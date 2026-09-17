@@ -1,0 +1,46 @@
+{
+  "system": {
+    "name": "Heo-Harness",
+    "version": "3.0.0-alpha.1",
+    "author": "Anh Cơ La",
+    "author_email": "genesis.corp.os@gmail.com",
+    "log_dir": "logs"
+  },
+  "security": {
+    "admin_pin": "",
+    "allow_external_plugins": true
+  },
+  "persona": {
+    "boss_name": "Sếp Cơ La",
+    "bot_name": "Bé Heo",
+    "bot_about": "Em là Trợ lý Điều hành AI Cấp cao trực thuộc hệ sinh thái Genesis Corp OS, do Sếp quản lý và điều hành. Khi có mặt trong các nhóm làm việc, vai trò của em là hỗ trợ các thành viên xử lý công việc chuyên môn, tra cứu dữ liệu và theo dõi tiến độ. Em chỉ phản hồi khi được @tag tên đích danh.",
+    "active_persona": "default",
+    "custom_tone": ""
+  },
+  "plugins": {
+    "@heo/plugin-auth": {
+      "enabled": true
+    },
+    "@heo/plugin-persona": {
+      "enabled": true
+    },
+    "@heo/provider-gemini": {
+      "enabled": true
+    },
+    "@heo/channel-zalo": {
+      "enabled": true
+    },
+    "@heo/tool-media": {
+      "enabled": true
+    },
+    "@heo/tool-office": {
+      "enabled": true
+    },
+    "@heo/ui-dashboard": {
+      "enabled": true
+    },
+    "@test/buggy": {
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heo-Harness — Trình Quản Trị Khung Sườn AI Agent & Kho Plugin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: '#ec4899', 600: '#db2777', 700: '#be185d' },
+            dark: { 900: '#0b0f19', 800: '#111827', 700: '#1f2937' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .badge-core { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .badge-channel { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-provider { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-tool { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-ui { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-agent { background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); }
+  </style>
+</head>
+<body class="bg-dark-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Header & Navigation -->
+  <header class="glass sticky top-0 z-50 border-b border-slate-800/80 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-600 flex items-center justify-center text-xl shadow-lg shadow-pink-500/20 ring-2 ring-pink-400/30">
+        🐷
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-pink-400 via-rose-300 to-cyan-300 bg-clip-text text-transparent">HEO-HARNESS</span>
+          <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">v3.0 Chassis</span>
+        </div>
+        <div class="text-xs text-slate-400">Kiến trúc Module "Everything is a Plugin" (DeepSeek Style)</div>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="flex items-center space-x-2">
+      <button onclick="switchTab('plugins')" id="tab-btn-plugins" class="px-4 py-2 rounded-xl text-sm font-medium transition flex items-center space-x-2 bg-pink-500 text-white shadow-lg shadow-pink-500/25">
+        <span>🧩</span><span>Kho Plugin & Tiện Ích</span>
+      </button>
+      <button onclick="switchTab('overview')" id="tab-btn-overview" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center space-x-2">
+        <span>📊</span><span>Tổng Quan Hệ Thống</span>
+      </button>
+      <button onclick="switchTab('persona')" id="tab-btn-persona" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center space-x-2">
+        <span>🎭</span><span>Danh Xưng & Persona</span>
+      </button>
+    </nav>
+
+    <!-- Author Badge -->
+    <div class="flex items-center space-x-2 text-xs text-slate-400 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700/60">
+      <span>Tác giả:</span>
+      <strong class="text-pink-400">Anh Cơ La</strong>
+      <span class="text-slate-600">•</span>
+      <a href="mailto:genesis.corp.os@gmail.com" class="text-slate-300 hover:text-cyan-300 transition">genesis.corp.os@gmail.com</a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- TAB 1: KHO PLUGIN (MARKETPLACE & MANAGER) -->
+    <section id="tab-plugins" class="space-y-6">
+      
+      <!-- Banner giới thiệu kiến trúc -->
+      <div class="glass p-6 rounded-3xl border border-slate-700/60 relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800/60 to-slate-900">
+        <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl">🧩</div>
+        <div class="max-w-3xl space-y-2">
+          <div class="flex items-center space-x-2 text-xs font-bold text-pink-400 uppercase tracking-wider">
+            <span>🛡️ Circuit Breaker & Error Boundary</span>
+            <span>•</span>
+            <span>Hot Mount / Unmount 0.1s</span>
+          </div>
+          <h2 class="text-2xl font-black text-white">Trung Tâm Điều Hành & Kho Tiện Ích Plugin</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Mỗi tính năng, cổng kết nối, AI model hay giao diện trong Heo-Harness đều là một <strong>Plugin độc lập</strong>. Nếu một plugin gặp sự cố, hệ thống sẽ tự động ngắt mạch (Circuit Breaker) để cách ly lỗi, tuyệt đối không làm gián đoạn bot Zalo và hệ thống lõi!
+          </p>
+        </div>
+
+        <!-- Sub-tabs: Đã Cài vs Chợ Tiện Ích -->
+        <div class="mt-6 flex items-center space-x-3 border-t border-slate-700/60 pt-4">
+          <button onclick="switchPluginSubTab('installed')" id="subtab-btn-installed" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-700 text-white flex items-center space-x-2">
+            <span>📦</span><span>Đã Cài Đặt (<span id="installed-count">0</span>)</span>
+          </button>
+          <button onclick="switchPluginSubTab('catalog')" id="subtab-btn-catalog" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2">
+            <span>🛒</span><span>Chợ Tiện Ích & Core Agent Mở Rộng (<span id="catalog-count">0</span>)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- DANH SÁCH PLUGIN ĐÃ CÀI ĐẶT -->
+      <div id="subtab-installed" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-white flex items-center space-x-2">
+            <span>⚡</span><span>Danh Sách Plugin Đang Hoạt Động Trên Khung Sườn (Harness)</span>
+          </h3>
+          <button onclick="refreshPlugins()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700 flex items-center space-x-1.5 transition">
+            <span class="animate-spin text-xs">🔄</span><span>Làm mới</span>
+          </button>
+        </div>
+
+        <div id="installed-plugins-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Render dynamically via JavaScript -->
+        </div>
+      </div>
+
+      <!-- KHO TIỆN ÍCH (MARKETPLACE CATALOG) -->
+      <div id="subtab-catalog" class="space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-white flex items-center space-x-2">
+            <span>🛒</span><span>Kho Plugin Tiện Ích & Core Agent Sẵn Sàng Cài Đặt (1-Click Install)</span>
+          </h3>
+          <span class="text-xs text-slate-400">Tự động tích hợp vào Harness mà không cần khởi động lại</span>
+        </div>
+
+        <div id="catalog-plugins-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Render dynamically via JavaScript -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: TỔNG QUAN HỆ THỐNG -->
+    <section id="tab-overview" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="glass p-5 rounded-2xl border border-slate-800">
+          <div class="text-xs text-slate-400 mb-1">Kiến Trúc Nhân Lõi</div>
+          <div class="text-xl font-bold text-white">Heo-Harness</div>
+          <div class="text-[11px] text-pink-400 mt-1">DeepSeek "Everything is a Plugin"</div>
+        </div>
+        <div class="glass p-5 rounded-2xl border border-slate-800">
+          <div class="text-xs text-slate-400 mb-1">Tác Giả Sáng Lập</div>
+          <div class="text-xl font-bold text-white">Anh Cơ La</div>
+          <div class="text-[11px] text-emerald-400 mt-1">Định danh bất biến 100%</div>
+        </div>
+        <div class="glass p-5 rounded-2xl border border-slate-800">
+          <div class="text-xs text-slate-400 mb-1">Circuit Breaker Status</div>
+          <div class="text-xl font-bold text-emerald-400">Active & Safe</div>
+          <div class="text-[11px] text-slate-400 mt-1">Cách ly lỗi hoàn toàn</div>
+        </div>
+        <div class="glass p-5 rounded-2xl border border-slate-800">
+          <div class="text-xs text-slate-400 mb-1">Cổng Phục Vụ</div>
+          <div class="text-xl font-bold text-cyan-400">Port 5066</div>
+          <div class="text-[11px] text-slate-400 mt-1">REST API & Web Console</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: DANH XƯNG & PERSONA -->
+    <section id="tab-persona" class="space-y-6 hidden">
+      <div class="glass p-6 rounded-3xl border border-slate-800 space-y-4">
+        <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+          <span>🎭</span><span>Cấu Hình Danh Xưng & 7 Phong Cách Thái Độ</span>
+        </h3>
+        <p class="text-xs text-slate-400">Được quản lý tự trị bởi Plugin <code>@heo/plugin-persona</code>.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <div class="text-xs text-slate-400 mb-1">Danh Xưng Chủ Nhân:</div>
+            <div class="text-base font-bold text-pink-400">Sếp Cơ La (Ryan)</div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <div class="text-xs text-slate-400 mb-1">Tên Gọi Trợ Lý:</div>
+            <div class="text-base font-bold text-cyan-400">Bé Heo</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal xem Log riêng của từng Plugin -->
+  <div id="log-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass max-w-2xl w-full rounded-2xl border border-slate-700 p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h4 class="font-bold text-white text-sm flex items-center space-x-2">
+          <span>📋</span><span id="modal-plugin-title">Nhật ký hoạt động Plugin</span>
+        </h4>
+        <button onclick="closeLogModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+      <div id="modal-log-content" class="bg-black/90 p-4 rounded-xl font-mono text-xs text-slate-300 h-64 overflow-y-auto space-y-1">
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-sm font-semibold bg-slate-800 border border-slate-700 text-white">
+  </div>
+
+  <script>
+    let pluginsData = [];
+    let catalogData = [];
+
+    function showToast(msg, isSuccess = true) {
+      const t = document.getElementById('toast');
+      t.innerHTML = `<span>${isSuccess ? '✅' : '❌'}</span><span>${msg}</span>`;
+      t.className = `fixed bottom-6 right-6 z-50 transition-all duration-300 px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-sm font-semibold border ${isSuccess ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200' : 'bg-rose-950/90 border-rose-500/50 text-rose-200'}`;
+      setTimeout(() => { t.classList.add('opacity-0', 'translate-y-20'); }, 3000);
+    }
+
+    function switchTab(tabName) {
+      ['plugins', 'overview', 'persona'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).className = 'px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center space-x-2';
+      });
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tabName}`).className = 'px-4 py-2 rounded-xl text-sm font-medium transition flex items-center space-x-2 bg-pink-500 text-white shadow-lg shadow-pink-500/25';
+    }
+
+    function switchPluginSubTab(sub) {
+      if (sub === 'installed') {
+        document.getElementById('subtab-installed').classList.remove('hidden');
+        document.getElementById('subtab-catalog').classList.add('hidden');
+        document.getElementById('subtab-btn-installed').className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-700 text-white flex items-center space-x-2';
+        document.getElementById('subtab-btn-catalog').className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2';
+      } else {
+        document.getElementById('subtab-installed').classList.add('hidden');
+        document.getElementById('subtab-catalog').classList.remove('hidden');
+        document.getElementById('subtab-btn-catalog').className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-700 text-white flex items-center space-x-2';
+        document.getElementById('subtab-btn-installed').className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2';
+      }
+    }
+
+    async function loadPlugins() {
+      try {
+        const res = await fetch('/api/plugins/list');
+        const data = await res.json();
+        if (data.ok) {
+          pluginsData = data.plugins;
+          renderInstalledPlugins(pluginsData);
+          document.getElementById('installed-count').textContent = pluginsData.length;
+        }
+      } catch (e) {
+        console.error("Lỗi nạp plugin:", e);
+      }
+    }
+
+    async function loadCatalog() {
+      try {
+        const res = await fetch('/api/plugins/catalog');
+        const data = await res.json();
+        if (data.ok) {
+          catalogData = data.catalog;
+          renderCatalog(catalogData);
+          document.getElementById('catalog-count').textContent = catalogData.length;
+        }
+      } catch (e) {
+        console.error("Lỗi nạp catalog:", e);
+      }
+    }
+
+    function renderInstalledPlugins(list) {
+      const container = document.getElementById('installed-plugins-grid');
+      container.innerHTML = '';
+
+      list.forEach(p => {
+        const meta = p.metadata;
+        const card = document.createElement('div');
+        card.className = 'glass p-5 rounded-2xl border border-slate-800/80 flex flex-col justify-between space-y-4 hover:border-slate-700 transition relative';
+
+        const isHealthy = p.health === 'healthy';
+        const isDegraded = p.health === 'degraded';
+        const isError = p.health === 'error';
+
+        let healthBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">Đã Tắt</span>`;
+        if (p.enabled) {
+          if (isHealthy) healthBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>Khỏe Mạnh</span></span>`;
+          else if (isDegraded) healthBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Cảnh Báo</span>`;
+          else if (isError) healthBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">Ngắt Mạch</span>`;
+        }
+
+        card.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center space-x-3">
+                <span class="text-2xl">${meta.icon || '🧩'}</span>
+                <div>
+                  <h4 class="font-bold text-white text-sm tracking-tight">${meta.name}</h4>
+                  <div class="text-[11px] font-mono text-slate-400">${meta.id}</div>
+                </div>
+              </div>
+              <div>${healthBadge}</div>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">${meta.description || 'Không có mô tả'}</p>
+            <div class="flex items-center space-x-2 pt-1">
+              <span class="badge-${meta.category} px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">${meta.category}</span>
+              <span class="text-[10px] text-slate-500 font-mono">v${meta.version}</span>
+              <span class="text-[10px] text-slate-500">• ${meta.author}</span>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-800/80 pt-3 flex items-center justify-between">
+            <button onclick="viewLogs('${meta.id}')" class="text-xs text-slate-400 hover:text-white flex items-center space-x-1">
+              <span>📋</span><span>Logs</span>
+            </button>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs text-slate-400">${p.enabled ? 'Đang bật' : 'Đã tắt'}</span>
+              <button onclick="togglePlugin('${meta.id}', ${!p.enabled})" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${p.enabled ? 'bg-pink-500' : 'bg-slate-700'}">
+                <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${p.enabled ? 'translate-x-6' : 'translate-x-1'}"></span>
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderCatalog(list) {
+      const container = document.getElementById('catalog-plugins-grid');
+      container.innerHTML = '';
+
+      list.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'glass p-5 rounded-2xl border border-slate-800/80 flex flex-col justify-between space-y-4 hover:border-slate-700 transition';
+        card.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex items-center space-x-3">
+              <span class="text-2xl">${c.icon}</span>
+              <div>
+                <h4 class="font-bold text-white text-sm">${c.name}</h4>
+                <div class="text-[11px] font-mono text-slate-400">${c.id}</div>
+              </div>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">${c.description}</p>
+            <div class="flex items-center space-x-2 pt-1">
+              <span class="badge-${c.category} px-2 py-0.5 rounded-md text-[10px] font-bold uppercase">${c.category}</span>
+              <span class="text-[10px] text-slate-500">Tác giả: ${c.author}</span>
+            </div>
+          </div>
+          <div class="border-t border-slate-800/80 pt-3 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Sẵn sàng</span>
+            <button onclick="installPlugin('${c.id}')" class="px-3 py-1.5 rounded-xl bg-pink-500 hover:bg-pink-600 text-xs font-bold text-white shadow-lg shadow-pink-500/20 transition flex items-center space-x-1">
+              <span>+</span><span>Cài Đặt 1-Click</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function togglePlugin(id, enable) {
+      try {
+        const res = await fetch('/api/plugins/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, enable })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showToast(`Đã ${enable ? 'bật' : 'tắt'} plugin ${id} thành công!`);
+          loadPlugins();
+        } else {
+          showToast(`Lỗi: ${data.error}`, false);
+        }
+      } catch (e) {
+        showToast(`Lỗi kết nối: ${e.message}`, false);
+      }
+    }
+
+    async function installPlugin(id) {
+      try {
+        const res = await fetch('/api/plugins/install', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showToast(data.message);
+          loadPlugins();
+        }
+      } catch (e) {
+        showToast(`Lỗi cài đặt: ${e.message}`, false);
+      }
+    }
+
+    function viewLogs(pluginId) {
+      const p = pluginsData.find(x => x.metadata.id === pluginId);
+      if (!p) return;
+      document.getElementById('modal-plugin-title').textContent = `Nhật ký: ${p.metadata.name} (${pluginId})`;
+      const logsElem = document.getElementById('modal-log-content');
+      logsElem.innerHTML = '';
+      if (p.recent_logs && p.recent_logs.length > 0) {
+        p.recent_logs.forEach(l => {
+          const div = document.createElement('div');
+          div.textContent = l;
+          logsElem.appendChild(div);
+        });
+      } else {
+        logsElem.innerHTML = '<div class="text-slate-500">Chưa có nhật ký ghi nhận.</div>';
+      }
+      document.getElementById('log-modal').classList.remove('hidden');
+    }
+
+    function closeLogModal() {
+      document.getElementById('log-modal').classList.add('hidden');
+    }
+
+    function refreshPlugins() {
+      loadPlugins();
+      loadCatalog();
+    }
+
+    window.onload = () => {
+      refreshPlugins();
+    };
+  </script>
+</body>
+</html>
