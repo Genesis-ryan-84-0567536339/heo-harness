@@ -7,19 +7,19 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐷</text></svg>">
   <style>
     :root {
-      --bg-body: #0a0e17;
-      --bg-card: #111827;
-      --bg-card-hover: #162235;
-      --bg-sidebar: #0d121f;
-      --bg-topbar: #0d121f;
-      --border: #1e293b;
+      --bg-body: #070a13;
+      --bg-card: #0d1322;
+      --bg-card-hover: #121b2f;
+      --bg-sidebar: #090e1a;
+      --bg-topbar: #090e1a;
+      --border: #1a2337;
       --border-focus: #3b82f6;
-      --border-subtle: #172033;
+      --border-subtle: #141c2e;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --text-faint: #64748b;
       --brand: #10b981;
-      --brand-glow: rgba(16, 185, 129, 0.15);
+      --brand-glow: rgba(16, 185, 129, 0.18);
       --p1: #ef4444;
       --p1-bg: rgba(239, 68, 68, 0.12);
       --p2: #f59e0b;
@@ -27,8 +27,8 @@
       --p3: #3b82f6;
       --p3-bg: rgba(59, 130, 246, 0.12);
       --accent: #8b5cf6;
-      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", Arial, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
 
     [data-theme="light"] {
@@ -56,6 +56,7 @@
       font-size: 13px;
       line-height: 1.5;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* Layout Shell */
@@ -89,18 +90,18 @@
     .brand-avatar {
       width: 36px;
       height: 36px;
-      border-radius: 9px;
+      border-radius: 10px;
       background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
-      box-shadow: 0 4px 12px var(--brand-glow);
+      box-shadow: 0 4px 14px var(--brand-glow);
     }
     .brand-titles { flex: 1; min-width: 0; }
     .brand-title {
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13.5px;
       color: var(--text);
       letter-spacing: -0.01em;
       white-space: nowrap;
@@ -111,11 +112,11 @@
       font-size: 10px;
       color: var(--brand);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     }
     .status-dot {
       width: 6px;
@@ -128,27 +129,30 @@
     .nav-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 12px 10px;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
     .nav-scroll::-webkit-scrollbar { width: 4px; }
     .nav-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    .nav-section-title {
+    .nav-group-label {
       font-size: 10px;
       font-weight: 700;
       color: var(--text-faint);
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      padding: 12px 10px 6px;
+      padding: 10px 10px 4px;
     }
-    .nav-item {
+    .nav-hub-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid transparent;
       background: transparent;
       color: var(--text-muted);
       font-size: 12.5px;
@@ -156,41 +160,42 @@
       cursor: pointer;
       text-align: left;
       transition: all 0.15s ease;
-      margin-bottom: 2px;
     }
-    .nav-item:hover {
+    .nav-hub-item:hover {
       background: var(--bg-card-hover);
       color: var(--text);
     }
-    .nav-item.active {
+    .nav-hub-item.active {
       background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.25);
       color: var(--brand);
       font-weight: 600;
-      border-left: 3px solid var(--brand);
-      border-top-left-radius: 2px;
-      border-bottom-left-radius: 2px;
     }
-    .nav-item-left {
+    .nav-hub-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 11px;
     }
     .nav-icon {
-      font-size: 14px;
-      width: 16px;
+      font-size: 15px;
+      width: 18px;
       text-align: center;
       color: var(--text-faint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .nav-item.active .nav-icon { color: var(--brand); }
+    .nav-hub-item.active .nav-icon { color: var(--brand); }
     .nav-badge {
-      font-size: 10px;
-      padding: 1px 6px;
-      border-radius: 10px;
+      font-size: 10.5px;
+      padding: 1px 7px;
+      border-radius: 12px;
       font-weight: 700;
       font-family: var(--mono);
     }
     .nav-badge.p1 { background: var(--p1-bg); color: var(--p1); }
     .nav-badge.p2 { background: var(--p2-bg); color: var(--p2); }
+    .nav-badge.good { background: rgba(16, 185, 129, 0.14); color: var(--brand); }
     .nav-badge.neutral { background: var(--border); color: var(--text-muted); }
 
     .sidebar-footer {
@@ -208,20 +213,21 @@
       min-width: 0;
     }
     .user-avatar {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
       font-size: 11px;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
     }
     .user-meta { min-width: 0; }
     .user-name {
-      font-size: 11.5px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text);
       white-space: nowrap;
@@ -229,8 +235,9 @@
       text-overflow: ellipsis;
     }
     .user-role {
-      font-size: 9.5px;
+      font-size: 10px;
       color: var(--brand);
+      font-weight: 500;
     }
 
     /* Main Area */
@@ -244,7 +251,7 @@
 
     /* Top Navbar */
     #topbar {
-      height: 54px;
+      height: 56px;
       background: var(--bg-topbar);
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -260,7 +267,7 @@
       gap: 16px;
     }
     .page-crumb {
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 600;
       color: var(--text);
       display: flex;
@@ -283,8 +290,8 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
-      border-radius: 6px;
+      padding: 7px 14px;
+      border-radius: 7px;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
@@ -300,14 +307,14 @@
       border-color: var(--text-faint);
     }
     .btn.primary {
-      background: var(--brand);
-      color: #042f1d;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #032b1a;
       border-color: var(--brand);
       font-weight: 600;
     }
     .btn.primary:hover {
-      filter: brightness(1.1);
-      box-shadow: 0 2px 10px var(--brand-glow);
+      filter: brightness(1.12);
+      box-shadow: 0 2px 12px var(--brand-glow);
     }
     .btn.ghost {
       background: transparent;
@@ -328,8 +335,9 @@
       color: #fff;
     }
     .btn.sm {
-      padding: 3px 8px;
+      padding: 4px 9px;
       font-size: 11px;
+      border-radius: 5px;
     }
 
     /* Content Area */
@@ -341,31 +349,69 @@
     #content-view::-webkit-scrollbar { width: 6px; }
     #content-view::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
 
-    /* View Header */
-    .view-head {
+    /* Unified Hub Navigation Header */
+    .hub-header {
+      margin-bottom: 22px;
+    }
+    .hub-titles {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 20px;
       gap: 16px;
+      margin-bottom: 14px;
     }
-    .view-titles h1 {
-      font-size: 19px;
+    .hub-titles h1 {
+      font-size: 20px;
       font-weight: 700;
       color: var(--text);
       letter-spacing: -0.02em;
       margin-bottom: 4px;
     }
-    .view-desc {
+    .hub-desc {
       font-size: 12.5px;
       color: var(--text-muted);
-      max-width: 800px;
+      max-width: 820px;
     }
-    .view-actions {
+    .hub-actions {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-shrink: 0;
+    }
+
+    /* Sub-Navigation Pills */
+    .hub-subnav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px;
+      background: rgba(13, 19, 34, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      width: fit-content;
+    }
+    .hub-subnav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .hub-subnav-btn:hover {
+      color: var(--text);
+    }
+    .hub-subnav-btn.active {
+      background: var(--border);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
     /* Cards & Grids */
@@ -447,10 +493,7 @@
     .badge.purple { background: rgba(139, 92, 246, 0.12); color: var(--accent); }
 
     /* Tables */
-    .table-box {
-      width: 100%;
-      overflow-x: auto;
-    }
+    .table-box { width: 100%; overflow-x: auto; }
     table.data-table {
       width: 100%;
       border-collapse: collapse;
@@ -464,7 +507,7 @@
       letter-spacing: 0.05em;
       color: var(--text-faint);
       border-bottom: 1px solid var(--border);
-      background: rgba(0,0,0,0.1);
+      background: rgba(0,0,0,0.12);
     }
     table.data-table td {
       padding: 12px 14px;
@@ -485,10 +528,10 @@
       align-items: start;
     }
     .kanban-col {
-      background: rgba(17, 24, 39, 0.6);
+      background: rgba(13, 19, 34, 0.6);
       border: 1px solid var(--border);
       border-radius: 8px;
-      min-height: 500px;
+      min-height: 520px;
       display: flex;
       flex-direction: column;
     }
@@ -511,41 +554,13 @@
     .kanban-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 7px;
       padding: 12px;
-      cursor: pointer;
       transition: all 0.15s ease;
     }
     .kanban-card:hover {
       border-color: var(--text-faint);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    /* Sub-tabs */
-    .subtabs {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 18px;
-      padding-bottom: 2px;
-    }
-    .subtab {
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.15s ease;
-    }
-    .subtab:hover { color: var(--text); }
-    .subtab.active {
-      color: var(--brand);
-      border-bottom-color: var(--brand);
-      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
     }
 
     /* Forms */
@@ -599,11 +614,11 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       width: 100%;
-      max-width: 600px;
+      max-width: 620px;
       max-height: 90vh;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
     }
     .modal-head {
       padding: 16px 20px;
@@ -625,7 +640,7 @@
       align-items: center;
       justify-content: flex-end;
       gap: 10px;
-      background: rgba(0,0,0,0.1);
+      background: rgba(0,0,0,0.15);
     }
 
     /* Toast Notification */
@@ -645,9 +660,6 @@
       opacity: 0;
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 200;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
     #toast.show {
       transform: translateY(0);
@@ -658,7 +670,7 @@
     #terminal-drawer {
       position: fixed;
       top: 0; right: -560px; width: 540px; height: 100vh;
-      background: #090d16;
+      background: #060910;
       border-left: 1px solid var(--border);
       box-shadow: -10px 0 30px rgba(0,0,0,0.5);
       transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -673,7 +685,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #0e1422;
+      background: #090e1a;
     }
     .term-body {
       flex: 1;
@@ -688,7 +700,7 @@
     .term-input-box {
       padding: 12px 16px;
       border-top: 1px solid var(--border);
-      background: #0e1422;
+      background: #090e1a;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -725,100 +737,61 @@
     .muted { color: var(--text-muted); }
     .faint { color: var(--text-faint); }
     .text-sm { font-size: 11.5px; }
-    .mt-4 { margin-top: 16px; }
   </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- SIDEBAR -->
+  <!-- SIDEBAR: 6 COHESIVE EXECUTIVE HUBS -->
   <aside id="sidebar">
     <div class="brand-header">
       <div class="brand-avatar">🐷</div>
       <div class="brand-titles">
         <div class="brand-title">HEO-HARNESS OS</div>
-        <div class="brand-sub"><span class="status-dot"></span> V6 Executive SSOT</div>
+        <div class="brand-sub"><span class="status-dot"></span> V6 Executive Suite</div>
       </div>
     </div>
 
     <div class="nav-scroll">
-      <!-- 1. EXECUTIVE SUITE -->
-      <div class="nav-section-title">Tổng Quan Điều Hành</div>
-      <button class="nav-item active" data-tab="command">
-        <div class="nav-item-left"><span class="nav-icon">⊞</span> Command Center</div>
-      </button>
-      <button class="nav-item" data-tab="attention">
-        <div class="nav-item-left"><span class="nav-icon">⚐</span> Attention Queue</div>
+      <div class="nav-group-label">Điều Hành Chiến Lược</div>
+
+      <!-- 1. COMMAND CENTER -->
+      <button class="nav-hub-item active" data-hub="command" onclick="switchHub('command')">
+        <div class="nav-hub-left"><span class="nav-icon">⊞</span> Command Center</div>
         <span class="nav-badge p1" id="badge-attention">0</span>
       </button>
-      <button class="nav-item" data-tab="work">
-        <div class="nav-item-left"><span class="nav-icon">✓</span> Work OS (Kanban)</div>
+
+      <!-- 2. WORK & SCHEDULE -->
+      <button class="nav-hub-item" data-hub="work" onclick="switchHub('work')">
+        <div class="nav-hub-left"><span class="nav-icon">✓</span> Work & Schedule</div>
         <span class="nav-badge neutral" id="badge-works">0</span>
       </button>
-      <button class="nav-item" data-tab="calendar">
-        <div class="nav-item-left"><span class="nav-icon">◷</span> Lịch & Nhắc Việc</div>
-      </button>
-      <button class="nav-item" data-tab="approvals">
-        <div class="nav-item-left"><span class="nav-icon">⚡</span> Phê Duyệt An Ninh</div>
-        <span class="nav-badge p2" id="badge-approvals">0</span>
+
+      <!-- 3. DIRECTORY 360 & ZALO -->
+      <div class="nav-group-label" style="margin-top:8px">Thực Thể & Kết Nối</div>
+      <button class="nav-hub-item" data-hub="directory" onclick="switchHub('directory')">
+        <div class="nav-hub-left"><span class="nav-icon">◉</span> Directory 360 & Zalo</div>
+        <span class="nav-badge good">ONLINE</span>
       </button>
 
-      <!-- 2. REALITY & ENTITY -->
-      <div class="nav-section-title">Thực Thể & Kết Nối</div>
-      <button class="nav-item" data-tab="groups">
-        <div class="nav-item-left"><span class="nav-icon">◉</span> Group 360 (Nhóm)</div>
-      </button>
-      <button class="nav-item" data-tab="people">
-        <div class="nav-item-left"><span class="nav-icon">◎</span> Person 360 (Nhân Sự)</div>
-      </button>
-      <button class="nav-item" data-tab="zalo">
-        <div class="nav-item-left"><span class="nav-icon">💬</span> Kênh Zalo Gateway</div>
+      <!-- 4. INTELLIGENCE & VALUE -->
+      <div class="nav-group-label" style="margin-top:8px">Trí Tuệ & Giá Trị</div>
+      <button class="nav-hub-item" data-hub="intelligence" onclick="switchHub('intelligence')">
+        <div class="nav-hub-left"><span class="nav-icon">◈</span> Intelligence & Value</div>
       </button>
 
-      <!-- 3. INTELLIGENCE & VALUE -->
-      <div class="nav-section-title">Trí Tuệ & Giá Trị</div>
-      <button class="nav-item" data-tab="insights">
-        <div class="nav-item-left"><span class="nav-icon">✦</span> Insights & Rủi Ro</div>
-      </button>
-      <button class="nav-item" data-tab="value">
-        <div class="nav-item-left"><span class="nav-icon">◈</span> Outcome & Giá Trị</div>
-      </button>
-      <button class="nav-item" data-tab="learning">
-        <div class="nav-item-left"><span class="nav-icon">⟳</span> Learning Loop</div>
-      </button>
-      <button class="nav-item" data-tab="artifacts">
-        <div class="nav-item-left"><span class="nav-icon">📁</span> Artifacts & Tài Liệu</div>
-      </button>
-
-      <!-- 4. AGENTS & TOOLS -->
-      <div class="nav-section-title">Tương Tác & Công Cụ</div>
-      <button class="nav-item" data-tab="chat">
-        <div class="nav-item-left"><span class="nav-icon">🤖</span> Trò Chuyện Bé Heo</div>
+      <!-- 5. EXECUTIVE ASSISTANT & STUDIO -->
+      <div class="nav-group-label" style="margin-top:8px">Trợ Lý & Công Cụ</div>
+      <button class="nav-hub-item" data-hub="assistant" onclick="switchHub('assistant')">
+        <div class="nav-hub-left"><span class="nav-icon">🤖</span> Assistant & Studio</div>
         <span class="nav-badge good">LIVE</span>
       </button>
-      <button class="nav-item" data-tab="persona">
-        <div class="nav-item-left"><span class="nav-icon">🎭</span> Persona Studio (7 Sắc Thái)</div>
-      </button>
-      <button class="nav-item" data-tab="runners">
-        <div class="nav-item-left"><span class="nav-icon">⚙</span> Thực Thi Công Cụ</div>
-      </button>
 
-      <!-- 5. GOVERNANCE & SYSTEM -->
-      <div class="nav-section-title">Quản Trị & Hạ Tầng</div>
-      <button class="nav-item" data-tab="policies">
-        <div class="nav-item-left"><span class="nav-icon">🛡</span> Trục An Toàn 5 Tầng</div>
-      </button>
-      <button class="nav-item" data-tab="executions">
-        <div class="nav-item-left"><span class="nav-icon">⇄</span> Executions & Trace</div>
-      </button>
-      <button class="nav-item" data-tab="audit">
-        <div class="nav-item-left"><span class="nav-icon">📑</span> Sổ Cái Kiểm Toán (Audit)</div>
-      </button>
-      <button class="nav-item" data-tab="plugins">
-        <div class="nav-item-left"><span class="nav-icon">🧩</span> Quản Trị Plugins & DSH</div>
-      </button>
-      <button class="nav-item" data-tab="control">
-        <div class="nav-item-left"><span class="nav-icon">⬡</span> Hạ Tầng & Backup</div>
+      <!-- 6. SECURITY, GOVERNANCE & SYSTEM -->
+      <div class="nav-group-label" style="margin-top:8px">Quản Trị & Hạ Tầng</div>
+      <button class="nav-hub-item" data-hub="governance" onclick="switchHub('governance')">
+        <div class="nav-hub-left"><span class="nav-icon">🛡</span> Governance & Security</div>
+        <span class="nav-badge p2" id="badge-approvals">0</span>
       </button>
     </div>
 
@@ -834,16 +807,16 @@
     </div>
   </aside>
 
-  <!-- MAIN CONTAINER -->
+  <!-- MAIN VIEWPORT -->
   <main id="main-container">
     <!-- Topbar -->
     <header id="topbar">
       <div class="topbar-left">
-        <div class="page-crumb" id="breadcrumb-title">Command Center</div>
-        <span class="page-crumb-sub" id="breadcrumb-sub">Bảng Điều Hành Chiến Lược</span>
+        <div class="page-crumb" id="top-title">Command Center</div>
+        <span class="page-crumb-sub" id="top-subtitle">Tổng Quan Trực Chiến & Hàng Đợi Điều Hành</span>
       </div>
       <div class="topbar-right">
-        <button class="btn sm" onclick="runFirstRunWizard()">⚡ Health Wizard</button>
+        <button class="btn sm" onclick="runHealthWizard()">⚡ Health Wizard</button>
         <button class="btn sm" onclick="toggleTerminal()">💻 Terminal CLI</button>
         <a class="btn sm primary" href="http://127.0.0.1:3080/" target="_blank">🌐 DSH Web (3080) ↗</a>
       </div>
@@ -851,7 +824,7 @@
 
     <!-- Content View -->
     <section id="content-view">
-      <!-- Dynamic tab content renders here -->
+      <!-- Active Hub content dynamically renders here -->
     </section>
   </main>
 
@@ -861,14 +834,12 @@
 <div id="modal-backdrop">
   <div class="modal-box">
     <div class="modal-head">
-      <h3 id="modal-title">Tiêu Đề Hộp Thoại</h3>
+      <h3 id="modal-title">Tiêu Đề</h3>
       <button class="btn sm ghost" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-body" id="modal-content">
-      <!-- Modal form / content -->
-    </div>
-    <div class="modal-foot" id="modal-footer">
-      <button class="btn" onclick="closeModal()">Hủy Bỏ</button>
+    <div class="modal-body" id="modal-content"></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">Đóng</button>
       <button class="btn primary" id="modal-submit-btn">Xác Nhận</button>
     </div>
   </div>
@@ -907,11 +878,20 @@ Gõ 'help' để xem danh sách lệnh có sẵn.
 
 <script>
 // ==========================================
-// STATE MANAGEMENT & DATA STORE
+// CENTRAL STATE STORE
 // ==========================================
 const state = {
   theme: 'dark',
-  activeTab: 'command',
+  activeHub: 'command',
+  subtabs: {
+    work: 'kanban',
+    directory: 'groups',
+    intelligence: 'insights',
+    assistant: 'chat',
+    governance: 'approvals'
+  },
+
+  // Raw Database Collections
   attention: [],
   works: [],
   calendar: [],
@@ -932,11 +912,11 @@ const state = {
   persona: {},
   auth: {},
 
-  // Filters & Sub-state
+  // Active Entity Selection
   activeGroupId: 'G-001',
-  groupSubtab: 'overview',
+  groupInnerTab: 'overview',
   activePersonId: 'P-001',
-  personSubtab: 'dossier',
+  personInnerTab: 'dossier',
   attentionFilter: 'ALL',
   insightFilter: 'ALL',
   artifactFilter: 'ALL',
@@ -968,7 +948,7 @@ function closeModal() {
 }
 
 function showEvidence(text) {
-  $('#evidence-content').textContent = text;
+  $('#evidence-content').textContent = decodeURIComponent(text);
   $('#evidence-drawer').classList.add('open');
 }
 
@@ -990,7 +970,7 @@ function toggleTheme() {
 }
 
 // ==========================================
-// API FETCHERS
+// DATA FETCHING & SYNC
 // ==========================================
 async function fetchAllData() {
   try {
@@ -1054,152 +1034,113 @@ function updateBadges() {
 }
 
 // ==========================================
-// RENDER ROUTER
+// ROUTING & HUB SWITCHING
 // ==========================================
-function navigateTo(tab) {
-  state.activeTab = tab;
-  $$('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.getAttribute('data-tab') === tab);
+function switchHub(hubKey, subtabKey = null) {
+  state.activeHub = hubKey;
+  if (subtabKey) {
+    state.subtabs[hubKey] = subtabKey;
+  }
+  $$('.nav-hub-item').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('data-hub') === hubKey);
   });
-  renderCurrentTab();
+  renderActiveHub();
 }
 
-function renderCurrentTab() {
-  const container = $('#content-view');
-  const titleEl = $('#breadcrumb-title');
-  const subEl = $('#breadcrumb-sub');
+function switchSubtab(hubKey, subtabKey) {
+  state.subtabs[hubKey] = subtabKey;
+  renderActiveHub();
+}
 
-  switch (state.activeTab) {
+function renderActiveHub() {
+  const container = $('#content-view');
+  const titleEl = $('#top-title');
+  const subEl = $('#top-subtitle');
+
+  switch (state.activeHub) {
     case 'command':
       titleEl.textContent = 'Command Center';
       subEl.textContent = 'Trung Tâm Chỉ Huy Chiến Lược & Tổng Quan Trực Chiến';
-      container.innerHTML = renderCommandCenter();
+      container.innerHTML = renderCommandCenterHub();
       break;
-    case 'attention':
-      titleEl.textContent = 'Attention Queue';
-      subEl.textContent = 'Hàng Đợi Chú Ý Trọng Điểm Theo Mức Độ Khẩn Cấp';
-      container.innerHTML = renderAttentionQueue();
-      break;
+
     case 'work':
-      titleEl.textContent = 'Work OS';
-      subEl.textContent = 'Bảng Điều Phối Công Việc Kanban 5 Trạng Thái';
-      container.innerHTML = renderWorkOS();
+      titleEl.textContent = 'Work & Schedule';
+      subEl.textContent = 'Bảng Điều Phối Công Việc Kanban & Lịch Trình Canonical';
+      container.innerHTML = renderWorkScheduleHub();
       break;
-    case 'calendar':
-      titleEl.textContent = 'Lịch & Nhắc Việc';
-      subEl.textContent = 'Lịch Trình Canonical Điều Hành & Checkpoint Tiếp Triển';
-      container.innerHTML = renderCalendar();
+
+    case 'directory':
+      titleEl.textContent = 'Directory 360 & Zalo';
+      subEl.textContent = 'Quản Trị Nhóm, Hồ Sơ Nhân Sự Canonical & Cổng Di Động Zalo';
+      container.innerHTML = renderDirectoryHub();
       break;
-    case 'approvals':
-      titleEl.textContent = 'Phê Duyệt An Ninh';
-      subEl.textContent = 'Hàng Đợi Thẩm Quyền SSOT Thuộc Quyền Hạn Tối Cao Của Sếp';
-      container.innerHTML = renderApprovals();
+
+    case 'intelligence':
+      titleEl.textContent = 'Intelligence & Value';
+      subEl.textContent = 'Dự Báo Rủi Ro, Quy Đổi Giá Trị Thực, Vòng Lặp Học Tập & Kho Báo Cáo';
+      container.innerHTML = renderIntelligenceHub();
       break;
-    case 'groups':
-      titleEl.textContent = 'Group 360';
-      subEl.textContent = 'Quản Trị Nhóm, Phòng Ban & Phân Tầng Chính Sách';
-      container.innerHTML = renderGroup360();
+
+    case 'assistant':
+      titleEl.textContent = 'Executive Assistant & Studio';
+      subEl.textContent = 'Trợ Lý Điều Hành Bé Heo, Cấu Hình 7 Thái Độ & Kích Hoạt Công Cụ';
+      container.innerHTML = renderAssistantHub();
       break;
-    case 'people':
-      titleEl.textContent = 'Person 360';
-      subEl.textContent = 'Hồ Sơ Nhân Sự, Cam Kết & Tín Hiệu Quan Hệ Đối Tác';
-      container.innerHTML = renderPerson360();
+
+    case 'governance':
+      titleEl.textContent = 'Governance, Security & System';
+      subEl.textContent = 'Phê Duyệt SSOT, Tường Lửa 5 Tầng, Sổ Cái SHA-256 & Hạ Tầng DSH';
+      container.innerHTML = renderGovernanceHub();
       break;
-    case 'zalo':
-      titleEl.textContent = 'Kênh Zalo Gateway';
-      subEl.textContent = 'Cổng Giao Tiếp Di Động Hai Chiều & Bộ Lọc Tag @';
-      container.innerHTML = renderZaloOps();
-      break;
-    case 'insights':
-      titleEl.textContent = 'Insights & Rủi Ro';
-      subEl.textContent = 'Phân Tích Dữ Liệu Thực & Dự Báo Nguy Cơ Tồn Đọng';
-      container.innerHTML = renderInsights();
-      break;
-    case 'value':
-      titleEl.textContent = 'Outcome & Giá Trị Thực';
-      subEl.textContent = 'Quy Đổi Kết Quả Thành Giá Trị Thực Chứng & Đo Lường Chi Phí';
-      container.innerHTML = renderOutcomeValue();
-      break;
-    case 'learning':
-      titleEl.textContent = 'Learning Loop';
-      subEl.textContent = 'Vòng Lặp Học Tập & Đề Xuất Tiến Hóa Bộ Nhớ Hệ Thống';
-      container.innerHTML = renderLearningLoop();
-      break;
-    case 'artifacts':
-      titleEl.textContent = 'Artifacts & Tài Liệu';
-      subEl.textContent = 'Kho Tài Liệu Word (.docx), Excel (.xlsx) & Media Tự Động';
-      container.innerHTML = renderArtifacts();
-      break;
-    case 'chat':
-      titleEl.textContent = 'Trò Chuyện Cùng Bé Heo';
-      subEl.textContent = 'Trợ Lý Điều Hành Thông Minh & Tự Động Kích Hoạt Tools';
-      container.innerHTML = renderChat();
-      break;
-    case 'persona':
-      titleEl.textContent = 'Persona Studio';
-      subEl.textContent = 'Cấu Hình Danh Xưng Sếp - Em & 7 Sắc Thái Thái Độ';
-      container.innerHTML = renderPersona();
-      break;
-    case 'runners':
-      titleEl.textContent = 'Thực Thi Công Cụ';
-      subEl.textContent = 'Kích Hoạt Trực Tiếp Công Cụ Office, Âm Nhạc & Đồ Họa Vector';
-      container.innerHTML = renderRunners();
-      break;
-    case 'policies':
-      titleEl.textContent = 'Trục An Toàn 5 Tầng';
-      subEl.textContent = 'Tường Lửa Thẩm Định Precedence SSOT: GLOBAL -> CHANNEL -> GROUP -> PERSON -> ACTION';
-      container.innerHTML = renderPolicies();
-      break;
-    case 'executions':
-      titleEl.textContent = 'Executions & Trace';
-      subEl.textContent = 'Nhật Ký Thực Thi Thời Gian Thực & Truy Vết Correlation ID';
-      container.innerHTML = renderExecutions();
-      break;
-    case 'audit':
-      titleEl.textContent = 'Sổ Cái Kiểm Toán (Audit)';
-      subEl.textContent = 'Sổ Cái Ghi Nhận Bất Biến Có Xác Thực Chuỗi Băm SHA-256';
-      container.innerHTML = renderAudit();
-      break;
-    case 'plugins':
-      titleEl.textContent = 'Quản Trị Plugins & DSH';
-      subEl.textContent = '10 Plugin Chuẩn Hóa Theo Chassis DeepSeek Harness';
-      container.innerHTML = renderPlugins();
-      break;
-    case 'control':
-      titleEl.textContent = 'Hạ Tầng & Backup';
-      subEl.textContent = 'Chỉ Số Phần Cứng, Tạo Bản Sao Lưu State & Khôi Phục Snapshot';
-      container.innerHTML = renderControlRoom();
-      break;
+
     default:
-      container.innerHTML = `<div class="card card-pad">Tab ${state.activeTab} đang cập nhật.</div>`;
+      container.innerHTML = `<div class="card card-pad">Đang tải phân hệ điều hành...</div>`;
   }
 }
 
 // ==========================================
-// TAB 1: COMMAND CENTER
+// HUB 1: COMMAND CENTER (COCKPIT)
 // ==========================================
-function renderCommandCenter() {
+function renderCommandCenterHub() {
   const pendingAppr = state.approvals.filter(a => a.status === 'PENDING').length;
   const criticalAtt = state.attention.filter(a => a.band === 'P1').length;
   const activeWorks = state.works.filter(w => w.status !== 'DONE').length;
 
+  let displayAtt = state.attention;
+  if (state.attentionFilter !== 'ALL') {
+    displayAtt = state.attention.filter(a => a.band === state.attentionFilter);
+  }
+
   return `
-    <!-- KPI Header -->
+    <div class="hub-header">
+      <div class="hub-titles">
+        <div>
+          <h1>Executive Command Center</h1>
+          <div class="hub-desc">Bảng điều hành hợp nhất của Anh Cơ La. Mọi tín hiệu khẩn cấp, việc trực chiến và thẩm quyền phê duyệt tập trung tại đây.</div>
+        </div>
+        <div class="hub-actions">
+          <button class="btn sm primary" onclick="recomputeAttention()">Recompute Attention</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 KPI Cards -->
     <div class="grid-4">
       <div class="kpi-card">
         <div class="kpi-label">Hàng Đợi Khẩn Cấp</div>
         <div class="kpi-val" style="color:var(--p1)">${state.attention.length}</div>
-        <div class="kpi-sub">${criticalAtt} mục P1 cần xử lý ngay</div>
+        <div class="kpi-sub">${criticalAtt} mục P1 cần quyết định ngay</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Chờ Sếp Phê Duyệt</div>
         <div class="kpi-val" style="color:var(--p2)">${pendingAppr}</div>
-        <div class="kpi-sub">Thẩm quyền Anh Cơ La</div>
+        <div class="kpi-sub">Thẩm quyền tối cao Anh Cơ La</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Công Việc Trực Chiến</div>
         <div class="kpi-val" style="color:var(--p3)">${state.works.length}</div>
-        <div class="kpi-sub">${activeWorks} việc đang triển khai</div>
+        <div class="kpi-sub">${activeWorks} việc đang mở</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Chi Phí Token API</div>
@@ -1208,17 +1149,24 @@ function renderCommandCenter() {
       </div>
     </div>
 
-    <!-- 2-Column: Critical Attention & Quick Dispatcher -->
+    <!-- 2 Column: Attention Queue & Quick Action Dispatcher -->
     <div class="grid-span">
       <!-- Attention Items -->
       <div class="card">
         <div class="card-head">
-          <h3>⚐ Attention Queue — Các Mục Cần Chú Ý Hàng Đầu</h3>
-          <button class="btn sm" onclick="recomputeAttention()">Tính Toán Lại</button>
+          <div class="flex-gap">
+            <span style="font-weight:600">⚐ Attention Queue Hàng Đầu</span>
+            <span class="badge ${state.attentionFilter === 'P1' ? 'p1' : 'neutral'}">${displayAtt.length} Mục</span>
+          </div>
+          <div class="flex-gap">
+            <button class="btn sm ${state.attentionFilter === 'ALL' ? 'primary' : 'ghost'}" onclick="setAttentionFilter('ALL')">Tất Cả</button>
+            <button class="btn sm ${state.attentionFilter === 'P1' ? 'danger' : 'ghost'}" onclick="setAttentionFilter('P1')">P1</button>
+            <button class="btn sm ${state.attentionFilter === 'P2' ? 'primary' : 'ghost'}" onclick="setAttentionFilter('P2')">P2</button>
+          </div>
         </div>
-        <div class="card-pad" style="display:flex;flex-direction:column;gap:12px">
-          ${state.attention.slice(0, 4).map(att => `
-            <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:8px;padding:14px">
+        <div class="card-pad" style="display:flex;flex-direction:column;gap:12px;max-height:480px;overflow-y:auto">
+          ${displayAtt.slice(0, 5).map(att => `
+            <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:8px;padding:14px;border-left:4px solid var(--${att.band.toLowerCase()})">
               <div class="flex-between" style="margin-bottom:6px">
                 <div class="flex-gap">
                   <span class="badge ${att.band.toLowerCase()}">${att.band}</span>
@@ -1228,8 +1176,8 @@ function renderCommandCenter() {
               </div>
               <p class="text-sm muted" style="margin-bottom:8px">${att.subject} · ${att.reason}</p>
               <div class="flex-between">
-                <span class="text-sm" style="color:var(--brand)">👉 Hành động: ${att.action}</span>
-                <button class="btn sm primary" onclick="handleAttentionAction('${att.id}')">Xử Lý Ngay</button>
+                <span class="text-sm" style="color:var(--brand)">👉 ${att.action}</span>
+                <button class="btn sm primary" onclick="handleAttentionAction('${att.id}')">Xử Lý Ngay ➔</button>
               </div>
             </div>
           `).join('') || '<div class="muted">Hệ thống an toàn, không có mục khẩn cấp tồn đọng.</div>'}
@@ -1242,7 +1190,7 @@ function renderCommandCenter() {
           <h3>⚡ Quick Action Dispatcher</h3>
         </div>
         <div class="card-pad" style="display:flex;flex-direction:column;gap:10px">
-          <button class="btn primary" style="justify-content:center;padding:10px" onclick="navigateTo('chat')">
+          <button class="btn primary" style="justify-content:center;padding:10px" onclick="switchHub('assistant', 'chat')">
             🤖 Trò Chuyện Trực Tiếp Bé Heo
           </button>
           <button class="btn" style="justify-content:center;padding:9px" onclick="openNewWorkModal()">
@@ -1254,12 +1202,12 @@ function renderCommandCenter() {
           <button class="btn" style="justify-content:center;padding:9px" onclick="openCreateDocModal()">
             📄 Xuất Báo Cáo Word / Excel Nhanh
           </button>
-          <button class="btn" style="justify-content:center;padding:9px" onclick="runFirstRunWizard()">
+          <button class="btn" style="justify-content:center;padding:9px" onclick="runHealthWizard()">
             🩺 Chạy Health Check Wizard E2E
           </button>
-          <a class="btn ghost" style="justify-content:center;padding:9px" href="http://127.0.0.1:3080/" target="_blank">
-            🌐 Mở DSH Web Chassis (Cổng 3080) ↗
-          </a>
+          <button class="btn ghost" style="justify-content:center;padding:9px" onclick="toggleTerminal()">
+            💻 Mở Hộp Lệnh Terminal CLI
+          </button>
         </div>
       </div>
     </div>
@@ -1268,7 +1216,7 @@ function renderCommandCenter() {
     <div class="card">
       <div class="card-head">
         <h3>✓ Công Việc Đang Triển Khai Gần Nhất</h3>
-        <button class="btn sm" onclick="navigateTo('work')">Mở Bảng Kanban ➔</button>
+        <button class="btn sm" onclick="switchHub('work', 'kanban')">Mở Bảng Kanban ➔</button>
       </div>
       <div class="table-box">
         <table class="data-table">
@@ -1284,7 +1232,7 @@ function renderCommandCenter() {
             </tr>
           </thead>
           <tbody>
-            ${state.works.slice(0, 6).map(w => `
+            ${state.works.slice(0, 5).map(w => `
               <tr>
                 <td class="mono font-bold">${w.id}</td>
                 <td><b>${w.title}</b></td>
@@ -1302,22 +1250,19 @@ function renderCommandCenter() {
   `;
 }
 
-function getStatusClass(st) {
-  if (st === 'DONE') return 'good';
-  if (st === 'BLOCKED') return 'p1';
-  if (st === 'DOING') return 'p3';
-  if (st === 'REVIEW') return 'p2';
-  return 'neutral';
-}
-
 function handleAttentionAction(attId) {
   if (attId.includes('APP')) {
-    navigateTo('approvals');
+    switchHub('governance', 'approvals');
   } else if (attId.includes('WRK')) {
-    navigateTo('work');
+    switchHub('work', 'kanban');
   } else {
-    navigateTo('insights');
+    switchHub('intelligence', 'insights');
   }
+}
+
+function setAttentionFilter(f) {
+  state.attentionFilter = f;
+  renderActiveHub();
 }
 
 async function recomputeAttention() {
@@ -1328,7 +1273,7 @@ async function recomputeAttention() {
     if (data.ok) {
       state.attention = data.attention;
       updateBadges();
-      renderCurrentTab();
+      renderActiveHub();
       showToast('Đã tính toán lại Attention Queue thành công!');
     }
   } catch (e) {
@@ -1337,66 +1282,43 @@ async function recomputeAttention() {
 }
 
 // ==========================================
-// TAB 2: ATTENTION QUEUE
+// HUB 2: WORK & SCHEDULE
 // ==========================================
-function renderAttentionQueue() {
-  let filtered = state.attention;
-  if (state.attentionFilter !== 'ALL') {
-    filtered = state.attention.filter(a => a.band === state.attentionFilter);
-  }
+function renderWorkScheduleHub() {
+  const currentSub = state.subtabs.work;
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Attention Queue (Hàng Đợi Trọng Điểm)</h1>
-        <div class="view-desc">Được tổng hợp từ các đầu việc quá hạn, lệnh chờ phê duyệt SSOT, rủi ro quan hệ và dự báo thời gian thực.</div>
+    <div class="hub-header">
+      <div class="hub-titles">
+        <div>
+          <h1>Điều Hành Công Việc & Lịch Trình (Work & Schedule)</h1>
+          <div class="hub-desc">Quản lý toàn diện quy trình giao việc, tiến độ 5 cột Kanban và lịch họp / deadline canonical.</div>
+        </div>
+        <div class="hub-actions">
+          ${currentSub === 'kanban' ? `
+            <button class="btn primary" onclick="openNewWorkModal()">+ Thêm Công Việc Mới</button>
+          ` : `
+            <button class="btn primary" onclick="openNewCalendarModal()">+ Lên Lịch Sự Kiện Mới</button>
+          `}
+        </div>
       </div>
-      <div class="view-actions">
-        <button class="btn ${state.attentionFilter === 'ALL' ? 'primary' : ''}" onclick="setAttentionFilter('ALL')">Tất Cả (${state.attention.length})</button>
-        <button class="btn ${state.attentionFilter === 'P1' ? 'danger' : ''}" onclick="setAttentionFilter('P1')">Khẩn Cấp P1</button>
-        <button class="btn ${state.attentionFilter === 'P2' ? 'primary' : ''}" onclick="setAttentionFilter('P2')">P2 Cần Xử Lý</button>
-        <button class="btn ${state.attentionFilter === 'P3' ? 'primary' : ''}" onclick="setAttentionFilter('P3')">P3 Thông Thường</button>
-        <button class="btn primary" onclick="recomputeAttention()">Recompute Queue</button>
+
+      <!-- Subnav Pills -->
+      <div class="hub-subnav">
+        <button class="hub-subnav-btn ${currentSub === 'kanban' ? 'active' : ''}" onclick="switchSubtab('work', 'kanban')">
+          ✓ Bảng Kanban 5 Cột (${state.works.length})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'calendar' ? 'active' : ''}" onclick="switchSubtab('work', 'calendar')">
+          ◷ Lịch Trình & Nhắc Việc (${state.calendar.length})
+        </button>
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:14px">
-      ${filtered.map(item => `
-        <div class="card card-pad" style="border-left:4px solid var(--${item.band.toLowerCase()})">
-          <div class="flex-between" style="margin-bottom:8px">
-            <div class="flex-gap">
-              <span class="badge ${item.band.toLowerCase()}">${item.band}</span>
-              <h3 style="font-size:14px;margin:0">${item.title}</h3>
-            </div>
-            <span class="badge neutral">${item.truth || 'CALCULATED'}</span>
-          </div>
-          <div class="text-sm muted" style="margin-bottom:10px">
-            <b>Đối tượng:</b> ${item.subject} · <b>Lý do:</b> ${item.reason}
-          </div>
-          <div class="flex-between">
-            <div class="text-sm" style="color:var(--brand)">
-              <b>Chỉ đạo tiếp theo:</b> ${item.action}
-            </div>
-            <div class="flex-gap">
-              <button class="btn sm" onclick="showEvidence('${encodeURIComponent(item.evidence)}')">Xem Bằng Chứng</button>
-              <button class="btn sm primary" onclick="handleAttentionAction('${item.id}')">Xử Lý Ngay ➔</button>
-            </div>
-          </div>
-        </div>
-      `).join('') || '<div class="card card-pad muted">Không có mục chú ý nào trong bộ lọc này.</div>'}
-    </div>
+    ${currentSub === 'kanban' ? renderKanbanView() : renderCalendarView()}
   `;
 }
 
-function setAttentionFilter(f) {
-  state.attentionFilter = f;
-  renderCurrentTab();
-}
-
-// ==========================================
-// TAB 3: WORK OS (KANBAN)
-// ==========================================
-function renderWorkOS() {
+function renderKanbanView() {
   const cols = [
     { key: 'TODO', title: 'Chưa Thực Hiện', badge: 'neutral' },
     { key: 'DOING', title: 'Đang Thực Hiện', badge: 'p3' },
@@ -1406,16 +1328,6 @@ function renderWorkOS() {
   ];
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Work OS (Bảng Điều Phối Kanban)</h1>
-        <div class="view-desc">Quản lý toàn bộ đầu việc trực chiến của Anh Cơ La và đội ngũ. Dữ liệu lưu vĩnh viễn vào Heo State Store.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="openNewWorkModal()">+ Thêm Công Việc Mới</button>
-      </div>
-    </div>
-
     <div class="kanban-board">
       ${cols.map(c => {
         const items = state.works.filter(w => w.status === c.key);
@@ -1460,6 +1372,45 @@ function renderWorkOS() {
   `;
 }
 
+function renderCalendarView() {
+  return `
+    <div class="card">
+      <div class="card-head">
+        <h3>Lịch Trình Canonical Đã Xác Lập</h3>
+        <span class="badge good">${state.calendar.length} Sự Kiện</span>
+      </div>
+      <div class="table-box">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã Sự Kiện</th>
+              <th>Tiêu Đề Lịch Trình</th>
+              <th>Loại Hình</th>
+              <th>Thời Gian (When)</th>
+              <th>Múi Giờ</th>
+              <th>Kênh Phát</th>
+              <th>Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.calendar.map(ev => `
+              <tr>
+                <td class="mono font-bold">${ev.id}</td>
+                <td><b>${ev.title}</b></td>
+                <td><span class="badge ${ev.type === 'Deadline' ? 'p1' : ev.type === 'Meeting' ? 'p3' : 'good'}">${ev.type}</span></td>
+                <td><b>${ev.when}</b></td>
+                <td class="muted mono text-sm">${ev.timezone}</td>
+                <td class="muted">${ev.delivery}</td>
+                <td><span class="badge good">${ev.status}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 async function moveWork(id, newStatus) {
   if (!newStatus) return;
   try {
@@ -1472,7 +1423,7 @@ async function moveWork(id, newStatus) {
     if (data.ok) {
       showToast(`Đã chuyển việc ${id} sang ${newStatus}!`);
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
@@ -1534,64 +1485,12 @@ function openNewWorkModal() {
         closeModal();
         showToast('Đã tạo việc mới thành công!');
         await fetchAllData();
-        renderCurrentTab();
+        renderActiveHub();
       }
     } catch (e) {
       showToast('Lỗi: ' + e.message);
     }
   });
-}
-
-// ==========================================
-// TAB 4: CALENDAR & REMINDERS
-// ==========================================
-function renderCalendar() {
-  return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Lịch Điều Hành & Nhắc Việc Canonical</h1>
-        <div class="view-desc">Quản lý lịch họp, sự kiện hạn chót và cơ chế nhắc hẹn điều hành tự động qua mạng nội bộ.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="openNewCalendarModal()">+ Lên Lịch Sự Kiện Mới</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-head">
-        <h3>Danh Sách Lịch Trình Đã Xác Lập</h3>
-        <span class="badge good">${state.calendar.length} Sự Kiện</span>
-      </div>
-      <div class="table-box">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Mã</th>
-              <th>Tiêu Đề Lịch Trình</th>
-              <th>Loại Hình</th>
-              <th>Thời Gian</th>
-              <th>Múi Giờ</th>
-              <th>Kênh Phát</th>
-              <th>Trạng Thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.calendar.map(ev => `
-              <tr>
-                <td class="mono font-bold">${ev.id}</td>
-                <td><b>${ev.title}</b></td>
-                <td><span class="badge ${ev.type === 'Deadline' ? 'p1' : ev.type === 'Meeting' ? 'p3' : 'good'}">${ev.type}</span></td>
-                <td><b>${ev.when}</b></td>
-                <td class="muted mono text-sm">${ev.timezone}</td>
-                <td class="muted">${ev.delivery}</td>
-                <td><span class="badge good">${ev.status}</span></td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
 }
 
 function openNewCalendarModal() {
@@ -1642,7 +1541,7 @@ function openNewCalendarModal() {
         closeModal();
         showToast('Đã thêm sự kiện lịch thành công!');
         await fetchAllData();
-        renderCurrentTab();
+        renderActiveHub();
       }
     } catch (e) {
       showToast('Lỗi: ' + e.message);
@@ -1651,84 +1550,48 @@ function openNewCalendarModal() {
 }
 
 // ==========================================
-// TAB 5: APPROVALS QUEUE
+// HUB 3: DIRECTORY 360 & ZALO
 // ==========================================
-function renderApprovals() {
-  const pending = state.approvals.filter(a => a.status === 'PENDING');
+function renderDirectoryHub() {
+  const currentSub = state.subtabs.directory;
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Hàng Đợi Phê Duyệt An Ninh SSOT</h1>
-        <div class="view-desc">Mọi tác vụ tác động ra ngoài (Zalo outbound, chia sẻ tài liệu, thay đổi chính sách) bắt buộc phải do Anh Cơ La ký duyệt.</div>
-      </div>
-      <div class="view-actions">
-        <span class="badge p2">${pending.length} Chờ Phê Duyệt</span>
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:16px">
-      ${state.approvals.map(appr => `
-        <div class="card card-pad" style="border-left:4px solid ${appr.status === 'PENDING' ? 'var(--p2)' : appr.status === 'APPROVED' ? 'var(--brand)' : 'var(--p1)'}">
-          <div class="flex-between" style="margin-bottom:10px">
-            <div class="flex-gap">
-              <span class="mono font-bold" style="font-size:14px">${appr.id}</span>
-              <span class="badge ${appr.status === 'PENDING' ? 'p2' : appr.status === 'APPROVED' ? 'good' : 'p1'}">${appr.status}</span>
-              <span class="mono text-sm muted">TTL: ${appr.ttl || 'Vĩnh viễn'}</span>
-            </div>
-            <span class="badge neutral mono">${appr.fingerprint || 'ssot-fp'}</span>
-          </div>
-
-          <h3 style="font-size:14px;margin-bottom:8px">${appr.summary}</h3>
-          
-          <div class="grid-2 text-sm muted" style="margin-bottom:12px;background:var(--bg-body);padding:10px;border-radius:6px">
-            <div><b>Tác vụ:</b> <span class="mono text-sm" style="color:var(--text)">${appr.action}</span></div>
-            <div><b>Mục tiêu:</b> <span style="color:var(--text)">${appr.target}</span></div>
-            <div><b>Lý do kích hoạt:</b> ${appr.why}</div>
-            <div><b>Tài nguyên:</b> ${appr.resource}</div>
-          </div>
-
-          <div class="flex-between">
-            <button class="btn sm ghost" onclick="showEvidence('${encodeURIComponent('fingerprint:' + appr.fingerprint + ' · payload:' + appr.data)}')">
-              🔍 Soát Xét Bằng Chứng Kỹ Thuật
-            </button>
-            ${appr.status === 'PENDING' ? `
-              <div class="flex-gap">
-                <button class="btn danger sm" onclick="actionApproval('${appr.id}', 'deny')">✕ Từ Chối (Deny)</button>
-                <button class="btn primary sm" onclick="actionApproval('${appr.id}', 'approve')">✔ Phê Duyệt (Approve)</button>
-              </div>
-            ` : `
-              <span class="text-sm muted">Đã giải quyết lúc ${appr.resolved_at || 'trước đó'}</span>
-            `}
-          </div>
+    <div class="hub-header">
+      <div class="hub-titles">
+        <div>
+          <h1>Tổ Chức, Danh Bạ & Kết Nối (Directory 360 & Zalo)</h1>
+          <div class="hub-desc">Quản lý cơ cấu phòng ban, danh bạ nhân sự canonical và kênh vận hành di động 2 chiều Zalo Gateway.</div>
         </div>
-      `).join('')}
+        <div class="hub-actions">
+          ${currentSub === 'groups' ? `
+            <button class="btn primary" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới</button>
+          ` : currentSub === 'people' ? `
+            <button class="btn primary" onclick="openNewPersonModal()">+ Thêm Nhân Sự Mới</button>
+          ` : `
+            <button class="btn primary" onclick="syncZaloGroups()">Đồng Bộ Nhóm (Sync)</button>
+          `}
+        </div>
+      </div>
+
+      <!-- Subnav Pills -->
+      <div class="hub-subnav">
+        <button class="hub-subnav-btn ${currentSub === 'groups' ? 'active' : ''}" onclick="switchSubtab('directory', 'groups')">
+          ◉ Group 360 (Nhóm & Ban)
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'people' ? 'active' : ''}" onclick="switchSubtab('directory', 'people')">
+          ◎ Person 360 (Nhân Sự & Đối Tác)
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'zalo' ? 'active' : ''}" onclick="switchSubtab('directory', 'zalo')">
+          💬 Kênh Zalo Gateway
+        </button>
+      </div>
     </div>
+
+    ${currentSub === 'groups' ? renderGroup360View() : currentSub === 'people' ? renderPerson360View() : renderZaloGatewayView()}
   `;
 }
 
-async function actionApproval(id, actionType) {
-  try {
-    const res = await fetch('/api/approvals/action', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, action: actionType })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      showToast(actionType === 'approve' ? 'Đã phê duyệt lệnh thành công!' : 'Đã từ chối lệnh!');
-      await fetchAllData();
-      renderCurrentTab();
-    }
-  } catch (e) {
-    showToast('Lỗi: ' + e.message);
-  }
-}
-
-// ==========================================
-// TAB 6: GROUP 360
-// ==========================================
-function renderGroup360() {
+function renderGroup360View() {
   const current = state.groups.find(g => g.id === state.activeGroupId) || state.groups[0] || {};
   const groupWorks = state.works.filter(w => w.group === current.name);
   const groupMembers = state.people.filter(p => p.groups && p.groups.includes(current.name));
@@ -1736,16 +1599,6 @@ function renderGroup360() {
   const groupAudits = state.audits.filter(a => a.object.includes(current.name) || a.reason.includes(current.name));
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Group 360 — ${current.name || 'Quản Trị Nhóm'}</h1>
-        <div class="view-desc">${current.purpose || 'Không gian làm việc điều phối nhóm & phòng ban'}</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới</button>
-      </div>
-    </div>
-
     <!-- Group Selector Pills -->
     <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto">
       ${state.groups.map(g => `
@@ -1755,38 +1608,37 @@ function renderGroup360() {
       `).join('')}
     </div>
 
-    <!-- Sub-tabs -->
-    <div class="subtabs">
-      <button class="subtab ${state.groupSubtab === 'overview' ? 'active' : ''}" onclick="setGroupSubtab('overview')">Tổng Quan Nhóm</button>
-      <button class="subtab ${state.groupSubtab === 'activity' ? 'active' : ''}" onclick="setGroupSubtab('activity')">Nhật Ký Hoạt Động (${groupAudits.length})</button>
-      <button class="subtab ${state.groupSubtab === 'people' ? 'active' : ''}" onclick="setGroupSubtab('people')">Thành Viên (${groupMembers.length})</button>
-      <button class="subtab ${state.groupSubtab === 'work' ? 'active' : ''}" onclick="setGroupSubtab('work')">Công Việc Gắn Nhóm (${groupWorks.length})</button>
-      <button class="subtab ${state.groupSubtab === 'policy' ? 'active' : ''}" onclick="setGroupSubtab('policy')">Chính Sách & Quyền Hạn</button>
+    <!-- Inner Subtabs -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:2px">
+      <button class="hub-subnav-btn ${state.groupInnerTab === 'overview' ? 'active' : ''}" onclick="setGroupInnerTab('overview')">Tổng Quan Nhóm</button>
+      <button class="hub-subnav-btn ${state.groupInnerTab === 'activity' ? 'active' : ''}" onclick="setGroupInnerTab('activity')">Nhật Ký Hoạt Động (${groupAudits.length})</button>
+      <button class="hub-subnav-btn ${state.groupInnerTab === 'people' ? 'active' : ''}" onclick="setGroupInnerTab('people')">Thành Viên (${groupMembers.length})</button>
+      <button class="hub-subnav-btn ${state.groupInnerTab === 'work' ? 'active' : ''}" onclick="setGroupInnerTab('work')">Công Việc (${groupWorks.length})</button>
+      <button class="hub-subnav-btn ${state.groupInnerTab === 'policy' ? 'active' : ''}" onclick="setGroupInnerTab('policy')">Chính Sách & Quyền Hạn</button>
     </div>
 
-    <!-- Subtab Content -->
-    ${renderGroupSubtabContent(current, groupWorks, groupMembers, groupPolicies, groupAudits)}
+    ${renderGroupInnerContent(current, groupWorks, groupMembers, groupPolicies, groupAudits)}
   `;
 }
 
-function setGroupSubtab(st) {
-  state.groupSubtab = st;
-  renderCurrentTab();
+function setGroupInnerTab(t) {
+  state.groupInnerTab = t;
+  renderActiveHub();
 }
 
 function selectGroup(gid) {
   state.activeGroupId = gid;
-  renderCurrentTab();
+  renderActiveHub();
 }
 
-function renderGroupSubtabContent(group, works, members, policies, audits) {
-  if (state.groupSubtab === 'activity') {
+function renderGroupInnerContent(group, works, members, policies, audits) {
+  if (state.groupInnerTab === 'activity') {
     return `
       <div class="card">
-        <div class="card-head"><h3>Nhật Ký Hoạt Động Gắn Với Nhóm: ${group.name}</h3></div>
+        <div class="card-head"><h3>Nhật Ký Hoạt Động Của Nhóm: ${group.name}</h3></div>
         <div class="table-box">
           <table class="data-table">
-            <thead><tr><th>Thời Gian</th><th>Người Thực Hiện</th><th>Sự Kiện</th><th>Đối Tượng</th><th>Lý Do</th><th>Kết Quả</th></tr></thead>
+            <thead><tr><th>Thời Gian</th><th>Người Thao Tác</th><th>Sự Kiện</th><th>Đối Tượng</th><th>Lý Do</th><th>Kết Quả</th></tr></thead>
             <tbody>
               ${audits.map(a => `
                 <tr>
@@ -1803,13 +1655,10 @@ function renderGroupSubtabContent(group, works, members, policies, audits) {
         </div>
       </div>
     `;
-  } else if (state.groupSubtab === 'people') {
+  } else if (state.groupInnerTab === 'people') {
     return `
       <div class="card">
-        <div class="card-head">
-          <h3>Thành Viên Trực Thuộc: ${group.name}</h3>
-          <button class="btn sm primary" onclick="openNewPersonModal()">+ Thêm Nhân Sự</button>
-        </div>
+        <div class="card-head"><h3>Thành Viên Thuộc Nhóm: ${group.name}</h3></div>
         <div class="table-box">
           <table class="data-table">
             <thead><tr><th>Mã</th><th>Họ & Tên</th><th>Vai Trò</th><th>Email</th><th>Số Điện Thoại</th><th>Quan Hệ</th></tr></thead>
@@ -1823,19 +1672,16 @@ function renderGroupSubtabContent(group, works, members, policies, audits) {
                   <td class="mono muted">${m.phone}</td>
                   <td><span class="badge good">${m.rel || 'Stable'}</span></td>
                 </tr>
-              `).join('') || '<tr><td colspan="6" class="muted">Chưa có nhân sự nào được liên kết với nhóm này.</td></tr>'}
+              `).join('') || '<tr><td colspan="6" class="muted">Chưa có nhân sự nào liên kết với nhóm này.</td></tr>'}
             </tbody>
           </table>
         </div>
       </div>
     `;
-  } else if (state.groupSubtab === 'work') {
+  } else if (state.groupInnerTab === 'work') {
     return `
       <div class="card">
-        <div class="card-head">
-          <h3>Đầu Việc Trực Chiến Của Nhóm: ${group.name}</h3>
-          <button class="btn sm primary" onclick="openNewWorkModal()">+ Tạo Việc Gắn Nhóm</button>
-        </div>
+        <div class="card-head"><h3>Đầu Việc Gắn Với Nhóm: ${group.name}</h3></div>
         <div class="table-box">
           <table class="data-table">
             <thead><tr><th>Mã</th><th>Tiêu Đề</th><th>Ưu Tiên</th><th>Trạng Thái</th><th>Người Nhận</th><th>Hạn Chót</th><th>Thao Tác</th></tr></thead>
@@ -1848,9 +1694,7 @@ function renderGroupSubtabContent(group, works, members, policies, audits) {
                   <td><span class="badge ${getStatusClass(w.status)}">${w.status}</span></td>
                   <td>${w.owner}</td>
                   <td class="muted">${w.deadline}</td>
-                  <td>
-                    <button class="btn sm" onclick="moveWork('${w.id}', 'DONE')">Đánh Dấu Xong</button>
-                  </td>
+                  <td><button class="btn sm" onclick="moveWork('${w.id}', 'DONE')">Đánh Dấu Xong</button></td>
                 </tr>
               `).join('') || '<tr><td colspan="7" class="muted">Không có đầu việc tồn đọng cho nhóm này.</td></tr>'}
             </tbody>
@@ -1858,10 +1702,10 @@ function renderGroupSubtabContent(group, works, members, policies, audits) {
         </div>
       </div>
     `;
-  } else if (state.groupSubtab === 'policy') {
+  } else if (state.groupInnerTab === 'policy') {
     return `
       <div class="card">
-        <div class="card-head"><h3>Chính Sách & Quy Tắc An Toàn Áp Dụng Cho Nhóm</h3></div>
+        <div class="card-head"><h3>Chính Sách Áp Dụng Cho Nhóm: ${group.name}</h3></div>
         <div class="table-box">
           <table class="data-table">
             <thead><tr><th>Mã Rule</th><th>Scope</th><th>Target</th><th>Hành Động</th><th>Quyết Định</th><th>Mô Tả</th></tr></thead>
@@ -1887,99 +1731,35 @@ function renderGroupSubtabContent(group, works, members, policies, audits) {
   return `
     <div class="grid-span">
       <div class="card card-pad">
-        <h3 style="margin-bottom:12px">Thông Tin Hoạt Động Cốt Lõi</h3>
+        <h3 style="margin-bottom:12px">Thông Tin Nhóm</h3>
         <div style="display:flex;flex-direction:column;gap:10px;font-size:12.5px">
-          <div class="flex-between"><span>Trạng thái sức khỏe:</span> <span class="badge good">${group.health || 'Healthy'}</span></div>
-          <div class="flex-between"><span>Số lượng thành viên:</span> <b>${group.members || 1} người</b></div>
+          <div class="flex-between"><span>Trạng thái:</span> <span class="badge good">${group.health || 'Healthy'}</span></div>
+          <div class="flex-between"><span>Thành viên:</span> <b>${group.members || 1} người</b></div>
           <div class="flex-between"><span>Chính sách áp dụng:</span> <span class="mono">${group.policy || 'POL-G-DEFAULT'}</span></div>
-          <div class="flex-between"><span>Chỉ thị điều phối Bot:</span> <span class="mono">${group.instruction || 'INS-G-DEFAULT'}</span></div>
-          <div class="flex-between"><span>Bot Bé Heo trong nhóm:</span> <span class="badge good">🟢 HOẠT ĐỘNG (TAG ONLY)</span></div>
+          <div class="flex-between"><span>Chỉ thị Bot:</span> <span class="mono">${group.instruction || 'INS-G-DEFAULT'}</span></div>
+          <div class="flex-between"><span>Bot trong nhóm:</span> <span class="badge good">🟢 HOẠT ĐỘNG (TAG ONLY)</span></div>
         </div>
       </div>
 
       <div class="card card-pad">
-        <h3 style="margin-bottom:12px">Thống Kê Nhóm</h3>
+        <h3 style="margin-bottom:12px">Thống Kê Nhanh</h3>
         <div style="display:flex;flex-direction:column;gap:12px">
-          <div class="flex-between">
-            <span class="muted">Đầu việc gắn kèm:</span>
-            <b>${works.length} công việc</b>
-          </div>
-          <div class="flex-between">
-            <span class="muted">Nhân sự liên kết:</span>
-            <b>${members.length} nhân sự</b>
-          </div>
-          <div class="flex-between">
-            <span class="muted">Chính sách đặc thù:</span>
-            <b>${policies.length} quy tắc</b>
-          </div>
+          <div class="flex-between"><span class="muted">Đầu việc gắn kèm:</span> <b>${works.length} công việc</b></div>
+          <div class="flex-between"><span class="muted">Nhân sự:</span> <b>${members.length} người</b></div>
+          <div class="flex-between"><span class="muted">Quy tắc an ninh:</span> <b>${policies.length} chính sách</b></div>
         </div>
       </div>
     </div>
   `;
 }
 
-function openNewGroupModal() {
-  openModal('Khởi Tạo Nhóm Làm Việc Mới', `
-    <div class="form-grid full">
-      <div class="form-field">
-        <label>Tên Nhóm / Ban Điều Hành (*)</label>
-        <input class="input" id="ngName" placeholder="Ví dụ: Ban Điều Hành Marketing..." />
-      </div>
-      <div class="form-field">
-        <label>Mục Đích & Sứ Mệnh Của Nhóm</label>
-        <input class="input" id="ngPurpose" placeholder="Ví dụ: Chiến dịch truyền thông & kết nối đối tác..." />
-      </div>
-      <div class="form-field">
-        <label>Chính Sách An Toàn Mặc Định</label>
-        <input class="input" id="ngPolicy" value="POL-G-CUSTOM v1" />
-      </div>
-    </div>
-  `, async () => {
-    const name = $('#ngName').value.trim();
-    if (!name) { showToast('Vui lòng nhập tên nhóm!'); return; }
-    const purpose = $('#ngPurpose').value.trim();
-    const policy = $('#ngPolicy').value.trim();
-
-    try {
-      const res = await fetch('/api/groups/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, purpose, policy })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        closeModal();
-        showToast('Đã tạo nhóm thành công!');
-        await fetchAllData();
-        state.activeGroupId = data.group.id;
-        renderCurrentTab();
-      }
-    } catch (e) {
-      showToast('Lỗi: ' + e.message);
-    }
-  });
-}
-
-// ==========================================
-// TAB 7: PERSON 360
-// ==========================================
-function renderPerson360() {
+function renderPerson360View() {
   const current = state.people.find(p => p.id === state.activePersonId) || state.people[0] || {};
   const personWorks = state.works.filter(w => w.owner === current.name);
   const personAudits = state.audits.filter(a => a.actor === current.name || a.object.includes(current.id));
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Person 360 — ${current.name || 'Hồ Sơ Nhân Sự'}</h1>
-        <div class="view-desc">Dossier canonical định danh, vai trò, email, điện thoại, lịch sử tương tác và cam kết công việc.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="openNewPersonModal()">+ Thêm Nhân Sự Mới</button>
-      </div>
-    </div>
-
-    <!-- People Pills -->
+    <!-- People Selector Pills -->
     <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto">
       ${state.people.map(p => `
         <button class="btn ${p.id === state.activePersonId ? 'primary' : ''}" onclick="selectPerson('${p.id}')">
@@ -1988,35 +1768,32 @@ function renderPerson360() {
       `).join('')}
     </div>
 
-    <!-- Subtabs -->
-    <div class="subtabs">
-      <button class="subtab ${state.personSubtab === 'dossier' ? 'active' : ''}" onclick="setPersonSubtab('dossier')">Hồ Sơ Canonical</button>
-      <button class="subtab ${state.personSubtab === 'commitments' ? 'active' : ''}" onclick="setPersonSubtab('commitments')">Cam Kết & Việc Giao (${personWorks.length})</button>
-      <button class="subtab ${state.personSubtab === 'activity' ? 'active' : ''}" onclick="setPersonSubtab('activity')">Nhật Ký Tương Tác (${personAudits.length})</button>
+    <!-- Inner Subtabs -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:2px">
+      <button class="hub-subnav-btn ${state.personInnerTab === 'dossier' ? 'active' : ''}" onclick="setPersonInnerTab('dossier')">Hồ Sơ Canonical</button>
+      <button class="hub-subnav-btn ${state.personInnerTab === 'commitments' ? 'active' : ''}" onclick="setPersonInnerTab('commitments')">Cam Kết & Việc Giao (${personWorks.length})</button>
+      <button class="hub-subnav-btn ${state.personInnerTab === 'activity' ? 'active' : ''}" onclick="setPersonInnerTab('activity')">Nhật Ký Tương Tác (${personAudits.length})</button>
     </div>
 
-    ${renderPersonSubtabContent(current, personWorks, personAudits)}
+    ${renderPersonInnerContent(current, personWorks, personAudits)}
   `;
 }
 
-function setPersonSubtab(st) {
-  state.personSubtab = st;
-  renderCurrentTab();
+function setPersonInnerTab(t) {
+  state.personInnerTab = t;
+  renderActiveHub();
 }
 
 function selectPerson(pid) {
   state.activePersonId = pid;
-  renderCurrentTab();
+  renderActiveHub();
 }
 
-function renderPersonSubtabContent(person, works, audits) {
-  if (state.personSubtab === 'commitments') {
+function renderPersonInnerContent(person, works, audits) {
+  if (state.personInnerTab === 'commitments') {
     return `
       <div class="card">
-        <div class="card-head">
-          <h3>Công Việc Do ${person.name} Phụ Trách</h3>
-          <button class="btn sm primary" onclick="openNewWorkModal()">+ Giao Việc Thêm</button>
-        </div>
+        <div class="card-head"><h3>Việc Do ${person.name} Phụ Trách</h3></div>
         <div class="table-box">
           <table class="data-table">
             <thead><tr><th>Mã</th><th>Tiêu Đề</th><th>Ưu Tiên</th><th>Trạng Thái</th><th>Nhóm</th><th>Hạn Chót</th></tr></thead>
@@ -2030,16 +1807,16 @@ function renderPersonSubtabContent(person, works, audits) {
                   <td>${w.group}</td>
                   <td class="muted">${w.deadline}</td>
                 </tr>
-              `).join('') || '<tr><td colspan="6" class="muted">Không có công việc mở nào của nhân sự này.</td></tr>'}
+              `).join('') || '<tr><td colspan="6" class="muted">Không có việc mở nào.</td></tr>'}
             </tbody>
           </table>
         </div>
       </div>
     `;
-  } else if (state.personSubtab === 'activity') {
+  } else if (state.personInnerTab === 'activity') {
     return `
       <div class="card">
-        <div class="card-head"><h3>Nhật Ký Tương Tác & Thao Tác Của ${person.name}</h3></div>
+        <div class="card-head"><h3>Nhật Ký Thao Tác Của ${person.name}</h3></div>
         <div class="table-box">
           <table class="data-table">
             <thead><tr><th>Thời Gian</th><th>Sự Kiện</th><th>Đối Tượng</th><th>Lý Do</th><th>Kết Quả</th></tr></thead>
@@ -2052,7 +1829,7 @@ function renderPersonSubtabContent(person, works, audits) {
                   <td class="muted">${a.reason}</td>
                   <td><span class="badge good">${a.result}</span></td>
                 </tr>
-              `).join('') || '<tr><td colspan="5" class="muted">Chưa có lịch sử tương tác nào được ghi nhận.</td></tr>'}
+              `).join('') || '<tr><td colspan="5" class="muted">Chưa có lịch sử tương tác nào.</td></tr>'}
             </tbody>
           </table>
         </div>
@@ -2060,26 +1837,26 @@ function renderPersonSubtabContent(person, works, audits) {
     `;
   }
 
-  // Dossier view
+  // Dossier
   return `
     <div class="grid-span">
       <div class="card card-pad">
-        <h3 style="margin-bottom:12px">Thông Tin Định Danh Tác Quyền</h3>
+        <h3 style="margin-bottom:12px">Thông Tin Định Danh</h3>
         <div style="display:flex;flex-direction:column;gap:10px;font-size:12.5px">
           <div class="flex-between"><span>Mã định danh:</span> <b class="mono">${person.id}</b></div>
           <div class="flex-between"><span>Họ và tên:</span> <b>${person.name}</b></div>
-          <div class="flex-between"><span>Vai trò đảm nhiệm:</span> <span>${person.role}</span></div>
+          <div class="flex-between"><span>Vai trò:</span> <span>${person.role}</span></div>
           <div class="flex-between"><span>Nhóm sinh hoạt:</span> <b>${person.groups}</b></div>
-          <div class="flex-between"><span>Email liên hệ:</span> <span class="mono">${person.email}</span></div>
-          <div class="flex-between"><span>Số điện thoại:</span> <span class="mono">${person.phone}</span></div>
+          <div class="flex-between"><span>Email:</span> <span class="mono">${person.email}</span></div>
+          <div class="flex-between"><span>Điện thoại:</span> <span class="mono">${person.phone}</span></div>
           <div class="flex-between"><span>Tín hiệu quan hệ:</span> <span class="badge good">${person.rel || 'Stable'}</span></div>
         </div>
       </div>
 
       <div class="card card-pad">
-        <h3 style="margin-bottom:12px">Hành Động Trực Tiếp</h3>
+        <h3 style="margin-bottom:12px">Thao Tác Nhanh</h3>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <button class="btn" onclick="navigateTo('zalo')">💬 Gửi Tin Nhắn Zalo Cho ${person.name}</button>
+          <button class="btn" onclick="switchSubtab('directory', 'zalo')">💬 Gửi Tin Nhắn Zalo Cho ${person.name}</button>
           <button class="btn" onclick="openNewWorkModal()">✓ Giao Đầu Việc Mới</button>
           <button class="btn ghost" onclick="showEvidence('${encodeURIComponent('person_canonical_id:' + person.id)}')">🔍 Xem Identity Provenance</button>
         </div>
@@ -2088,82 +1865,15 @@ function renderPersonSubtabContent(person, works, audits) {
   `;
 }
 
-function openNewPersonModal() {
-  openModal('Thêm Nhân Sự / Đối Tác Mới', `
-    <div class="form-grid">
-      <div class="form-field col-span-2">
-        <label>Họ và Tên (*)</label>
-        <input class="input" id="npName" placeholder="Ví dụ: Hoàng Văn Nam..." />
-      </div>
-      <div class="form-field">
-        <label>Vai Trò / Chức Danh</label>
-        <input class="input" id="npRole" placeholder="Ví dụ: Chuyên Viên Kỹ Thuật..." />
-      </div>
-      <div class="form-field">
-        <label>Nhóm Tham Gia</label>
-        <input class="input" id="npGroup" value="Strategic Partners" />
-      </div>
-      <div class="form-field">
-        <label>Email Liên Hệ</label>
-        <input class="input" id="npEmail" placeholder="nam.hoang@genesis.corp" />
-      </div>
-      <div class="form-field">
-        <label>Số Điện Thoại</label>
-        <input class="input" id="npPhone" placeholder="+84-0912..." />
-      </div>
-    </div>
-  `, async () => {
-    const name = $('#npName').value.trim();
-    if (!name) { showToast('Vui lòng nhập tên!'); return; }
-    const role = $('#npRole').value.trim();
-    const groups = $('#npGroup').value.trim();
-    const email = $('#npEmail').value.trim();
-    const phone = $('#npPhone').value.trim();
-
-    try {
-      const res = await fetch('/api/people/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, role, groups, email, phone })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        closeModal();
-        showToast('Đã thêm nhân sự thành công!');
-        await fetchAllData();
-        state.activePersonId = data.person.id;
-        renderCurrentTab();
-      }
-    } catch (e) {
-      showToast('Lỗi: ' + e.message);
-    }
-  });
-}
-
-// ==========================================
-// TAB 8: ZALO GATEWAY
-// ==========================================
-function renderZaloOps() {
+function renderZaloGatewayView() {
   const z = state.zalo || {};
   const isFilter = z.tag_filter !== false;
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Kênh Zalo & Multi-Device Operations</h1>
-        <div class="view-desc">Cấu hình kênh Zalo cá nhân, mã QR pairing, lọc tag @, đồng bộ nhóm và gửi tin nhắn kiểm thử trực tiếp qua Gateway.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn" onclick="openQrModal()">Mã QR Pairing</button>
-        <button class="btn primary" onclick="syncZaloGroups()">Đồng Bộ Nhóm (Sync Groups)</button>
-      </div>
-    </div>
-
     <div class="grid-span">
-      <!-- Status & Sender -->
       <div class="card card-pad">
         <div class="flex-between" style="margin-bottom:14px">
-          <h3 style="margin:0">Trạng Thái Kết Nối Gateway</h3>
+          <h3 style="margin:0">Trạng Thái Kết Nối Zalo Gateway</h3>
           <span class="badge good">🟢 CONNECTED</span>
         </div>
 
@@ -2192,7 +1902,10 @@ function renderZaloOps() {
             <label>Nội Dung Tin Nhắn</label>
             <input class="input" id="zgMsg" value="@Bé Heo xin báo cáo tình hình tiến độ dự án!" />
           </div>
-          <button class="btn primary" onclick="sendZaloTest()">Gửi Tin Nhắn Test ↗</button>
+          <div class="flex-between">
+            <button class="btn primary" onclick="sendZaloTest()">Gửi Tin Nhắn Test ↗</button>
+            <button class="btn ghost" onclick="openQrModal()">Mã QR Pairing</button>
+          </div>
         </div>
       </div>
 
@@ -2216,6 +1929,91 @@ function renderZaloOps() {
   `;
 }
 
+function openNewGroupModal() {
+  openModal('Khởi Tạo Nhóm Làm Việc Mới', `
+    <div class="form-grid full">
+      <div class="form-field">
+        <label>Tên Nhóm (*)</label>
+        <input class="input" id="ngName" placeholder="Ví dụ: Ban Điều Hành Marketing..." />
+      </div>
+      <div class="form-field">
+        <label>Mục Đích Hoạt Động</label>
+        <input class="input" id="ngPurpose" placeholder="Ví dụ: Chiến dịch truyền thông..." />
+      </div>
+    </div>
+  `, async () => {
+    const name = $('#ngName').value.trim();
+    if (!name) { showToast('Vui lòng nhập tên nhóm!'); return; }
+    const purpose = $('#ngPurpose').value.trim();
+    try {
+      const res = await fetch('/api/groups/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, purpose })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        closeModal();
+        showToast('Đã tạo nhóm thành công!');
+        await fetchAllData();
+        renderActiveHub();
+      }
+    } catch (e) {
+      showToast('Lỗi: ' + e.message);
+    }
+  });
+}
+
+function openNewPersonModal() {
+  openModal('Thêm Nhân Sự / Đối Tác Mới', `
+    <div class="form-grid">
+      <div class="form-field col-span-2">
+        <label>Họ và Tên (*)</label>
+        <input class="input" id="npName" placeholder="Ví dụ: Hoàng Văn Nam..." />
+      </div>
+      <div class="form-field">
+        <label>Vai Trò / Chức Danh</label>
+        <input class="input" id="npRole" placeholder="Chuyên Viên Kỹ Thuật" />
+      </div>
+      <div class="form-field">
+        <label>Nhóm Tham Gia</label>
+        <input class="input" id="npGroup" value="Strategic Partners" />
+      </div>
+      <div class="form-field">
+        <label>Email Liên Hệ</label>
+        <input class="input" id="npEmail" placeholder="nam.hoang@genesis.corp" />
+      </div>
+      <div class="form-field">
+        <label>Số Điện Thoại</label>
+        <input class="input" id="npPhone" placeholder="+84-0912..." />
+      </div>
+    </div>
+  `, async () => {
+    const name = $('#npName').value.trim();
+    if (!name) { showToast('Vui lòng nhập tên!'); return; }
+    const role = $('#npRole').value.trim();
+    const groups = $('#npGroup').value.trim();
+    const email = $('#npEmail').value.trim();
+    const phone = $('#npPhone').value.trim();
+    try {
+      const res = await fetch('/api/people/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, role, groups, email, phone })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        closeModal();
+        showToast('Đã thêm nhân sự thành công!');
+        await fetchAllData();
+        renderActiveHub();
+      }
+    } catch (e) {
+      showToast('Lỗi: ' + e.message);
+    }
+  });
+}
+
 async function syncZaloGroups() {
   showToast('Đang đồng bộ nhóm...');
   try {
@@ -2224,7 +2022,7 @@ async function syncZaloGroups() {
     if (data.ok) {
       showToast(`Đã đồng bộ thành công ${data.count} nhóm vào Zalo Gateway!`);
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
@@ -2238,7 +2036,7 @@ async function toggleZaloFilter() {
     if (data.ok) {
       showToast(`Đã chuyển bộ lọc tag sang: ${data.status_str}`);
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
@@ -2261,7 +2059,7 @@ async function sendZaloTest() {
     if (data.ok) {
       showToast('Đã gửi tin nhắn test thành công!');
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
@@ -2271,55 +2069,85 @@ async function sendZaloTest() {
 function openQrModal() {
   openModal('Mã QR Kết Nối Zalo Personal Bot', `
     <div style="text-align:center;padding:16px">
-      <svg width="180" height="180" viewBox="0 0 100 100" style="background:#fff;padding:12px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.3)">
+      <svg width="170" height="170" viewBox="0 0 100 100" style="background:#fff;padding:12px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.3)">
         <rect x="10" y="10" width="25" height="25" fill="#000"/>
         <rect x="15" y="15" width="15" height="15" fill="#fff"/>
         <rect x="18" y="18" width="9" height="9" fill="#000"/>
-        
         <rect x="65" y="10" width="25" height="25" fill="#000"/>
         <rect x="70" y="15" width="15" height="15" fill="#fff"/>
         <rect x="73" y="18" width="9" height="9" fill="#000"/>
-        
         <rect x="10" y="65" width="25" height="25" fill="#000"/>
         <rect x="15" y="70" width="15" height="15" fill="#fff"/>
         <rect x="18" y="73" width="9" height="9" fill="#000"/>
-        
-        <!-- Random QR Pattern Elements -->
         <rect x="42" y="15" width="8" height="8" fill="#000"/>
         <rect x="45" y="30" width="10" height="10" fill="#000"/>
-        <rect x="25" y="42" width="12" height="6" fill="#000"/>
         <rect x="50" y="50" width="15" height="15" fill="#000"/>
-        <rect x="70" y="65" width="8" height="14" fill="#000"/>
-        <rect x="80" y="80" width="10" height="10" fill="#000"/>
         <circle cx="50" cy="50" r="6" fill="#10b981"/>
       </svg>
       <div style="margin-top:14px;font-size:13px;font-weight:600">Session ID: HEO-V6-ZALO-${Math.floor(Date.now()/1000)}</div>
-      <p class="text-sm muted" style="margin-top:4px">Quét mã QR bằng ứng dụng Zalo trên điện thoại của Sếp để duy trì phiên liên tục.</p>
+      <p class="text-sm muted" style="margin-top:4px">Quét mã QR bằng ứng dụng Zalo trên điện thoại của Sếp để kết nối Gateway.</p>
     </div>
   `, () => closeModal());
 }
 
 // ==========================================
-// TAB 9: INSIGHTS & FORECAST
+// HUB 4: INTELLIGENCE & VALUE
 // ==========================================
-function renderInsights() {
+function renderIntelligenceHub() {
+  const currentSub = state.subtabs.intelligence;
+
+  return `
+    <div class="hub-header">
+      <div class="hub-titles">
+        <div>
+          <h1>Trí Tuệ & Giá Trị Thực (Intelligence & Value)</h1>
+          <div class="hub-desc">Phân tích rủi ro, quy đổi kết quả thành giá trị kinh tế thực chứng, vòng lặp học tập và kho tài liệu tự động.</div>
+        </div>
+        <div class="hub-actions">
+          ${currentSub === 'outcomes' ? `
+            <button class="btn primary" onclick="openNewOutcomeModal()">+ Ghi Nhận Outcome Mới</button>
+          ` : currentSub === 'learning' ? `
+            <button class="btn primary" onclick="openNewLearningModal()">+ Đề Xuất Học Tập Mới</button>
+          ` : currentSub === 'artifacts' ? `
+            <button class="btn primary" onclick="openCreateDocModal()">+ Tạo Tài Liệu Mới</button>
+          ` : `
+            <button class="btn primary" onclick="recomputeInsights()">Tính Toán Lại Insights</button>
+          `}
+        </div>
+      </div>
+
+      <!-- Subnav Pills -->
+      <div class="hub-subnav">
+        <button class="hub-subnav-btn ${currentSub === 'insights' ? 'active' : ''}" onclick="switchSubtab('intelligence', 'insights')">
+          ✦ Dự Báo & Rủi Ro (${state.insights.length})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'outcomes' ? 'active' : ''}" onclick="switchSubtab('intelligence', 'outcomes')">
+          ◈ Đo Lường Giá Trị Thực (${state.outcomes.length})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'learning' ? 'active' : ''}" onclick="switchSubtab('intelligence', 'learning')">
+          ⟳ Vòng Lặp Học Tập (${state.learnings.length})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'artifacts' ? 'active' : ''}" onclick="switchSubtab('intelligence', 'artifacts')">
+          📁 Kho Tài Liệu & Báo Cáo (${state.artifacts.length})
+        </button>
+      </div>
+    </div>
+
+    ${currentSub === 'insights' ? renderInsightsView() : currentSub === 'outcomes' ? renderOutcomesView() : currentSub === 'learning' ? renderLearningView() : renderArtifactsView()}
+  `;
+}
+
+function renderInsightsView() {
   let filtered = state.insights;
   if (state.insightFilter !== 'ALL') {
     filtered = state.insights.filter(i => i.kind.includes(state.insightFilter));
   }
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Insights & Dự Báo Thời Gian Thực</h1>
-        <div class="view-desc">Tính toán từ nhịp độ phản hồi, tiến độ công việc và rủi ro quan hệ đối tác dựa trên dữ liệu thật.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn ${state.insightFilter === 'ALL' ? 'primary' : ''}" onclick="setInsightFilter('ALL')">Tất Cả (${state.insights.length})</button>
-        <button class="btn ${state.insightFilter === 'risk' ? 'danger' : ''}" onclick="setInsightFilter('risk')">Rủi Ro</button>
-        <button class="btn ${state.insightFilter === 'Opportunity' ? 'primary' : ''}" onclick="setInsightFilter('Opportunity')">Cơ Hội</button>
-        <button class="btn primary" onclick="recomputeInsights()">Tính Toán Lại Insights</button>
-      </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn sm ${state.insightFilter === 'ALL' ? 'primary' : 'ghost'}" onclick="setInsightFilter('ALL')">Tất Cả (${state.insights.length})</button>
+      <button class="btn sm ${state.insightFilter === 'risk' ? 'danger' : 'ghost'}" onclick="setInsightFilter('risk')">Rủi Ro</button>
+      <button class="btn sm ${state.insightFilter === 'Opportunity' ? 'primary' : 'ghost'}" onclick="setInsightFilter('Opportunity')">Cơ Hội</button>
     </div>
 
     <div class="grid-3">
@@ -2344,11 +2172,11 @@ function renderInsights() {
 
 function setInsightFilter(f) {
   state.insightFilter = f;
-  renderCurrentTab();
+  renderActiveHub();
 }
 
 async function recomputeInsights() {
-  showToast('Đang phân tích và tính toán lại insights...');
+  showToast('Đang tính toán lại insights...');
   try {
     const res = await fetch('/api/insights/recompute', { method: 'POST' });
     const data = await res.json();
@@ -2356,36 +2184,22 @@ async function recomputeInsights() {
       state.insights = data.insights;
       showToast('Đã tính toán lại Insights thành công!');
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
   }
 }
 
-// ==========================================
-// TAB 10: OUTCOME & VALUE
-// ==========================================
-function renderOutcomeValue() {
+function renderOutcomesView() {
   const verifiedCount = state.outcomes.filter(o => o.attribution === 'VERIFIED').length;
   const pendingCount = state.outcomes.filter(o => o.attribution !== 'VERIFIED').length;
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Outcome & Quy Đổi Giá Trị Thực</h1>
-        <div class="view-desc">Mô hình Result ➔ Outcome ➔ Value. Đo lường giá trị thực tế mang lại cho tổ chức và kiểm chứng chi phí 0đ API.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="openNewOutcomeModal()">+ Ghi Nhận Outcome Mới</button>
-      </div>
-    </div>
-
-    <!-- 4 KPI Cards -->
     <div class="grid-4">
       <div class="kpi-card">
         <div class="kpi-label">Tổng Số Outcomes</div>
-        <div class="kpi-val" style="color:var(--text)">${state.outcomes.length}</div>
+        <div class="kpi-val">${state.outcomes.length}</div>
         <div class="kpi-sub">${verifiedCount} verified · ${pendingCount} pending</div>
       </div>
       <div class="kpi-card">
@@ -2396,7 +2210,7 @@ function renderOutcomeValue() {
       <div class="kpi-card">
         <div class="kpi-label">Chi Phí Token API</div>
         <div class="kpi-val" style="color:var(--brand)">0 VNĐ</div>
-        <div class="kpi-sub">Google Antigravity Brain 0đ Token</div>
+        <div class="kpi-sub">Google Antigravity CLI 0đ Token</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Tiết Kiệm Thời Gian</div>
@@ -2405,11 +2219,8 @@ function renderOutcomeValue() {
       </div>
     </div>
 
-    <!-- Outcomes Table -->
     <div class="card">
-      <div class="card-head">
-        <h3>Danh Sách Kết Quả & Giá Trị Thực Chứng (Outcomes)</h3>
-      </div>
+      <div class="card-head"><h3>Bảng Kết Quả & Giá Trị Thực Chứng (Outcomes)</h3></div>
       <div class="table-box">
         <table class="data-table">
           <thead>
@@ -2466,7 +2277,7 @@ function openNewOutcomeModal() {
         <input class="input" id="noWorkId" value="W-692" />
       </div>
       <div class="form-field">
-        <label>Mức Độ Tác Động (Impact)</label>
+        <label>Mức Độ Tác Động</label>
         <select class="input" id="noImpact">
           <option value="Critical">Critical (Sống còn)</option>
           <option value="High" selected>High (Cao)</option>
@@ -2501,7 +2312,7 @@ function openNewOutcomeModal() {
         closeModal();
         showToast('Đã ghi nhận Outcome thành công!');
         await fetchAllData();
-        renderCurrentTab();
+        renderActiveHub();
       }
     } catch (e) {
       showToast('Lỗi: ' + e.message);
@@ -2520,32 +2331,18 @@ async function verifyOutcome(id) {
     if (data.ok) {
       showToast(`Đã xác thực outcome ${id} thành công!`);
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
   }
 }
 
-// ==========================================
-// TAB 11: LEARNING LOOP
-// ==========================================
-function renderLearningLoop() {
+function renderLearningView() {
   const candidates = state.learnings.filter(l => l.status === 'CANDIDATE');
   const applied = state.learnings.filter(l => l.status === 'APPLIED');
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Learning Loop (Vòng Lặp Học Tập & Tiến Hóa)</h1>
-        <div class="view-desc">Thu thập phản hồi từ các tương tác thực tế để cập nhật bộ nhớ, liên kết thực thể và hiệu chuẩn baseline.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="openNewLearningModal()">+ Đề Xuất Học Tập Mới</button>
-      </div>
-    </div>
-
-    <!-- 3 KPI Cards -->
     <div class="grid-3">
       <div class="kpi-card">
         <div class="kpi-label">Tổng Đề Xuất Tiến Hóa</div>
@@ -2564,7 +2361,6 @@ function renderLearningLoop() {
       </div>
     </div>
 
-    <!-- Learning Candidates Cards -->
     <div style="display:flex;flex-direction:column;gap:14px">
       ${state.learnings.map(item => `
         <div class="card card-pad" style="border-left:4px solid ${item.status === 'APPLIED' ? 'var(--brand)' : item.status === 'CANDIDATE' ? 'var(--p2)' : 'var(--border)'}">
@@ -2582,7 +2378,7 @@ function renderLearningLoop() {
           </div>
 
           <div class="flex-between text-sm muted">
-            <div><b>Mục tiêu:</b> ${item.target} · <b>Nguồn đề xuất:</b> ${item.suggested_by}</div>
+            <div><b>Mục tiêu:</b> ${item.target} · <b>Nguồn:</b> ${item.suggested_by}</div>
             ${item.status === 'CANDIDATE' ? `
               <div class="flex-gap">
                 <button class="btn sm danger" onclick="actionLearning('${item.id}', 'dismiss')">Bác Bỏ</button>
@@ -2602,7 +2398,7 @@ function openNewLearningModal() {
   openModal('Tạo Đề Xuất Học Tập & Tiến Hóa Mới', `
     <div class="form-grid">
       <div class="form-field">
-        <label>Loại Tiến Hóa (Type)</label>
+        <label>Loại Tiến Hóa</label>
         <select class="input" id="nlType">
           <option value="MEMORY_UPDATE">MEMORY_UPDATE (Cập nhật ngữ cảnh bộ nhớ)</option>
           <option value="ENTITY_LINK">ENTITY_LINK (Liên kết quan hệ thực thể)</option>
@@ -2611,12 +2407,12 @@ function openNewLearningModal() {
         </select>
       </div>
       <div class="form-field">
-        <label>Mục Tiêu Tác Động (Target)</label>
+        <label>Mục Tiêu Tác Động</label>
         <input class="input" id="nlTarget" value="Core Brain Context" />
       </div>
       <div class="form-field col-span-2">
         <label>Tóm Tắt Đề Xuất (*)</label>
-        <input class="input" id="nlSummary" placeholder="Ví dụ: Tối ưu hóa phản hồi cho nhóm đối tác chiến lược..." />
+        <input class="input" id="nlSummary" placeholder="Ví dụ: Tối ưu hóa phản hồi cho nhóm đối tác..." />
       </div>
       <div class="form-field col-span-2">
         <label>Nội Dung Tri Thức Chi Tiết</label>
@@ -2641,7 +2437,7 @@ function openNewLearningModal() {
         closeModal();
         showToast('Đã gửi đề xuất học tập thành công!');
         await fetchAllData();
-        renderCurrentTab();
+        renderActiveHub();
       }
     } catch (e) {
       showToast('Lỗi: ' + e.message);
@@ -2660,17 +2456,14 @@ async function actionLearning(id, action) {
     if (data.ok) {
       showToast(action === 'apply' ? 'Đã áp dụng tri thức vào hệ thống!' : 'Đã bác bỏ đề xuất!');
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
   }
 }
 
-// ==========================================
-// TAB 12: ARTIFACTS & FILES
-// ==========================================
-function renderArtifacts() {
+function renderArtifactsView() {
   let filtered = state.artifacts;
   if (state.artifactFilter === 'DOC') {
     filtered = state.artifacts.filter(a => a.kind === 'DOCUMENT');
@@ -2679,23 +2472,13 @@ function renderArtifacts() {
   }
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Kho Tài Liệu & Artifacts Tự Động</h1>
-        <div class="view-desc">Tập hợp toàn bộ các báo cáo Word (.docx), bảng tính Excel (.xlsx), bản beat MP3/WAV và ảnh vector SVG sinh từ Agent.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn ${state.artifactFilter === 'ALL' ? 'primary' : ''}" onclick="setArtifactFilter('ALL')">Tất Cả (${state.artifacts.length})</button>
-        <button class="btn ${state.artifactFilter === 'DOC' ? 'primary' : ''}" onclick="setArtifactFilter('DOC')">Văn Bản & Bảng Tính</button>
-        <button class="btn ${state.artifactFilter === 'MEDIA' ? 'primary' : ''}" onclick="setArtifactFilter('MEDIA')">Media & Audio</button>
-        <button class="btn primary" onclick="openCreateDocModal()">+ Tạo Tài Liệu Mới</button>
-      </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn sm ${state.artifactFilter === 'ALL' ? 'primary' : 'ghost'}" onclick="setArtifactFilter('ALL')">Tất Cả (${state.artifacts.length})</button>
+      <button class="btn sm ${state.artifactFilter === 'DOC' ? 'primary' : 'ghost'}" onclick="setArtifactFilter('DOC')">Văn Bản & Bảng Tính</button>
+      <button class="btn sm ${state.artifactFilter === 'MEDIA' ? 'primary' : 'ghost'}" onclick="setArtifactFilter('MEDIA')">Media & Audio</button>
     </div>
 
     <div class="card">
-      <div class="card-head">
-        <h3>Tài Nguyên Trong Thư Mục Artifacts</h3>
-      </div>
       <div class="table-box">
         <table class="data-table">
           <thead>
@@ -2730,7 +2513,7 @@ function renderArtifacts() {
 
 function setArtifactFilter(f) {
   state.artifactFilter = f;
-  renderCurrentTab();
+  renderActiveHub();
 }
 
 function openCreateDocModal() {
@@ -2770,7 +2553,7 @@ function openCreateDocModal() {
         closeModal();
         showToast('Đã xuất bản tài liệu thành công!');
         await fetchAllData();
-        renderCurrentTab();
+        renderActiveHub();
       }
     } catch (e) {
       showToast('Lỗi: ' + e.message);
@@ -2779,31 +2562,54 @@ function openCreateDocModal() {
 }
 
 // ==========================================
-// TAB 13: LIVE CHAT CÙNG BÉ HEO
+// HUB 5: EXECUTIVE ASSISTANT & STUDIO
 // ==========================================
 let chatHistory = [
   { sender: 'bot', text: 'Dạ Em chào Sếp Cơ La! Em Bé Heo đã sẵn sàng hỗ trợ Sếp điều hành công việc. Sếp có chỉ đạo gì cho em hôm nay ạ? 🥰' }
 ];
 
-function renderChat() {
+function renderAssistantHub() {
+  const currentSub = state.subtabs.assistant;
+
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Trò Chuyện Cùng Bé Heo (Live Chat)</h1>
-        <div class="view-desc">Trợ lý điều hành cá nhân hoá cho Anh Cơ La. Tự động đính kèm báo cáo Word, bảng tính Excel, beat thư giãn và ảnh AI khi Sếp yêu cầu.</div>
+    <div class="hub-header">
+      <div class="hub-titles">
+        <div>
+          <h1>Trợ Lý Bé Heo & Studio (Assistant & Studio)</h1>
+          <div class="hub-desc">Trợ lý điều hành thông minh, tự động sinh tài liệu/media, cấu hình danh xưng Sếp - Em và công cụ kích hoạt trực tiếp.</div>
+        </div>
+        <div class="hub-actions">
+          <span class="badge good">Core Antigravity Brain (0đ API)</span>
+        </div>
       </div>
-      <div class="view-actions">
-        <span class="badge good">Core Antigravity Brain (0đ API)</span>
+
+      <!-- Subnav Pills -->
+      <div class="hub-subnav">
+        <button class="hub-subnav-btn ${currentSub === 'chat' ? 'active' : ''}" onclick="switchSubtab('assistant', 'chat')">
+          🤖 Live Chat Cùng Bé Heo
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'persona' ? 'active' : ''}" onclick="switchSubtab('assistant', 'persona')">
+          🎭 Persona Studio (7 Thái Độ)
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'runners' ? 'active' : ''}" onclick="switchSubtab('assistant', 'runners')">
+          ⚙ Thực Thi Công Cụ (Runners Hub)
+        </button>
       </div>
     </div>
 
+    ${currentSub === 'chat' ? renderChatView() : currentSub === 'persona' ? renderPersonaView() : renderRunnersView()}
+  `;
+}
+
+function renderChatView() {
+  return `
     <div class="card" style="display:flex;flex-direction:column;height:600px">
       <!-- Quick Prompt Chips -->
-      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;overflow-x:auto;background:rgba(0,0,0,0.1)">
-        <button class="btn sm ghost" onclick="sendQuickChat('Xuất cho em một bản báo cáo Word tiến độ dự án')">📄 Xuất Báo Cáo Word</button>
-        <button class="btn sm ghost" onclick="sendQuickChat('Tạo bảng tính Excel tài chính dự án')">📊 Tạo File Excel Tài Chính</button>
-        <button class="btn sm ghost" onclick="sendQuickChat('Bé Heo tạo một bản nhạc beat lofi thư giãn')">🎵 Tạo Beat Lo-Fi</button>
-        <button class="btn sm ghost" onclick="sendQuickChat('Vẽ cho em một bức tranh AI Bé Heo')">🎨 Vẽ Tranh Vector AI</button>
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;overflow-x:auto;background:rgba(0,0,0,0.12)">
+        <button class="btn sm ghost" onclick="sendQuickChat('Xuất cho em một bản báo cáo Word tiến độ dự án')">📄 Báo Cáo Word</button>
+        <button class="btn sm ghost" onclick="sendQuickChat('Tạo bảng tính Excel tài chính dự án')">📊 Bảng Tính Excel</button>
+        <button class="btn sm ghost" onclick="sendQuickChat('Bé Heo tạo một bản nhạc beat lofi thư giãn')">🎵 Beat Lo-Fi WAV</button>
+        <button class="btn sm ghost" onclick="sendQuickChat('Vẽ cho em một bức tranh AI Bé Heo')">🎨 Tranh Vector AI</button>
         <button class="btn sm ghost" onclick="sendQuickChat('Ai là tác giả và chủ nhân duy nhất của em?')">👑 Tác Quyền Chủ Nhân</button>
       </div>
 
@@ -2821,7 +2627,7 @@ function renderChat() {
               <div style="font-size:13px;line-height:1.6">${m.text}</div>
               
               ${m.attachment ? `
-                <div style="margin-top:10px;padding:10px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <div style="margin-top:10px;padding:10px;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:12px">
                   <div style="font-size:12px;font-weight:600">${m.attachment.title || m.attachment.filename}</div>
                   <a class="btn sm primary" href="${m.attachment.download_url}" download>Tải Về ⬇</a>
                 </div>
@@ -2832,7 +2638,7 @@ function renderChat() {
       </div>
 
       <!-- Chat Input Box -->
-      <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;background:rgba(0,0,0,0.1)">
+      <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;background:rgba(0,0,0,0.12)">
         <input class="input" id="chat-input" placeholder="Nhập chỉ đạo cho Bé Heo..." style="flex:1" onkeydown="if(event.key==='Enter') sendChat()" />
         <button class="btn primary" onclick="sendChat()">Gửi Lệnh ➔</button>
       </div>
@@ -2852,7 +2658,7 @@ async function sendChat() {
 
   chatHistory.push({ sender: 'user', text: msg });
   inp.value = '';
-  renderCurrentTab();
+  renderActiveHub();
 
   const msgBox = $('#chat-messages');
   if (msgBox) msgBox.scrollTop = msgBox.scrollHeight;
@@ -2870,7 +2676,7 @@ async function sendChat() {
         text: data.reply,
         attachment: data.attachment
       });
-      renderCurrentTab();
+      renderActiveHub();
       const updatedBox = $('#chat-messages');
       if (updatedBox) updatedBox.scrollTop = updatedBox.scrollHeight;
     }
@@ -2879,10 +2685,7 @@ async function sendChat() {
   }
 }
 
-// ==========================================
-// TAB 14: PERSONA STUDIO
-// ==========================================
-function renderPersona() {
+function renderPersonaView() {
   const cfg = state.persona || {};
   const personas = [
     { key: 'default', name: 'Ngọt Ngào & Chu Đáo', desc: 'Em - Sếp, ân cần hỗ trợ và phục vụ chu đáo mọi chỉ đạo.' },
@@ -2895,16 +2698,6 @@ function renderPersona() {
   ];
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Persona Studio (Cấu Hình Bản Sắc & Thái Độ)</h1>
-        <div class="view-desc">Cấu hình danh xưng Sếp Cơ La - Em Bé Heo và 7 sắc thái biểu cảm thông minh theo chuẩn SSOT.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="savePersonaConfig()">Lưu Cấu Hình Persona</button>
-      </div>
-    </div>
-
     <div class="grid-span">
       <div class="card card-pad">
         <h3 style="margin-bottom:14px">Thông Số Danh Xưng</h3>
@@ -2921,11 +2714,12 @@ function renderPersona() {
             <label>Email Tác Quyền Chủ Nhân</label>
             <input class="input" value="genesis.corp.os@gmail.com" readonly />
           </div>
+          <button class="btn primary" style="margin-top:10px" onclick="savePersonaConfig()">Lưu Cấu Hình Persona</button>
         </div>
       </div>
 
       <div class="card card-pad">
-        <h3 style="margin-bottom:14px">7 Sắc Thái Thái Độ Trợ Lý</h3>
+        <h3 style="margin-bottom:14px">7 Sắc Thái Biểu Cảm Của Bé Heo</h3>
         <div style="display:flex;flex-direction:column;gap:10px">
           ${personas.map(p => `
             <label style="display:flex;align-items:flex-start;gap:10px;padding:10px;background:var(--bg-body);border:1px solid var(--border);border-radius:6px;cursor:pointer">
@@ -2958,25 +2752,15 @@ async function savePersonaConfig() {
     if (data.ok) {
       showToast('Đã lưu cấu hình Persona thành công!');
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
   }
 }
 
-// ==========================================
-// TAB 15: RUNNERS & TOOLS
-// ==========================================
-function renderRunners() {
+function renderRunnersView() {
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Thực Thi Công Cụ (Runners Hub)</h1>
-        <div class="view-desc">Kích hoạt trực tiếp các công cụ văn phòng và media: Xuất Word, Bảng tính Excel, Tạo Beat Lo-Fi và Vẽ vector SVG.</div>
-      </div>
-    </div>
-
     <div class="grid-2">
       <!-- Word Runner -->
       <div class="card card-pad">
@@ -2987,7 +2771,7 @@ function renderRunners() {
             <input class="input" id="rnWordTitle" value="Báo Cáo Nghiệm Thu Trực Tuyến" />
           </div>
           <div class="form-field">
-            <label>Nội Dung</label>
+            <label>Nội Dung Tóm Tắt</label>
             <textarea class="input" id="rnWordContent" rows="2">Biên bản đối soát dữ liệu và nghiệm thu hệ thống Heo OS V6.</textarea>
           </div>
           <button class="btn primary" onclick="runExportWord()">Xuất Bản Tài Liệu Word (.docx) ➔</button>
@@ -3003,14 +2787,14 @@ function renderRunners() {
             <input class="input" id="rnExcelTitle" value="Bảng Cân Đối Tài Chính Heo OS" />
           </div>
           <div class="form-field">
-            <label>Định Dạng Dữ Liệu</label>
-            <input class="input" value="Doanh thu, Chi phí API (0đ), Lợi nhuận dự phóng" readonly />
+            <label>Dữ Liệu Mẫu</label>
+            <input class="input" value="Chi phí API (0đ), Tiết kiệm vận hành, Lợi nhuận dự phóng" readonly />
           </div>
           <button class="btn primary" onclick="runExportExcel()">Xuất Bản Bảng Tính Excel (.xlsx) ➔</button>
         </div>
       </div>
 
-      <!-- Media Beat Runner -->
+      <!-- Beat Synthesizer -->
       <div class="card card-pad">
         <h3 style="margin-bottom:12px">🎵 Audio Beat Synthesizer</h3>
         <div class="form-grid full">
@@ -3027,7 +2811,7 @@ function renderRunners() {
         </div>
       </div>
 
-      <!-- Vector Art Runner -->
+      <!-- Vector Art Generator -->
       <div class="card card-pad">
         <h3 style="margin-bottom:12px">🎨 Vector Art Generator</h3>
         <div class="form-grid full">
@@ -3135,30 +2919,127 @@ async function runGenerateArt() {
 }
 
 // ==========================================
-// TAB 16: POLICY GATE ENGINE (5 TẦNG)
+// HUB 6: GOVERNANCE, SECURITY & SYSTEM
 // ==========================================
-function renderPolicies() {
+function renderGovernanceHub() {
+  const currentSub = state.subtabs.governance;
+
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Trục An Toàn Policy Gate (5 Tầng Phân Quyền)</h1>
-        <div class="view-desc">Thẩm định quyền hạn theo thứ bậc SSOT: GLOBAL ➔ CHANNEL ➔ GROUP ➔ PERSON ➔ ACTION. Chặn đứng các hành động trái phép.</div>
+    <div class="hub-header">
+      <div class="hub-titles">
+        <div>
+          <h1>Quản Trị, An Ninh & Hạ Tầng (Governance & Security)</h1>
+          <div class="hub-desc">Phê duyệt an ninh SSOT, tường lửa 5 tầng, sổ cái kiểm toán SHA-256, trace thực thi và quản trị hạ tầng DSH.</div>
+        </div>
+        <div class="hub-actions">
+          ${currentSub === 'policies' ? `
+            <button class="btn primary" onclick="openNewPolicyModal()">+ Ban Hành Quy Tắc Mới</button>
+          ` : currentSub === 'audit' ? `
+            <button class="btn primary" onclick="verifyAuditChain()">Xác Thực Chuỗi Băm (SHA-256)</button>
+          ` : currentSub === 'system' ? `
+            <button class="btn primary" onclick="createBackupSnapshot()">Tạo Snapshot Sao Lưu 📸</button>
+          ` : `
+            <span class="badge p2">${state.approvals.filter(a => a.status === 'PENDING').length} Chờ Phê Duyệt</span>
+          `}
+        </div>
       </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="openNewPolicyModal()">+ Ban Hành Quy Tắc Mới</button>
+
+      <!-- Subnav Pills -->
+      <div class="hub-subnav">
+        <button class="hub-subnav-btn ${currentSub === 'approvals' ? 'active' : ''}" onclick="switchSubtab('governance', 'approvals')">
+          ⚡ Phê Duyệt An Ninh (${state.approvals.filter(a => a.status === 'PENDING').length})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'policies' ? 'active' : ''}" onclick="switchSubtab('governance', 'policies')">
+          🛡 Trục An Toàn 5 Tầng (${state.policies.length})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'audit' ? 'active' : ''}" onclick="switchSubtab('governance', 'audit')">
+          📑 Sổ Cái Kiểm Toán (${state.audits.length})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'executions' ? 'active' : ''}" onclick="switchSubtab('governance', 'executions')">
+          ⇄ Live Trace (${state.executions.length})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'system' ? 'active' : ''}" onclick="switchSubtab('governance', 'system')">
+          ⬡ Hạ Tầng & DSH Plugins (10)
+        </button>
       </div>
     </div>
 
+    ${currentSub === 'approvals' ? renderApprovalsView() : currentSub === 'policies' ? renderPoliciesView() : currentSub === 'audit' ? renderAuditView() : currentSub === 'executions' ? renderExecutionsView() : renderSystemView()}
+  `;
+}
+
+function renderApprovalsView() {
+  return `
+    <div style="display:flex;flex-direction:column;gap:16px">
+      ${state.approvals.map(appr => `
+        <div class="card card-pad" style="border-left:4px solid ${appr.status === 'PENDING' ? 'var(--p2)' : appr.status === 'APPROVED' ? 'var(--brand)' : 'var(--p1)'}">
+          <div class="flex-between" style="margin-bottom:10px">
+            <div class="flex-gap">
+              <span class="mono font-bold" style="font-size:14px">${appr.id}</span>
+              <span class="badge ${appr.status === 'PENDING' ? 'p2' : appr.status === 'APPROVED' ? 'good' : 'p1'}">${appr.status}</span>
+              <span class="mono text-sm muted">TTL: ${appr.ttl || 'Vĩnh viễn'}</span>
+            </div>
+            <span class="badge neutral mono">${appr.fingerprint || 'ssot-fp'}</span>
+          </div>
+
+          <h3 style="font-size:14px;margin-bottom:8px">${appr.summary}</h3>
+          
+          <div class="grid-2 text-sm muted" style="margin-bottom:12px;background:var(--bg-body);padding:10px;border-radius:6px">
+            <div><b>Tác vụ:</b> <span class="mono text-sm" style="color:var(--text)">${appr.action}</span></div>
+            <div><b>Mục tiêu:</b> <span style="color:var(--text)">${appr.target}</span></div>
+            <div><b>Lý do kích hoạt:</b> ${appr.why}</div>
+            <div><b>Tài nguyên:</b> ${appr.resource}</div>
+          </div>
+
+          <div class="flex-between">
+            <button class="btn sm ghost" onclick="showEvidence('${encodeURIComponent('fingerprint:' + appr.fingerprint + ' · payload:' + appr.data)}')">
+              🔍 Soát Xét Bằng Chứng Kỹ Thuật
+            </button>
+            ${appr.status === 'PENDING' ? `
+              <div class="flex-gap">
+                <button class="btn danger sm" onclick="actionApproval('${appr.id}', 'deny')">✕ Từ Chối (Deny)</button>
+                <button class="btn primary sm" onclick="actionApproval('${appr.id}', 'approve')">✔ Phê Duyệt (Approve)</button>
+              </div>
+            ` : `
+              <span class="text-sm muted">Đã giải quyết lúc ${appr.resolved_at || 'trước đó'}</span>
+            `}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+async function actionApproval(id, actionType) {
+  try {
+    const res = await fetch('/api/approvals/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action: actionType })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast(actionType === 'approve' ? 'Đã phê duyệt lệnh thành công!' : 'Đã từ chối lệnh!');
+      await fetchAllData();
+      renderActiveHub();
+    }
+  } catch (e) {
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+function renderPoliciesView() {
+  return `
     <!-- Simulator Box -->
     <div class="card card-pad" style="margin-bottom:20px;background:linear-gradient(180deg, var(--bg-card) 0%, rgba(16,185,129,0.03) 100%)">
-      <h3 style="margin-bottom:12px">⚡ Policy Simulator (Mô Phỏng Thẩm Định Quyền Hạn)</h3>
+      <h3 style="margin-bottom:12px">⚡ Policy Simulator (Mô Phỏng Thẩm Định 5 Tầng SSOT)</h3>
       <div class="grid-4" style="margin-bottom:12px">
         <div class="form-field">
-          <label>Chủ Thể Thực Hiện (Actor)</label>
+          <label>Chủ Thể (Actor)</label>
           <input class="input" id="simActor" value="P-OWNER" />
         </div>
         <div class="form-field">
-          <label>Hành Động Yêu Cầu (Action)</label>
+          <label>Hành Động (Action)</label>
           <input class="input" id="simAction" value="zalo.send_message" />
         </div>
         <div class="form-field">
@@ -3180,11 +3061,8 @@ function renderPolicies() {
       </div>
     </div>
 
-    <!-- Active Policies Table -->
     <div class="card">
-      <div class="card-head">
-        <h3>Danh Sách Quy Tắc An Ninh Đang Có Hiệu Lực</h3>
-      </div>
+      <div class="card-head"><h3>Danh Sách Quy Tắc An Ninh 5 Tầng</h3></div>
       <div class="table-box">
         <table class="data-table">
           <thead>
@@ -3249,30 +3127,30 @@ function openNewPolicyModal() {
       <div class="form-field">
         <label>Phạm Vi (Scope)</label>
         <select class="input" id="npolScope">
-          <option value="GLOBAL">GLOBAL (Toàn cục)</option>
-          <option value="GROUP">GROUP (Áp dụng theo nhóm)</option>
-          <option value="PERSON">PERSON (Áp dụng cho người cụ thể)</option>
-          <option value="ACTION">ACTION (Theo hành động)</option>
+          <option value="GLOBAL">GLOBAL</option>
+          <option value="GROUP">GROUP</option>
+          <option value="PERSON">PERSON</option>
+          <option value="ACTION">ACTION</option>
         </select>
       </div>
       <div class="form-field">
-        <label>Đối Tượng Khớp (Target)</label>
-        <input class="input" id="npolTarget" value="*" placeholder="Ví dụ: G-001 hoặc P-018" />
+        <label>Đối Tượng Khớp</label>
+        <input class="input" id="npolTarget" value="*" />
       </div>
       <div class="form-field">
-        <label>Hành Động Khớp (Action)</label>
+        <label>Hành Động Khớp</label>
         <input class="input" id="npolAction" value="external.send" />
       </div>
       <div class="form-field">
-        <label>Quyết Định (Decision)</label>
+        <label>Quyết Định</label>
         <select class="input" id="npolDecision">
-          <option value="APPROVAL" selected>APPROVAL (Yêu cầu Sếp duyệt)</option>
+          <option value="APPROVAL" selected>APPROVAL (Yêu cầu duyệt)</option>
           <option value="DENY">DENY (Chặn tuyệt đối)</option>
-          <option value="ALLOW">ALLOW (Cho phép tự động)</option>
+          <option value="ALLOW">ALLOW (Cho phép)</option>
         </select>
       </div>
       <div class="form-field">
-        <label>Mức Độ Ưu Tiên (Priority: 1-100)</label>
+        <label>Mức Độ Ưu Tiên (1-100)</label>
         <input class="input" type="number" id="npolPri" value="60" />
       </div>
       <div class="form-field">
@@ -3299,7 +3177,7 @@ function openNewPolicyModal() {
         closeModal();
         showToast('Đã ban hành quy tắc thành công!');
         await fetchAllData();
-        renderCurrentTab();
+        renderActiveHub();
       }
     } catch (e) {
       showToast('Lỗi: ' + e.message);
@@ -3307,86 +3185,8 @@ function openNewPolicyModal() {
   });
 }
 
-// ==========================================
-// TAB 17: EXECUTIONS & TRACE
-// ==========================================
-function renderExecutions() {
+function renderAuditView() {
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Executions & Live Trace</h1>
-        <div class="view-desc">Nhật ký thực thi thời gian thực của mọi tool calls, API requests và quyết định của Policy Gate Engine.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="refreshExecutions()">Làm Mới Trace</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="table-box">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Thời Điểm</th>
-              <th>Mã Trace</th>
-              <th>Correlation ID</th>
-              <th>Hành Động</th>
-              <th>Quyết Định Policy</th>
-              <th>Độ Trễ</th>
-              <th>Trạng Thái</th>
-              <th>Kết Quả Thực Thi</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.executions.map(ex => `
-              <tr>
-                <td class="mono muted text-sm">${ex.time}</td>
-                <td class="mono font-bold">${ex.id}</td>
-                <td class="mono text-sm">${ex.corr}</td>
-                <td><span class="mono">${ex.action}</span></td>
-                <td><span class="badge ${ex.policy === 'AUTO' ? 'good' : 'p2'}">${ex.policy}</span></td>
-                <td class="mono">${ex.duration}</td>
-                <td><span class="badge ${ex.status === 'SUCCEEDED' ? 'good' : ex.status === 'APPROVAL_PENDING' ? 'p2' : 'p1'}">${ex.status}</span></td>
-                <td class="muted">${ex.result}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-}
-
-async function refreshExecutions() {
-  showToast('Đang cập nhật trace...');
-  try {
-    const res = await fetch('/api/executions/list');
-    const data = await res.json();
-    if (data.ok) {
-      state.executions = data.executions;
-      showToast('Đã cập nhật trace mới nhất!');
-      renderCurrentTab();
-    }
-  } catch (e) {
-    showToast('Lỗi: ' + e.message);
-  }
-}
-
-// ==========================================
-// TAB 18: AUDIT LEDGER (SHA-256 VERIFIED)
-// ==========================================
-function renderAudit() {
-  return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Sổ Cái Kiểm Toán Bất Biến (Audit Ledger)</h1>
-        <div class="view-desc">Mọi thay đổi trạng thái, phê duyệt và giao dịch đều được băm nối chuỗi mật mã SHA-256 chống giả mạo tuyệt đối.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="verifyAuditChain()">Xác Thực Chuỗi Băm (Verify SHA-256)</button>
-      </div>
-    </div>
-
     ${state.auditVerify ? `
       <div class="card card-pad" style="margin-bottom:16px;background:rgba(16,185,129,0.06);border-color:var(--brand)">
         <div class="flex-between">
@@ -3443,101 +3243,77 @@ async function verifyAuditChain() {
     if (data.ok) {
       state.auditVerify = data;
       showToast('Xác thực toàn vẹn: Chuỗi kiểm toán 100% hợp lệ!');
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
   }
 }
 
-// ==========================================
-// TAB 19: PLUGINS & DSH CHASSIS
-// ==========================================
-function renderPlugins() {
+function renderExecutionsView() {
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Quản Trị Plugins & Backend DSH</h1>
-        <div class="view-desc">10 Plugin chuẩn hóa kế thừa BasePlugin thuộc framework DeepSeek Harness. Circuit Breaker bảo vệ 100%.</div>
+    <div class="card">
+      <div class="card-head">
+        <h3>Nhật Ký Thực Thi Thời Gian Thực (Executions Trace)</h3>
+        <button class="btn sm primary" onclick="refreshExecutions()">Làm Mới Trace</button>
       </div>
-      <div class="view-actions">
-        <span class="badge good">10/10 Plugins Sẵn Sàng</span>
+      <div class="table-box">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Thời Điểm</th>
+              <th>Mã Trace</th>
+              <th>Correlation ID</th>
+              <th>Hành Động</th>
+              <th>Quyết Định Policy</th>
+              <th>Độ Trễ</th>
+              <th>Trạng Thái</th>
+              <th>Kết Quả Thực Thi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.executions.map(ex => `
+              <tr>
+                <td class="mono muted text-sm">${ex.time}</td>
+                <td class="mono font-bold">${ex.id}</td>
+                <td class="mono text-sm">${ex.corr}</td>
+                <td><span class="mono">${ex.action}</span></td>
+                <td><span class="badge ${ex.policy === 'AUTO' ? 'good' : 'p2'}">${ex.policy}</span></td>
+                <td class="mono">${ex.duration}</td>
+                <td><span class="badge ${ex.status === 'SUCCEEDED' ? 'good' : ex.status === 'APPROVAL_PENDING' ? 'p2' : 'p1'}">${ex.status}</span></td>
+                <td class="muted">${ex.result}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
-    </div>
-
-    <div class="grid-2">
-      ${state.plugins.map(pl => {
-        const isCore = pl.id.includes('antigravity') || pl.id.includes('rbac');
-        return `
-          <div class="card card-pad" style="border-left:4px solid ${pl.enabled ? 'var(--brand)' : 'var(--p2)'}">
-            <div class="flex-between" style="margin-bottom:8px">
-              <div>
-                <strong style="font-size:13.5px">${pl.name}</strong>
-                <div class="mono text-sm muted">${pl.id}</div>
-              </div>
-              <span class="badge ${pl.enabled ? 'good' : 'p2'}">${pl.enabled ? 'ENABLED' : 'STANDBY'}</span>
-            </div>
-            
-            <p class="text-sm muted" style="margin-bottom:12px">${pl.description}</p>
-
-            <div class="flex-between" style="border-top:1px solid var(--border-subtle);padding-top:10px">
-              <div class="text-sm muted">
-                Circuit Breaker: <span class="badge good">Healthy (0 Lỗi)</span>
-              </div>
-              ${!isCore ? `
-                <button class="btn sm ${pl.enabled ? 'danger' : 'primary'}" onclick="togglePlugin('${pl.id}', ${!pl.enabled})">
-                  ${pl.enabled ? 'Tạm Tắt' : 'Kích Hoạt'}
-                </button>
-              ` : `
-                <span class="badge good">CORE BẤT BIẾN</span>
-              `}
-            </div>
-          </div>
-        `;
-      }).join('')}
     </div>
   `;
 }
 
-async function togglePlugin(id, enable) {
+async function refreshExecutions() {
+  showToast('Đang cập nhật trace...');
   try {
-    const res = await fetch('/api/plugins/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, enable })
-    });
+    const res = await fetch('/api/executions/list');
     const data = await res.json();
     if (data.ok) {
-      showToast(`Đã ${enable ? 'bật' : 'tắt'} plugin ${id}!`);
-      await fetchAllData();
-      renderCurrentTab();
+      state.executions = data.executions;
+      showToast('Đã cập nhật trace mới nhất!');
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
   }
 }
 
-// ==========================================
-// TAB 20: CONTROL ROOM & SYSTEM HEALTH
-// ==========================================
-function renderControlRoom() {
+function renderSystemView() {
   const met = state.metrics || {};
   const disk = met.disk || { total_gb: 182, used_gb: 21, percent: 11.7 };
-  const ram = met.ram || { percent: 22.0 };
+  const ram = met.ram || { percent: 20.3 };
   const cpu = met.cpu || { percent: 12.5 };
 
   return `
-    <div class="view-head">
-      <div class="view-titles">
-        <h1>Hạ Tầng & Control Room</h1>
-        <div class="view-desc">Chỉ số tài nguyên máy chủ Fedora, snapshot sao lưu dữ liệu Heo State và cơ chế khôi phục tức thì.</div>
-      </div>
-      <div class="view-actions">
-        <button class="btn primary" onclick="createBackupSnapshot()">Tạo Snapshot Sao Lưu 📸</button>
-      </div>
-    </div>
-
-    <!-- Metrics Cards -->
+    <!-- Hardware Metrics -->
     <div class="grid-4">
       <div class="kpi-card">
         <div class="kpi-label">Dung Lượng Ổ Đĩa</div>
@@ -3547,11 +3323,11 @@ function renderControlRoom() {
       <div class="kpi-card">
         <div class="kpi-label">Sử Dụng RAM</div>
         <div class="kpi-val" style="color:var(--p3)">${ram.percent}%</div>
-        <div class="kpi-sub">Bộ nhớ hệ thống</div>
+        <div class="kpi-sub">Bộ nhớ hệ thống Fedora</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Mức Tiêu Thụ CPU</div>
-        <div class="kpi-val" style="color:var(--gold)">${cpu.percent}%</div>
+        <div class="kpi-val" style="color:var(--p2)">${cpu.percent}%</div>
         <div class="kpi-sub">Xử lý tác vụ nền</div>
       </div>
       <div class="kpi-card">
@@ -3561,7 +3337,36 @@ function renderControlRoom() {
       </div>
     </div>
 
-    <!-- Backups List -->
+    <!-- 10 Plugins Grid -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-head">
+        <h3>10 Plugin Chuẩn Hóa Theo DeepSeek Harness Chassis</h3>
+        <span class="badge good">10/10 Enabled</span>
+      </div>
+      <div class="card-pad" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        ${state.plugins.map(pl => {
+          const isCore = pl.id.includes('antigravity') || pl.id.includes('rbac');
+          return `
+            <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:6px;padding:12px;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <b>${pl.name}</b>
+                <div class="mono text-sm muted">${pl.id}</div>
+              </div>
+              <div class="flex-gap">
+                <span class="badge ${pl.enabled ? 'good' : 'p2'}">${pl.enabled ? 'ENABLED' : 'STANDBY'}</span>
+                ${!isCore ? `
+                  <button class="btn sm ${pl.enabled ? 'danger' : 'primary'}" onclick="togglePlugin('${pl.id}', ${!pl.enabled})">
+                    ${pl.enabled ? 'Tắt' : 'Bật'}
+                  </button>
+                ` : '<span class="badge good">CORE</span>'}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Snapshots Backup Table -->
     <div class="card">
       <div class="card-head">
         <h3>Lịch Sử Bản Sao Lưu An Toàn (Snapshots)</h3>
@@ -3589,12 +3394,30 @@ function renderControlRoom() {
                   <button class="btn sm primary" onclick="restoreBackup('${b.backup_id}')">Khôi Phục Snapshot ⟲</button>
                 </td>
               </tr>
-            `).join('') || '<tr><td colspan="5" class="muted">Chưa có bản sao lưu nào. Bấm nút "Tạo Snapshot Sao Lưu" ở trên để tạo bản lưu đầu tiên.</td></tr>'}
+            `).join('') || '<tr><td colspan="5" class="muted">Chưa có bản sao lưu nào. Bấm nút "Tạo Snapshot Sao Lưu" để tạo bản lưu.</td></tr>'}
           </tbody>
         </table>
       </div>
     </div>
   `;
+}
+
+async function togglePlugin(id, enable) {
+  try {
+    const res = await fetch('/api/plugins/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, enable })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast(`Đã ${enable ? 'bật' : 'tắt'} plugin ${id}!`);
+      await fetchAllData();
+      renderActiveHub();
+    }
+  } catch (e) {
+    showToast('Lỗi: ' + e.message);
+  }
 }
 
 async function createBackupSnapshot() {
@@ -3605,7 +3428,7 @@ async function createBackupSnapshot() {
     if (data.ok) {
       showToast(`Đã tạo bản sao lưu thành công: ${data.backup_id}!`);
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
@@ -3625,14 +3448,14 @@ async function restoreBackup(backup_id) {
     if (data.ok) {
       showToast(data.message);
       await fetchAllData();
-      renderCurrentTab();
+      renderActiveHub();
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
   }
 }
 
-async function runFirstRunWizard() {
+async function runHealthWizard() {
   showToast('Đang chạy kiểm thử E2E 5 tầng...');
   try {
     const res = await fetch('/api/system/wizard_test', { method: 'POST' });
@@ -3692,21 +3515,20 @@ if (termInput) {
   });
 }
 
+function getStatusClass(st) {
+  if (st === 'DONE') return 'good';
+  if (st === 'BLOCKED') return 'p1';
+  if (st === 'DOING') return 'p3';
+  if (st === 'REVIEW') return 'p2';
+  return 'neutral';
+}
+
 // ==========================================
 // APP INITIALIZATION
 // ==========================================
 window.addEventListener('DOMContentLoaded', async () => {
-  // Bind Sidebar clicks
-  $$('.nav-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const tab = el.getAttribute('data-tab');
-      navigateTo(tab);
-    });
-  });
-
-  // Fetch all live data and render initial tab
   await fetchAllData();
-  renderCurrentTab();
+  renderActiveHub();
 
   // Auto-refresh metrics every 15 seconds
   setInterval(async () => {
