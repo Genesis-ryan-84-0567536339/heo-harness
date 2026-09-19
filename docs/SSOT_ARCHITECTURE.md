@@ -150,8 +150,8 @@ Mọi giao tiếp giữa các plugin và core **bắt buộc** dùng Typed Event
 
 ## 6. LỘ TRÌNH TRIỂN KHAI NHẤT QUÁN (5 PHASES)
 
-- [x] **Phase 1: Hardened Chassis (ĐÃ HOÀN THÀNH):** Core Context, EventBus, CircuitBreaker, BasePlugin, Manager. Unit tests 100% PASS.
-- [ ] **Phase 2: V6 UI Shell & Add-in Hub:** Chuyển hóa giao diện mẫu V6 thành Web UI chính thức (`@heo/ui-dashboard`), hỗ trợ render động các plugin và tab quản lý kho Plugin một chạm.
-- [ ] **Phase 3: Core Provider AGY CLI (`@heo/provider-antigravity`):** Đóng gói connector gọi Google AGY CLI gói tháng làm model chính; cắm thêm stub `@heo/provider-deepseek` làm provider dự phòng.
-- [ ] **Phase 4: Channel Zalo Packaging (`@heo/channel-zalo`):** Đóng gói module Zalo cá nhân hiện tại thành plugin chuẩn, cắm vào `Reality + Identity` và tích hợp quét QR an toàn.
-- [ ] **Phase 5: E2E Verification & Phased Migration:** Chạy song song kiểm thử nghiệm ngặt trên máy chủ, xác thực E2E trace hoàn chỉnh trước khi chuyển đổi chính thức từ Heo v2.1.
+- [x] **Phase 1: Hardened Chassis (HOÀN THÀNH):** Core Context, EventBus, CircuitBreaker, BasePlugin, Manager. Unit tests 100% PASS.
+- [x] **Phase 2: V6 UI Shell & Add-in Hub (HOÀN THÀNH):** Chuyển hóa giao diện mẫu V6 thành Web UI chính thức (`@heo/ui-dashboard`), hỗ trợ render động các plugin và tab quản lý kho Plugin một chạm.
+- [x] **Phase 3: Core Provider AGY CLI (HOÀN THÀNH):** Đóng gói connector gọi Google AGY CLI gói tháng làm model chính (`@heo/provider-antigravity`); cắm thêm stub `@heo/provider-deepseek` làm provider dự phòng.
+- [x] **Phase 4: Channel Zalo Packaging (HOÀN THÀNH):** Đóng gói module Zalo cá nhân (`@heo/channel-zalo`), kiểm soát xuất tin qua Policy Engine, lọc tag thông minh, evidence provenance.
+- [x] **Phase 5: E2E Verification & Phased Migration (HOÀN THÀNH):** 16/16 bài kiểm thử toàn diện vượt qua 100%, bảo đảm độc lập tuyệt đối, không ảnh hưởng bot cũ.
