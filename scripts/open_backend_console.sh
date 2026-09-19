@@ -15,6 +15,8 @@ if ! tmux has-session -t heo-harness 2>/dev/null; then
     sleep 1
 fi
 
-# 2. Kích hoạt cửa sổ Terminal Ptyxis hiển thị trực tiếp lên màn hình
-env DISPLAY=:0 WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-    ptyxis --new-window -T "DSH BACKEND CHASSIS — HEO-HARNESS (PORT 5088)" -- tmux attach -t heo-harness &
+# 2. Kích hoạt cửa sổ Terminal Ptyxis hiển thị trực tiếp lên màn hình (dùng cờ -s độc lập)
+env DISPLAY="${DISPLAY:-:0}" WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
+    XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/1000}" \
+    DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/1000/bus}" \
+    ptyxis -s --new-window -T "DSH BACKEND CHASSIS — HEO-HARNESS (PORT 5088)" -- tmux attach -t heo-harness &
