@@ -112,7 +112,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                     "name": "AGY-ASSIS / HEO OS",
                     "version": "V6 Executive Intelligence OS",
                     "author": "Anh Cơ La (Ryan)",
-                    "email": "genesis.corp.os@gmail.com",
+                    "email": store.get_config().get("boss_email", "") if store else "",
                     "architecture": "Modular Harness (DSH Chassis Standard)",
                     "readiness": "READY_END_TO_END",
                     "core_status": "Healthy",
@@ -446,7 +446,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 reply = f"Dạ {boss_name}! Em {bot_name} nghe đây ạ. Hôm nay em có thể hỗ trợ điều hành công việc gì cho {boss_name} ạ? 🥰"
 
             elif any(k in msg_lower for k in ["tác quyền", "ai tạo", "tác giả", "sở hữu"]):
-                reply = f"Dạ {boss_name}, tác giả sáng lập và chủ nhân duy nhất của em là {boss_name} (Anh Cơ La - genesis.corp.os@gmail.com). Toàn bộ hệ thống được bảo vệ bằng cơ chế RBAC bất biến! 👑"
+                reply = f"Dạ {boss_name}, tác giả sáng lập và chủ nhân duy nhất của em là {boss_name}. Toàn bộ hệ thống được bảo vệ bằng cơ chế RBAC bất biến! 👑"
 
             else:
                 reply = f"Dạ {boss_name}, em {bot_name} đã tiếp nhận chỉ đạo: '{user_msg}'. Em đang phối hợp cùng Core Agent Antigravity để xử lý theo đúng chuẩn SSOT v1.0.0 của {boss_name} ạ! ✨"
@@ -538,16 +538,32 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
+        elif path_clean == "/api/groups/delete":
+            gid = data.get("id", "").strip()
+            if store and hasattr(store, "delete_group"):
+                ok = store.delete_group(gid)
+                self._send_json({"ok": ok, "message": f"Đã xóa nhóm {gid}!" if ok else "Không tìm thấy nhóm"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
         # ================= PEOPLE MUTATION =================
         elif path_clean == "/api/people/create":
             name = data.get("name", "Nhân sự mới").strip()
             role = data.get("role", "Chuyên viên")
-            groups = data.get("groups", "Strategic Partners")
+            groups = data.get("groups", "Chưa phân nhóm")
             email = data.get("email", "")
             phone = data.get("phone", "")
             if store:
                 p = store.add_person(name, role, groups, email, phone)
                 self._send_json({"ok": True, "person": p, "message": f"Đã thêm nhân sự {p['id']} thành công!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/people/delete":
+            pid = data.get("id", "").strip()
+            if store and hasattr(store, "delete_person"):
+                ok = store.delete_person(pid)
+                self._send_json({"ok": ok, "message": f"Đã xóa nhân sự {pid}!" if ok else "Không tìm thấy nhân sự"})
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
@@ -694,7 +710,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
         elif path_clean in ["/api/whatsapp/send", "/api/whatsapp/send_test"]:
-            target = data.get("target", "+84-0567536339")
+            target = data.get("target", "")
             msg = data.get("message", "").strip()
             if not msg:
                 self._send_json({"ok": False, "error": "Nội dung tin nhắn không được để trống"}, 400)
