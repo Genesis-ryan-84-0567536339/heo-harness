@@ -14,6 +14,7 @@ import os
 import shutil
 import urllib.parse
 import uuid
+from pathlib import Path
 
 class DashboardHTTPHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
@@ -275,6 +276,51 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 "antigravity_probe": "PROBE_PASS"
             }
             self._send_json(metrics)
+
+        # ================= CONFIG & CORE AGENT & PIN =================
+        elif path_clean == "/api/config":
+            cfg = store.get_config() if store else {}
+            self._send_json({"ok": True, "config": cfg})
+
+        elif path_clean in ["/api/google/info", "/api/google_info"]:
+            ginfo = store.get_google_auth_info() if store else {}
+            self._send_json({"ok": True, "google": ginfo})
+
+        elif path_clean == "/api/quota":
+            qstats = store.get_quota_stats() if store else {}
+            self._send_json({"ok": True, "quota": qstats})
+
+        elif path_clean in ["/api/pin/status", "/api/pin_status"]:
+            has_p = store.has_security_pin() if store else False
+            self._send_json({"ok": True, "has_pin": has_p})
+
+        elif path_clean in ["/api/zalo/qr.png", "/api/qr.png"]:
+            qr_file = Path("/home/ryan/heo-harness/data/zalo_qr.png")
+            if qr_file.exists():
+                img_data = qr_file.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(img_data)))
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(img_data)
+                return
+            self._send_json({"error": "QR file not found"}, 404)
+
+        elif path_clean in ["/api/zalo/qr", "/api/qr"]:
+            if "image" in self.headers.get("Accept", ""):
+                qr_file = Path("/home/ryan/heo-harness/data/zalo_qr.png")
+                if qr_file.exists():
+                    img_data = qr_file.read_bytes()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "image/png")
+                    self.send_header("Content-Length", str(len(img_data)))
+                    self.send_header("Cache-Control", "no-cache")
+                    self.end_headers()
+                    self.wfile.write(img_data)
+                    return
+            qr_b64 = store.get_zalo_qr_base64() if store else ""
+            self._send_json({"ok": True, "qr_data": qr_b64})
 
         else:
             self._send_json({"error": "Endpoint not found"}, 404)
@@ -721,13 +767,97 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 "message": f"Đã nạp thành công plugin {plugin_id} vào hệ thống Heo-Harness!"
             })
 
-        elif path_clean == "/api/system/open-terminal":
-            try:
-                import subprocess
-                subprocess.Popen(["/home/ryan/heo-harness/scripts/open_backend_console.sh"])
-                self._send_json({"ok": True, "message": "Đã mở cửa sổ Terminal Backend DSH trên màn hình Desktop!"})
-            except Exception as e:
-                self._send_json({"ok": False, "error": str(e)}, 500)
+        elif path_clean == "/api/config":
+            pin = str(data.get("pin", "")).strip()
+            if store:
+                ok, msg, cfg = store.update_config(data, pin)
+                self._send_json({"ok": ok, "message": msg, "config": cfg}, 200 if ok else 403)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/accept_disclaimer":
+            if store:
+                ok, msg, cfg = store.update_config({"disclaimer_accepted": True})
+                self._send_json({"ok": True, "message": "Đã chấp thuận Điều khoản sử dụng & Tuyên bố miễn trừ trách nhiệm!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/unpair_boss":
+            pin = str(data.get("pin", "")).strip()
+            if store:
+                ok, msg = store.unpair_boss(pin)
+                self._send_json({"ok": ok, "message": msg}, 200 if ok else 403)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/set_pin":
+            new_pin = str(data.get("new_pin", "")).strip()
+            old_pin = str(data.get("old_pin", "")).strip()
+            if store:
+                ok, msg = store.set_security_pin(new_pin, old_pin)
+                self._send_json({"ok": ok, "message": msg}, 200 if ok else 400)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/verify_pin":
+            pin = str(data.get("pin", "")).strip()
+            if store:
+                ok = store.verify_security_pin(pin)
+                self._send_json({"ok": ok, "has_pin": store.has_security_pin()}, 200 if ok else 403)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/switch_model":
+            model = str(data.get("model", "")).strip()
+            if store and model:
+                res = store.switch_model(model)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "Invalid model parameter"}, 400)
+
+        elif path_clean == "/api/set_effort":
+            effort = str(data.get("effort", "high")).strip()
+            if store:
+                res = store.set_effort(effort)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/check_quota":
+            if store:
+                res = store.check_quota()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/logout_google":
+            if store:
+                res = store.logout_google()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/zalo/refresh_qr", "/api/refresh_qr"]:
+            if store:
+                res = store.refresh_zalo_qr()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/zalo/logout", "/api/logout_zalo"]:
+            pin = str(data.get("pin", "")).strip()
+            if store:
+                ok, msg = store.logout_zalo(pin)
+                self._send_json({"ok": ok, "message": msg}, 200 if ok else 403)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/zalo/restart_bridge", "/api/restart_zalo_bridge"]:
+            if store:
+                res = store.restart_zalo_bridge()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
         else:
             self._send_json({"error": "Endpoint not found"}, 404)
