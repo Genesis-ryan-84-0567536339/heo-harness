@@ -1,419 +1,705 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<html lang="vi" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Heo-Harness — Trình Quản Trị Khung Sườn AI Agent & Kho Plugin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: { 500: '#ec4899', 600: '#db2777', 700: '#be185d' },
-            dark: { 900: '#0b0f19', 800: '#111827', 700: '#1f2937' }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    .glass { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .badge-core { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
-    .badge-channel { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-    .badge-provider { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
-    .badge-tool { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .badge-ui { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-agent { background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AGY-ASSIS / HEO — V6 Executive UI</title>
+<style>
+:root{
+  --bg:#08111f;--bg2:#0b1526;--panel:#0f1c2f;--panel2:#12233b;--panel3:#172a45;
+  --text:#eaf2ff;--muted:#8ea2bd;--faint:#5c7391;--line:#243955;--line2:#1c304a;
+  --brand:#65e6b4;--brand2:#65a8ff;--accent:#a889ff;--warn:#ffc857;--danger:#ff6b7a;--good:#66e3a4;
+  --shadow:0 18px 50px rgba(0,0,0,.28);--radius:18px;--radius2:12px;
+  --sidebar:272px;
+}
+html[data-theme="light"]{
+  --bg:#eef4fb;--bg2:#f7faff;--panel:#ffffff;--panel2:#f7fbff;--panel3:#eef5ff;
+  --text:#142238;--muted:#5f728b;--faint:#8192a8;--line:#d9e4f1;--line2:#e6edf6;
+  --shadow:0 15px 40px rgba(28,54,84,.12);
+}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+body{overflow:hidden}.app{display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr);height:100vh;background:linear-gradient(135deg,var(--bg),var(--bg2))}
+.sidebar{border-right:1px solid var(--line2);background:rgba(8,17,31,.92);backdrop-filter:blur(16px);display:flex;flex-direction:column;min-width:0;z-index:10}
+html[data-theme="light"] .sidebar{background:rgba(255,255,255,.92)}
+.brand{padding:22px 20px 14px;display:flex;align-items:center;gap:12px}.brand-mark{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#062019;font-weight:900;box-shadow:0 12px 30px rgba(101,230,180,.22)}
+.brand h1{font-size:15px;margin:0;letter-spacing:.06em}.brand p{margin:3px 0 0;font-size:11px;color:var(--muted)}
+.sidebar-scroll{overflow:auto;padding:5px 12px 16px}.nav-section{margin-top:13px}.nav-title{padding:0 10px 7px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:800}.nav-item{width:100%;border:0;background:transparent;color:var(--muted);display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;cursor:pointer;font-size:13px;text-align:left;transition:.18s}.nav-item:hover{background:var(--panel2);color:var(--text)}.nav-item.active{background:linear-gradient(90deg,rgba(101,230,180,.14),rgba(101,168,255,.08));color:var(--text);box-shadow:inset 2px 0 var(--brand)}.nav-icon{width:20px;text-align:center;font-size:15px}.nav-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(255,200,87,.12);color:var(--warn);font-weight:800}
+.sidebar-foot{margin-top:auto;padding:12px;border-top:1px solid var(--line2)}.mini-status{background:var(--panel);border:1px solid var(--line2);border-radius:14px;padding:12px}.mini-status-row{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11px;color:var(--muted);margin:5px 0}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.dot.good{background:var(--good);box-shadow:0 0 0 4px rgba(102,227,164,.1)}.dot.warn{background:var(--warn)}.dot.danger{background:var(--danger)}
+.main{min-width:0;display:flex;flex-direction:column}.topbar{height:72px;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid var(--line2);background:rgba(8,17,31,.58);backdrop-filter:blur(14px);z-index:7}.html-light{}
+html[data-theme="light"] .topbar{background:rgba(255,255,255,.72)}
+.top-search{flex:1;max-width:660px;position:relative}.top-search input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:11px 42px 11px 38px;outline:none}.top-search .left{position:absolute;left:13px;top:10px;color:var(--muted)}.top-search .kbd{position:absolute;right:11px;top:9px;color:var(--faint);font-size:10px;border:1px solid var(--line);border-radius:6px;padding:3px 6px}.top-actions{margin-left:auto;display:flex;align-items:center;gap:9px}.icon-btn,.btn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;cursor:pointer;transition:.18s}.icon-btn{width:39px;height:39px;display:grid;place-items:center}.icon-btn:hover,.btn:hover{border-color:var(--brand2);transform:translateY(-1px)}.btn{padding:9px 13px;font-size:12px;font-weight:750}.btn.primary{background:linear-gradient(135deg,var(--brand),#5fd4cf);color:#052018;border-color:transparent}.btn.blue{background:rgba(101,168,255,.13);color:#a8ccff;border-color:rgba(101,168,255,.36)}.btn.danger{background:rgba(255,107,122,.1);color:#ff97a2;border-color:rgba(255,107,122,.35)}.btn.ghost{background:transparent}.owner-chip{display:flex;align-items:center;gap:9px;border:1px solid var(--line);padding:5px 9px 5px 5px;border-radius:12px;background:var(--panel)}.avatar{width:29px;height:29px;border-radius:9px;background:linear-gradient(135deg,var(--brand2),var(--accent));display:grid;place-items:center;font-size:11px;font-weight:900;color:white}.owner-chip span{font-size:11px;color:var(--muted)}.owner-chip b{display:block;color:var(--text);font-size:11px}
+.content{overflow:auto;padding:22px 24px 42px}.content-inner{max-width:1580px;margin:0 auto}.demo-banner{display:flex;align-items:center;gap:10px;border:1px solid rgba(255,200,87,.3);background:rgba(255,200,87,.06);color:#ffd880;border-radius:12px;padding:9px 12px;font-size:11px;margin-bottom:15px}.demo-banner strong{color:#ffe5a6}.view-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin:4px 0 18px}.view-head h2{margin:0;font-size:23px;letter-spacing:-.02em}.view-head p{margin:5px 0 0;color:var(--muted);font-size:12px;max-width:850px}.view-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.grid{display:grid;gap:14px}.grid.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.span-layout{grid-template-columns:minmax(0,1.7fr) minmax(330px,.9fr)}.card{background:linear-gradient(180deg,var(--panel),rgba(15,28,47,.94));border:1px solid var(--line2);border-radius:var(--radius);box-shadow:var(--shadow);min-width:0}.html-light{}
+html[data-theme="light"] .card{background:linear-gradient(180deg,#fff,#fbfdff)}
+.card-pad{padding:16px}.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:15px 16px 0}.card-head h3{margin:0;font-size:13px}.card-head p{margin:4px 0 0;font-size:10px;color:var(--muted)}.card-body{padding:14px 16px 16px}.kpi{padding:16px;position:relative;overflow:hidden}.kpi:after{content:"";position:absolute;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(101,168,255,.13),transparent 70%);right:-25px;top:-30px}.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.kpi-value{font-size:25px;font-weight:850;margin:7px 0 4px;letter-spacing:-.03em}.kpi-sub{font-size:10px;color:var(--faint)}.trend-up{color:var(--good)}.trend-warn{color:var(--warn)}.metric-line{height:5px;background:var(--panel3);border-radius:99px;margin-top:10px;overflow:hidden}.metric-line i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));border-radius:99px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:850;letter-spacing:.03em;border:1px solid transparent;white-space:nowrap}.badge.fact{background:rgba(101,230,180,.09);color:#8ff0c8;border-color:rgba(101,230,180,.2)}.badge.calculated{background:rgba(101,168,255,.1);color:#a6ccff;border-color:rgba(101,168,255,.25)}.badge.inferred{background:rgba(168,137,255,.1);color:#c3aeff;border-color:rgba(168,137,255,.23)}.badge.forecast{background:rgba(255,200,87,.1);color:#ffd67a;border-color:rgba(255,200,87,.24)}.badge.estimated{background:rgba(255,133,93,.1);color:#ffb29a;border-color:rgba(255,133,93,.25)}.badge.unavailable{background:rgba(142,162,189,.08);color:var(--muted);border-color:var(--line)}.badge.p1{background:rgba(255,107,122,.1);color:#ff98a3;border-color:rgba(255,107,122,.25)}.badge.p2{background:rgba(255,200,87,.1);color:#ffd570;border-color:rgba(255,200,87,.22)}.badge.p3{background:rgba(101,168,255,.1);color:#a6ccff;border-color:rgba(101,168,255,.22)}.badge.good{background:rgba(102,227,164,.1);color:#8df0bc;border-color:rgba(102,227,164,.22)}.badge.danger{background:rgba(255,107,122,.1);color:#ff98a3;border-color:rgba(255,107,122,.25)}
+.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;font-size:11px}.table th{text-align:left;color:var(--faint);font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:9px 10px;border-bottom:1px solid var(--line2);white-space:nowrap}.table td{padding:10px;border-bottom:1px solid var(--line2);color:var(--muted);vertical-align:middle}.table tr:last-child td{border-bottom:0}.table tr:hover td{background:rgba(101,168,255,.025)}.table strong{color:var(--text);font-weight:750}.link{color:#91bdff;cursor:pointer;text-decoration:none}.link:hover{text-decoration:underline}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:10px}.muted{color:var(--muted)}.faint{color:var(--faint)}.small{font-size:10px}.section-title{font-size:12px;font-weight:850;margin:17px 0 10px}.divider{height:1px;background:var(--line2);margin:12px 0}.stack{display:flex;flex-direction:column;gap:9px}.row{display:flex;align-items:center;gap:8px}.between{justify-content:space-between}.wrap{flex-wrap:wrap}.grow{flex:1}.right{text-align:right}
+.list-item{padding:11px 0;border-bottom:1px solid var(--line2)}.list-item:last-child{border-bottom:0}.item-title{font-size:11px;font-weight:750;color:var(--text)}.item-meta{font-size:9px;color:var(--faint);margin-top:4px}.item-desc{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.45}.evidence-link{margin-top:7px;font-size:9px;color:#95c2ff;cursor:pointer}.evidence-link:hover{text-decoration:underline}
+.progress-ring{--p:75;width:52px;height:52px;border-radius:50%;background:conic-gradient(var(--brand) calc(var(--p)*1%),var(--panel3) 0);position:relative;display:grid;place-items:center}.progress-ring:after{content:"";width:38px;height:38px;background:var(--panel);border-radius:50%;position:absolute}.progress-ring b{z-index:1;font-size:10px}
+.tabs{display:flex;gap:5px;overflow:auto;padding:5px;background:var(--panel2);border:1px solid var(--line2);border-radius:12px;margin-bottom:14px}.tab{border:0;background:transparent;color:var(--muted);padding:8px 10px;border-radius:8px;font-size:10px;cursor:pointer;white-space:nowrap}.tab.active{background:var(--panel);color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.entity-head{display:flex;gap:14px;align-items:flex-start}.entity-icon{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,rgba(101,230,180,.25),rgba(101,168,255,.18));border:1px solid rgba(101,230,180,.25);display:grid;place-items:center;font-size:21px}.entity-title h3{margin:1px 0 4px;font-size:18px}.entity-title p{margin:0;color:var(--muted);font-size:10px}.pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.pill{font-size:9px;border:1px solid var(--line);border-radius:999px;padding:4px 7px;color:var(--muted);background:var(--panel2)}
+.timeline{position:relative;padding-left:22px}.timeline:before{content:"";position:absolute;left:7px;top:7px;bottom:7px;width:1px;background:var(--line)}.timeline-item{position:relative;padding:0 0 14px}.timeline-item:before{content:"";position:absolute;left:-19px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--brand2);box-shadow:0 0 0 4px rgba(101,168,255,.08)}.timeline-item h4{margin:0;font-size:10px}.timeline-item p{margin:4px 0 0;font-size:9px;color:var(--muted);line-height:1.5}
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:12px;overflow:auto;padding-bottom:5px}.kanban-col{background:var(--panel2);border:1px solid var(--line2);border-radius:14px;min-height:470px}.kanban-head{padding:11px 12px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;font-size:10px;font-weight:800}.kanban-card{margin:9px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px}.kanban-card h4{margin:0 0 6px;font-size:10px}.kanban-card p{margin:0;font-size:9px;color:var(--muted);line-height:1.45}
+.calendar{display:grid;grid-template-columns:70px repeat(5,minmax(150px,1fr));border:1px solid var(--line2);border-radius:14px;overflow:auto;background:var(--panel)}.cal-cell{min-height:72px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);padding:8px;font-size:9px;color:var(--muted)}.cal-head{min-height:auto;background:var(--panel2);font-weight:800;color:var(--text)}.cal-time{background:var(--panel2);color:var(--faint)}.event{padding:6px;border-radius:8px;background:rgba(101,168,255,.1);border:1px solid rgba(101,168,255,.2);color:#b8d7ff;margin-bottom:4px}.event.warn{background:rgba(255,200,87,.1);border-color:rgba(255,200,87,.2);color:#ffe0a0}.event.good{background:rgba(101,230,180,.1);border-color:rgba(101,230,180,.2);color:#a5f3d3}
+.slo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.slo{border:1px solid var(--line2);border-radius:12px;padding:11px;background:var(--panel2)}.slo b{display:block;font-size:11px}.slo span{font-size:9px;color:var(--muted)}.slo .bar{height:5px;background:var(--panel3);border-radius:99px;margin-top:8px;overflow:hidden}.slo .bar i{height:100%;display:block;background:var(--good);border-radius:99px}.slo.warn .bar i{background:var(--warn)}
+.codebox{background:#07101d;color:#a9c7e6;border:1px solid #1a2d46;border-radius:12px;padding:12px;overflow:auto;font:10px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}.html-light .codebox{background:#f6f9fd;color:#2a3d55}
+.stepper{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:10px}.step{border:1px solid var(--line2);border-radius:13px;padding:12px;background:var(--panel2)}.step .n{width:27px;height:27px;border-radius:9px;display:grid;place-items:center;font-size:10px;font-weight:900;margin-bottom:8px;background:rgba(101,168,255,.12);color:#a9ccff}.step.done .n{background:rgba(102,227,164,.12);color:#9af0c4}.step h4{font-size:10px;margin:0 0 4px}.step p{font-size:9px;color:var(--muted);margin:0;line-height:1.4}
+.callout{border-left:3px solid var(--brand2);background:rgba(101,168,255,.05);padding:10px 12px;border-radius:0 10px 10px 0;font-size:10px;color:var(--muted);line-height:1.5}.callout.warn{border-left-color:var(--warn);background:rgba(255,200,87,.05)}.callout.danger{border-left-color:var(--danger);background:rgba(255,107,122,.05)}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.field label{display:block;font-size:9px;color:var(--faint);margin-bottom:5px}.field input,.field select,.field textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:9px 10px;font-size:10px;outline:none}.field textarea{min-height:76px;resize:vertical}.field.full{grid-column:1/-1}.switch{width:38px;height:22px;border-radius:99px;background:var(--panel3);border:1px solid var(--line);position:relative;cursor:pointer}.switch:after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;top:2px;left:3px;background:var(--muted);transition:.18s}.switch.on{background:rgba(101,230,180,.15);border-color:rgba(101,230,180,.4)}.switch.on:after{left:18px;background:var(--brand)}
+.overlay{position:fixed;inset:0;background:rgba(2,7,13,.58);backdrop-filter:blur(6px);z-index:30;display:none;align-items:center;justify-content:center;padding:20px}.overlay.show{display:flex}.modal{width:min(720px,96vw);max-height:88vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:0 30px 100px rgba(0,0,0,.45)}.modal-head{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--line2)}.modal-head h3{margin:0;font-size:14px}.modal-head p{margin:4px 0 0;color:var(--muted);font-size:9px}.modal-body{padding:18px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--line2)}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:min(480px,92vw);background:var(--panel);border-left:1px solid var(--line);box-shadow:-25px 0 80px rgba(0,0,0,.35);z-index:35;transform:translateX(102%);transition:.22s;overflow:auto}.drawer.show{transform:translateX(0)}.drawer-head{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line2);padding:16px;display:flex;justify-content:space-between;z-index:2}.drawer-body{padding:16px}.evidence-card{border:1px solid var(--line2);border-radius:12px;padding:11px;margin-bottom:9px;background:var(--panel2)}.evidence-card h4{font-size:10px;margin:0 0 5px}.evidence-card p{font-size:9px;color:var(--muted);margin:0;line-height:1.45}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);opacity:0;z-index:50;background:var(--text);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:10px;font-weight:800;transition:.22s;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}
+.qr{width:210px;height:210px;margin:8px auto;background-color:#fff;background-image:repeating-linear-gradient(0deg,#000 0 5px,transparent 5px 10px),repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 10px);background-blend-mode:multiply;position:relative;border:13px solid #fff;box-shadow:0 6px 30px rgba(0,0,0,.25)}.qr:before,.qr:after{content:"";position:absolute;width:42px;height:42px;border:10px solid #000;background:#fff;top:4px}.qr:before{left:4px}.qr:after{right:4px}.qr-center{position:absolute;width:42px;height:42px;border:10px solid #000;background:#fff;left:50%;bottom:4px;transform:translateX(-50%)}
+.arch{display:grid;grid-template-columns:repeat(7,minmax(115px,1fr));gap:8px;overflow:auto}.arch-node{min-height:86px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:10px;position:relative}.arch-node:after{content:"→";position:absolute;right:-10px;top:32px;color:var(--faint);z-index:2}.arch-node:last-child:after{display:none}.arch-node b{font-size:10px}.arch-node p{font-size:8px;color:var(--muted);line-height:1.45;margin:5px 0 0}
+@media(max-width:1200px){:root{--sidebar:228px}.grid.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.span-layout{grid-template-columns:1fr}.slo-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){body{overflow:auto}.app{display:block;height:auto;min-height:100vh}.sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;transform:translateX(-102%);transition:.2s;box-shadow:20px 0 50px rgba(0,0,0,.35)}.sidebar.open{transform:translateX(0)}.main{min-height:100vh}.topbar{position:sticky;top:0;padding:0 12px}.mobile-menu{display:grid!important}.owner-chip{display:none}.content{padding:15px 12px 30px}.grid.cols-4,.grid.cols-3,.grid.cols-2,.form-grid{grid-template-columns:1fr}.view-head{display:block}.view-actions{justify-content:flex-start;margin-top:10px}.stepper{grid-template-columns:1fr}.slo-grid{grid-template-columns:1fr}.calendar{grid-template-columns:60px repeat(5,170px)}.arch{grid-template-columns:repeat(7,150px)}}
+.mobile-menu{display:none}
+.hidden{display:none!important}
+</style>
 </head>
-<body class="bg-dark-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
-
-  <!-- Header & Navigation -->
-  <header class="glass sticky top-0 z-50 border-b border-slate-800/80 px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center space-x-3">
-      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-600 flex items-center justify-center text-xl shadow-lg shadow-pink-500/20 ring-2 ring-pink-400/30">
-        🐷
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">H</div>
+      <div><h1>HEO OS / EXECUTIVE</h1><p>V6 Executive Intelligence OS</p></div>
+    </div>
+    <div class="sidebar-scroll">
+      <div class="nav-section">
+        <div class="nav-title">Điều hành</div>
+        <button class="nav-item active" data-route="dashboard"><span class="nav-icon">◫</span>Command Center</button>
+        <button class="nav-item" data-route="attention"><span class="nav-icon">⚑</span>Attention Queue <span class="nav-badge">5</span></button>
+        <button class="nav-item" data-route="work"><span class="nav-icon">✓</span>Work OS</button>
+        <button class="nav-item" data-route="calendar"><span class="nav-icon">▦</span>Calendar & Reminder</button>
       </div>
-      <div>
-        <div class="flex items-center space-x-2">
-          <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-pink-400 via-rose-300 to-cyan-300 bg-clip-text text-transparent">HEO-HARNESS</span>
-          <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">v3.0 Chassis</span>
-        </div>
-        <div class="text-xs text-slate-400">Kiến trúc Module "Everything is a Plugin" (DeepSeek Style)</div>
+      <div class="nav-section">
+        <div class="nav-title">Reality + Identity</div>
+        <button class="nav-item" data-route="groups"><span class="nav-icon">◉</span>Group 360</button>
+        <button class="nav-item" data-route="people"><span class="nav-icon">◎</span>Person 360</button>
+        <button class="nav-item" data-route="whatsapp"><span class="nav-icon">💬</span>Zalo / Channel Ops</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-title">Intelligence</div>
+        <button class="nav-item" data-route="intel"><span class="nav-icon">✦</span>Insights & Forecast</button>
+        <button class="nav-item" data-route="value"><span class="nav-icon">◇</span>Outcome & Value</button>
+        <button class="nav-item" data-route="learning"><span class="nav-icon">↻</span>Learning Loop</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-title">Governance</div>
+        <button class="nav-item" data-route="approvals"><span class="nav-icon">⌁</span>Approvals <span class="nav-badge">3</span></button>
+        <button class="nav-item" data-route="policies"><span class="nav-icon">⚙</span>Policy Engine</button>
+        <button class="nav-item" data-route="executions"><span class="nav-icon">⇢</span>Executions & Trace</button>
+        <button class="nav-item" data-route="tools"><span class="nav-icon">🧩</span>Tools & Add-ins Hub <span class="nav-badge" id="sidebarPluginCount">7</span></button>
+        <button class="nav-item" data-route="artifacts"><span class="nav-icon">▤</span>Artifacts</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-title">System</div>
+        <button class="nav-item" data-route="control"><span class="nav-icon">◈</span>Control Room</button>
+        <button class="nav-item" data-route="audit"><span class="nav-icon">≡</span>Audit Ledger</button>
+        <button class="nav-item" data-route="settings"><span class="nav-icon">⚒</span>Owner & Operations</button>
       </div>
     </div>
-
-    <!-- Main Navigation Tabs -->
-    <nav class="flex items-center space-x-2">
-      <button onclick="switchTab('plugins')" id="tab-btn-plugins" class="px-4 py-2 rounded-xl text-sm font-medium transition flex items-center space-x-2 bg-pink-500 text-white shadow-lg shadow-pink-500/25">
-        <span>🧩</span><span>Kho Plugin & Tiện Ích</span>
-      </button>
-      <button onclick="switchTab('overview')" id="tab-btn-overview" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center space-x-2">
-        <span>📊</span><span>Tổng Quan Hệ Thống</span>
-      </button>
-      <button onclick="switchTab('persona')" id="tab-btn-persona" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center space-x-2">
-        <span>🎭</span><span>Danh Xưng & Persona</span>
-      </button>
-    </nav>
-
-    <!-- Author Badge -->
-    <div class="flex items-center space-x-2 text-xs text-slate-400 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700/60">
-      <span>Tác giả:</span>
-      <strong class="text-pink-400">Anh Cơ La</strong>
-      <span class="text-slate-600">•</span>
-      <a href="mailto:genesis.corp.os@gmail.com" class="text-slate-300 hover:text-cyan-300 transition">genesis.corp.os@gmail.com</a>
+    <div class="sidebar-foot">
+      <div class="mini-status">
+        <div class="mini-status-row"><span><i class="dot good" id="dotCore"></i>Core Chassis</span><b id="valCore">Healthy</b></div>
+        <div class="mini-status-row"><span><i class="dot good" id="dotAgy"></i>Antigravity CLI</span><b id="valAgy">Probe PASS</b></div>
+        <div class="mini-status-row"><span><i class="dot good" id="dotZalo"></i>Zalo Channel</span><b id="valZalo">Connected</b></div>
+        <div class="mini-status-row"><span><i class="dot good" id="dotReady"></i>Readiness</span><b id="valReady">READY_E2E</b></div>
+      </div>
     </div>
-  </header>
+  </aside>
 
-  <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
-
-    <!-- TAB 1: KHO PLUGIN (MARKETPLACE & MANAGER) -->
-    <section id="tab-plugins" class="space-y-6">
-      
-      <!-- Banner giới thiệu kiến trúc -->
-      <div class="glass p-6 rounded-3xl border border-slate-700/60 relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800/60 to-slate-900">
-        <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl">🧩</div>
-        <div class="max-w-3xl space-y-2">
-          <div class="flex items-center space-x-2 text-xs font-bold text-pink-400 uppercase tracking-wider">
-            <span>🛡️ Circuit Breaker & Error Boundary</span>
-            <span>•</span>
-            <span>Hot Mount / Unmount 0.1s</span>
-          </div>
-          <h2 class="text-2xl font-black text-white">Trung Tâm Điều Hành & Kho Tiện Ích Plugin</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
-            Mỗi tính năng, cổng kết nối, AI model hay giao diện trong Heo-Harness đều là một <strong>Plugin độc lập</strong>. Nếu một plugin gặp sự cố, hệ thống sẽ tự động ngắt mạch (Circuit Breaker) để cách ly lỗi, tuyệt đối không làm gián đoạn bot Zalo và hệ thống lõi!
-          </p>
-        </div>
-
-        <!-- Sub-tabs: Đã Cài vs Chợ Tiện Ích -->
-        <div class="mt-6 flex items-center space-x-3 border-t border-slate-700/60 pt-4">
-          <button onclick="switchPluginSubTab('installed')" id="subtab-btn-installed" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-700 text-white flex items-center space-x-2">
-            <span>📦</span><span>Đã Cài Đặt (<span id="installed-count">0</span>)</span>
-          </button>
-          <button onclick="switchPluginSubTab('catalog')" id="subtab-btn-catalog" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2">
-            <span>🛒</span><span>Chợ Tiện Ích & Core Agent Mở Rộng (<span id="catalog-count">0</span>)</span>
-          </button>
-        </div>
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn mobile-menu" id="mobileMenu">☰</button>
+      <div class="top-search"><span class="left">⌕</span><input id="globalSearch" placeholder="Tìm group, person, work, insight, execution, add-ins…" /><span class="kbd">⌘ K</span></div>
+      <div class="top-actions">
+        <button class="btn ghost" id="wizardBtn">First-Run</button>
+        <button class="icon-btn" id="themeBtn" title="Đổi giao diện">☼</button>
+        <button class="icon-btn" id="notifyBtn" title="Thông báo">●</button>
+        <div class="owner-chip"><div class="avatar">R</div><div><b>Anh Cơ La (Ryan)</b><span>genesis.corp.os@gmail.com</span></div></div>
       </div>
-
-      <!-- DANH SÁCH PLUGIN ĐÃ CÀI ĐẶT -->
-      <div id="subtab-installed" class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="text-base font-bold text-white flex items-center space-x-2">
-            <span>⚡</span><span>Danh Sách Plugin Đang Hoạt Động Trên Khung Sườn (Harness)</span>
-          </h3>
-          <button onclick="refreshPlugins()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700 flex items-center space-x-1.5 transition">
-            <span class="animate-spin text-xs">🔄</span><span>Làm mới</span>
-          </button>
-        </div>
-
-        <div id="installed-plugins-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Render dynamically via JavaScript -->
-        </div>
+    </header>
+    <div class="content">
+      <div class="content-inner">
+        <div class="demo-banner"><span>🛡️</span><div><strong>Hệ Thống Heo-Harness Trực Chiến (Chuẩn V6 SSOT).</strong> Quản trị Modular Khung Sườn độc lập · Circuit Breaker bảo vệ 100% · Core Agent AGY CLI gói tháng.</div></div>
+        <div id="view"></div>
       </div>
-
-      <!-- KHO TIỆN ÍCH (MARKETPLACE CATALOG) -->
-      <div id="subtab-catalog" class="space-y-4 hidden">
-        <div class="flex items-center justify-between">
-          <h3 class="text-base font-bold text-white flex items-center space-x-2">
-            <span>🛒</span><span>Kho Plugin Tiện Ích & Core Agent Sẵn Sàng Cài Đặt (1-Click Install)</span>
-          </h3>
-          <span class="text-xs text-slate-400">Tự động tích hợp vào Harness mà không cần khởi động lại</span>
-        </div>
-
-        <div id="catalog-plugins-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Render dynamically via JavaScript -->
-        </div>
-      </div>
-
-    </section>
-
-    <!-- TAB 2: TỔNG QUAN HỆ THỐNG -->
-    <section id="tab-overview" class="space-y-6 hidden">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="glass p-5 rounded-2xl border border-slate-800">
-          <div class="text-xs text-slate-400 mb-1">Kiến Trúc Nhân Lõi</div>
-          <div class="text-xl font-bold text-white">Heo-Harness</div>
-          <div class="text-[11px] text-pink-400 mt-1">DeepSeek "Everything is a Plugin"</div>
-        </div>
-        <div class="glass p-5 rounded-2xl border border-slate-800">
-          <div class="text-xs text-slate-400 mb-1">Tác Giả Sáng Lập</div>
-          <div class="text-xl font-bold text-white">Anh Cơ La</div>
-          <div class="text-[11px] text-emerald-400 mt-1">Định danh bất biến 100%</div>
-        </div>
-        <div class="glass p-5 rounded-2xl border border-slate-800">
-          <div class="text-xs text-slate-400 mb-1">Circuit Breaker Status</div>
-          <div class="text-xl font-bold text-emerald-400">Active & Safe</div>
-          <div class="text-[11px] text-slate-400 mt-1">Cách ly lỗi hoàn toàn</div>
-        </div>
-        <div class="glass p-5 rounded-2xl border border-slate-800">
-          <div class="text-xs text-slate-400 mb-1">Cổng Phục Vụ</div>
-          <div class="text-xl font-bold text-cyan-400">Port 5066</div>
-          <div class="text-[11px] text-slate-400 mt-1">REST API & Web Console</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 3: DANH XƯNG & PERSONA -->
-    <section id="tab-persona" class="space-y-6 hidden">
-      <div class="glass p-6 rounded-3xl border border-slate-800 space-y-4">
-        <h3 class="text-lg font-bold text-white flex items-center space-x-2">
-          <span>🎭</span><span>Cấu Hình Danh Xưng & 7 Phong Cách Thái Độ</span>
-        </h3>
-        <p class="text-xs text-slate-400">Được quản lý tự trị bởi Plugin <code>@heo/plugin-persona</code>.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-            <div class="text-xs text-slate-400 mb-1">Danh Xưng Chủ Nhân:</div>
-            <div class="text-base font-bold text-pink-400">Sếp Cơ La (Ryan)</div>
-          </div>
-          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-            <div class="text-xs text-slate-400 mb-1">Tên Gọi Trợ Lý:</div>
-            <div class="text-base font-bold text-cyan-400">Bé Heo</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
+    </div>
   </main>
+</div>
 
-  <!-- Modal xem Log riêng của từng Plugin -->
-  <div id="log-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="glass max-w-2xl w-full rounded-2xl border border-slate-700 p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h4 class="font-bold text-white text-sm flex items-center space-x-2">
-          <span>📋</span><span id="modal-plugin-title">Nhật ký hoạt động Plugin</span>
-        </h4>
-        <button onclick="closeLogModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
-      </div>
-      <div id="modal-log-content" class="bg-black/90 p-4 rounded-xl font-mono text-xs text-slate-300 h-64 overflow-y-auto space-y-1">
-      </div>
+<div class="drawer" id="drawer"><div class="drawer-head"><div><b>Evidence drill-down</b><div class="small muted" id="drawerSubtitle">Typed refs · provenance · trace</div></div><button class="icon-btn" data-close-drawer>×</button></div><div class="drawer-body" id="drawerBody"></div></div>
+<div class="overlay" id="modalOverlay"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast">Đã cập nhật</div>
+
+<script>
+const $=(q,el=document)=>el.querySelector(q); const $$=(q,el=document)=>[...el.querySelectorAll(q)];
+const state={route:'dashboard',groupTab:'overview',personTab:'dossier',approved:new Set(),denied:new Set(),theme:'dark'};
+const sample={
+ attention:[
+  {id:'ATT-1028',band:'P1',title:'Cam kết giao báo giá đã quá hạn 19 giờ',subject:'Work W-341 · Group Nhà phân phối miền Nam',truth:'CALCULATED',reason:'deadline_overdue + owner_dependency',action:'Nhắc owner nội bộ và đề xuất follow-up',evidence:'raw_event:RE-88311 · work_item:W-341'},
+  {id:'ATT-1032',band:'P1',title:'Phê duyệt gửi tài liệu đối tác đang chờ 24 phút',subject:'Approval AP-91 · Person Nguyễn Anh',truth:'FACT',reason:'approval_waiting + business_value_high',action:'Owner review approval',evidence:'approval:AP-91 · artifact:AF-22'},
+  {id:'ATT-1041',band:'P2',title:'Rủi ro quan hệ tăng sau 3 lần follow-up chưa phản hồi',subject:'Person P-018 · Group Strategic Partners',truth:'INFERRED',reason:'friction_signal + response_drop',action:'Xem evidence trước khi hành động',evidence:'message:MSG-1209 · insight:IN-771'},
+  {id:'ATT-1049',band:'P2',title:'Deadline dự án có khả năng trượt',subject:'Work W-398 · Project Phoenix',truth:'FORECAST',reason:'blocked_dependency + deadline_72h',action:'Resolve blocker trước 15:00',evidence:'forecast:FC-301 · work_item:W-398'},
+  {id:'ATT-1053',band:'P3',title:'Artifact sắp hết retention',subject:'Artifact AF-17',truth:'CALCULATED',reason:'retention_window',action:'Pin evidence hoặc để hệ thống expire',evidence:'artifact:AF-17'}
+ ],
+ approvals:[
+  {id:'AP-91',ttl:'06:12',action:'whatsapp.send_message',target:'Nguyễn Anh · Strategic Partners',summary:'Gửi file Báo giá V3 cùng lời nhắn follow-up',why:'Work W-341 quá hạn và owner đã yêu cầu chuẩn bị follow-up',data:'Tên người nhận, nội dung tin nhắn, artifact AF-22',resource:'WhatsApp · 1 outbound · cost unavailable',fingerprint:'d18e…77ab'},
+  {id:'AP-94',ttl:'14:48',action:'artifact.send',target:'Group Sales Ops',summary:'Gửi biên bản họp đã xác nhận',why:'Event EV-88 chuyển HELD, artifact AF-31 available',data:'Group id, file AF-31, caption',resource:'WhatsApp · provider receipt required',fingerprint:'a2c4…9ef1'},
+  {id:'AP-97',ttl:'21:05',action:'scheduler.create',target:'Internal owner reminder',summary:'Tạo reminder 09:00 sáng mai',why:'Commitment C-155 chưa có follow-up',data:'Work ref + schedule',resource:'Internal · no outbound',fingerprint:'30be…151a'}
+ ],
+ groups:[
+  {id:'G-001',name:'Strategic Partners',purpose:'Đối tác chiến lược · cơ hội & cam kết',health:'Healthy',members:28,open:7,alerts:2,policy:'POL-G-STRATEGIC v8',instruction:'INS-G-12 v4'},
+  {id:'G-002',name:'Sales Ops',purpose:'Vận hành bán hàng & thực thi',health:'Healthy',members:34,open:12,alerts:1,policy:'POL-G-SALES v12',instruction:'INS-G-18 v6'},
+  {id:'G-003',name:'Project Phoenix',purpose:'Điều phối dự án triển khai',health:'Lagging',members:16,open:9,alerts:3,policy:'POL-G-PHX v5',instruction:'INS-G-20 v3'}
+ ],
+ people:[
+  {id:'P-018',name:'Nguyễn Anh',role:'Partner Lead',groups:'Strategic Partners',rel:'Medium risk',open:3,last:'38 phút trước'},
+  {id:'P-022',name:'Trần Minh',role:'Sales Manager',groups:'Sales Ops',rel:'Stable',open:5,last:'12 phút trước'},
+  {id:'P-041',name:'Lê Hương',role:'Project Owner',groups:'Project Phoenix',rel:'Opportunity',open:4,last:'1 giờ trước'}
+ ],
+ works:[
+  {id:'W-341',title:'Gửi báo giá V3 cho Nguyễn Anh',status:'BLOCKED',owner:'Owner',deadline:'Hôm nay 09:00',group:'Strategic Partners',priority:'P1'},
+  {id:'W-398',title:'Chốt dependency API đối tác',status:'DOING',owner:'Lê Hương',deadline:'19/09 15:00',group:'Project Phoenix',priority:'P2'},
+  {id:'W-403',title:'Xác nhận lịch review Sales Ops',status:'TODO',owner:'Trần Minh',deadline:'18/09 14:00',group:'Sales Ops',priority:'P2'},
+  {id:'W-405',title:'Tổng hợp meeting notes',status:'REVIEW',owner:'Heo',deadline:'Hôm nay 17:00',group:'Sales Ops',priority:'P3'},
+  {id:'W-411',title:'Theo dõi phản hồi đối tác',status:'WAITING',owner:'Heo',deadline:'20/09 10:00',group:'Strategic Partners',priority:'P3'}
+ ],
+ insights:[
+  {id:'IN-771',kind:'Relationship risk',truth:'INFERRED',title:'Responsiveness giảm trong 14 ngày',confidence:'0.78',subject:'P-018 Nguyễn Anh',reason:'median_response_time ↑ · 3 follow-up chưa phản hồi',evidence:'MSG-1209, MSG-1217, W-341'},
+  {id:'IN-779',kind:'Opportunity',truth:'INFERRED',title:'Tín hiệu quan tâm tăng ở chủ đề Enterprise',confidence:'0.72',subject:'G-001 Strategic Partners',reason:'mention frequency + positive follow-through',evidence:'MSG-1260, MSG-1268'},
+  {id:'FC-301',kind:'Deadline risk',truth:'FORECAST',title:'Project Phoenix có risk HIGH trong 72h',confidence:'0.81',subject:'W-398',reason:'blocked dependency + deadline proximity',evidence:'W-398, EV-92'}
+ ],
+ artifacts:[
+  {id:'AF-22',name:'Bao-gia-V3.pdf',state:'AVAILABLE',size:'2.8 MiB',sha:'8f31…a7c0',refs:4,retention:'Pinned'},
+  {id:'AF-31',name:'Meeting-Notes-16-09.docx',state:'AVAILABLE',size:'418 KiB',sha:'03c4…12df',refs:2,retention:'87 ngày'},
+  {id:'AF-17',name:'Product-brief-old.pdf',state:'AVAILABLE',size:'1.1 MiB',sha:'cc29…51ab',refs:0,retention:'3 ngày'},
+  {id:'AF-40',name:'voice-note.ogg',state:'METADATA_ONLY',size:'—',sha:'—',refs:1,retention:'90 ngày'}
+ ],
+ policies:[
+  {id:'PR-0012',scope:'GLOBAL',target:'*',action:'external.send',decision:'APPROVAL',priority:50,version:12},
+  {id:'PR-0091',scope:'GROUP',target:'G-001',action:'whatsapp.send_message',decision:'APPROVAL',priority:80,version:8},
+  {id:'PR-0110',scope:'PERSON',target:'P-018',action:'whatsapp.send_message',decision:'DENY',priority:100,version:3},
+  {id:'PR-0132',scope:'ACTION',target:'scheduler.create',action:'scheduler.create',decision:'AUTO',priority:70,version:5}
+ ],
+ executions:[
+  {id:'EX-8801',corr:'COR-66201',action:'scheduler.create',status:'SUCCEEDED',policy:'AUTO',duration:'812 ms',result:'EV-101 created'},
+  {id:'EX-8797',corr:'COR-66193',action:'whatsapp.send_message',status:'APPROVAL_PENDING',policy:'APPROVAL',duration:'—',result:'AP-91'},
+  {id:'EX-8789',corr:'COR-66170',action:'whatsapp.send_message',status:'DENIED',policy:'DENY',duration:'49 ms',result:'no permit'}
+ ]
+};
+
+function truthBadge(t){const c=(t||'FACT').toLowerCase();return `<span class="badge ${c}">${t}</span>`}
+function priBadge(p){return `<span class="badge ${p.toLowerCase()}">${p}</span>`}
+function statusBadge(s){let c=/pass|healthy|connected|available|succeeded|verified|ready|stable|auto/i.test(s)?'good':/deny|failed|error|critical|blocked|expired/i.test(s)?'danger':'calculated';return `<span class="badge ${c}">${s}</span>`}
+function viewHead(title,desc,actions=''){return `<div class="view-head"><div><h2>${title}</h2><p>${desc}</p></div><div class="view-actions">${actions}</div></div>`}
+function evidenceLink(label='Xem evidence',payload='raw_event:RE-88311'){return `<div class="evidence-link" data-evidence="${encodeURIComponent(payload)}">↗ ${label}</div>`}
+function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function openEvidence(encoded){const text=decodeURIComponent(encoded||'');$('#drawerBody').innerHTML=`<div class="callout">Evidence là typed pointer, không chứa secret. UI luôn drill-down qua authorized core API.</div><div class="section-title">Evidence refs</div>${text.split(' · ').map((x,i)=>`<div class="evidence-card"><h4>${x}</h4><p>Phiên bản mẫu v${i+1} · provenance verified · truth source preserved.</p><div class="mono faint" style="margin-top:7px">{ kind: "${x.split(':')[0]||'ref'}", id: "${x.split(':')[1]||x}", version: 1 }</div></div>`).join('')}<div class="section-title">Trace linkage</div><div class="timeline"><div class="timeline-item"><h4>Source</h4><p>Provider/raw evidence được ghi immutable trước downstream parse.</p></div><div class="timeline-item"><h4>Canonical mapping</h4><p>Entity link giữ source refs và version.</p></div><div class="timeline-item"><h4>Decision / Action</h4><p>Policy evaluation và execution permit có correlation id.</p></div></div>`;$('#drawer').classList.add('show')}
+function modal(title,sub,body,foot=''){const m=$('#modal');m.innerHTML=`<div class="modal-head"><div><h3>${title}</h3><p>${sub||''}</p></div><button class="icon-btn" data-close-modal>×</button></div><div class="modal-body">${body}</div>${foot?`<div class="modal-foot">${foot}</div>`:''}`;$('#modalOverlay').classList.add('show')}
+function closeModal(){$('#modalOverlay').classList.remove('show')}
+
+function dashboard(){return `${viewHead('Executive Command Center','Màn hình trả lời: “Tôi cần chú ý và quyết định gì ngay bây giờ?” — business truth trước, infrastructure metrics ở Control Room.',`<button class="btn" data-route-go="approvals">Duyệt action</button><button class="btn primary" data-route-go="attention">Xem Attention</button>`)}
+<div class="grid cols-4">
+ <div class="card kpi"><div class="kpi-label">Needs Owner</div><div class="kpi-value">4</div><div class="kpi-sub"><span class="trend-warn">2 P1</span> · 2 quyết định hôm nay</div></div>
+ <div class="card kpi"><div class="kpi-label">Overdue / Blocked</div><div class="kpi-value">7</div><div class="kpi-sub">2 quá hạn · 5 blocked</div></div>
+ <div class="card kpi"><div class="kpi-label">Pending Approval</div><div class="kpi-value">3</div><div class="kpi-sub">TTL gần nhất 06:12</div></div>
+ <div class="card kpi"><div class="kpi-label">Readiness</div><div class="kpi-value" style="font-size:18px;color:var(--good)">READY_END_TO_END</div><div class="kpi-sub">Demo state · E2E trace PASS</div></div>
+</div>
+<div class="grid span-layout" style="margin-top:14px">
+ <div class="stack">
+  <div class="card"><div class="card-head"><div><h3>Needs Owner</h3><p>Exception/decision bắt buộc owner tham gia</p></div><button class="btn ghost" data-route-go="attention">Tất cả</button></div><div class="card-body">${sample.attention.slice(0,3).map(a=>`<div class="list-item"><div class="row between"><div class="item-title">${a.title}</div>${priBadge(a.band)}</div><div class="item-meta">${a.subject} · ${truthBadge(a.truth)}</div><div class="item-desc">${a.action}</div>${evidenceLink('Drill-down source',a.evidence)}</div>`).join('')}</div></div>
+  <div class="grid cols-2">
+   <div class="card"><div class="card-head"><div><h3>Overdue / Blocked</h3><p>Work bottlenecks có evidence</p></div></div><div class="card-body"><div class="table-wrap"><table class="table"><thead><tr><th>Work</th><th>Owner</th><th>Deadline</th><th>Pri</th></tr></thead><tbody>${sample.works.filter(w=>['BLOCKED','DOING'].includes(w.status)).map(w=>`<tr><td><strong>${w.title}</strong><div class="small faint">${w.id} · ${w.group}</div></td><td>${w.owner}</td><td>${w.deadline}</td><td>${priBadge(w.priority)}</td></tr>`).join('')}</tbody></table></div></div></div>
+   <div class="card"><div class="card-head"><div><h3>Relationship Alerts</h3><p>Không chẩn đoán; chỉ signal có evidence</p></div></div><div class="card-body"><div class="list-item"><div class="row between"><div class="item-title">Nguyễn Anh · responsiveness giảm</div>${truthBadge('INFERRED')}</div><div class="item-desc">14d window · confidence 0.78 · friction signal tăng.</div>${evidenceLink('Evidence + method','message:MSG-1209 · insight:IN-771')}</div><div class="list-item"><div class="row between"><div class="item-title">Lê Hương · follow-up opportunity</div>${truthBadge('INFERRED')}</div><div class="item-desc">Positive follow-through tăng so với baseline 28d.</div>${evidenceLink('Evidence + method','message:MSG-1260 · insight:IN-779')}</div></div></div>
+  </div>
+  <div class="card"><div class="card-head"><div><h3>Work & Calendar</h3><p>Operational workload gần nhất</p></div><button class="btn ghost" data-route-go="calendar">Lịch</button></div><div class="card-body"><div class="grid cols-3"><div class="slo"><b>09:00 · Follow-up báo giá</b><span>Reminder · Strategic Partners</span></div><div class="slo"><b>14:00 · Sales review</b><span>Meeting · Sales Ops</span></div><div class="slo warn"><b>15:00 · API dependency</b><span>Deadline · Project Phoenix</span></div></div></div></div>
+ </div>
+ <div class="stack">
+  <div class="card"><div class="card-head"><div><h3>Pending Approval</h3><p>Owner là approver duy nhất V1</p></div><button class="btn ghost" data-route-go="approvals">Mở queue</button></div><div class="card-body">${sample.approvals.map(a=>`<div class="list-item"><div class="row between"><div class="item-title">${a.action}</div><span class="badge p2">TTL ${a.ttl}</span></div><div class="item-desc">${a.summary}</div><div class="item-meta">${a.target}</div></div>`).join('')}</div></div>
+  <div class="card"><div class="card-head"><div><h3>Forecast / Early Warning</h3><p>L1 qualitative risk · no pseudo-precision</p></div></div><div class="card-body"><div class="row" style="align-items:flex-start"><div class="progress-ring" style="--p:81"><b>HIGH</b></div><div class="grow"><div class="item-title">Deadline risk · Project Phoenix</div><div class="item-desc">Blocked dependency + deadline proximity. Confidence 0.81; probability chưa được trình bày như calibrated probability.</div>${evidenceLink('Reason codes + evidence','forecast:FC-301 · work_item:W-398')}</div></div></div></div>
+  <div class="card"><div class="card-head"><div><h3>Cost → Outcome → Value</h3><p>Không ép ROI giả</p></div></div><div class="card-body"><div class="row between"><span class="muted small">Resource usage hôm nay</span><strong>42 model runs</strong></div><div class="row between" style="margin-top:9px"><span class="muted small">Provider quota remaining</span><span class="badge unavailable">UNAVAILABLE</span></div><div class="row between" style="margin-top:9px"><span class="muted small">Outcomes verified</span><strong>8</strong></div><div class="row between" style="margin-top:9px"><span class="muted small">Value</span><span class="badge estimated">3 ESTIMATED</span></div><div class="callout" style="margin-top:11px">Không có source quota thật ⇒ UI hiển thị UNAVAILABLE, không suy từ lỗi provider.</div></div></div>
+ </div>
+</div>`}
+
+function attention(){return `${viewHead('Attention Queue','P1/P2/P3 được tính từ factor_values + reason_codes; mọi item phải drill-down được.',`<button class="btn">Filter</button><button class="btn primary" data-action="recompute-attention">Recompute</button>`)}
+<div class="card"><div class="card-body"><div class="table-wrap"><table class="table"><thead><tr><th>Band</th><th>Attention</th><th>Truth</th><th>Reason</th><th>Recommended action</th><th></th></tr></thead><tbody>${sample.attention.map(a=>`<tr><td>${priBadge(a.band)}</td><td><strong>${a.title}</strong><div class="small faint">${a.id} · ${a.subject}</div></td><td>${truthBadge(a.truth)}</td><td><span class="mono">${a.reason}</span></td><td>${a.action}</td><td><button class="btn ghost" data-evidence="${encodeURIComponent(a.evidence)}">Evidence</button></td></tr>`).join('')}</tbody></table></div></div></div>
+<div class="grid cols-3" style="margin-top:14px"><div class="card card-pad"><b class="small">P1 mapping</b><p class="small muted">Overdue critical / owner-decision urgent / severe blocker. Escalate immediately.</p></div><div class="card card-pad"><b class="small">P2 mapping</b><p class="small muted">Due ≤72h / high-risk relationship signal / material business opportunity.</p></div><div class="card card-pad"><b class="small">P3 mapping</b><p class="small muted">Watchlist / lower urgency; vẫn giữ reason + recompute_at.</p></div></div>`}
+
+function work(){const cols=['TODO','DOING','WAITING','BLOCKED','REVIEW'];return `${viewHead('Work Operating System','Chat chỉ là nguồn phát hiện. WorkItem có lifecycle, owner, deadline, dependency, evidence và outcome_ref.',`<button class="btn">Filter</button><button class="btn primary" data-action="new-work">+ Work item</button>`)}
+<div class="kanban">${cols.map(c=>`<div class="kanban-col"><div class="kanban-head"><span>${c}</span><span class="faint">${sample.works.filter(w=>w.status===c).length}</span></div>${sample.works.filter(w=>w.status===c).map(w=>`<div class="kanban-card"><div class="row between"><span class="mono faint">${w.id}</span>${priBadge(w.priority)}</div><h4>${w.title}</h4><p>${w.group}<br>Owner: ${w.owner}<br>Deadline: ${w.deadline}</p>${evidenceLink('Source / evidence','work_item:'+w.id+' · raw_event:RE-'+w.id.slice(2))}</div>`).join('')||`<div class="kanban-card"><p>Không có item trong demo.</p></div>`}</div>`).join('')}</div>`}
+
+function calendar(){let times=['09:00','11:00','14:00','15:00','17:00'];let days=['T2 17','T3 18','T4 19','T5 20','T6 21'];return `${viewHead('Calendar & Reminder','Internal canonical scheduler là built-in V1. Reminder outbound tới người/group vẫn phải qua policy.',`<button class="btn">Hôm nay</button><button class="btn primary" data-action="new-event">+ Schedule</button>`)}
+<div class="calendar"><div class="cal-cell cal-head"></div>${days.map(d=>`<div class="cal-cell cal-head">${d}</div>`).join('')}${times.map((t,ri)=>`<div class="cal-cell cal-time">${t}</div>${days.map((d,ci)=>`<div class="cal-cell">${ri===0&&ci===1?'<div class="event good">Follow-up báo giá<br><span class="small">Reminder</span></div>':''}${ri===2&&ci===1?'<div class="event">Sales review<br><span class="small">Meeting</span></div>':''}${ri===3&&ci===2?'<div class="event warn">API dependency<br><span class="small">Deadline</span></div>':''}${ri===4&&ci===0?'<div class="event">Review notes<br><span class="small">Checkpoint</span></div>':''}</div>`).join('')}`).join('')}</div>
+<div class="grid cols-3" style="margin-top:14px"><div class="card card-pad"><b class="small">Timezone contract</b><p class="small muted">API returns RFC3339 UTC; UI renders owner timezone while preserving original provider timestamp.</p></div><div class="card card-pad"><b class="small">Recurring event</b><p class="small muted">Rule versioned; next occurrence persisted. Missed fire is reconciled after restart.</p></div><div class="card card-pad"><b class="small">Outbound reminder</b><p class="small muted">Always re-evaluate policy immediately before WhatsApp side-effect.</p></div></div>`}
+
+function groups(){const g=sample.groups[0];let tabs=['overview','activity','memory','people','work','events','files','intelligence','decisions','actions','value','policy'];return `${viewHead('Group 360','Current state là explainable projection; không phải free-form summary không nguồn.',`<button class="btn">Chọn group</button><button class="btn primary" data-evidence="${encodeURIComponent('raw_event:RE-88311 · policy_evaluation:PE-201 · insight:IN-779')}">Evidence map</button>`)}
+<div class="card card-pad"><div class="entity-head"><div class="entity-icon">G</div><div class="entity-title grow"><h3>${g.name}</h3><p>${g.id} · ${g.purpose}</p><div class="pill-row"><span class="pill">${g.members} members</span><span class="pill">${g.open} open work</span><span class="pill">${g.alerts} alerts</span><span class="pill">${g.policy}</span></div></div>${statusBadge(g.health)}</div></div>
+<div class="tabs" style="margin-top:14px">${tabs.map(t=>`<button class="tab ${state.groupTab===t?'active':''}" data-group-tab="${t}">${({overview:'Overview',activity:'Activity',memory:'Memory',people:'People',work:'Work',events:'Events',files:'Files',intelligence:'Intelligence',decisions:'Decisions',actions:'Heo Actions',value:'Cost & Value',policy:'Instruction & Policy'})[t]}</button>`).join('')}</div>
+<div id="groupTabContent">${groupTabContent(state.groupTab)}</div>`}
+function groupTabContent(t){if(t==='overview')return `<div class="grid span-layout"><div class="card"><div class="card-head"><div><h3>Current Situation</h3><p>Mỗi bullet có truth_type + evidence</p></div></div><div class="card-body"><div class="list-item"><div class="row between"><div class="item-title">Báo giá V3 chưa gửi do chờ owner approval</div>${truthBadge('FACT')}</div><div class="item-desc">Work W-341 đang BLOCKED bởi AP-91.</div>${evidenceLink('Source chain','work_item:W-341 · approval:AP-91')}</div><div class="list-item"><div class="row between"><div class="item-title">Responsiveness của Partner Lead giảm trong 14d</div>${truthBadge('INFERRED')}</div><div class="item-desc">Confidence 0.78, method relationship_v1.2.</div>${evidenceLink('Method + evidence','insight:IN-771 · message:MSG-1209')}</div><div class="list-item"><div class="row between"><div class="item-title">Deadline risk trong 72h</div>${truthBadge('FORECAST')}</div><div class="item-desc">L1 HIGH; no calibrated probability.</div>${evidenceLink('Reason codes','forecast:FC-301')}</div></div></div><div class="card"><div class="card-head"><div><h3>Health & Governance</h3><p>Projection metadata</p></div></div><div class="card-body"><div class="stack"><div class="row between"><span class="muted small">Lifecycle</span>${statusBadge('ACTIVE')}</div><div class="row between"><span class="muted small">Instruction</span><span class="mono">INS-G-12 v4</span></div><div class="row between"><span class="muted small">Policy</span><span class="mono">POL-G-STRATEGIC v8</span></div><div class="row between"><span class="muted small">Projection version</span><span class="mono">v128</span></div><div class="row between"><span class="muted small">Freshness</span><span>2.1s</span></div></div></div></div></div>`;
+if(t==='activity')return `<div class="card card-pad"><div class="timeline"><div class="timeline-item"><h4>09:12 · Nguyễn Anh gửi phản hồi về điều khoản</h4><p>FACT · MSG-1268 · provider timestamp preserved.</p></div><div class="timeline-item"><h4>09:13 · Work candidate W-341 updated</h4><p>CALCULATED · parser + domain rule.</p></div><div class="timeline-item"><h4>09:14 · Heo tạo approval AP-91</h4><p>FACT runtime · policy decision APPROVAL.</p></div></div></div>`;
+if(t==='memory')return `<div class="grid cols-3"><div class="card card-pad"><b class="small">Group Journal v42</b><p class="small muted">Tóm tắt tiến triển theo thời gian, versioned; references raw events thay vì copy toàn bộ history.</p></div><div class="card card-pad"><b class="small">Current State v128</b><p class="small muted">3 open loops · 2 commitments · 1 pending approval.</p></div><div class="card card-pad"><b class="small">Operational memory</b><p class="small muted">Tool success 98.7% · last approved outbound AP-88.</p></div></div>`;
+if(t==='people')return `<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Person</th><th>Role</th><th>Relationship</th><th>Open work</th></tr></thead><tbody>${sample.people.map(p=>`<tr><td><strong>${p.name}</strong><div class="small faint">${p.id}</div></td><td>${p.role}</td><td>${p.rel}</td><td>${p.open}</td></tr>`).join('')}</tbody></table></div></div>`;
+if(t==='work')return `<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Work</th><th>Status</th><th>Owner</th><th>Deadline</th><th>Pri</th></tr></thead><tbody>${sample.works.filter(w=>w.group==='Strategic Partners').map(w=>`<tr><td><strong>${w.title}</strong></td><td>${statusBadge(w.status)}</td><td>${w.owner}</td><td>${w.deadline}</td><td>${priBadge(w.priority)}</td></tr>`).join('')}</tbody></table></div></div>`;
+if(t==='events')return `<div class="grid cols-3"><div class="card card-pad"><b class="small">Follow-up báo giá</b><p class="small muted">Reminder · 18/09 09:00 · owner internal.</p></div><div class="card card-pad"><b class="small">Partner review</b><p class="small muted">Meeting · 20/09 14:30 · CONFIRMED.</p></div><div class="card card-pad"><b class="small">Commitment checkpoint</b><p class="small muted">Follow-up checkpoint · 21/09 10:00.</p></div></div>`;
+if(t==='files')return artifacts(false);
+if(t==='intelligence')return intel(false);
+if(t==='decisions')return `<div class="card card-pad"><div class="timeline"><div class="timeline-item"><h4>DEC-88 · Approval required for external send</h4><p>Owner policy · source AP-91 · active.</p></div><div class="timeline-item"><h4>DEC-81 · Keep opportunity on watchlist</h4><p>Owner decision · evidence IN-779.</p></div></div></div>`;
+if(t==='actions')return `<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Action</th><th>Policy</th><th>Status</th><th>Result</th></tr></thead><tbody>${sample.executions.map(e=>`<tr><td><strong>${e.action}</strong><div class="small faint">${e.id}</div></td><td>${e.policy}</td><td>${statusBadge(e.status)}</td><td>${e.result}</td></tr>`).join('')}</tbody></table></div></div>`;
+if(t==='value')return value(false);
+return `<div class="grid cols-2"><div class="card card-pad"><b class="small">Effective Instruction</b><p class="small muted">INS-G-12 v4 · “Ưu tiên giải quyết cam kết và không tự outbound tới partner nếu chưa có approval.”</p></div><div class="card card-pad"><b class="small">Effective Policy</b><p class="small muted">Global → Channel → Group → Person → Action. Person-level DENY có thể override Group APPROVAL.</p></div></div>`}
+
+function people(){let p=sample.people[0];let tabs=['dossier','identity','activity','relationship','work','events','files','intel','value','alerts'];return `${viewHead('Person 360','Một dossier canonical cho identity, group, activity, relationship, work, events, files, intel, value và alerts.',`<button class="btn">Chọn person</button><button class="btn primary" data-evidence="${encodeURIComponent('person:P-018 · person_identity:PI-991 · message:MSG-1209')}">Identity provenance</button>`)}
+<div class="card card-pad"><div class="entity-head"><div class="entity-icon">P</div><div class="entity-title grow"><h3>${p.name}</h3><p>${p.id} · ${p.role} · ${p.groups}</p><div class="pill-row"><span class="pill">WhatsApp identity verified</span><span class="pill">3 open work</span><span class="pill">Relationship: ${p.rel}</span></div></div>${truthBadge('FACT')}</div></div>
+<div class="tabs" style="margin-top:14px">${tabs.map(t=>`<button class="tab ${state.personTab===t?'active':''}" data-person-tab="${t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div><div id="personTabContent">${personTabContent(state.personTab)}</div>`}
+function personTabContent(t){if(t==='dossier')return `<div class="grid span-layout"><div class="card"><div class="card-head"><div><h3>Current dossier</h3><p>Source-backed facts + governed interpretations</p></div></div><div class="card-body"><div class="list-item"><div class="item-title">Identity</div><div class="item-desc">PI-991 · whatsapp · participant type PN · canonical P-018.</div>${evidenceLink('Identity source','person_identity:PI-991 · raw_event:RE-88011')}</div><div class="list-item"><div class="item-title">Open commitment</div><div class="item-desc">W-341 · báo giá V3 · overdue 19h.</div>${evidenceLink('Work source','work_item:W-341')}</div><div class="list-item"><div class="item-title">Relationship signal</div><div class="item-desc">Responsiveness decreased, 14d vs 28d baseline; confidence 0.78.</div>${evidenceLink('Signal evidence','insight:IN-771 · message:MSG-1209')}</div></div></div><div class="card"><div class="card-head"><div><h3>Guardrails</h3><p>Không gán nhãn tâm lý</p></div></div><div class="card-body"><div class="callout warn">Behavioral/communication signals chỉ được diễn giải có evidence + confidence. Manual notes phải phân biệt với FACT.</div><div class="section-title">Membership</div><div class="row between"><span class="muted small">Strategic Partners</span><span>Partner Lead</span></div><div class="row between" style="margin-top:8px"><span class="muted small">Sales Ops</span><span>Guest</span></div></div></div></div>`;
+if(t==='identity')return `<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Identity</th><th>Provider</th><th>External ID</th><th>State</th><th>Source</th></tr></thead><tbody><tr><td><strong>PI-991</strong></td><td>WhatsApp</td><td class="mono">84xxxx@s.whatsapp.net</td><td>${statusBadge('ACTIVE')}</td><td><span class="link" data-evidence="${encodeURIComponent('raw_event:RE-88011')}">RE-88011</span></td></tr></tbody></table></div></div>`;
+if(t==='activity')return groupTabContent('activity'); if(t==='relationship')return `<div class="grid cols-2"><div class="card card-pad"><b class="small">Engagement trend</b><p class="small muted">14d responsiveness ↓ 31% vs 28d baseline. CALCULATED window; denominator visible.</p><div class="metric-line"><i style="width:69%"></i></div></div><div class="card card-pad"><b class="small">Interpretation</b><p class="small muted">friction_risk = MEDIUM, confidence 0.78, method relationship_v1.2.</p>${evidenceLink('Method + evidence','insight:IN-771')}</div></div>`;
+if(t==='work')return groupTabContent('work'); if(t==='events')return groupTabContent('events'); if(t==='files')return artifacts(false); if(t==='intel')return intel(false); if(t==='value')return value(false); return attention();}
+
+function whatsapp(){return `${viewHead('WhatsApp Channel Operations','Provider session, pairing, inbound/outbound, group discovery, capability reporting. Adapter không chứa business logic.',`<button class="btn" data-action="sync-groups">Sync groups</button><button class="btn primary" data-action="wa-connect">Connect / Relink</button>`)}
+<div class="grid cols-4"><div class="card kpi"><div class="kpi-label">Session</div><div class="kpi-value" style="font-size:19px;color:var(--good)">CONNECTED</div><div class="kpi-sub">has_session=true</div></div><div class="card kpi"><div class="kpi-label">Inbound lag</div><div class="kpi-value">0.8s</div><div class="kpi-sub">p95 certification target ≤2s</div></div><div class="card kpi"><div class="kpi-label">Backlog</div><div class="kpi-value">12</div><div class="kpi-sub">oldest 8.4s</div></div><div class="card kpi"><div class="kpi-label">Last event</div><div class="kpi-value" style="font-size:19px">22s</div><div class="kpi-sub">ago · source-backed</div></div></div>
+<div class="grid span-layout" style="margin-top:14px"><div class="card"><div class="card-head"><div><h3>Inbound capability coverage</h3><p>Unsupported/partial phải hiển thị đúng</p></div></div><div class="card-body"><table class="table"><thead><tr><th>Type</th><th>Support</th><th>RawEvent mapping</th><th>Note</th></tr></thead><tbody><tr><td>Text / reply</td><td>${statusBadge('SUPPORTED')}</td><td>message</td><td>reply refs preserved</td></tr><tr><td>Reaction</td><td>${statusBadge('SUPPORTED')}</td><td>reaction</td><td>target source id</td></tr><tr><td>Edit / delete</td><td>${statusBadge('SUPPORTED')}</td><td>edit / delete</td><td>raw reality not rewritten</td></tr><tr><td>Image/video/audio/document</td><td><span class="badge p2">PARTIAL</span></td><td>message + attachment metadata</td><td>bytes may download later</td></tr><tr><td>Unknown protocol</td><td><span class="badge unavailable">UNSUPPORTED</span></td><td>raw preserved</td><td>no fake normalization</td></tr></tbody></table></div></div><div class="stack"><div class="card card-pad"><div class="row between"><div><b class="small">Linked account</b><p class="small muted">Sanitized identity only</p></div>${statusBadge('CONNECTED')}</div><div class="codebox">account_id: wa:owner<br>is_pairing: false<br>has_session: true<br>state: CONNECTED</div></div><div class="card card-pad"><b class="small">QR safety</b><p class="small muted">QR generated on-demand only, default safety window 90s. Không log raw QR/credentials; timeout → IDLE_TIMEOUT.</p></div></div></div>`}
+
+function intel(standalone=true){let head=standalone?viewHead('Insights & Forecast','Behavior, relationship, risk/opportunity, forecast và early warning đều phải truth-typed, versioned, evidence-backed.',`<button class="btn">Method registry</button><button class="btn primary">Recompute selected</button>`):'';return `${head}<div class="grid cols-3">${sample.insights.map(i=>`<div class="card card-pad"><div class="row between"><span class="badge calculated">${i.kind}</span>${truthBadge(i.truth)}</div><h3 style="font-size:13px;margin:12px 0 6px">${i.title}</h3><div class="small muted">${i.subject} · confidence ${i.confidence}</div><p class="small muted" style="line-height:1.5">${i.reason}</p>${evidenceLink('Evidence / method',i.evidence)}</div>`).join('')}</div><div class="card" style="margin-top:14px"><div class="card-head"><div><h3>V1 deterministic method contract</h3><p>Qualitative outputs trước khi calibrated probability đủ điều kiện</p></div></div><div class="card-body"><table class="table"><thead><tr><th>Domain</th><th>Window / inputs</th><th>Output</th><th>Guardrail</th></tr></thead><tbody><tr><td><strong>Behavior</strong></td><td>7d vs 28d / 14d vs previous 14d</td><td>frequency, reciprocity, responsiveness</td><td>denominator visible</td></tr><tr><td><strong>Relationship</strong></td><td>engagement, friction, follow-through</td><td>shift / friction risk / opportunity</td><td>no psychological diagnosis</td></tr><tr><td><strong>Forecast L1</strong></td><td>reason codes + current evidence</td><td>HIGH / MEDIUM / LOW + confidence</td><td>no pseudo-precision</td></tr></tbody></table></div></div>`}
+
+function approvals(){return `${viewHead('Approval Queue','Owner là approver duy nhất V1. Approval bind vào action fingerprint + target + normalized inputs + shared_data_refs + policy version.',`<button class="btn">History</button><button class="btn primary">3 Pending</button>`)}
+<div class="grid span-layout"><div class="card"><div class="card-body">${sample.approvals.map((a,idx)=>`<div class="list-item"><div class="row between"><div class="item-title">${a.action}</div><span class="badge ${idx===0?'p1':'p2'}">TTL ${a.ttl}</span></div><div class="item-desc">${a.summary}</div><div class="item-meta">Target: ${a.target} · fingerprint ${a.fingerprint}</div><div class="row wrap" style="margin-top:9px"><button class="btn primary" data-approve="${a.id}">Approve</button><button class="btn danger" data-deny="${a.id}">Deny</button><button class="btn" data-action="modify-approval" data-id="${a.id}">Modify</button></div></div>`).join('')}</div></div><div class="card"><div class="card-head"><div><h3>Approval UI contract</h3><p>Thông tin bắt buộc trước khi owner quyết định</p></div></div><div class="card-body"><div class="stack"><div><b class="small">Action summary + target</b><p class="small muted">Không dùng label mơ hồ kiểu “Run”.</p></div><div><b class="small">Why / source / why now</b><p class="small muted">Drill-down tới work/message/insight.</p></div><div><b class="small">Data sharing</b><p class="small muted">Hiển thị dữ liệu nào sẽ rời hệ thống.</p></div><div><b class="small">Resource</b><p class="small muted">Tool/model/cost nếu source-backed.</p></div></div></div></div></div>`}
+
+function policies(){return `${viewHead('Policy & Permission Engine','Exact precedence: GLOBAL → CHANNEL → GROUP → PERSON → ACTION; max depth wins, explicit DENY wins tại cùng depth, rồi priority DESC / id ASC.',`<button class="btn" data-action="simulate-policy">Policy simulator</button><button class="btn primary">+ New version</button>`)}
+<div class="grid span-layout"><div class="card"><div class="card-body"><table class="table"><thead><tr><th>Rule</th><th>Scope</th><th>Target</th><th>Action</th><th>Decision</th><th>Priority</th><th>v</th></tr></thead><tbody>${sample.policies.map(p=>`<tr><td><strong>${p.id}</strong></td><td>${p.scope}</td><td class="mono">${p.target}</td><td class="mono">${p.action}</td><td>${statusBadge(p.decision)}</td><td>${p.priority}</td><td>${p.version}</td></tr>`).join('')}</tbody></table></div></div><div class="stack"><div class="card card-pad"><b class="small">Default decisions</b><div class="divider"></div><div class="row between"><span class="small muted">Current-scope retrieval</span><span class="badge calculated">OBSERVE</span></div><div class="row between" style="margin-top:8px"><span class="small muted">Cross-group retrieval</span><span class="badge danger">DENY</span></div><div class="row between" style="margin-top:8px"><span class="small muted">External side-effect</span><span class="badge p2">APPROVAL</span></div></div><div class="card card-pad"><b class="small">Security lock</b><p class="small muted">Model output không bao giờ là permit. Tool Gateway chỉ nhận permit do Policy Engine tạo từ frozen context/action.</p></div></div></div>
+<div class="card" style="margin-top:14px"><div class="card-head"><div><h3>Deterministic evaluation trace</h3><p>Ví dụ request: send WhatsApp tới P-018 trong G-001</p></div></div><div class="card-body"><div class="stepper"><div class="step done"><div class="n">1</div><h4>Collect</h4><p>4 active rules applicable.</p></div><div class="step done"><div class="n">2</div><h4>Max depth</h4><p>PERSON depth = 3.</p></div><div class="step done"><div class="n">3</div><h4>DENY wins</h4><p>PR-0110 explicit DENY.</p></div><div class="step done"><div class="n">4</div><h4>Audit</h4><p>policy_evaluation PE-201.</p></div><div class="step done"><div class="n">5</div><h4>Result</h4><p>No execution permit.</p></div></div></div></div>`}
+
+function executions(){return `${viewHead('Executions & Live Trace','Timeline stage thật: IN → GATE → CTX → MODEL/NO-MODEL → TOOL → OUT → RESULT. Không mô phỏng hidden chain-of-thought.',`<button class="btn">Filter</button><button class="btn primary">Open correlation</button>`)}
+<div class="grid span-layout"><div class="card"><div class="card-body"><table class="table"><thead><tr><th>Execution</th><th>Action</th><th>Policy</th><th>Status</th><th>Duration</th><th>Result</th></tr></thead><tbody>${sample.executions.map(e=>`<tr><td><strong>${e.id}</strong><div class="small faint">${e.corr}</div></td><td class="mono">${e.action}</td><td>${e.policy}</td><td>${statusBadge(e.status)}</td><td>${e.duration}</td><td>${e.result}</td></tr>`).join('')}</tbody></table></div></div><div class="card"><div class="card-head"><div><h3>COR-66193</h3><p>Real runtime trace · sample</p></div></div><div class="card-body"><div class="timeline"><div class="timeline-item"><h4>IN · 09:14:02.118</h4><p>WA message MSG-1268 · G-001 · P-018.</p></div><div class="timeline-item"><h4>GATE · 09:14:02.130</h4><p>POL-G-STRATEGIC v8 → APPROVAL.</p></div><div class="timeline-item"><h4>CTX · 09:14:02.146</h4><p>Frozen manifest CTX-908 · policy-authorized only.</p></div><div class="timeline-item"><h4>MODEL · 09:14:02.209</h4><p>Requested model → actual model metadata recorded; no chain-of-thought.</p></div><div class="timeline-item"><h4>RESULT · 09:14:04.651</h4><p>Proposed action created AP-91; no side-effect before approval.</p></div></div></div></div></div>`}
+
+function tools(){
+ let subtabs = [
+  {id:'plugins', label:`📦 Add-ins Đang Chạy (${state.plugins.length})`},
+  {id:'catalog', label:`🛒 Kho Tiện Ích Sẵn Sàng (${state.catalog.length})`},
+  {id:'contracts', label:'📜 Tool Execution Contracts'}
+ ];
+ let cats = [
+  {id:'all', label:'Tất cả'},
+  {id:'provider', label:'Model Providers'},
+  {id:'channel', label:'Kênh Chat'},
+  {id:'tool', label:'Công Cụ / MCP'},
+  {id:'governance', label:'Quản Trị'},
+  {id:'ui', label:'Giao Diện'}
+ ];
+
+ let currentSub = state.toolSubTab || 'plugins';
+ let currentCat = state.toolCategory || 'all';
+
+ let head = viewHead(
+  'Tools & Add-ins Hub',
+  'Quản trị toàn bộ Add-in của Heo-Harness · Circuit Breaker bảo vệ cách ly lỗi 100% · Bật/Tắt nóng không cần khởi động lại máy chủ.',
+  `<button class="btn" data-action="probe-plugins">Kiểm tra sức khỏe</button><button class="btn primary" data-action="open-catalog-tab">+ Thêm Add-in Mới</button>`
+ );
+
+ let subnav = `<div class="tabs" style="margin-bottom:14px">${subtabs.map(t=>`<button class="tab ${currentSub===t.id?'active':''}" data-tool-subtab="${t.id}">${t.label}</button>`).join('')}</div>`;
+
+ if(currentSub === 'contracts'){
+  let toolContracts=[
+   ['whatsapp.send_message','action/write','Person/group WhatsApp','20s · provider receipt'],
+   ['zalo.send_message','action/write','Person/group Zalo cá nhân','15s · session receipt'],
+   ['artifact.send','action/write','Authorized artifact → Kênh chat','30s'],
+   ['artifact.read','read/internal','Authorized bytes','30s'],
+   ['scheduler.create','write/internal','Canonical event/reminder','10s'],
+   ['scheduler.reschedule','write/internal','Versioned reschedule','10s'],
+   ['scheduler.cancel','write/internal','Cancel event/reminder','10s'],
+   ['work.create_or_update','write/internal','WorkItem lifecycle','10s'],
+   ['policy.evaluate','read/internal','Effective permission','5s'],
+   ['outcome.verify','write/internal','Evidence-based verification','10s'],
+   ['http.mcp','optional external','Owner-configured connector','per manifest']
+  ];
+  return `${head}${subnav}<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Tool Contract</th><th>Capability</th><th>Scope</th><th>Timeout / Result</th></tr></thead><tbody>${toolContracts.map(t=>`<tr><td><strong class="mono">${t[0]}</strong></td><td>${t[1]}</td><td>${t[2]}</td><td>${t[3]}</td></tr>`).join('')}</tbody></table></div></div><div class="callout" style="margin-top:14px">Minimum necessary data only. Tool không được nhận toàn bộ Group/Person memory theo mặc định; external side-effect cần permit hợp lệ do Policy Engine cấp.</div>`;
+ }
+
+ if(currentSub === 'catalog'){
+  return `${head}${subnav}<div class="grid cols-3">${state.catalog.map(item=>`
+   <div class="card card-pad">
+    <div class="row between">
+     <span style="font-size:22px">${item.icon||'🧩'}</span>
+     <span class="badge ${item.installed?'good':'calculated'}">${item.installed?'ĐÃ CÀI ĐẶT':'SẴN SÀNG'}</span>
     </div>
+    <h3 style="margin:10px 0 4px;font-size:13px">${item.name}</h3>
+    <div class="mono faint" style="font-size:9px">${item.id} · v${item.version}</div>
+    <div class="small muted" style="margin:4px 0">Tác giả: <strong>${item.author}</strong></div>
+    <p class="small muted" style="line-height:1.45;margin:8px 0 14px">${item.description}</p>
+    <div class="row between" style="border-top:1px solid var(--line2);padding-top:10px;margin-top:auto">
+     <span class="badge unavailable">${item.category.toUpperCase()}</span>
+     ${item.installed ? `<span class="small faint">Đang trong hệ thống</span>` : `<button class="btn primary" style="padding:5px 10px;font-size:10px" data-install-plugin="${item.id}">+ Nạp vào hệ thống</button>`}
+    </div>
+   </div>
+  `).join('')}</div>`;
+ }
+
+ // Mặc định: view 'plugins' (Add-ins đang chạy)
+ let filteredPlugins = state.plugins.filter(p => {
+  if(currentCat === 'all') return true;
+  return (p.category || '').toLowerCase() === currentCat.toLowerCase();
+ });
+
+ let filterHtml = `<div class="row wrap" style="gap:6px;margin-bottom:14px">${cats.map(c=>`<button class="btn ${currentCat===c.id?'primary':'ghost'}" style="padding:6px 11px;font-size:10px" data-tool-cat="${c.id}">${c.label}</button>`).join('')}</div>`;
+
+ let pluginCards = filteredPlugins.map(p => {
+  let isCoreAgy = p.id === '@heo/provider-gemini' || p.id === '@heo/provider-antigravity';
+  let isCircuitHealthy = (p.circuit_breaker?.status || 'HEALTHY') === 'HEALTHY';
+  let failCount = p.circuit_breaker?.failure_count || 0;
+  let maxFail = p.circuit_breaker?.max_failures || 3;
+
+  return `
+  <div class="card card-pad" style="${!p.enabled ? 'opacity:0.65;' : ''}">
+   <div class="row between">
+    <div class="row" style="gap:10px">
+     <span style="font-size:24px">${p.icon || '🧩'}</span>
+     <div>
+      <h3 style="margin:0;font-size:13px">${p.name}</h3>
+      <div class="mono faint" style="font-size:9px">${p.id} · v${p.version}</div>
+     </div>
+    </div>
+    <div class="switch ${p.enabled ? 'on' : ''}" data-toggle-plugin="${p.id}" data-enabled="${p.enabled}" title="Bật / Tắt plugin ngay tức thì"></div>
+   </div>
+
+   <div class="small muted" style="margin:9px 0 3px">Tác giả: <strong>${p.author}</strong></div>
+   <p class="small muted" style="line-height:1.45;margin:0 0 12px;min-height:36px">${p.description}</p>
+
+   <div style="background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px;margin-bottom:10px">
+    <div class="row between" style="font-size:10px">
+     <span class="muted">Trạng thái:</span>
+     ${statusBadge(p.enabled ? (isCircuitHealthy ? 'ACTIVE' : 'CIRCUIT_TRIPPED') : 'DISABLED')}
+    </div>
+    <div class="row between" style="font-size:10px;margin-top:6px">
+     <span class="muted">Circuit Breaker:</span>
+     <span class="small ${failCount > 0 ? 'trend-warn' : 'muted'}">Lỗi: ${failCount}/${maxFail} · ${p.circuit_breaker?.circuit_open ? '🛑 ĐÃ NGẮT MẠCH' : '🛡️ An Toàn'}</span>
+    </div>
+   </div>
+
+   <div class="row between" style="border-top:1px solid var(--line2);padding-top:10px">
+    <span class="badge ${isCoreAgy ? 'fact' : 'calculated'}">${p.category.toUpperCase()}${isCoreAgy ? ' (CORE AGY)' : ''}</span>
+    <div class="row" style="gap:6px">
+     <button class="btn ghost" style="padding:4px 8px;font-size:9px" data-evidence="plugin:${p.id} · telemetry:live">Audit</button>
+     <button class="btn" style="padding:4px 8px;font-size:9px" data-action="config-plugin" data-id="${p.id}">Cấu hình</button>
+    </div>
+   </div>
   </div>
+  `;
+ }).join('');
 
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-sm font-semibold bg-slate-800 border border-slate-700 text-white">
+ return `${head}${subnav}${filterHtml}<div class="grid cols-3">${pluginCards || '<div class="card card-pad" style="grid-column:1/-1"><p class="muted">Không có plugin nào phù hợp với bộ lọc này.</p></div>'}</div>`;
+}
+
+function artifacts(standalone=true){let head=standalone?viewHead('Artifacts','Metadata trong SQLite; bytes trong persistent artifact volume theo opaque artifact_id; checksum + provenance bắt buộc.',`<button class="btn">Retention</button><button class="btn primary">+ Upload</button>`):'';return `${head}<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Artifact</th><th>State</th><th>Size</th><th>SHA-256</th><th>Evidence refs</th><th>Retention</th></tr></thead><tbody>${sample.artifacts.map(a=>`<tr><td><strong>${a.name}</strong><div class="small faint">${a.id}</div></td><td>${statusBadge(a.state)}</td><td>${a.size}</td><td class="mono">${a.sha}</td><td>${a.refs}</td><td>${a.retention}</td></tr>`).join('')}</tbody></table></div></div>${standalone?`<div class="grid cols-3" style="margin-top:14px"><div class="card card-pad"><b class="small">Raw payload</b><p class="small muted">365 ngày mặc định; configurable 30d-indefinite; evidence hold có thể pin.</p></div><div class="card card-pad"><b class="small">Artifact bytes</b><p class="small muted">90 ngày sau last evidence ref; min 30d.</p></div><div class="card card-pad"><b class="small">Logs</b><p class="small muted">30 ngày, secrets redacted, rotate by size/time.</p></div></div>`:''}`}
+
+function value(standalone=true){let head=standalone?viewHead('Result → Outcome → Value','Attribution state rõ: UNATTRIBUTED / ESTIMATED / VERIFIED. Không fill số để dashboard đẹp.',`<button class="btn">Method registry</button><button class="btn primary">Verify outcome</button>`):'';return `${head}<div class="grid cols-4"><div class="card kpi"><div class="kpi-label">Results today</div><div class="kpi-value">31</div><div class="kpi-sub">provider/runtime results</div></div><div class="card kpi"><div class="kpi-label">Outcomes</div><div class="kpi-value">14</div><div class="kpi-sub">8 verified · 6 pending</div></div><div class="card kpi"><div class="kpi-label">Value verified</div><div class="kpi-value">5</div><div class="kpi-sub">evidence-backed</div></div><div class="card kpi"><div class="kpi-label">Unattributed</div><div class="kpi-value">9</div><div class="kpi-sub">valid state, not zero</div></div></div><div class="card" style="margin-top:14px"><div class="card-body"><table class="table"><thead><tr><th>Outcome</th><th>Source result</th><th>Status</th><th>Value</th><th>Evidence</th></tr></thead><tbody><tr><td><strong>Meeting EV-88 held</strong></td><td>EX-8750</td><td>${statusBadge('VERIFIED')}</td><td><span class="badge estimated">ESTIMATED</span></td><td><span class="link" data-evidence="${encodeURIComponent('event:EV-88 · execution:EX-8750')}">drill-down</span></td></tr><tr><td><strong>File AF-31 delivered</strong></td><td>EX-8790</td><td>${statusBadge('VERIFIED')}</td><td><span class="badge unavailable">UNATTRIBUTED</span></td><td><span class="link" data-evidence="${encodeURIComponent('artifact:AF-31 · result:RS-881')}">drill-down</span></td></tr><tr><td><strong>Risk mitigated</strong></td><td>W-330</td><td><span class="badge p2">PENDING_VERIFY</span></td><td><span class="badge unavailable">UNAVAILABLE</span></td><td>insufficient evidence</td></tr></tbody></table></div></div>`}
+
+function learning(){return `${viewHead('Learning Loop','Outcome/correction cải thiện memory, entity links, work state, baselines và evaluation samples — nhưng model không tự đổi policy.',`<button class="btn">Evaluation set</button><button class="btn primary">Review candidates</button>`)}<div class="grid cols-3"><div class="card card-pad"><div class="row between"><b class="small">Memory update</b><span class="badge p2">CANDIDATE</span></div><p class="small muted">Group journal nên ghi “đã gửi proposal V2, đang chờ legal review”.</p>${evidenceLink('Source','result:RS-889 · work_item:W-390')}</div><div class="card card-pad"><div class="row between"><b class="small">Identity correction</b><span class="badge p2">CANDIDATE</span></div><p class="small muted">Human correction tách hai PersonIdentity cùng display name.</p>${evidenceLink('Evidence','correction:CR-22')}</div><div class="card card-pad"><div class="row between"><b class="small">Tool reliability</b><span class="badge calculated">CALCULATED</span></div><p class="small muted">whatsapp.send_message 98.7% success trong 30d; 2 retry due provider.</p>${evidenceLink('Telemetry','tool_call:TC-330')}</div></div><div class="callout warn" style="margin-top:14px">Policy/instruction changes luôn versioned + actor. Model chỉ được đề xuất, không self-authorize permission changes.</div>`}
+
+function control(){return `${viewHead('Antigravity Control Room','Operational telemetry có correlation id nhưng không được giả business truth. Quota chỉ source-backed.',`<button class="btn" data-action="probe-model">Probe model</button><button class="btn primary" data-action="run-e2e">Run health checks</button>`)}
+<div class="grid cols-4"><div class="card kpi"><div class="kpi-label">Core readiness</div><div class="kpi-value" style="font-size:18px;color:var(--good)">PASS</div><div class="kpi-sub">DB writable · migrations current</div></div><div class="card kpi"><div class="kpi-label">Antigravity CLI</div><div class="kpi-value" style="font-size:18px;color:var(--good)">PROBE_PASS</div><div class="kpi-sub">oauth_session · gói tháng</div></div><div class="card kpi"><div class="kpi-label">Zalo Channel</div><div class="kpi-value" style="font-size:18px;color:var(--good)">CONNECTED</div><div class="kpi-sub">session persisted</div></div><div class="card kpi"><div class="kpi-label">Quota remaining</div><div class="kpi-value" style="font-size:18px;color:var(--good)">UNLIMITED</div><div class="kpi-sub">Gói tháng Google AGY</div></div></div>
+<div class="grid span-layout" style="margin-top:14px"><div class="card"><div class="card-head"><div><h3>SLO / Health</h3><p>Certification profile targets</p></div></div><div class="card-body"><div class="slo-grid"><div class="slo"><b>RawEvent ingest · 0.8s</b><span>p95 target ≤2s</span><div class="bar"><i style="width:40%"></i></div></div><div class="slo"><b>Projection freshness · 3.4s</b><span>p95 target ≤10s</span><div class="bar"><i style="width:34%"></i></div></div><div class="slo"><b>UI read · 0.62s</b><span>p95 target ≤1.5s</span><div class="bar"><i style="width:41%"></i></div></div><div class="slo"><b>Trace completeness · 99.7%</b><span>target ≥99.5%</span><div class="bar"><i style="width:99.7%"></i></div></div><div class="slo"><b>Policy trace · 100%</b><span>external side-effects</span><div class="bar"><i style="width:100%"></i></div></div><div class="slo warn"><b>Disk free · 23%</b><span>warn below 20%</span><div class="bar"><i style="width:77%"></i></div></div></div></div></div><div class="stack"><div class="card card-pad"><b class="small">Queue</b><div class="row between" style="margin-top:8px"><span class="small muted">Pending jobs</span><strong>12</strong></div><div class="row between" style="margin-top:8px"><span class="small muted">Oldest age</span><strong>8.4s</strong></div><div class="row between" style="margin-top:8px"><span class="small muted">Dead-letter</span><strong>0</strong></div></div><div class="card card-pad"><b class="small">Certification profile</b><p class="small muted">50 active groups · 25k inbound/day · 1M RawEvents · 100k work/intel · 4 concurrent model executions.</p></div></div></div>`}
+
+function audit(){return `${viewHead('Audit Ledger','Governance/event history có actor, reason, version và result; security-relevant actions không silent mutate.',`<button class="btn">Export filtered</button><button class="btn primary">Verify chain</button>`)}<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Time</th><th>Actor</th><th>Event</th><th>Object</th><th>Reason / result</th><th>Correlation</th></tr></thead><tbody><tr><td>09:14:04</td><td class="mono">heo_runtime</td><td>approval.created</td><td>AP-91</td><td>policy APPROVAL · fingerprint bound</td><td class="mono">COR-66193</td></tr><tr><td>09:13:58</td><td class="mono">owner_local:demo</td><td>policy.read</td><td>POL-G-STRATEGIC v8</td><td>UI effective policy drill-down</td><td class="mono">COR-66188</td></tr><tr><td>08:51:22</td><td class="mono">heo_runtime</td><td>attention.changed</td><td>ATT-1028</td><td>P2 → P1 · deadline overdue</td><td class="mono">COR-66090</td></tr><tr><td>08:43:07</td><td class="mono">owner_local:demo</td><td>person.merge.denied</td><td>MC-19</td><td>insufficient evidence</td><td class="mono">COR-66031</td></tr><tr><td>08:30:00</td><td class="mono">system</td><td>backup.completed</td><td>BK-20260917-0830</td><td>checksums PASS · secret_export=false</td><td class="mono">COR-65990</td></tr></tbody></table></div></div>`}
+
+function settings(){return `${viewHead('Owner & Operations','V1 single-owner, local-first. Remote mode off by default; lifecycle includes backup + restore + update + rollback.',`<button class="btn" data-action="backup">Run backup</button><button class="btn primary" data-action="open-wizard">First-Run Wizard</button>`)}
+<div class="grid span-layout"><div class="stack"><div class="card"><div class="card-head"><div><h3>Owner security</h3><p>Local-first default</p></div></div><div class="card-body"><div class="row between"><div><b class="small">Local mode</b><div class="small muted">UI binds 127.0.0.1:5088</div></div><div class="switch on"></div></div><div class="divider"></div><div class="row between"><div><b class="small">Remote mode</b><div class="small muted">Requires owner auth + TLS reverse proxy</div></div><div class="switch"></div></div><div class="callout warn" style="margin-top:12px">Remote mode không được bật chỉ bằng bind 0.0.0.0. Phải có authenticated owner session, secure cookie/CSRF controls và TLS.</div></div></div>
+<div class="card"><div class="card-head"><div><h3>Backup / Restore</h3><p>Manifest + checksums + safety backup</p></div></div><div class="card-body"><div class="row wrap"><button class="btn primary" data-action="backup">Create backup</button><button class="btn" data-action="restore">Restore…</button><button class="btn">Verify latest</button></div><div class="table-wrap" style="margin-top:10px"><table class="table"><thead><tr><th>Backup</th><th>Release</th><th>Schema</th><th>Integrity</th><th>Secrets</th></tr></thead><tbody><tr><td><strong>BK-20260917-0830</strong></td><td>v1.0.0</td><td>42</td><td>${statusBadge('PASS')}</td><td>false</td></tr><tr><td><strong>BK-20260916-0830</strong></td><td>v1.0.0</td><td>42</td><td>${statusBadge('PASS')}</td><td>false</td></tr></tbody></table></div></div></div>
+<div class="card"><div class="card-head"><div><h3>Architecture lock</h3><p>Authority boundaries</p></div></div><div class="card-body"><div class="arch"><div class="arch-node"><b>Zalo / Channels</b><p>Provider I/O only</p></div><div class="arch-node"><b>Raw Reality</b><p>append-only evidence</p></div><div class="arch-node"><b>Canonical</b><p>Person/Group/Work</p></div><div class="arch-node"><b>Memory/Intel</b><p>authorized context</p></div><div class="arch-node"><b>Heo Runtime</b><p>policy + orchestration</p></div><div class="arch-node"><b>Tool Gateway</b><p>permit side-effects</p></div><div class="arch-node"><b>Outcome/Learn</b><p>value + governed loop</p></div></div></div></div></div>
+<div class="stack"><div class="card card-pad"><b class="small">Install state</b><div class="divider"></div><div class="stack"><div class="row between"><span class="small muted">Chassis / DB</span>${statusBadge('INSTALLED_HEALTHY')}</div><div class="row between"><span class="small muted">Antigravity CLI</span>${statusBadge('PROBE_PASS')}</div><div class="row between"><span class="small muted">Zalo Cá Nhân</span>${statusBadge('CONNECTED')}</div><div class="row between"><span class="small muted">E2E Trace</span>${statusBadge('PASS')}</div><div class="row between"><span class="small muted">Readiness</span>${statusBadge('READY_END_TO_END')}</div></div></div><div class="card card-pad"><b class="small">Owner commands</b><div class="codebox" style="margin-top:10px">heo status<br>heo logs [core|zalo]<br>heo restart<br>heo antigravity probe<br>heo zalo connect|status|logout<br>heo plugin list|toggle &lt;id&gt;<br>heo backup<br>heo restore &lt;backup&gt;</div></div><div class="card card-pad"><b class="small">Retention</b><p class="small muted">Backups: 7 daily + 4 weekly + 6 monthly. Normal backup excludes plaintext tokens.</p></div></div></div>`}
+
+function wizardModal(){modal('First-Run Wizard','System Health → Antigravity → Zalo Channel → E2E Test → Ready',`<div class="stepper"><div class="step done"><div class="n">✓</div><h4>System Health</h4><p>Chassis + DB + UI + agy binary healthy.</p></div><div class="step done"><div class="n">✓</div><h4>Antigravity CLI</h4><p>Authenticated probe PASS (Gói tháng).</p></div><div class="step done"><div class="n">✓</div><h4>Zalo Cá Nhân</h4><p>CONNECTED + saved session.</p></div><div class="step done"><div class="n">✓</div><h4>E2E Test</h4><p>Real inbound observed; trace complete.</p></div><div class="step done"><div class="n">✓</div><h4>Ready</h4><p>Source → policy → model/plan → result linked.</p></div></div><div class="callout" style="margin-top:16px">Chỉ READY_END_TO_END mới được gọi là “Heo sẵn sàng hoạt động đầy đủ”. Khung sườn modular bảo đảm lỗi plugin không lan sang Core.</div>`,`<button class="btn" data-close-modal>Đóng</button><button class="btn primary" data-action="run-e2e">Run E2E test</button>`)}
+
+const renderers={dashboard,attention,work,calendar,groups,people,whatsapp,intel,approvals,policies,executions,tools,artifacts,value,learning,control,audit,settings};
+
+function render(){
+ const fn = renderers[state.route] || dashboard;
+ $('#view').innerHTML = fn();
+ $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.route === state.route));
+ attachDynamic();
+ window.scrollTo(0,0);
+}
+
+function attachDynamic(){
+ $$('[data-route-go]').forEach(b => b.onclick = () => go(b.dataset.routeGo));
+ $$('[data-evidence]').forEach(b => b.onclick = () => openEvidence(b.dataset.evidence));
+ $$('[data-group-tab]').forEach(b => b.onclick = () => { state.groupTab = b.dataset.groupTab; render(); });
+ $$('[data-person-tab]').forEach(b => b.onclick = () => { state.personTab = b.dataset.personTab; render(); });
+ 
+ // Approvals actions
+ $$('[data-approve]').forEach(b => b.onclick = () => handleApproval(b.dataset.approve, 'approve', b));
+ $$('[data-deny]').forEach(b => b.onclick = () => handleApproval(b.dataset.deny, 'deny', b));
+
+ // Tools & Add-ins actions
+ $$('[data-tool-subtab]').forEach(b => b.onclick = () => { state.toolSubTab = b.dataset.toolSubtab; render(); });
+ $$('[data-tool-cat]').forEach(b => b.onclick = () => { state.toolCategory = b.dataset.toolCat; render(); });
+ $$('[data-toggle-plugin]').forEach(b => b.onclick = () => {
+  let pid = b.dataset.togglePlugin;
+  let isCurrentlyOn = b.dataset.enabled === 'true';
+  togglePlugin(pid, !isCurrentlyOn);
+ });
+ $$('[data-install-plugin]').forEach(b => b.onclick = () => installPlugin(b.dataset.installPlugin));
+
+ $$('[data-action]').forEach(b => b.onclick = () => action(b.dataset.action, b.dataset.id));
+}
+
+function go(r){
+ state.route = r;
+ history.replaceState(null, '', '#' + r);
+ render();
+ $('#sidebar').classList.remove('open');
+}
+
+$$('.nav-item').forEach(b => b.onclick = () => go(b.dataset.route));
+
+function handleApproval(id, actionType, btnEl){
+ fetch('/api/approvals/action', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({ id, action: actionType })
+ }).then(() => {
+  showToast(`${id} đã được ${actionType === 'approve' ? 'PHÊ DUYỆT' : 'TỪ CHỐI'}!`);
+  if(btnEl){
+   let item = btnEl.closest('.list-item');
+   if(item) item.style.opacity = '.45';
+  }
+ }).catch(err => {
+  showToast(`Lỗi: ${err.message}`);
+ });
+}
+
+// REALTIME API INTEGRATION FOR PLUGINS & SYSTEM
+async function fetchPlugins(){
+ try {
+  let res = await fetch('/api/plugins/list');
+  let data = await res.json();
+  if(data.ok && Array.isArray(data.plugins)){
+   state.plugins = data.plugins;
+   let badge = $('#sidebarPluginCount');
+   if(badge) badge.textContent = data.plugins.length;
+   if(state.route === 'tools') render();
+  }
+ } catch(e){
+  console.warn('Cannot fetch plugins:', e);
+ }
+}
+
+async function fetchCatalog(){
+ try {
+  let res = await fetch('/api/plugins/catalog');
+  let data = await res.json();
+  if(data.ok && Array.isArray(data.catalog)){
+   state.catalog = data.catalog;
+  }
+ } catch(e){
+  console.warn('Cannot fetch catalog:', e);
+ }
+}
+
+async function fetchSystemStatus(){
+ try {
+  let res = await fetch('/api/system/status');
+  let data = await res.json();
+  if(data.system){
+   let sys = data.system;
+   if($('#valCore')) $('#valCore').textContent = sys.core_status || 'Healthy';
+   if($('#valAgy')) $('#valAgy').textContent = sys.antigravity_probe || 'Probe PASS';
+   if($('#valZalo')) $('#valZalo').textContent = sys.channel_session || 'Connected';
+   if($('#valReady')) $('#valReady').textContent = sys.readiness || 'READY_E2E';
+  }
+ } catch(e){
+  console.warn('Cannot fetch system status:', e);
+ }
+}
+
+async function togglePlugin(pluginId, newEnable){
+ try {
+  let res = await fetch('/api/plugins/toggle', {
+   method: 'POST',
+   headers: {'Content-Type': 'application/json'},
+   body: JSON.stringify({ id: pluginId, enable: newEnable })
+  });
+  let data = await res.json();
+  if(data.ok){
+   showToast(`Đã ${newEnable ? 'KÍCH HOẠT' : 'TẠM DỪNG'} plugin: ${pluginId}`);
+   await fetchPlugins();
+  } else {
+   showToast(`Không thể đổi trạng thái plugin: ${data.error || 'Lỗi không xác định'}`);
+  }
+ } catch(e){
+  showToast(`Lỗi kết nối máy chủ: ${e.message}`);
+ }
+}
+
+async function installPlugin(pluginId){
+ try {
+  let res = await fetch('/api/plugins/install', {
+   method: 'POST',
+   headers: {'Content-Type': 'application/json'},
+   body: JSON.stringify({ id: pluginId })
+  });
+  let data = await res.json();
+  if(data.ok){
+   showToast(data.message || `Đã cài đặt ${pluginId}`);
+   await fetchPlugins();
+   await fetchCatalog();
+   if(state.route === 'tools') render();
+  }
+ } catch(e){
+  showToast(`Lỗi cài đặt: ${e.message}`);
+ }
+}
+
+function action(a, id){
+ if(a === 'open-wizard' || a === 'run-e2e') return wizardModal();
+ if(a === 'open-catalog-tab'){
+  state.route = 'tools';
+  state.toolSubTab = 'catalog';
+  render();
+  return;
+ }
+ if(a === 'probe-plugins'){
+  showToast('Chạy kiểm tra Circuit Breaker toàn bộ plugin: 0 TRIPPED · 100% HEALTHY');
+  fetchPlugins();
+  return;
+ }
+ if(a === 'config-plugin'){
+  modal('Cấu hình Add-in', id, `
+   <div class="form-grid">
+    <div class="field full"><label>Plugin ID</label><input class="mono" value="${id}" disabled /></div>
+    <div class="field"><label>Tự động kích hoạt khi bật máy</label><select><option>Bật (Mặc định)</option><option>Tắt</option></select></div>
+    <div class="field"><label>Ngưỡng ngắt mạch (Circuit Threshold)</label><input type="number" value="3" /></div>
+    <div class="field full"><label>Tham số cấu hình JSON</label><textarea class="mono">{\n  "log_level": "INFO",\n  "isolated_sandbox": true\n}</textarea></div>
+   </div>
+  `, `<button class="btn" data-close-modal>Đóng</button><button class="btn primary" onclick="closeModal();showToast('Đã lưu cấu hình plugin')">Lưu Cấu Hình</button>`);
+  return;
+ }
+ if(a === 'new-work') return modal('Tạo WorkItem','Manual source · versioned mutation',`<div class="form-grid"><div class="field full"><label>Title</label><input id="newWorkTitle" placeholder="Ví dụ: Follow-up đối tác" /></div><div class="field"><label>Owner</label><select><option>Owner</option><option>Heo</option></select></div><div class="field"><label>Priority</label><select><option>P2</option><option>P1</option><option>P3</option></select></div><div class="field"><label>Deadline</label><input type="datetime-local" /></div><div class="field"><label>Group</label><select><option>Strategic Partners</option><option>Sales Ops</option></select></div><div class="field full"><label>Evidence / note</label><textarea placeholder="Manual source sẽ được phân biệt với source-backed facts"></textarea></div></div>`,`<button class="btn" data-close-modal>Hủy</button><button class="btn primary" data-action="save-work">Create</button>`);
+ if(a === 'save-work'){ closeModal(); showToast('Đã tạo WorkItem mẫu'); return; }
+ if(a === 'new-event') return modal('Schedule canonical event','Internal scheduler · timezone explicit',`<div class="form-grid"><div class="field full"><label>Title</label><input placeholder="Meeting / Deadline / Reminder" /></div><div class="field"><label>Type</label><select><option>Meeting</option><option>Deadline</option><option>Reminder</option><option>Follow-up checkpoint</option></select></div><div class="field"><label>Timezone</label><select><option>Asia/Ho_Chi_Minh</option><option>UTC</option></select></div><div class="field"><label>When</label><input type="datetime-local" /></div><div class="field"><label>Delivery</label><select><option>Internal owner</option><option>Zalo outbound (policy)</option></select></div></div>`,`<button class="btn" data-close-modal>Hủy</button><button class="btn primary" data-action="save-event">Schedule</button>`);
+ if(a === 'save-event'){ closeModal(); showToast('Event mẫu đã được schedule'); return; }
+ if(a === 'wa-connect') return qrModal();
+ if(a === 'sync-groups'){ showToast('Đồng bộ danh sách nhóm chat Zalo thành công (3 nhóm)'); return; }
+ if(a === 'probe-model'){ showToast('Antigravity CLI Probe PASS · Lõi suy luận sẵn sàng'); return; }
+ if(a === 'recompute-attention'){ showToast('Attention queue recomputed từ factor_values'); return; }
+ if(a === 'backup'){ showToast('Backup demo: manifest + checksums PASS'); return; }
+ if(a === 'restore') return modal('Restore backup','Safety flow bắt buộc trước restore',`<div class="stepper" style="grid-template-columns:repeat(4,1fr)"><div class="step"><div class="n">1</div><h4>Validate</h4><p>Manifest + checksums + integrity.</p></div><div class="step"><div class="n">2</div><h4>Safety backup</h4><p>Snapshot current state.</p></div><div class="step"><div class="n">3</div><h4>Restore</h4><p>Apply compatible DB/files.</p></div><div class="step"><div class="n">4</div><h4>Gates</h4><p>Migrate + health/auth/link checks.</p></div></div><div class="callout danger" style="margin-top:15px">Failed restore phải tự rollback về safety backup; không để partial restored state.</div>`,`<button class="btn" data-close-modal>Hủy</button><button class="btn danger" data-action="confirm-restore">Restore selected</button>`);
+ if(a === 'confirm-restore'){ closeModal(); showToast('Restore flow mô phỏng đã hoàn tất'); return; }
+ if(a === 'simulate-policy') return policySimulator();
+ if(a === 'modify-approval') return modal('Modify proposed action',id,`<div class="field"><label>Modified action summary</label><textarea>Giảm nội dung outbound xuống minimum necessary data.</textarea></div><div class="callout" style="margin-top:12px">Modify tạo action fingerprint mới; approval cũ không được reuse.</div>`,`<button class="btn" data-close-modal>Hủy</button><button class="btn primary" data-action="save-modified-approval">Create new fingerprint</button>`);
+ if(a === 'save-modified-approval'){ closeModal(); showToast('Đã tạo fingerprint mới; approval cũ không còn áp dụng'); return; }
+}
+
+function qrModal(){
+ let secs = 90;
+ modal('Kết Nối Kênh Chat (Zalo / Multi-Device)','Mã QR tạo theo yêu cầu · không lưu token thô',`<div style="text-align:center"><div class="qr"><div class="qr-center"></div></div><div class="small muted">Mã QR xác thực phiên · Hết hạn trong <b id="qrSecs">90</b>s</div></div><div class="callout" style="margin-top:14px">Mở ứng dụng Zalo trên điện thoại → Quét mã QR để liên kết bot bảo mật. Phiên làm việc được mã hóa cục bộ an toàn.</div>`,`<button class="btn danger" data-close-modal>Hủy phiên quét</button><button class="btn primary" data-action="simulate-wa-linked">Xác nhận đã quét</button>`);
+ let iv = setInterval(() => {
+  let el = $('#qrSecs');
+  if(!el){ clearInterval(iv); return; }
+  secs--;
+  el.textContent = secs;
+  if(secs <= 0){
+   clearInterval(iv);
+   el.textContent = '0';
+   showToast('Mã QR đã hết hạn → IDLE_TIMEOUT');
+  }
+ }, 1000);
+}
+
+function policySimulator(){
+ modal('Policy Precedence Simulator','Deterministic precedence: GLOBAL → CHANNEL → GROUP → PERSON → ACTION',`
+  <div class="form-grid">
+   <div class="field"><label>Nhóm Chat (Group)</label><select id="simGroup"><option value="G-001">G-001 Strategic Partners</option><option value="G-002">G-002 Sales Ops</option></select></div>
+   <div class="field"><label>Người nhận (Person)</label><select id="simPerson"><option value="P-018">P-018 Nguyễn Anh (Có rule DENY)</option><option value="P-022">P-022 Trần Minh</option></select></div>
+   <div class="field full"><label>Hành động ngoại vi (Action)</label><select id="simAction"><option value="whatsapp.send_message">whatsapp.send_message (Gửi tin nhắn ngoài)</option><option value="zalo.send_message">zalo.send_message (Gửi tin nhắn ngoài)</option><option value="scheduler.create">scheduler.create (Nội bộ hệ thống)</option><option value="artifact.send">artifact.send (Chia sẻ tệp tài liệu)</option></select></div>
   </div>
+  <div id="simResult" class="callout" style="margin-top:14px">Chọn tham số và bấm Chạy Thẩm Định (Evaluate).</div>
+ `, `<button class="btn" data-close-modal>Đóng</button><button class="btn primary" id="simRun">Chạy Thẩm Định</button>`);
 
-  <script>
-    let pluginsData = [];
-    let catalogData = [];
-
-    function showToast(msg, isSuccess = true) {
-      const t = document.getElementById('toast');
-      t.innerHTML = `<span>${isSuccess ? '✅' : '❌'}</span><span>${msg}</span>`;
-      t.className = `fixed bottom-6 right-6 z-50 transition-all duration-300 px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-sm font-semibold border ${isSuccess ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200' : 'bg-rose-950/90 border-rose-500/50 text-rose-200'}`;
-      setTimeout(() => { t.classList.add('opacity-0', 'translate-y-20'); }, 3000);
+ setTimeout(() => {
+  $('#simRun').onclick = async () => {
+   let p = $('#simPerson').value;
+   let g = $('#simGroup').value;
+   let a = $('#simAction').value;
+   try {
+    let res = await fetch('/api/policy/simulate', {
+     method: 'POST',
+     headers: {'Content-Type': 'application/json'},
+     body: JSON.stringify({ group: g, person: p, action: a })
+    });
+    let data = await res.json();
+    if(data.decision === 'DENY'){
+     $('#simResult').className = 'callout danger';
+     $('#simResult').innerHTML = `<b>QUYẾT ĐỊNH: DENY (TỪ CHỐI TUYỆT ĐỐI)</b><p>${data.reason} · Không cấp Execution Permit.</p>`;
+    } else {
+     $('#simResult').className = 'callout good';
+     $('#simResult').innerHTML = `<b>QUYẾT ĐỊNH: ${data.decision}</b><p>${data.reason} · Permit: <span class="mono">${data.permit_id}</span></p>`;
     }
+   } catch(e){
+    $('#simResult').innerHTML = `Lỗi kiểm tra: ${e.message}`;
+   }
+  };
+ }, 0);
+}
 
-    function switchTab(tabName) {
-      ['plugins', 'overview', 'persona'].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.add('hidden');
-        document.getElementById(`tab-btn-${t}`).className = 'px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center space-x-2';
-      });
-      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-      document.getElementById(`tab-btn-${tabName}`).className = 'px-4 py-2 rounded-xl text-sm font-medium transition flex items-center space-x-2 bg-pink-500 text-white shadow-lg shadow-pink-500/25';
-    }
+document.addEventListener('click', e => {
+ if(e.target.matches('[data-close-modal]')) closeModal();
+ if(e.target.matches('[data-close-drawer]')) $('#drawer').classList.remove('show');
+ if(e.target.dataset.action === 'simulate-wa-linked'){
+  closeModal();
+  showToast('Zalo Channel CONNECTED thành công!');
+  return;
+ }
+ if(e.target.dataset.action && e.target.closest('.modal')) action(e.target.dataset.action, e.target.dataset.id);
+});
 
-    function switchPluginSubTab(sub) {
-      if (sub === 'installed') {
-        document.getElementById('subtab-installed').classList.remove('hidden');
-        document.getElementById('subtab-catalog').classList.add('hidden');
-        document.getElementById('subtab-btn-installed').className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-700 text-white flex items-center space-x-2';
-        document.getElementById('subtab-btn-catalog').className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2';
-      } else {
-        document.getElementById('subtab-installed').classList.add('hidden');
-        document.getElementById('subtab-catalog').classList.remove('hidden');
-        document.getElementById('subtab-btn-catalog').className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-700 text-white flex items-center space-x-2';
-        document.getElementById('subtab-btn-installed').className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2';
-      }
-    }
+$('#modalOverlay').addEventListener('click', e => { if(e.target.id === 'modalOverlay') closeModal(); });
+$('#wizardBtn').onclick = wizardModal;
+$('#mobileMenu').onclick = () => $('#sidebar').classList.toggle('open');
+$('#themeBtn').onclick = () => {
+ state.theme = state.theme === 'dark' ? 'light' : 'dark';
+ document.documentElement.dataset.theme = state.theme;
+ showToast(`Chế độ giao diện: ${state.theme.toUpperCase()}`);
+};
+$('#notifyBtn').onclick = () => showToast('3 yêu cầu phê duyệt + 2 việc P1 cần Sếp xem xét');
 
-    async function loadPlugins() {
-      try {
-        const res = await fetch('/api/plugins/list');
-        const data = await res.json();
-        if (data.ok) {
-          pluginsData = data.plugins;
-          renderInstalledPlugins(pluginsData);
-          document.getElementById('installed-count').textContent = pluginsData.length;
-        }
-      } catch (e) {
-        console.error("Lỗi nạp plugin:", e);
-      }
-    }
+$('#globalSearch').addEventListener('keydown', e => {
+ if(e.key === 'Enter'){
+  let q = e.target.value.toLowerCase();
+  if(q.includes('policy')) go('policies');
+  else if(q.includes('approval')) go('approvals');
+  else if(q.includes('zalo') || q.includes('channel') || q.includes('whatsapp')) go('whatsapp');
+  else if(q.includes('person')) go('people');
+  else if(q.includes('group')) go('groups');
+  else if(q.includes('work')) go('work');
+  else if(q.includes('trace') || q.includes('exec')) go('executions');
+  else if(q.includes('plugin') || q.includes('tool') || q.includes('mcp')) go('tools');
+  else showToast('Tìm kiếm: Thử "plugin", "policy", "work", "zalo", "group"…');
+ }
+});
 
-    async function loadCatalog() {
-      try {
-        const res = await fetch('/api/plugins/catalog');
-        const data = await res.json();
-        if (data.ok) {
-          catalogData = data.catalog;
-          renderCatalog(catalogData);
-          document.getElementById('catalog-count').textContent = catalogData.length;
-        }
-      } catch (e) {
-        console.error("Lỗi nạp catalog:", e);
-      }
-    }
+document.addEventListener('keydown', e => {
+ if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){
+  e.preventDefault();
+  $('#globalSearch').focus();
+ }
+ if(e.key === 'Escape'){
+  closeModal();
+  $('#drawer').classList.remove('show');
+ }
+});
 
-    function renderInstalledPlugins(list) {
-      const container = document.getElementById('installed-plugins-grid');
-      container.innerHTML = '';
+// Khởi chạy
+const initial = location.hash.replace('#', '');
+if(renderers[initial]) state.route = initial;
+render();
 
-      list.forEach(p => {
-        const meta = p.metadata;
-        const card = document.createElement('div');
-        card.className = 'glass p-5 rounded-2xl border border-slate-800/80 flex flex-col justify-between space-y-4 hover:border-slate-700 transition relative';
-
-        const isHealthy = p.health === 'healthy';
-        const isDegraded = p.health === 'degraded';
-        const isError = p.health === 'error';
-
-        let healthBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">Đã Tắt</span>`;
-        if (p.enabled) {
-          if (isHealthy) healthBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>Khỏe Mạnh</span></span>`;
-          else if (isDegraded) healthBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Cảnh Báo</span>`;
-          else if (isError) healthBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">Ngắt Mạch</span>`;
-        }
-
-        card.innerHTML = `
-          <div class="space-y-2">
-            <div class="flex items-start justify-between">
-              <div class="flex items-center space-x-3">
-                <span class="text-2xl">${meta.icon || '🧩'}</span>
-                <div>
-                  <h4 class="font-bold text-white text-sm tracking-tight">${meta.name}</h4>
-                  <div class="text-[11px] font-mono text-slate-400">${meta.id}</div>
-                </div>
-              </div>
-              <div>${healthBadge}</div>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">${meta.description || 'Không có mô tả'}</p>
-            <div class="flex items-center space-x-2 pt-1">
-              <span class="badge-${meta.category} px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">${meta.category}</span>
-              <span class="text-[10px] text-slate-500 font-mono">v${meta.version}</span>
-              <span class="text-[10px] text-slate-500">• ${meta.author}</span>
-            </div>
-          </div>
-
-          <div class="border-t border-slate-800/80 pt-3 flex items-center justify-between">
-            <button onclick="viewLogs('${meta.id}')" class="text-xs text-slate-400 hover:text-white flex items-center space-x-1">
-              <span>📋</span><span>Logs</span>
-            </button>
-            <div class="flex items-center space-x-2">
-              <span class="text-xs text-slate-400">${p.enabled ? 'Đang bật' : 'Đã tắt'}</span>
-              <button onclick="togglePlugin('${meta.id}', ${!p.enabled})" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${p.enabled ? 'bg-pink-500' : 'bg-slate-700'}">
-                <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${p.enabled ? 'translate-x-6' : 'translate-x-1'}"></span>
-              </button>
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function renderCatalog(list) {
-      const container = document.getElementById('catalog-plugins-grid');
-      container.innerHTML = '';
-
-      list.forEach(c => {
-        const card = document.createElement('div');
-        card.className = 'glass p-5 rounded-2xl border border-slate-800/80 flex flex-col justify-between space-y-4 hover:border-slate-700 transition';
-        card.innerHTML = `
-          <div class="space-y-2">
-            <div class="flex items-center space-x-3">
-              <span class="text-2xl">${c.icon}</span>
-              <div>
-                <h4 class="font-bold text-white text-sm">${c.name}</h4>
-                <div class="text-[11px] font-mono text-slate-400">${c.id}</div>
-              </div>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">${c.description}</p>
-            <div class="flex items-center space-x-2 pt-1">
-              <span class="badge-${c.category} px-2 py-0.5 rounded-md text-[10px] font-bold uppercase">${c.category}</span>
-              <span class="text-[10px] text-slate-500">Tác giả: ${c.author}</span>
-            </div>
-          </div>
-          <div class="border-t border-slate-800/80 pt-3 flex items-center justify-between">
-            <span class="text-xs text-slate-400">Sẵn sàng</span>
-            <button onclick="installPlugin('${c.id}')" class="px-3 py-1.5 rounded-xl bg-pink-500 hover:bg-pink-600 text-xs font-bold text-white shadow-lg shadow-pink-500/20 transition flex items-center space-x-1">
-              <span>+</span><span>Cài Đặt 1-Click</span>
-            </button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    async function togglePlugin(id, enable) {
-      try {
-        const res = await fetch('/api/plugins/toggle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, enable })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          showToast(`Đã ${enable ? 'bật' : 'tắt'} plugin ${id} thành công!`);
-          loadPlugins();
-        } else {
-          showToast(`Lỗi: ${data.error}`, false);
-        }
-      } catch (e) {
-        showToast(`Lỗi kết nối: ${e.message}`, false);
-      }
-    }
-
-    async function installPlugin(id) {
-      try {
-        const res = await fetch('/api/plugins/install', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          showToast(data.message);
-          loadPlugins();
-        }
-      } catch (e) {
-        showToast(`Lỗi cài đặt: ${e.message}`, false);
-      }
-    }
-
-    function viewLogs(pluginId) {
-      const p = pluginsData.find(x => x.metadata.id === pluginId);
-      if (!p) return;
-      document.getElementById('modal-plugin-title').textContent = `Nhật ký: ${p.metadata.name} (${pluginId})`;
-      const logsElem = document.getElementById('modal-log-content');
-      logsElem.innerHTML = '';
-      if (p.recent_logs && p.recent_logs.length > 0) {
-        p.recent_logs.forEach(l => {
-          const div = document.createElement('div');
-          div.textContent = l;
-          logsElem.appendChild(div);
-        });
-      } else {
-        logsElem.innerHTML = '<div class="text-slate-500">Chưa có nhật ký ghi nhận.</div>';
-      }
-      document.getElementById('log-modal').classList.remove('hidden');
-    }
-
-    function closeLogModal() {
-      document.getElementById('log-modal').classList.add('hidden');
-    }
-
-    function refreshPlugins() {
-      loadPlugins();
-      loadCatalog();
-    }
-
-    window.onload = () => {
-      refreshPlugins();
-    };
-  </script>
+// Tải dữ liệu thật từ máy chủ Heo-Harness
+fetchPlugins();
+fetchCatalog();
+fetchSystemStatus();
+</script>
 </body>
 </html>

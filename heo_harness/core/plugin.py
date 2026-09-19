@@ -171,11 +171,28 @@ class BasePlugin:
         pass
 
     def get_status_report(self) -> Dict[str, Any]:
+        meta_dict = self.metadata.to_dict()
+        category_str = self.metadata.category.value if hasattr(self.metadata.category, "value") else str(self.metadata.category)
         return {
-            "metadata": self.metadata.to_dict(),
+            "id": self.metadata.id,
+            "name": self.metadata.name,
+            "version": self.metadata.version,
+            "author": self.metadata.author,
+            "author_email": self.metadata.author_email,
+            "category": category_str,
+            "description": self.metadata.description,
+            "icon": self.metadata.icon,
+            "metadata": meta_dict,
             "enabled": self.enabled,
             "loaded": self.loaded,
             "health": self.health_status.value,
+            "circuit_breaker": {
+                "status": "HEALTHY" if not self.circuit.is_open else "CIRCUIT_TRIPPED",
+                "failure_count": self.circuit.consecutive_failures,
+                "max_failures": self.circuit.failure_threshold,
+                "circuit_open": self.circuit.is_open,
+                "total_errors": self.circuit.total_errors
+            },
             "total_errors": self.circuit.total_errors,
             "consecutive_failures": self.circuit.consecutive_failures,
             "circuit_tripped": self.circuit.is_open,

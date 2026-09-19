@@ -16,9 +16,21 @@ from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory, 
 
 class TestHeoHarness(unittest.TestCase):
     def setUp(self):
-        self.ctx = Context()
+        self.tmp_cfg = f"/tmp/test_harness_core_{id(self)}.json"
+        if os.path.exists(self.tmp_cfg):
+            os.remove(self.tmp_cfg)
+        self.ctx = Context(config_path=self.tmp_cfg)
         self.bus = EventBus()
         self.manager = PluginManager(self.ctx, self.bus)
+
+    def tearDown(self):
+        for pid in list(self.manager._plugins.keys()):
+            self.manager.unload_plugin(pid)
+        if hasattr(self, "tmp_cfg") and os.path.exists(self.tmp_cfg):
+            try:
+                os.remove(self.tmp_cfg)
+            except Exception:
+                pass
 
     def test_scan_builtin_plugins(self):
         """Kiểm tra việc quét và nạp tự động 7 plugin mặc định."""

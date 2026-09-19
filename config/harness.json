@@ -38,9 +38,6 @@
     },
     "@heo/ui-dashboard": {
       "enabled": true
-    },
-    "@test/buggy": {
-      "enabled": true
     }
   }
 }

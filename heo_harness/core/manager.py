@@ -18,26 +18,81 @@ from heo_harness.core.plugin import BasePlugin, PluginHealthStatus, PluginCatego
 # Kho Catalog Marketplace có sẵn để người dùng có thể cài đặt thêm trên Web UI
 MARKETPLACE_CATALOG: List[Dict[str, Any]] = [
     {
-        "id": "@heo/agent-coder",
-        "name": "Core Agent Lập Trình Viên (Coder)",
+        "id": "@heo/provider-antigravity",
+        "name": "Core Agent: Google Antigravity CLI (Gói tháng)",
         "version": "1.0.0",
-        "author": "Anh Cơ La",
-        "category": "agent",
-        "description": "Chuyên gia phân tích kiến trúc, sinh mã nguồn, rà soát bug và tự động tối ưu hóa code.",
-        "icon": "👨‍💻",
+        "author": "Anh Cơ La (Ryan)",
+        "category": "provider",
+        "description": "Lõi suy luận chính của Heo qua Antigravity CLI gói tháng (Gemini 3.8 / Pro / Sonnet), chi phí 0đ API.",
+        "icon": "🌟",
+        "installed": True,
+        "is_default": True
+    },
+    {
+        "id": "@heo/provider-deepseek",
+        "name": "Secondary Provider: DeepSeek V3 / R1",
+        "version": "1.0.0",
+        "author": "Anh Cơ La (Ryan)",
+        "category": "provider",
+        "description": "Mô hình dự phòng giá rẻ qua API DeepSeek khi cần phân tích mã nguồn hoặc chạy batch tác vụ phụ.",
+        "icon": "⚡",
         "installed": False,
         "is_default": False
     },
     {
-        "id": "@heo/agent-finance",
-        "name": "Core Agent Cố Vấn Tài Chính (Finance)",
+        "id": "@heo/channel-zalo",
+        "name": "Kênh Kết Nối Zalo Cá Nhân (Bảo Mật QR)",
         "version": "1.0.0",
-        "author": "Anh Cơ La",
-        "category": "agent",
-        "description": "Phân tích số liệu tài chính doanh nghiệp, thị trường chứng khoán, tiền tệ và khuyến nghị đầu tư.",
-        "icon": "📈",
+        "author": "Anh Cơ La (Ryan)",
+        "category": "channel",
+        "description": "Kết nối và đồng bộ tin nhắn cá nhân / nhóm Zalo, mã hóa phiên làm việc, tự động tương tác.",
+        "icon": "💬",
+        "installed": True,
+        "is_default": True
+    },
+    {
+        "id": "@heo/channel-whatsapp",
+        "name": "Kênh Kết Nối WhatsApp Multi-Device",
+        "version": "1.0.0",
+        "author": "Genesis Corp OS",
+        "category": "channel",
+        "description": "Mở rộng khả năng tiếp cận đối tác quốc tế qua giao thức WhatsApp Multi-Device.",
+        "icon": "📱",
         "installed": False,
         "is_default": False
+    },
+    {
+        "id": "@heo/plugin-crm",
+        "name": "HubSpot & Customer Pipeline CRM",
+        "version": "1.0.0",
+        "author": "Anh Cơ La (Ryan)",
+        "category": "tool",
+        "description": "Tự động trích xuất thông tin khách hàng tiềm năng, đồng bộ deals và lịch sử liên hệ từ Zalo vào CRM.",
+        "icon": "📇",
+        "installed": False,
+        "is_default": False
+    },
+    {
+        "id": "@heo/tool-office",
+        "name": "Bộ Công Cụ Văn Phòng (Word, Excel, PDF)",
+        "version": "1.0.0",
+        "author": "Anh Cơ La (Ryan)",
+        "category": "tool",
+        "description": "Đọc, tạo lập và xuất báo cáo tài liệu tự động dưới các định dạng DOCX, XLSX, PDF theo chuẩn doanh nghiệp.",
+        "icon": "📊",
+        "installed": True,
+        "is_default": True
+    },
+    {
+        "id": "@heo/tool-media",
+        "name": "Bộ Xử Lý Đa Phương Tiện (Image, Voice, Video)",
+        "version": "1.0.0",
+        "author": "Anh Cơ La (Ryan)",
+        "category": "tool",
+        "description": "Nhận dạng giọng nói voice message, phân tích ảnh chụp màn hình và chuyển đổi định dạng tệp.",
+        "icon": "🎨",
+        "installed": True,
+        "is_default": True
     },
     {
         "id": "@heo/channel-telegram",
@@ -47,39 +102,6 @@ MARKETPLACE_CATALOG: List[Dict[str, Any]] = [
         "category": "channel",
         "description": "Mở rộng khả năng trực chiến của Bé Heo sang mạng lưới Telegram song song với Zalo.",
         "icon": "✈️",
-        "installed": False,
-        "is_default": False
-    },
-    {
-        "id": "@heo/channel-webhook",
-        "name": "Cổng Webhook Tự Động Hóa (Incoming/Outgoing)",
-        "version": "1.0.0",
-        "author": "Genesis Corp OS",
-        "category": "channel",
-        "description": "Nhận lệnh tự động từ GitHub, Jira, CRM, hệ thống nội bộ để phát thông báo ra nhóm.",
-        "icon": "🌐",
-        "installed": False,
-        "is_default": False
-    },
-    {
-        "id": "@heo/tool-notion-sync",
-        "name": "Đồng Bộ Không Gian Làm Việc Notion",
-        "version": "1.0.0",
-        "author": "Cộng Đồng Heo-Harness",
-        "category": "tool",
-        "description": "Tự động ghi chép biên bản cuộc họp, to-do list từ Zalo trực tiếp vào Notion database.",
-        "icon": "📓",
-        "installed": False,
-        "is_default": False
-    },
-    {
-        "id": "@heo/tool-crypto-rates",
-        "name": "Bảng Giá Crypto & Vàng Trực Tuyến",
-        "version": "1.0.0",
-        "author": "Cộng Đồng Heo-Harness",
-        "category": "tool",
-        "description": "Cập nhật realtime biểu đồ BTC, ETH, vàng SJC và tự động thông báo biến động giá.",
-        "icon": "🪙",
         "installed": False,
         "is_default": False
     }
