@@ -715,13 +715,27 @@
         <span class="nav-badge neutral" id="badge-works">0</span>
       </button>
 
-      <div class="nav-section-label" style="padding-left:10px;margin-top:10px">Kênh Kết Nối & Thực Thể</div>
-      <button class="nav-hub-item" data-hub="directory" onclick="switchHub('directory')">
+      <div class="nav-section-label" style="padding-left:10px;margin-top:10px">Kênh Hội Thoại & Thực Thể</div>
+      <button class="nav-hub-item" data-hub="zalo" onclick="switchHub('zalo')">
         <div class="nav-hub-left">
-          <span class="nav-hub-icon">◉</span>
-          <span>Kênh Zalo, WhatsApp & Danh Bạ</span>
+          <span class="nav-hub-icon">💬</span>
+          <span>Kênh Zalo Gateway</span>
         </div>
         <span class="nav-badge live">ONLINE</span>
+      </button>
+      <button class="nav-hub-item" data-hub="whatsapp" onclick="switchHub('whatsapp')">
+        <div class="nav-hub-left">
+          <span class="nav-hub-icon">📱</span>
+          <span>Kênh WhatsApp Gateway</span>
+        </div>
+        <span class="nav-badge live">ONLINE</span>
+      </button>
+      <button class="nav-hub-item" data-hub="directory" onclick="switchHub('directory')">
+        <div class="nav-hub-left">
+          <span class="nav-hub-icon">👥</span>
+          <span>Danh Bạ & Nhóm 360</span>
+        </div>
+        <span class="nav-badge neutral" id="badge-groups">5 Nhóm</span>
       </button>
 
       <div class="nav-section-label" style="padding-left:10px;margin-top:10px">Trí Tuệ & Trợ Lý</div>
@@ -1017,9 +1031,21 @@ function renderActiveHub() {
       container.innerHTML = renderWorkScheduleHub();
       break;
 
+    case 'zalo':
+      titleEl.textContent = 'Kênh Zalo Gateway (Personal Bot)';
+      subEl.textContent = 'Quản lý kết nối Zalo cá nhân, quét mã QR thực tế, lọc tin @tag nhóm & nhật ký trò chuyện 1-1 với Sếp';
+      container.innerHTML = renderZaloHub();
+      break;
+
+    case 'whatsapp':
+      titleEl.textContent = 'Kênh WhatsApp Gateway (Multi-Device)';
+      subEl.textContent = 'Quản lý kết nối WhatsApp Multi-Device, quét mã QR chuẩn ISO, lọc tin đối tác & nhật ký hội thoại';
+      container.innerHTML = renderWhatsAppHub();
+      break;
+
     case 'directory':
-      titleEl.textContent = 'Kênh Zalo & Danh Bạ';
-      subEl.textContent = 'Quản Lý Kết Nối Zalo Gateway, Nhóm Trực Chiến & Danh Bạ';
+      titleEl.textContent = 'Danh Bạ & Nhóm Thực Tế (Directory 360)';
+      subEl.textContent = 'Quản trị 5 nhóm Zalo trực chiến và 38 nhân sự, đối tác liên hệ';
       container.innerHTML = renderDirectoryHub();
       break;
 
@@ -1479,33 +1505,58 @@ function openNewCalendarModal() {
 // ==========================================
 // 3. DIRECTORY 360 & ZALO HUB (REAL QR & CONNECTION)
 // ==========================================
+
+function renderZaloHub() {
+  return `
+    <div class="hub-header">
+      <div class="hub-header-top">
+        <div>
+          <h1 class="hub-title">Kênh Kết Nối Zalo Gateway</h1>
+          <p class="hub-desc">Cổng kết nối Zalo cá nhân 2 chiều, bảo mật bằng mã QR quét trực tiếp từ app Zalo điện thoại.</p>
+        </div>
+        <div>
+          <button class="btn primary sm" onclick="syncZaloGroups()">Đồng Bộ Nhóm (Sync)</button>
+        </div>
+      </div>
+    </div>
+    ${renderZaloGatewayView()}
+  `;
+}
+
+function renderWhatsAppHub() {
+  return `
+    <div class="hub-header">
+      <div class="hub-header-top">
+        <div>
+          <h1 class="hub-title">Kênh Kết Nối WhatsApp Gateway (Multi-Device)</h1>
+          <p class="hub-desc">Cổng kết nối WhatsApp Multi-Device 2 chiều, mã QR quét trực tiếp từ WhatsApp trên điện thoại.</p>
+        </div>
+        <div>
+          <button class="btn primary sm" style="background:#25D366;border-color:#25D366;color:#052e16;font-weight:700" onclick="refreshWhatsAppQR()">🔄 Làm Mới QR WhatsApp</button>
+        </div>
+      </div>
+    </div>
+    ${renderWhatsAppGatewayView()}
+  `;
+}
+
 function renderDirectoryHub() {
-  const currentSub = state.subtabs.directory || 'zalo';
+  const currentSub = (state.subtabs.directory === 'people') ? 'people' : 'groups';
 
   return `
     <div class="hub-header">
       <div class="hub-header-top">
         <div>
-          <h1 class="hub-title">Kênh Hội Thoại Đa Nền Tảng (Zalo & WhatsApp Gateway Hub)</h1>
-          <p class="hub-desc">Quản lý 2 cổng kết nối song song Zalo Gateway & WhatsApp Multi-Device, quét mã QR thực tế, danh sách nhóm và danh bạ đối tác.</p>
+          <h1 class="hub-title">Danh Bạ & Nhóm Thực Tế (Directory 360)</h1>
+          <p class="hub-desc">Quản lý các nhóm làm việc trực chiến và danh bạ nhân sự, đối tác liên hệ.</p>
         </div>
         <div>
-          ${currentSub === 'zalo' ? `
-            <button class="btn primary sm" onclick="syncZaloGroups()">Đồng Bộ Nhóm (Sync)</button>
-          ` : `
-            <button class="btn primary sm" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới</button>
-          `}
+          <button class="btn primary sm" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới</button>
         </div>
       </div>
 
       <!-- Subnav Pills -->
       <div class="hub-subnav">
-        <button class="hub-subnav-btn ${currentSub === 'zalo' ? 'active' : ''}" onclick="switchSubtab('directory', 'zalo')">
-          💬 Kênh Zalo Gateway (QR & Kết Nối)
-        </button>
-        <button class="hub-subnav-btn ${currentSub === 'whatsapp' ? 'active' : ''}" onclick="switchSubtab('directory', 'whatsapp')">
-          📱 Kênh WhatsApp Gateway (Multi-Device)
-        </button>
         <button class="hub-subnav-btn ${currentSub === 'groups' ? 'active' : ''}" onclick="switchSubtab('directory', 'groups')">
           ◉ Group 360 (Nhóm & Ban) (${state.groups.length})
         </button>
@@ -1515,10 +1566,9 @@ function renderDirectoryHub() {
       </div>
     </div>
 
-    ${currentSub === 'zalo' ? renderZaloGatewayView() : currentSub === 'whatsapp' ? renderWhatsAppGatewayView() : currentSub === 'groups' ? renderGroup360View() : renderPerson360View()}
+    ${currentSub === 'groups' ? renderGroup360View() : renderPerson360View()}
   `;
 }
-
 
 function renderWhatsAppGatewayView() {
   const wa = state.whatsapp || {
@@ -2519,7 +2569,7 @@ function renderGovernanceHub() {
           📃 Sổ Cái Kiểm Toán (SHA-256)
         </button>
         <button class="hub-subnav-btn ${currentSub === 'infra' ? 'active' : ''}" onclick="switchSubtab('governance', 'infra')">
-          ⬡ Hạ Tầng & DSH Plugins (10)
+          ⬡ Hạ Tầng & DSH Plugins (11)
         </button>
       </div>
     </div>
@@ -2673,12 +2723,13 @@ function renderInfraView() {
     <!-- 10 Plugins Standardized -->
     <div class="card card-pad" style="margin-bottom:20px">
       <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:14px">
-        10 Plugin Chuẩn Hóa Theo DeepSeek Harness Chassis
+        11 Plugin Chuẩn Hóa Theo DeepSeek Harness Chassis
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         ${[
           { id: 'heo-provider-antigravity-brain', name: 'Core Agent: Google Antigravity CLI (0đ Token API)', st: 'ENABLED' },
           { id: 'heo-channel-zalo-gateway', name: 'Kênh Kết Nối Zalo Cá Nhân (Bảo Mật QR)', st: 'ENABLED' },
+          { id: 'heo-channel-whatsapp-gateway', name: 'Kênh Kết Nối WhatsApp Gateway (Multi-Device & QR)', st: 'ENABLED' },
           { id: 'heo-persona-heo-attitude', name: 'Danh Xưng & 7 Persona Thái Độ Bé Heo', st: 'ENABLED' },
           { id: 'heo-auth-rbac-security', name: 'Định Danh Tác Quyền & Bảo Mật RBAC', st: 'ENABLED' },
           { id: 'heo-policy-gate-firewall', name: 'Tường Lửa 5 Tầng Phê Duyệt & Cấp Phép SSOT', st: 'ENABLED' },
