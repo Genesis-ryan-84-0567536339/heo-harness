@@ -22,12 +22,12 @@ else
     exit 1
 fi
 
-# 2. Kiểm tra Unit Test & Cú pháp
-echo -e "  ${CYAN}>>> Đang chạy kiểm thử tích hợp 4 tiêu chuẩn...${NC}"
-if python3 -m unittest tests/test_harness_core.py &>/dev/null; then
-    echo -e "  ${GREEN}✔ [OK]${NC} Toàn bộ 4 bài test Core Chassis & 7 Plugin: VƯỢT QUA 100%"
+# 2. Kiểm tra Toàn Bộ Unit Test & Kiến Trúc SSOT
+echo -e "  ${CYAN}>>> Đang chạy kiểm thử tích hợp 16 tiêu chuẩn SSOT v1.0.0...${NC}"
+if python3 -m unittest discover -s tests &>/dev/null; then
+    echo -e "  ${GREEN}✔ [OK]${NC} Toàn bộ 16 bài test (Core Chassis, V6 UI, Policy Engine, AGY Core & Zalo): VƯỢT QUA 100%"
 else
-    echo -e "  ${RED}✖ [ERR]${NC} Phát hiện lỗi trong bài kiểm thử Core"
+    echo -e "  ${RED}✖ [ERR]${NC} Phát hiện lỗi trong bài kiểm thử hệ thống!"
     exit 1
 fi
 

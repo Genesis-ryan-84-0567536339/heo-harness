@@ -11,16 +11,20 @@ import signal
 from heo_harness.core.context import Context
 from heo_harness.core.bus import EventBus
 from heo_harness.core.manager import PluginManager
+from heo_harness.core.policy import PolicyEngine
 
 class HeoHarnessApp:
     def __init__(self, config_path: str = None):
-        print("🐷 [Heo-Harness] Đang khởi tạo Khung Sườn AI Agent Runtime...")
+        print("🐷 [Heo-Harness] Đang khởi tạo Khung Sườn AI Agent Runtime (SSOT v1.0.0)...")
         self.ctx = Context(config_path)
         self.bus = EventBus()
+        self.policy_engine = PolicyEngine()
         self.manager = PluginManager(self.ctx, self.bus)
 
-        # Cung cấp PluginManager cho context để các plugin UI có thể gọi
+        # Cung cấp các dịch vụ nền tảng cho Context container
         self.ctx.provide("plugin_manager", self.manager)
+        self.ctx.provide("policy_engine", self.policy_engine)
+        self.ctx.provide("event_bus", self.bus)
         self.running = False
 
     def start(self) -> None:
