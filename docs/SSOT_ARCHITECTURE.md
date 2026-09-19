@@ -10,11 +10,11 @@
 
 ## 1. TRIẾT LÝ BẤT BIẾN (IMMUTABLE TENETS)
 
-Mọi dòng mã và tính năng trong tương lai của dự án **BẮT BUỘC** tuân thủ 6 nguyên lý bất biến sau:
+Mọi dòng mã và tính năng trong tương lai của dự án **BẮT BUỘC** tuân thủ 7 nguyên lý bất biến sau:
 
 1. **Khung gầm tối giản (Chassis-First):** Core (`heo_harness/core`) chỉ đóng vai trò khung kết nối (Dependency Injection, Typed EventBus, Circuit Breaker, Lifecycle Hooks). Core **tuyệt đối không** chứa logic nghiệp vụ đặc thù của bất kỳ công cụ, mô hình hay kênh chat nào.
 2. **Mọi thứ là Plugin (Everything is a Plugin):** Kênh chat (Zalo, WhatsApp), Mô hình AI (Antigravity CLI, DeepSeek), Công cụ (Drive, Office), Quản trị và cả Giao diện Web UI đều là các **Add-In Plugins** cắm vào Chassis.
-3. **Core Agent là Antigravity CLI gói tháng:** Trái tim suy luận mặc định của Heo là Google Antigravity CLI (`@heo/provider-antigravity`) gói tháng cá nhân của Sếp Ryan. Mô hình khác (như DeepSeek V3/R1) chỉ là **Optional Secondary Provider** (bật/tắt tùy ý, không ràng buộc).
+3. **Core Agent là Antigravity CLI gói tháng:** Trái tim suy luận mặc định của Heo là Google Antigravity CLI (`heo-provider-antigravity-brain`) gói tháng cá nhân của Sếp Ryan. Mô hình khác (như DeepSeek V3/R1) chỉ là **Optional Secondary Provider** (`heo-provider-deepseek-reasoning` - bật/tắt tùy ý, không ràng buộc).
 4. **Cô lập lỗi 100% (Fault Isolation & Circuit Breaker):** Một plugin bị crash, timeout, hoặc lỗi mạng thì chỉ riêng plugin đó bị ngắt mạch (`CIRCUIT_TRIPPED`). Core và các plugin khác (nhất là bot Zalo và Core Agent) vẫn hoạt động 100% bình thường.
 5. **Dữ liệu thật & Minh chứng nguồn (Truth-Typing & Evidence Provenance):** Mọi thông tin hiển thị trên UI hoặc lưu trữ trong bộ nhớ phải phân loại rõ ràng:
    - `FACT`: Sự thật có nhật ký gốc từ kênh truyền.
@@ -24,6 +24,7 @@ Mọi dòng mã và tính năng trong tương lai của dự án **BẮT BUỘC*
    Mọi hành động đều phải có `correlation_id` và bằng chứng (`evidence`) có thể drill-down kiểm tra.
 6. **Mô hình không tự cấp quyền (No Self-Authorization):** Model chỉ là đề xuất hành động. Mọi hành động gây tác động ngoại vi (gửi tin nhắn Zalo, chỉnh sửa lịch, xóa tệp) **phải qua Policy Engine** với thứ tự ưu tiên tuyệt đối:
    `GLOBAL -> CHANNEL -> GROUP -> PERSON -> ACTION`.
+7. **Quy tắc đặt tên Plugin chuẩn hóa:** Bắt buộc tuân thủ định dạng `heo-<tên plugin>-<chức năng>` cho toàn bộ plugin của hệ thống.
 
 ---
 
@@ -32,22 +33,22 @@ Mọi dòng mã và tính năng trong tương lai của dự án **BẮT BUỘC*
 ```mermaid
 graph TD
     subgraph Layer4 ["TẦNG 4: GIAO DIỆN EXECUTIVE V6 (UI SHELL & SLOTS)"]
-        UI_Shell["V6 Web UI Shell (Topbar, Sidebar, Breadcrumb)"]
-        UI_Slots["Dynamic Slots: Command Center | Reality 360 | Governance | Add-ins Hub"]
+        UI_Shell["V6 Web UI Shell: heo-ui-dashboard-executive (Cổng 5088)"]
+        DSH_Shell["DSH Native Web UI Shell: @deepseek-ai/dsh web (Cổng 3080)"]
     end
 
     subgraph Layer3 ["TẦNG 3: QUẢN TRỊ & BẢO VỆ (GOVERNANCE & SAFETY)"]
-        Policy_Engine["Policy & Permission Engine (Deterministic Precedence)"]
-        Approval_Queue["Human-in-the-loop Approval Queue (Owner Decisions)"]
-        Trace_Auditor["Executions Trace & Immutable Audit Ledger"]
+        Policy_Engine["heo-policy-gate-firewall (SSOT Deterministic Precedence)"]
+        Auth_Security["heo-auth-rbac-security (Tác quyền Anh Cơ La & PIN Admin)"]
+        Persona_Attitude["heo-persona-heo-attitude (Danh xưng Em - Sếp & 7 thái độ)"]
     end
 
-    subgraph Layer2 ["TẦNG 2: HỆ SINH THÁI CẮM RÚT (PLUGIN ECOSYSTEM)"]
-        P_Provider["Core Provider: @heo/provider-antigravity (AGY CLI)"]
-        P_Provider_Opt["Optional Provider: @heo/provider-deepseek"]
-        P_Channel["Channels: @heo/channel-zalo | @heo/channel-whatsapp"]
-        P_Tools["Tools: @heo/tool-office | @heo/tool-media | @heo/tool-crm"]
-        P_Memory["Intelligence: @heo/intel-memory | @heo/intel-journal"]
+    subgraph Layer2 ["TẦNG 2: HỆ SINH THÁI PLUGIN (heo-<tên>-<chức năng>)"]
+        P_Provider["Core Provider: heo-provider-antigravity-brain (0đ Token API)"]
+        P_Provider_Gemini["Multi-Key Failover: heo-provider-gemini-orchestrator"]
+        P_Provider_Opt["Optional Provider: heo-provider-deepseek-reasoning"]
+        P_Channel["Channels: heo-channel-zalo-gateway | heo-channel-whatsapp-bridge"]
+        P_Tools["Tools: heo-tool-office-reporter | heo-tool-media-processor"]
     end
 
     subgraph Layer1 ["TẦNG 1: KHUNG GẦM LÕI (CORE CHASSIS)"]
