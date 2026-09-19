@@ -104,7 +104,14 @@ echo "==========================================================================
 echo -e "${GREEN}${BOLD}🎉 HOÀN TẤT TRIỂN KHAI THỰC TẾ! BẢNG ĐIỀU KHIỂN V6 ĐANG SẴN SÀNG PHỤC VỤ SẾP!${NC}"
 echo -e "${YELLOW}${BOLD}👉 Sếp mở trình duyệt và truy cập: http://127.0.0.1:5088${NC}"
 echo "=========================================================================================="
-echo -e "${CYAN}Đang giữ console trực chiến. Nhấn Ctrl+C bất cứ lúc nào để dừng.${NC}"
+echo -e "${CYAN}Đang giữ console trực chiến vĩnh viễn (Watchdog Active). Sẵn sàng phục vụ 24/7.${NC}"
 
-# Chờ và hiển thị trạng thái
-wait $APP_PID
+# Vòng lặp Watchdog giám sát vĩnh viễn - KHÔNG BAO GIỜ TẮT
+while true; do
+    if ! kill -0 "$APP_PID" 2>/dev/null; then
+        echo -e "\n${YELLOW}⚠️ Phát hiện máy chủ tạm dừng. Watchdog tự động phục hồi và khởi động lại ngay lập tức...${NC}"
+        python3 -m heo_harness.app &
+        APP_PID=$!
+    fi
+    sleep 2
+done
