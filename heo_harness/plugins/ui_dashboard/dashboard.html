@@ -49,6 +49,25 @@ html[data-theme="light"] .codebox{background:#f6f9fd;color:#2a3d55}
 .arch{display:grid;grid-template-columns:repeat(7,minmax(115px,1fr));gap:8px;overflow:auto}.arch-node{min-height:84px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:10px;position:relative}.arch-node:after{content:"→";position:absolute;right:-10px;top:32px;color:var(--faint);z-index:2}.arch-node:last-child:after{display:none}.arch-node b{font-size:10px}.arch-node p{font-size:8px;color:var(--muted);line-height:1.4;margin:4px 0 0}
 .timeline{position:relative;padding-left:22px}.timeline:before{content:"";position:absolute;left:7px;top:7px;bottom:7px;width:1px;background:var(--line)}.timeline-item{position:relative;padding:0 0 14px}.timeline-item:before{content:"";position:absolute;left:-19px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--brand2);box-shadow:0 0 0 4px rgba(101,168,255,.08)}.timeline-item h4{margin:0;font-size:10px}.timeline-item p{margin:3px 0 0;font-size:9px;color:var(--muted);line-height:1.5}
 
+/* STYLE KANBAN CHO WORK OS */
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(230px,1fr));gap:12px;overflow:auto;padding-bottom:10px}
+.kanban-col{background:var(--panel2);border:1px solid var(--line2);border-radius:14px;min-height:480px;display:flex;flex-direction:column}
+.kanban-head{padding:11px 13px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;font-size:11px;font-weight:800;align-items:center}
+.kanban-card{margin:9px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:.18s}
+.kanban-card:hover{border-color:var(--brand2);transform:translateY(-1px)}
+.kanban-card h4{margin:0 0 6px;font-size:11.5px;color:var(--text)}
+.kanban-card p{margin:0;font-size:9.5px;color:var(--muted);line-height:1.45}
+.kanban-actions{display:flex;gap:4px;margin-top:10px;padding-top:8px;border-top:1px solid var(--line2);flex-wrap:wrap}
+
+/* STYLE CALENDAR */
+.calendar{display:grid;grid-template-columns:70px repeat(5,minmax(150px,1fr));border:1px solid var(--line2);border-radius:14px;overflow:auto;background:var(--panel)}
+.cal-cell{min-height:72px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);padding:8px;font-size:9px;color:var(--muted)}
+.cal-head{min-height:auto;background:var(--panel2);font-weight:800;color:var(--text);padding:10px 8px}
+.cal-time{background:var(--panel2);color:var(--faint);font-weight:700}
+.event{padding:6px;border-radius:8px;background:rgba(101,168,255,.1);border:1px solid rgba(101,168,255,.25);color:#b8d7ff;margin-bottom:4px}
+.event.warn{background:rgba(255,200,87,.1);border-color:rgba(255,200,87,.25);color:#ffe0a0}
+.event.good{background:rgba(101,230,180,.1);border-color:rgba(101,230,180,.25);color:#a5f3d3}
+
 /* STYLE CHAT CONSOLE THỜI GIAN THỰC */
 .chat-container{display:flex;flex-direction:column;height:calc(100vh - 170px);background:var(--panel);border:1px solid var(--line2);border-radius:var(--radius);overflow:hidden}
 .chat-head{padding:14px 18px;border-bottom:1px solid var(--line2);background:var(--panel2);display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -61,6 +80,7 @@ html[data-theme="light"] .codebox{background:#f6f9fd;color:#2a3d55}
 .chat-msg.agent .chat-bubble{background:var(--panel2);border:1px solid var(--line2);color:var(--text);border-bottom-left-radius:4px}
 .chat-msg.user .chat-bubble{background:linear-gradient(135deg,rgba(101,168,255,.22),rgba(101,230,180,.18));border:1px solid rgba(101,230,180,.35);color:var(--text);border-bottom-right-radius:4px}
 .msg-meta{font-size:9.5px;color:var(--faint);margin-top:5px;display:flex;align-items:center;gap:8px}
+.chat-attachment{margin-top:10px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
 .chat-input-area{padding:12px 18px 14px;border-top:1px solid var(--line2);background:var(--panel2)}
 .quick-prompts{display:flex;gap:7px;overflow:auto;padding-bottom:10px;margin-bottom:4px}
 .quick-chip{font-size:10px;border:1px solid var(--line);border-radius:20px;padding:4px 10px;background:var(--panel);color:var(--muted);cursor:pointer;white-space:nowrap;transition:.18s}
@@ -84,8 +104,8 @@ html[data-theme="light"] .codebox{background:#f6f9fd;color:#2a3d55}
 .tool-runner{background:var(--panel);border:1px solid var(--line2);border-radius:var(--radius);padding:18px;margin-bottom:16px}
 .tool-result-box{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:14px;display:none}
 
-@media(max-width:1200px){:root{--sidebar:228px}.grid.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.span-layout{grid-template-columns:1fr}}
-@media(max-width:760px){body{overflow:auto}.app{display:block;height:auto;min-height:100vh}.sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;transform:translateX(-102%);transition:.2s;box-shadow:20px 0 50px rgba(0,0,0,.35)}.sidebar.open{transform:translateX(0)}.main{min-height:100vh}.topbar{position:sticky;top:0;padding:0 12px}.mobile-menu{display:grid!important}.owner-chip{display:none}.content{padding:15px 12px 30px}.grid.cols-4,.grid.cols-3,.grid.cols-2,.form-grid{grid-template-columns:1fr}.view-head{display:block}.view-actions{justify-content:flex-start;margin-top:10px}}
+@media(max-width:1200px){:root{--sidebar:228px}.grid.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.span-layout{grid-template-columns:1fr}.kanban{grid-template-columns:repeat(2,minmax(200px,1fr))}}
+@media(max-width:760px){body{overflow:auto}.app{display:block;height:auto;min-height:100vh}.sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;transform:translateX(-102%);transition:.2s;box-shadow:20px 0 50px rgba(0,0,0,.35)}.sidebar.open{transform:translateX(0)}.main{min-height:100vh}.topbar{position:sticky;top:0;padding:0 12px}.mobile-menu{display:grid!important}.owner-chip{display:none}.content{padding:15px 12px 30px}.grid.cols-4,.grid.cols-3,.grid.cols-2,.form-grid{grid-template-columns:1fr}.view-head{display:block}.view-actions{justify-content:flex-start;margin-top:10px}.kanban{grid-template-columns:1fr}}
 .mobile-menu{display:none}
 </style>
 </head>
@@ -114,7 +134,7 @@ html[data-theme="light"] .codebox{background:#f6f9fd;color:#2a3d55}
         <div class="nav-title">Nghiệp Vụ Điều Hành</div>
         <button class="nav-item" data-route="dashboard"><span class="nav-icon">◫</span>Command Center</button>
         <button class="nav-item" data-route="attention"><span class="nav-icon">⚑</span>Attention Queue <span class="nav-badge">5</span></button>
-        <button class="nav-item" data-route="work"><span class="nav-icon">✓</span>Work OS</button>
+        <button class="nav-item" data-route="work"><span class="nav-icon">✓</span>Work OS (Kanban) <span class="nav-badge" id="sidebarWorkCount">5</span></button>
         <button class="nav-item" data-route="calendar"><span class="nav-icon">▦</span>Calendar & Reminder</button>
       </div>
       <div class="nav-section">
@@ -125,9 +145,9 @@ html[data-theme="light"] .codebox{background:#f6f9fd;color:#2a3d55}
       </div>
       <div class="nav-section">
         <div class="nav-title">Governance & System</div>
-        <button class="nav-item" data-route="approvals"><span class="nav-icon">⌁</span>Approvals <span class="nav-badge">3</span></button>
+        <button class="nav-item" data-route="approvals"><span class="nav-icon">⌁</span>Approvals <span class="nav-badge" id="sidebarApprBadge">3</span></button>
         <button class="nav-item" data-route="executions"><span class="nav-icon">⇢</span>Executions & Trace</button>
-        <button class="nav-item" data-route="artifacts"><span class="nav-icon">▤</span>Artifacts</button>
+        <button class="nav-item" data-route="artifacts"><span class="nav-icon">▤</span>Artifacts & Files</button>
         <button class="nav-item" data-route="audit"><span class="nav-icon">≡</span>Audit Ledger</button>
         <button class="nav-item" data-route="settings"><span class="nav-icon">⚒</span>Owner & Operations</button>
       </div>
@@ -148,12 +168,13 @@ html[data-theme="light"] .codebox{background:#f6f9fd;color:#2a3d55}
   <main class="main">
     <header class="topbar">
       <button class="icon-btn mobile-menu" id="mobileMenu">☰</button>
-      <div class="top-search"><span class="left">⌕</span><input id="globalSearch" placeholder="Tìm kiếm plugins, policy, work, insights, hạ tầng DSH…" /><span class="kbd">⌘ K</span></div>
+      <div class="top-search"><span class="left">⌕</span><input id="globalSearch" placeholder="Tìm kiếm plugins, work, calendar, artifacts, hạ tầng DSH…" /><span class="kbd">⌘ K</span></div>
       <div class="top-actions">
         <button class="btn primary" data-route-go="chat">💬 Chat Bé Heo</button>
         <a href="http://127.0.0.1:3080/" target="_blank" class="btn blue" title="Mở giao diện gốc DeepSeek Harness Web UI cổng 3080">🌐 DSH Web UI (3080) ↗</a>
         <button class="btn blue" data-action="open-backend-terminal" title="Mở cửa sổ dòng lệnh Terminal của Backend DSH">🖥️ Terminal DSH</button>
         <button class="btn ghost" data-route-go="runners">🛠️ Runners</button>
+        <button class="btn ghost" data-route-go="work">✓ Work OS</button>
         <button class="btn ghost" data-route-go="tools">🧩 Plugins</button>
         <button class="icon-btn" id="themeBtn" title="Đổi giao diện">☼</button>
         <button class="icon-btn" id="notifyBtn" title="Thông báo">●</button>
@@ -180,13 +201,15 @@ html[data-theme="light"] .codebox{background:#f6f9fd;color:#2a3d55}
 const $=(q,el=document)=>el.querySelector(q); const $$=(q,el=document)=>[...el.querySelectorAll(q)];
 const state={
   route:'chat',
-  groupTab:'overview',
-  personTab:'dossier',
-  approved:new Set(),
-  denied:new Set(),
   theme:'dark',
   plugins:[],
   catalog:[],
+  works:[],
+  calendar:[],
+  approvals:[],
+  artifacts:[],
+  audits:[],
+  metrics:{},
   chatHistory:[
     {sender:'agent', text:'Dạ Sếp Cơ La! Em Bé Heo nghe đây ạ. Hôm nay em có thể hỗ trợ điều hành công việc, phân tích tiến độ hoặc xuất báo cáo tài liệu gì cho Sếp ạ? 🥰', meta:'Google Antigravity CLI · 0đ API · 48ms'}
   ],
@@ -211,8 +234,8 @@ const PERSONA_LIST = [
 
 function viewHead(title,desc,actions=''){return `<div class="view-head"><div><h2>${title}</h2><p>${desc}</p></div><div class="view-actions">${actions}</div></div>`}
 function truthBadge(t){const c=(t||'FACT').toLowerCase();return `<span class="badge ${c}">${t}</span>`}
-function priBadge(p){return `<span class="badge ${p.toLowerCase()}">${p}</span>`}
-function statusBadge(s){let c=/pass|healthy|connected|available|succeeded|verified|ready|stable|auto/i.test(s)?'good':/deny|failed|error|critical|blocked|expired/i.test(s)?'danger':'calculated';return `<span class="badge ${c}">${s}</span>`}
+function priBadge(p){return `<span class="badge ${(p||'p2').toLowerCase()}">${p||'P2'}</span>`}
+function statusBadge(s){let c=/pass|healthy|connected|available|succeeded|verified|ready|stable|auto|approved/i.test(s)?'good':/deny|denied|failed|error|critical|blocked|expired/i.test(s)?'danger':'calculated';return `<span class="badge ${c}">${s}</span>`}
 function evidenceLink(label='Xem evidence',payload='raw_event:RE-88311'){return `<div class="evidence-link" data-evidence="${encodeURIComponent(payload)}">↗ ${label}</div>`}
 function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
 function openEvidence(encoded){const text=decodeURIComponent(encoded||'');$('#drawerBody').innerHTML=`<div class="callout">Evidence là typed pointer, không chứa secret. UI luôn drill-down qua authorized core API.</div><div class="section-title">Evidence refs</div>${text.split(' · ').map((x,i)=>`<div class="evidence-card"><h4>${x}</h4><p>Phiên bản mẫu v${i+1} · provenance verified · truth source preserved.</p><div class="mono faint" style="margin-top:7px">{ kind: "${x.split(':')[0]||'ref'}", id: "${x.split(':')[1]||x}", version: 1 }</div></div>`).join('')}<div class="section-title">Trace linkage</div><div class="timeline"><div class="timeline-item"><h4>Source</h4><p>Provider/raw evidence được ghi immutable trước downstream parse.</p></div><div class="timeline-item"><h4>Canonical mapping</h4><p>Entity link giữ source refs và version.</p></div><div class="timeline-item"><h4>Decision / Action</h4><p>Policy evaluation và execution permit có correlation id.</p></div></div>`;$('#drawer').classList.add('show')}
@@ -220,7 +243,7 @@ function modal(title,sub,body,foot=''){const m=$('#modal');m.innerHTML=`<div cla
 function closeModal(){$('#modalOverlay').classList.remove('show')}
 
 // ==========================================
-// 1. LIVE CHAT VỚI BÉ HEO
+// 1. LIVE CHAT VỚI BÉ HEO (AUTO-TOOL ATTACHMENTS)
 // ==========================================
 function chat(){
   let currentPersona = PERSONA_LIST.find(p => p.id === state.personaConfig.active_persona) || PERSONA_LIST[0];
@@ -228,7 +251,7 @@ function chat(){
   return `
   ${viewHead(
     '💬 Trò Chuyện Trực Tiếp Với Bé Heo (Live Executive Chat Console)',
-    'Trợ lý Điều hành AI Cấp cao trực thuộc hệ sinh thái Genesis Corp OS · Định tuyến qua Policy Gate · Core Agent Google Antigravity 0đ Token API.',
+    'Trợ lý Điều hành AI Cấp cao trực thuộc hệ sinh thái Genesis Corp OS · Tự động sinh tài liệu Word, Excel, Beat và Tranh AI ngay trong tin nhắn · 0đ Token API.',
     `<button class="btn" data-route-go="persona">🎭 Đổi Persona (${currentPersona.name})</button>
      <button class="btn primary" data-route-go="runners">🛠️ Chạy Công Cụ Thực Tế</button>`
   )}
@@ -244,7 +267,7 @@ function chat(){
             <span class="badge fact">0đ TOKEN API</span>
           </div>
           <div class="small muted" style="margin-top:2px">
-            Phong cách: <b>${currentPersona.icon} ${currentPersona.name}</b> · Danh xưng: <b>${state.personaConfig.boss_name}</b> · Mô hình: <b>Google Antigravity Brain</b>
+            Phong cách: <b>${currentPersona.icon} ${currentPersona.name}</b> · Danh xưng: <b>${state.personaConfig.boss_name}</b> · Lõi: <b>Google Antigravity Brain</b>
           </div>
         </div>
       </div>
@@ -258,6 +281,7 @@ function chat(){
         <div class="chat-msg ${m.sender}">
           <div class="chat-bubble">
             <div>${m.text.replace(/\n/g, '<br/>')}</div>
+            ${m.attachment ? renderChatAttachment(m.attachment) : ''}
             <div class="msg-meta">
               <span>${m.sender === 'user' ? state.personaConfig.boss_name : state.personaConfig.bot_name}</span>
               ${m.meta ? `<span>•</span><span>${m.meta}</span>` : ''}
@@ -286,6 +310,48 @@ function chat(){
   `;
 }
 
+function renderChatAttachment(att){
+  if(att.type === 'word' || att.type === 'excel'){
+    return `
+    <div class="chat-attachment row between">
+      <div class="row" style="gap:8px">
+        <span style="font-size:22px">${att.type==='word'?'📄':'📊'}</span>
+        <div>
+          <strong style="font-size:11px">${att.title}</strong>
+          <div class="small faint">${att.filename} (${att.size})</div>
+        </div>
+      </div>
+      <a href="${att.download_url}" download class="btn primary" style="padding:4px 9px;font-size:10px">📥 Tải về</a>
+    </div>
+    `;
+  }
+  if(att.type === 'audio'){
+    return `
+    <div class="chat-attachment">
+      <div class="row between" style="margin-bottom:6px">
+        <span style="font-size:11px;font-weight:700">🎵 ${att.title} (${att.duration})</span>
+        <a href="${att.download_url}" download class="btn primary" style="padding:3px 7px;font-size:9px">📥 Tải WAV</a>
+      </div>
+      <audio controls src="${att.download_url}" style="width:100%;height:32px"></audio>
+    </div>
+    `;
+  }
+  if(att.type === 'image'){
+    return `
+    <div class="chat-attachment">
+      <div class="row between" style="margin-bottom:6px">
+        <span style="font-size:11px;font-weight:700">🎨 ${att.title}</span>
+        <a href="${att.download_url}" download class="btn primary" style="padding:3px 7px;font-size:9px">📥 Tải SVG</a>
+      </div>
+      <div style="background:#040914;padding:8px;border-radius:8px;text-align:center">
+        <img src="${att.image_url}" style="max-height:160px;max-width:100%;border-radius:6px" alt="Tranh AI" />
+      </div>
+    </div>
+    `;
+  }
+  return '';
+}
+
 function clearChat(){
   state.chatHistory = [
     {sender:'agent', text:`Dạ ${state.personaConfig.boss_name}! Khung chat đã được làm mới. Em sẵn sàng tiếp nhận các chỉ đạo tiếp theo của Sếp! ✨`, meta:'Google Antigravity CLI · 0đ API'}
@@ -307,7 +373,6 @@ async function handleSendChat(){
   let text = input.value.trim();
   if(!text) return;
 
-  // Render tin nhắn của Sếp ngay
   state.chatHistory.push({
     sender: 'user',
     text: text,
@@ -316,11 +381,9 @@ async function handleSendChat(){
   input.value = '';
   render();
 
-  // Scroll xuống đáy
   let box = $('#chatMessages');
   if(box) box.scrollTop = box.scrollHeight;
 
-  // Hiển thị trạng thái đang xử lý
   let typingId = 'typing-' + Date.now();
   if(box){
     let div = document.createElement('div');
@@ -345,12 +408,13 @@ async function handleSendChat(){
       state.chatHistory.push({
         sender: 'agent',
         text: data.reply,
+        attachment: data.attachment,
         meta: `${data.model || 'Google AGY CLI'} · ${data.latency_ms}ms · ${data.evidence || 'FACT'}`
       });
     } else {
       state.chatHistory.push({
         sender: 'agent',
-        text: `Dạ ${state.personaConfig.boss_name}, có lỗi nhỏ khi kết nối: ${data.error || 'Vui lòng thử lại'} ạ! 🥺`,
+        text: `Dạ ${state.personaConfig.boss_name}, có lỗi: ${data.error || 'Vui lòng thử lại'} ạ! 🥺`,
         meta: 'Lỗi phản hồi'
       });
     }
@@ -370,7 +434,483 @@ async function handleSendChat(){
 }
 
 // ==========================================
-// 2. PERSONA STUDIO (7 THÁI ĐỘ)
+// 2. WORK OS (KANBAN BOARD TƯƠNG TÁC THẬT)
+// ==========================================
+function work(){
+  const cols = ['TODO', 'DOING', 'WAITING', 'BLOCKED', 'REVIEW'];
+  return `
+  ${viewHead(
+    '✓ Work Operating System (Kanban Trực Chiến)',
+    'Quản lý vòng đời công việc, gán người phụ trách, hạn chót, mức độ ưu tiên và chuyển đổi trạng thái thời gian thực.',
+    `<button class="btn primary" id="btnOpenNewWorkModal">+ Thêm Work Item Mới</button>`
+  )}
+
+  <div class="kanban">
+    ${cols.map(col => {
+      let items = (state.works || []).filter(w => w.status === col);
+      return `
+      <div class="kanban-col">
+        <div class="kanban-head">
+          <span>${col}</span>
+          <span class="badge calculated">${items.length}</span>
+        </div>
+        <div style="flex:1;overflow:auto">
+          ${items.map(w => `
+            <div class="kanban-card">
+              <div class="row between">
+                <span class="mono faint">${w.id}</span>
+                ${priBadge(w.priority)}
+              </div>
+              <h4 style="margin:6px 0">${w.title}</h4>
+              <p>
+                <b>Nhóm:</b> ${w.group}<br>
+                <b>Phụ trách:</b> ${w.owner}<br>
+                <b>Hạn chót:</b> ${w.deadline}
+              </p>
+              <div class="kanban-actions">
+                <span class="small faint" style="margin-right:auto">Chuyển:</span>
+                ${cols.filter(c => c !== col).map(c => `
+                  <button class="btn ghost" style="padding:2px 6px;font-size:8.5px" onclick="moveWorkItem('${w.id}', '${c}')">${c}</button>
+                `).join('')}
+              </div>
+            </div>
+          `).join('') || `<div style="padding:20px;text-align:center;color:var(--faint);font-size:10px">Trống</div>`}
+        </div>
+      </div>
+      `;
+    }).join('')}
+  </div>
+  `;
+}
+
+function openNewWorkModal(){
+  modal('Tạo Work Item Mới Cho Dự Án', 'Công việc sẽ được lưu bền vững vào hệ cơ sở dữ liệu Heo OS', `
+    <div class="form-grid">
+      <div class="field full"><label>Tiêu Đề Công Việc (Title)</label><input id="modalWorkTitle" placeholder="Ví dụ: Hoàn tất báo cáo tiến độ tuần này..." /></div>
+      <div class="field"><label>Người Phụ Trách (Owner)</label><select id="modalWorkOwner"><option>Anh Cơ La</option><option>Bé Heo</option><option>Lê Hương</option><option>Trần Minh</option></select></div>
+      <div class="field"><label>Mức Ưu Tiên (Priority)</label><select id="modalWorkPri"><option value="P1">P1 (Khẩn cấp)</option><option value="P2" selected>P2 (Quan trọng)</option><option value="P3">P3 (Bình thường)</option></select></div>
+      <div class="field"><label>Hạn Chót (Deadline)</label><input id="modalWorkDeadline" value="Hôm nay 22:00" /></div>
+      <div class="field"><label>Nhóm Phụ Trách (Group)</label><select id="modalWorkGroup"><option>Strategic Partners</option><option>Sales Ops</option><option>Project Phoenix</option></select></div>
+      <div class="field full"><label>Ghi Chú Chi Tiết</label><textarea id="modalWorkNote" placeholder="Chi tiết yêu cầu công việc..."></textarea></div>
+    </div>
+  `, `<button class="btn" data-close-modal>Hủy</button><button class="btn primary" id="btnSubmitWork">Xác Nhận Tạo</button>`);
+
+  setTimeout(() => {
+    let sub = $('#btnSubmitWork');
+    if(sub){
+      sub.onclick = async () => {
+        let title = $('#modalWorkTitle').value.trim();
+        if(!title){ showToast('Vui lòng nhập tiêu đề!'); return; }
+        let owner = $('#modalWorkOwner').value;
+        let priority = $('#modalWorkPri').value;
+        let deadline = $('#modalWorkDeadline').value;
+        let group = $('#modalWorkGroup').value;
+        let note = $('#modalWorkNote').value;
+
+        closeModal();
+        try {
+          let res = await fetch('/api/work/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ title, owner, priority, deadline, group, note })
+          });
+          let data = await res.json();
+          if(data.ok){
+            showToast(data.message || 'Đã tạo công việc thành công!');
+            await fetchWorks();
+            render();
+          }
+        } catch(e){
+          showToast('Lỗi: ' + e.message);
+        }
+      };
+    }
+  }, 0);
+}
+
+async function moveWorkItem(id, newStatus){
+  try {
+    let res = await fetch('/api/work/move', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ id, status: newStatus })
+    });
+    let data = await res.json();
+    if(data.ok){
+      showToast(`Đã chuyển ${id} sang ${newStatus}`);
+      await fetchWorks();
+      render();
+    }
+  } catch(e){
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+// ==========================================
+// 3. CALENDAR & REMINDER (LỊCH THẬT)
+// ==========================================
+function calendar(){
+  let times = ['09:00', '11:00', '14:00', '15:00', '17:00'];
+  let days = ['T2 17', 'T3 18', 'T4 19', 'T5 20', 'T6 21'];
+  return `
+  ${viewHead(
+    '▦ Calendar & Reminder (Lịch Điều Hành Canonical)',
+    'Quản lý sự kiện, lịch họp, hạn chót và nhắc nhở được lưu trữ bền vững với định dạng múi giờ Asia/Ho_Chi_Minh chuẩn.',
+    `<button class="btn primary" id="btnOpenNewEventModal">+ Lên Lịch Sự Kiện Mới</button>`
+  )}
+
+  <div class="calendar">
+    <div class="cal-cell cal-head">Giờ</div>
+    ${days.map(d => `<div class="cal-cell cal-head">${d}</div>`).join('')}
+    ${times.map((t, ri) => `
+      <div class="cal-cell cal-time">${t}</div>
+      ${days.map((d, ci) => {
+        let matchEv = (state.calendar || []).find(e => e.when && e.when.includes(d) && e.when.includes(t));
+        let evHtml = '';
+        if(matchEv){
+          let clz = matchEv.type === 'Meeting' ? 'good' : (matchEv.type === 'Deadline' ? 'warn' : '');
+          evHtml = `<div class="event ${clz}"><b>${matchEv.title}</b><br><span class="small">${matchEv.type}</span></div>`;
+        }
+        return `<div class="cal-cell">${evHtml}</div>`;
+      }).join('')}
+    `).join('')}
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-head"><div><h3>Danh Sách Toàn Bộ Lịch Hẹn & Nhắc Việc (${(state.calendar||[]).length})</h3></div></div>
+    <div class="card-body">
+      <table class="table">
+        <thead><tr><th>Mã</th><th>Sự Kiện</th><th>Phân Loại</th><th>Thời Gian</th><th>Múi Giờ</th><th>Trạng Thái</th></tr></thead>
+        <tbody>
+          ${(state.calendar||[]).map(ev => `
+            <tr>
+              <td class="mono"><strong>${ev.id}</strong></td>
+              <td>${ev.title}</td>
+              <td><span class="badge calculated">${ev.type}</span></td>
+              <td><b>${ev.when}</b></td>
+              <td class="faint mono">${ev.timezone}</td>
+              <td>${statusBadge(ev.status)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
+
+function openNewEventModal(){
+  modal('Lên Lịch Sự Kiện / Nhắc Nhở Mới', 'Lưu trữ vào bộ nhớ Calendar chuẩn của Heo OS', `
+    <div class="form-grid">
+      <div class="field full"><label>Tên Sự Kiện (Title)</label><input id="modalEventTitle" placeholder="Ví dụ: Họp triển khai cùng đối tác..." /></div>
+      <div class="field"><label>Phân Loại (Type)</label><select id="modalEventType"><option>Meeting</option><option>Deadline</option><option>Reminder</option><option>Checkpoint</option></select></div>
+      <div class="field"><label>Khung Giờ & Ngày (When)</label><input id="modalEventWhen" value="T5 20 14:00" /></div>
+      <div class="field"><label>Kênh Gửi Nhắc Nhở</label><select id="modalEventDelivery"><option>Internal owner (Thông báo nội bộ)</option><option>Zalo outbound (Gửi qua Zalo)</option></select></div>
+    </div>
+  `, `<button class="btn" data-close-modal>Hủy</button><button class="btn primary" id="btnSubmitEvent">Lên Lịch Ngay</button>`);
+
+  setTimeout(() => {
+    let sub = $('#btnSubmitEvent');
+    if(sub){
+      sub.onclick = async () => {
+        let title = $('#modalEventTitle').value.trim();
+        if(!title){ showToast('Vui lòng nhập tên sự kiện!'); return; }
+        let type = $('#modalEventType').value;
+        let when = $('#modalEventWhen').value;
+        let delivery = $('#modalEventDelivery').value;
+
+        closeModal();
+        try {
+          let res = await fetch('/api/calendar/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ title, type, when, delivery })
+          });
+          let data = await res.json();
+          if(data.ok){
+            showToast(data.message || 'Đã lên lịch sự kiện!');
+            await fetchCalendar();
+            render();
+          }
+        } catch(e){
+          showToast('Lỗi: ' + e.message);
+        }
+      };
+    }
+  }, 0);
+}
+
+// ==========================================
+// 4. APPROVALS QUEUE (PHÊ DUYỆT THẬT)
+// ==========================================
+function approvals(){
+  let pendingCount = (state.approvals||[]).filter(a => a.status === 'PENDING').length;
+  return `
+  ${viewHead(
+    '⌁ Approval Queue (Hàng Đợi Phê Duyệt Của Sếp)',
+    'Chủ nhân duy nhất (Anh Cơ La) là người có quyền phê duyệt các hành động gửi tin nhắn ra ngoài hoặc thay đổi trạng thái quan trọng.',
+    `<span class="badge p1">${pendingCount} Chờ Phê Duyệt</span>`
+  )}
+
+  <div class="grid span-layout">
+    <div class="card">
+      <div class="card-body">
+        ${(state.approvals || []).map((a, idx) => {
+          let isPending = a.status === 'PENDING';
+          return `
+          <div class="list-item" style="${!isPending ? 'opacity:0.65;' : ''}">
+            <div class="row between">
+              <div class="item-title">${a.action}</div>
+              <span class="badge ${isPending ? 'p1' : (a.status === 'APPROVED' ? 'good' : 'danger')}">
+                ${isPending ? 'TTL ' + a.ttl : a.status}
+              </span>
+            </div>
+            <div class="item-desc" style="font-weight:700;color:var(--text);margin:5px 0">${a.summary}</div>
+            <div class="item-meta">Mục tiêu: <b>${a.target}</b> · Lý do: ${a.why}</div>
+            <div class="mono faint" style="margin-top:4px">Dữ liệu: ${a.data} · Fingerprint: ${a.fingerprint}</div>
+            ${isPending ? `
+              <div class="row wrap" style="margin-top:10px">
+                <button class="btn primary" onclick="handleApprovalAction('${a.id}', 'approve')">✓ Phê Duyệt (Approve)</button>
+                <button class="btn danger" onclick="handleApprovalAction('${a.id}', 'deny')">✕ Từ Chối (Deny)</button>
+              </div>
+            ` : `
+              <div class="small muted" style="margin-top:8px">Đã xử lý lúc ${a.resolved_at || 'hôm nay'}.</div>
+            `}
+          </div>
+          `;
+        }).join('') || '<p class="muted">Không có yêu cầu phê duyệt nào.</p>'}
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <h3 style="margin:0 0 10px">Nguyên Tắc Thẩm Quyền SSOT</h3>
+      <div class="callout good">
+        Mọi side-effect ra kênh chat ngoài (Zalo / WhatsApp) bắt buộc phải có Execution Permit do Policy Engine cấp sau khi Sếp bấm Phê Duyệt.
+      </div>
+      <div class="divider"></div>
+      <div class="stack">
+        <div class="row between"><span class="small muted">Chủ sở hữu:</span><b>Anh Cơ La (Ryan)</b></div>
+        <div class="row between"><span class="small muted">Email kiểm soát:</span><span class="mono">genesis.corp.os@gmail.com</span></div>
+        <div class="row between"><span class="small muted">Khóa bảo mật:</span><span class="badge fact">RBAC_INVARIANT</span></div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+async function handleApprovalAction(id, actionType){
+  try {
+    let res = await fetch('/api/approvals/action', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ id, action: actionType })
+    });
+    let data = await res.json();
+    if(data.ok){
+      showToast(`${id} đã được ${actionType === 'approve' ? 'PHÊ DUYỆT' : 'TỪ CHỐI'}!`);
+      await fetchApprovals();
+      render();
+    }
+  } catch(e){
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+// ==========================================
+// 5. ARTIFACTS & FILES (QUÉT FILE THẬT)
+// ==========================================
+function artifacts(){
+  return `
+  ${viewHead(
+    '▤ Artifacts & Documents (Kho Tài Liệu & Media Đã Sinh)',
+    'Toàn bộ tài liệu Microsoft Word (.docx), bảng tính Excel (.xlsx), beat nhạc (.wav) và tranh minh họa (.svg) được sinh ra thực tế trong hệ thống.',
+    `<button class="btn primary" data-route-go="runners">+ Tạo Tài Liệu Mới</button>`
+  )}
+
+  <div class="card">
+    <div class="card-body">
+      <table class="table">
+        <thead><tr><th>Tên Tệp</th><th>Phân Loại</th><th>Kích Thước</th><th>Thời Gian Tạo</th><th>Trạng Thái</th><th>Tải Xuống</th></tr></thead>
+        <tbody>
+          ${(state.artifacts || []).map(a => `
+            <tr>
+              <td>
+                <strong style="color:var(--text)">${a.name}</strong>
+                <div class="mono faint" style="font-size:9px">${a.rel_path}</div>
+              </td>
+              <td><span class="badge ${a.kind==='DOCUMENT'?'fact':'calculated'}">${a.kind}</span></td>
+              <td><b>${a.size_kb} KB</b></td>
+              <td>${a.mtime}</td>
+              <td>${statusBadge(a.state)}</td>
+              <td>
+                <a href="${a.download_url}" download class="btn primary" style="padding:4px 9px;font-size:10px">📥 Tải Về</a>
+              </td>
+            </tr>
+          `).join('') || '<tr><td colspan="6" style="text-align:center">Chưa có tệp nào được sinh ra.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
+
+// ==========================================
+// 6. CONTROL ROOM & SYSTEM METRICS THẬT
+// ==========================================
+function control(){
+  let m = state.metrics || {};
+  let disk = m.disk || {total_gb:182.2, used_gb:21.3, free_gb:151.6, percent:11.7};
+  let ram = m.ram || {percent:20.5};
+  let uptimeMin = Math.floor((m.uptime_sec || 60) / 60);
+
+  return `
+  ${viewHead(
+    '◈ Control Room — Giám Sát Hạ Tầng Thời Gian Thực',
+    'Chỉ số tải phần cứng máy chủ Linux thật, dung lượng ổ đĩa, tiến trình AI Core Agent và bộ lọc bảo vệ Circuit Breaker.',
+    `<button class="btn primary" onclick="fetchMetrics();showToast('Đã làm mới thông số!')">Làm Mới Số Liệu</button>`
+  )}
+
+  <div class="grid cols-4">
+    <div class="card kpi">
+      <div class="kpi-label">Dung Lượng Ổ Đĩa (Disk)</div>
+      <div class="kpi-value" style="color:var(--good)">${disk.free_gb} GB</div>
+      <div class="kpi-sub">Đã dùng ${disk.used_gb} GB / ${disk.total_gb} GB (${disk.percent}%)</div>
+      <div class="metric-line"><i style="width:${disk.percent}%"></i></div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Bộ Nhớ RAM (Linux)</div>
+      <div class="kpi-value" style="color:var(--brand2)">${ram.percent}%</div>
+      <div class="kpi-sub">Mức sử dụng RAM thực tế hệ điều hành</div>
+      <div class="metric-line"><i style="width:${ram.percent}%"></i></div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">Thời Gian Hoạt Động (Uptime)</div>
+      <div class="kpi-value" style="color:var(--text)">${uptimeMin} Phút</div>
+      <div class="kpi-sub">10/10 Plugins Đang Chạy Ổn Định</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-label">API Quota Cost</div>
+      <div class="kpi-value" style="color:var(--good)">0 VNĐ</div>
+      <div class="kpi-sub">Google Antigravity CLI gói tháng</div>
+    </div>
+  </div>
+
+  <div class="grid span-layout" style="margin-top:14px">
+    <div class="card card-pad">
+      <h3 style="margin:0 0 10px">Trạng Thái An Ninh 5 Tầng (Policy Gate)</h3>
+      <div class="stepper">
+        <div class="step done"><div class="n">1</div><h4>Global</h4><p>Quyền hạn toàn hệ thống</p></div>
+        <div class="step done"><div class="n">2</div><h4>Channel</h4><p>Kênh Zalo / Web Console</p></div>
+        <div class="step done"><div class="n">3</div><h4>Group</h4><p>Nhóm làm việc cộng tác</p></div>
+        <div class="step done"><div class="n">4</div><h4>Person</h4><p>Quy tắc cá nhân riêng biệt</p></div>
+        <div class="step done"><div class="n">5</div><h4>Action</h4><p>Cấp permit thực thi</p></div>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <h3 style="margin:0 0 8px">Thông Tin Máy Chủ</h3>
+      <div class="stack">
+        <div class="row between"><span class="small muted">Hệ điều hành:</span><b>Linux (Fedora / GNOME)</b></div>
+        <div class="row between"><span class="small muted">Cổng Console Heo:</span><span class="mono">127.0.0.1:5088</span></div>
+        <div class="row between"><span class="small muted">Cổng DSH Backend:</span><span class="mono">127.0.0.1:3080</span></div>
+        <div class="row between"><span class="small muted">Circuit Breaker:</span><span class="badge good">100% HEALTHY</span></div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+// ==========================================
+// 7. AUDIT LEDGER (NHẬT KÝ KIỂM TOÁN THẬT)
+// ==========================================
+function audit(){
+  return `
+  ${viewHead(
+    '≡ Audit Ledger (Nhật Ký Kiểm Toán Bất Biến SSOT)',
+    'Ghi lại toàn bộ hành động, lệnh điều hành, thẩm định policy, thay đổi công việc và sự kiện hệ thống.',
+    `<button class="btn primary" onclick="fetchAudits();showToast('Đã cập nhật nhật ký!')">Làm Mới</button>`
+  )}
+
+  <div class="card">
+    <div class="card-body">
+      <table class="table">
+        <thead><tr><th>Thời Gian</th><th>Tác Nhân</th><th>Sự Kiện</th><th>Đối Tượng</th><th>Lý Do / Nội Dung</th><th>Kết Quả</th><th>Mã Truy Vết</th></tr></thead>
+        <tbody>
+          ${(state.audits || []).map(a => `
+            <tr>
+              <td class="mono"><b>${a.time}</b></td>
+              <td><span class="badge calculated">${a.actor}</span></td>
+              <td class="mono">${a.event}</td>
+              <td><strong>${a.object}</strong></td>
+              <td>${a.reason}</td>
+              <td>${statusBadge(a.result)}</td>
+              <td class="mono faint">${a.corr || 'COR-TRACE'}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="7" style="text-align:center">Chưa có nhật ký kiểm toán.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
+
+// ==========================================
+// 8. SETTINGS & BACKUP (SAO LƯU THẬT)
+// ==========================================
+function settings(){
+  return `
+  ${viewHead(
+    '⚒ Owner & Operations (Cài Đặt & Sao Lưu Hệ Thống)',
+    'Quản lý quyền sở hữu, cấu hình máy chủ cục bộ và tạo snapshot bản sao lưu an toàn cho toàn bộ dữ liệu Heo OS.',
+    `<button class="btn primary" id="btnRunBackup">💾 Tạo Bản Sao Lưu Ngay</button>`
+  )}
+
+  <div class="grid span-layout">
+    <div class="card card-pad">
+      <h3 style="margin:0 0 12px">Xác Thực Tác Quyền Chủ Nhân Duy Nhất</h3>
+      <div class="stack">
+        <div class="row between"><span class="small muted">Kiến trúc sư trưởng:</span><b>Anh Cơ La (Ryan)</b></div>
+        <div class="row between"><span class="small muted">Email đăng ký:</span><span class="mono">genesis.corp.os@gmail.com</span></div>
+        <div class="row between"><span class="small muted">Mô hình vận hành:</span><b>Local-First / Private On-Premise</b></div>
+        <div class="row between"><span class="small muted">Khung sườn:</span><b>DeepSeek Harness (DSH)</b></div>
+      </div>
+      <div class="callout good" style="margin-top:14px">
+        Tác quyền vĩnh viễn thuộc về Anh Cơ La. Mọi phân hệ đều phải tuân thủ nghiêm ngặt danh xưng và thẩm quyền chỉ đạo cao nhất của Sếp.
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <h3 style="margin:0 0 10px">Sao Lưu & Phục Hồi Dữ Liệu</h3>
+      <p class="small muted">Snapshot lưu lại toàn bộ WorkItems, Lịch Canonical, Danh xưng Persona và Lịch sử Audit vào thư mục <span class="mono">data/backups/</span>.</p>
+      <button class="btn primary" id="btnRunBackup2" style="width:100%;justify-content:center;margin-top:10px">💾 Tạo Bản Snapshot Dữ Liệu An Toàn</button>
+      <div id="backupResult" class="callout good" style="margin-top:12px;display:none"></div>
+    </div>
+  </div>
+  `;
+}
+
+async function handleRunBackup(){
+  try {
+    let res = await fetch('/api/system/backup', {method: 'POST'});
+    let data = await res.json();
+    if(data.ok){
+      let box = $('#backupResult');
+      if(box){
+        box.style.display = 'block';
+        box.innerHTML = `<b>✅ ĐÃ TẠO BẢN SAO LƯU THÀNH CÔNG!</b><br>Mã sao lưu: <b>${data.backup_id}</b><br>Đường dẫn: <span class="mono">${data.path}</span><br>Thời gian: ${data.timestamp}`;
+      }
+      showToast('Đã tạo bản sao lưu an toàn!');
+      await fetchAudits();
+    } else {
+      showToast('Lỗi sao lưu: ' + data.error);
+    }
+  } catch(e){
+    showToast('Lỗi kết nối: ' + e.message);
+  }
+}
+
+// ==========================================
+// 9. CÁC VIEW CÒN LẠI (PERSONA, RUNNERS, DSH, ATTENTION, TOOLS, ETC.)
 // ==========================================
 function persona(){
   return `
@@ -473,9 +1013,6 @@ async function handleSavePersona(){
   }
 }
 
-// ==========================================
-// 3. LIVE TOOL RUNNERS (XUẤT WORD, EXCEL, BEAT, TRANH AI, ZALO SIMULATOR)
-// ==========================================
 function runners(){
   return `
   ${viewHead(
@@ -637,7 +1174,6 @@ function runners(){
   `;
 }
 
-// Bổ sung các event handler cho Tool Runners
 async function runWordExport(){
   let title = $('#wordTitle').value.trim() || 'Báo Cáo Điều Hành Heo OS';
   let content = $('#wordContent').value.trim();
@@ -664,6 +1200,7 @@ async function runWordExport(){
       </div>
       `;
       showToast('Đã tạo file Word thành công!');
+      fetchArtifacts();
     } else {
       box.innerHTML = `<span style="color:var(--danger)">Lỗi: ${data.error}</span>`;
     }
@@ -697,6 +1234,7 @@ async function runExcelExport(){
       </div>
       `;
       showToast('Đã tạo bảng tính Excel thành công!');
+      fetchArtifacts();
     } else {
       box.innerHTML = `<span style="color:var(--danger)">Lỗi: ${data.error}</span>`;
     }
@@ -733,6 +1271,7 @@ async function runBeatGen(){
       </div>
       `;
       showToast('Đã tạo beat nhạc thành công!');
+      fetchArtifacts();
     } else {
       box.innerHTML = `<span style="color:var(--danger)">Lỗi: ${data.error}</span>`;
     }
@@ -771,6 +1310,7 @@ async function runArtGen(){
       </div>
       `;
       showToast('Đã vẽ tranh AI thành công!');
+      fetchArtifacts();
     } else {
       box.innerHTML = `<span style="color:var(--danger)">Lỗi: ${data.error}</span>`;
     }
@@ -809,9 +1349,9 @@ async function runZaloSim(){
           <p style="margin:4px 0 0">Tin đến: "<i>${content}</i>"</p>
           <div style="background:var(--panel);padding:10px;border-radius:8px;margin-top:8px">
             <b>Bé Heo gửi trả lời Zalo:</b>
-            <div style="margin-top:3px;color:var(--text)">${r.reply_text || 'Đã tiếp nhận yêu cầu'}</div>
+            <div style="margin-top:3px;color:var(--text)">${r.reply || 'Đã tiếp nhận yêu cầu'}</div>
           </div>
-          <div class="mono faint" style="margin-top:6px">Evidence: ${r.evidence_ref || 'verified'} · Permit: ${r.send_result?.permit_id || 'PERMIT-ZALO'}</div>
+          <div class="mono faint" style="margin-top:6px">Evidence: ${r.evidence_ref || 'verified'} · Permit: ${r.send_status?.approval_id || 'PERMIT-ZALO'}</div>
         </div>
         `;
       } else {
@@ -832,9 +1372,6 @@ async function runZaloSim(){
   }
 }
 
-// ==========================================
-// 4. VIEW KHUNG SƯỜN DSH (KÈM LINK 3080 & HƯỚNG DẪN XEM 10 PLUGIN)
-// ==========================================
 function dsh(){
   let runningCount = (state.plugins || []).filter(p => p.enabled).length;
   let totalCount = (state.plugins || []).length;
@@ -865,8 +1402,9 @@ function dsh(){
       <b>💡 Hướng dẫn Sếp kiểm tra 10 Plugin trong UI Backend DSH (Cổng 3080):</b><br>
       1. Bấm nút <b>"Mở DSH Web UI 3080"</b> ở trên để mở tab trình duyệt mới.<br>
       2. Ở thanh menu bên trái dưới cùng, bấm icon <b>Cài Đặt ⚙️ (Settings)</b>.<br>
-      3. Chọn tab <b>"Plugins"</b> -> Chuyển sang danh mục <b>"Global plugins"</b>.<br>
-      4. Sếp sẽ thấy toàn bộ 10 plugin <span class="mono">heo-...</span> đang hoạt động đầy đủ với nhãn <b>Running & Enabled</b>!
+      3. Chọn tab <b>"Plugins"</b> -> Chuyển sang thẻ <b>"Plugin list"</b>.<br>
+      4. Cuộn xuống bấm mở rộng mục <b>"Global plugins (166 plugins)"</b>.<br>
+      5. Sếp sẽ thấy toàn bộ 10 plugin <span class="mono">heo-...</span> đang hoạt động đầy đủ với nhãn <b>Running & Enabled</b>!
     </div>
   </div>
   `;
@@ -907,36 +1445,12 @@ function dsh(){
    </div>
    <div class="card-body">
     <div class="arch" style="grid-template-columns: repeat(6, minmax(130px, 1fr));">
-     <div class="arch-node">
-      <div style="font-size:16px;margin-bottom:4px">💬</div>
-      <b>Kênh Zalo Cá Nhân</b>
-      <p>Nhận diện tin nhắn, lọc @tag đích danh</p>
-     </div>
-     <div class="arch-node">
-      <div style="font-size:16px;margin-bottom:4px">🛡️</div>
-      <b>Trục An Toàn 5 Tầng</b>
-      <p>Policy Engine kiểm tra: ALLOW / DENY</p>
-     </div>
-     <div class="arch-node">
-      <div style="font-size:16px;margin-bottom:4px">⚡</div>
-      <b>DSH Chassis Core</b>
-      <p>Event Bus trung chuyển, Service Container</p>
-     </div>
-     <div class="arch-node">
-      <div style="font-size:16px;margin-bottom:4px">🌟</div>
-      <b>Core Agent (AGY CLI)</b>
-      <p>Gói tháng 0đ API, DeepSeek V3/R1 tùy chọn</p>
-     </div>
-     <div class="arch-node">
-      <div style="font-size:16px;margin-bottom:4px">🧩</div>
-      <b>Add-ins & Tools</b>
-      <p>Word, Excel, Media Beat, Auth, Persona</p>
-     </div>
-     <div class="arch-node">
-      <div style="font-size:16px;margin-bottom:4px">🔌</div>
-      <b>Circuit Breaker</b>
-      <p>Cách ly lỗi 100%, tự động hồi phục</p>
-     </div>
+     <div class="arch-node"><div style="font-size:16px;margin-bottom:4px">💬</div><b>Kênh Zalo Cá Nhân</b><p>Nhận diện tin nhắn, lọc @tag đích danh</p></div>
+     <div class="arch-node"><div style="font-size:16px;margin-bottom:4px">🛡️</div><b>Trục An Toàn 5 Tầng</b><p>Policy Engine kiểm tra: ALLOW / DENY</p></div>
+     <div class="arch-node"><div style="font-size:16px;margin-bottom:4px">⚡</div><b>DSH Chassis Core</b><p>Event Bus trung chuyển, Service Container</p></div>
+     <div class="arch-node"><div style="font-size:16px;margin-bottom:4px">🌟</div><b>Core Agent (AGY CLI)</b><p>Gói tháng 0đ API, DeepSeek V3/R1 tùy chọn</p></div>
+     <div class="arch-node"><div style="font-size:16px;margin-bottom:4px">🧩</div><b>Add-ins & Tools</b><p>Word, Excel, Media Beat, Auth, Persona</p></div>
+     <div class="arch-node"><div style="font-size:16px;margin-bottom:4px">🔌</div><b>Circuit Breaker</b><p>Cách ly lỗi 100%, tự động hồi phục</p></div>
     </div>
    </div>
   </div>
@@ -1001,109 +1515,59 @@ function dsh(){
   return `${head}${banner3080}${kpis}${archFlow}${pluginsGrid}`;
 }
 
-// ==========================================
-// 5. CÁC VIEW QUẢN TRỊ GỐC (GIỮ NGUYÊN HOÀN TOÀN)
-// ==========================================
-const sample={
- attention:[
-  {id:'ATT-1028',band:'P1',title:'Cam kết giao báo giá đã quá hạn 19 giờ',subject:'Work W-341 · Group Nhà phân phối miền Nam',truth:'CALCULATED',reason:'deadline_overdue + owner_dependency',action:'Nhắc owner nội bộ và đề xuất follow-up',evidence:'raw_event:RE-88311 · work_item:W-341'},
-  {id:'ATT-1032',band:'P1',title:'Phê duyệt gửi tài liệu đối tác đang chờ 24 phút',subject:'Approval AP-91 · Person Nguyễn Anh',truth:'FACT',reason:'approval_waiting + business_value_high',action:'Owner review approval',evidence:'approval:AP-91 · artifact:AF-22'},
-  {id:'ATT-1041',band:'P2',title:'Rủi ro quan hệ tăng sau 3 lần follow-up chưa phản hồi',subject:'Person P-018 · Group Strategic Partners',truth:'INFERRED',reason:'friction_signal + response_drop',action:'Xem evidence trước khi hành động',evidence:'message:MSG-1209 · insight:IN-771'},
-  {id:'ATT-1049',band:'P2',title:'Deadline dự án có khả năng trượt',subject:'Work W-398 · Project Phoenix',truth:'FORECAST',reason:'blocked_dependency + deadline_72h',action:'Resolve blocker trước 15:00',evidence:'forecast:FC-301 · work_item:W-398'},
-  {id:'ATT-1053',band:'P3',title:'Artifact sắp hết retention',subject:'Artifact AF-17',truth:'CALCULATED',reason:'retention_window',action:'Pin evidence hoặc để hệ thống expire',evidence:'artifact:AF-17'}
- ],
- approvals:[
-  {id:'AP-91',ttl:'06:12',action:'whatsapp.send_message',target:'Nguyễn Anh · Strategic Partners',summary:'Gửi file Báo giá V3 cùng lời nhắn follow-up',why:'Work W-341 quá hạn và owner đã yêu cầu chuẩn bị follow-up',data:'Tên người nhận, nội dung tin nhắn, artifact AF-22',resource:'WhatsApp · 1 outbound · cost unavailable',fingerprint:'d18e…77ab'},
-  {id:'AP-94',ttl:'14:48',action:'artifact.send',target:'Group Sales Ops',summary:'Gửi biên bản họp đã xác nhận',why:'Event EV-88 chuyển HELD, artifact AF-31 available',data:'Group id, file AF-31, caption',resource:'WhatsApp · provider receipt required',fingerprint:'a2c4…9ef1'},
-  {id:'AP-97',ttl:'21:05',action:'scheduler.create',target:'Internal owner reminder',summary:'Tạo reminder 09:00 sáng mai',why:'Commitment C-155 chưa có follow-up',data:'Work ref + schedule',resource:'Internal · no outbound',fingerprint:'30be…151a'}
- ],
- groups:[
-  {id:'G-001',name:'Strategic Partners',purpose:'Đối tác chiến lược · cơ hội & cam kết',health:'Healthy',members:28,open:7,alerts:2,policy:'POL-G-STRATEGIC v8',instruction:'INS-G-12 v4'},
-  {id:'G-002',name:'Sales Ops',purpose:'Vận hành bán hàng & thực thi',health:'Healthy',members:34,open:12,alerts:1,policy:'POL-G-SALES v12',instruction:'INS-G-18 v6'},
-  {id:'G-003',name:'Project Phoenix',purpose:'Điều phối dự án triển khai',health:'Lagging',members:16,open:9,alerts:3,policy:'POL-G-PHX v5',instruction:'INS-G-20 v3'}
- ],
- people:[
-  {id:'P-018',name:'Nguyễn Anh',role:'Partner Lead',groups:'Strategic Partners',rel:'Medium risk',open:3,last:'38 phút trước'},
-  {id:'P-022',name:'Trần Minh',role:'Sales Manager',groups:'Sales Ops',rel:'Stable',open:5,last:'12 phút trước'},
-  {id:'P-041',name:'Lê Hương',role:'Project Owner',groups:'Project Phoenix',rel:'Opportunity',open:4,last:'1 giờ trước'}
- ],
- works:[
-  {id:'W-341',title:'Gửi báo giá V3 cho Nguyễn Anh',status:'BLOCKED',owner:'Owner',deadline:'Hôm nay 09:00',group:'Strategic Partners',priority:'P1'},
-  {id:'W-398',title:'Chốt dependency API đối tác',status:'DOING',owner:'Lê Hương',deadline:'19/09 15:00',group:'Project Phoenix',priority:'P2'},
-  {id:'W-403',title:'Xác nhận lịch review Sales Ops',status:'TODO',owner:'Trần Minh',deadline:'18/09 14:00',group:'Sales Ops',priority:'P2'},
-  {id:'W-405',title:'Tổng hợp meeting notes',status:'REVIEW',owner:'Heo',deadline:'Hôm nay 17:00',group:'Sales Ops',priority:'P3'},
-  {id:'W-411',title:'Theo dõi phản hồi đối tác',status:'WAITING',owner:'Heo',deadline:'20/09 10:00',group:'Strategic Partners',priority:'P3'}
- ],
- insights:[
-  {id:'IN-771',kind:'Relationship risk',truth:'INFERRED',title:'Responsiveness giảm trong 14 ngày',confidence:'0.78',subject:'P-018 Nguyễn Anh',reason:'median_response_time ↑ · 3 follow-up chưa phản hồi',evidence:'MSG-1209, MSG-1217, W-341'},
-  {id:'IN-779',kind:'Opportunity',truth:'INFERRED',title:'Tín hiệu quan tâm tăng ở chủ đề Enterprise',confidence:'0.72',subject:'G-001 Strategic Partners',reason:'mention frequency + positive follow-through',evidence:'MSG-1260, MSG-1268'},
-  {id:'FC-301',kind:'Deadline risk',truth:'FORECAST',title:'Project Phoenix có risk HIGH trong 72h',confidence:'0.81',subject:'W-398',reason:'blocked dependency + deadline proximity',evidence:'W-398, EV-92'}
- ],
- artifacts:[
-  {id:'AF-22',name:'Bao-gia-V3.pdf',state:'AVAILABLE',size:'2.8 MiB',sha:'8f31…a7c0',refs:4,retention:'Pinned'},
-  {id:'AF-31',name:'Meeting-Notes-16-09.docx',state:'AVAILABLE',size:'418 KiB',sha:'03c4…12df',refs:2,retention:'87 ngày'},
-  {id:'AF-17',name:'Product-brief-old.pdf',state:'AVAILABLE',size:'1.1 MiB',sha:'cc29…51ab',refs:0,retention:'3 ngày'},
-  {id:'AF-40',name:'voice-note.ogg',state:'METADATA_ONLY',size:'—',sha:'—',refs:1,retention:'90 ngày'}
- ],
- policies:[
-  {id:'PR-0012',scope:'GLOBAL',target:'*',action:'external.send',decision:'APPROVAL',priority:50,version:12},
-  {id:'PR-0091',scope:'GROUP',target:'G-001',action:'whatsapp.send_message',decision:'APPROVAL',priority:80,version:8},
-  {id:'PR-0110',scope:'PERSON',target:'P-018',action:'whatsapp.send_message',decision:'DENY',priority:100,version:3},
-  {id:'PR-0132',scope:'ACTION',target:'scheduler.create',action:'scheduler.create',decision:'AUTO',priority:70,version:5}
- ],
- executions:[
-  {id:'EX-8801',corr:'COR-66201',action:'scheduler.create',status:'SUCCEEDED',policy:'AUTO',duration:'812 ms',result:'EV-101 created'},
-  {id:'EX-8797',corr:'COR-66193',action:'whatsapp.send_message',status:'APPROVAL_PENDING',policy:'APPROVAL',duration:'—',result:'AP-91'},
-  {id:'EX-8789',corr:'COR-66170',action:'whatsapp.send_message',status:'DENIED',policy:'DENY',duration:'49 ms',result:'no permit'}
- ]
-};
-
 function dashboard(){return `${viewHead('Executive Command Center','Màn hình trả lời: “Tôi cần chú ý và quyết định gì ngay bây giờ?” — business truth trước, infrastructure metrics ở Control Room.',`<button class="btn" data-route-go="approvals">Duyệt action</button><button class="btn primary" data-route-go="attention">Xem Attention</button>`)}
 <div class="grid cols-4">
  <div class="card kpi"><div class="kpi-label">Needs Owner</div><div class="kpi-value">4</div><div class="kpi-sub"><span class="trend-warn">2 P1</span> · 2 quyết định hôm nay</div></div>
  <div class="card kpi"><div class="kpi-label">Overdue / Blocked</div><div class="kpi-value">7</div><div class="kpi-sub">2 quá hạn · 5 blocked</div></div>
- <div class="card kpi"><div class="kpi-label">Pending Approval</div><div class="kpi-value">3</div><div class="kpi-sub">TTL gần nhất 06:12</div></div>
+ <div class="card kpi"><div class="kpi-label">Pending Approval</div><div class="kpi-value">${(state.approvals||[]).filter(a=>a.status==='PENDING').length}</div><div class="kpi-sub">TTL gần nhất 06:12</div></div>
  <div class="card kpi"><div class="kpi-label">Readiness</div><div class="kpi-value" style="font-size:18px;color:var(--good)">READY_END_TO_END</div><div class="kpi-sub">Demo state · E2E trace PASS</div></div>
 </div>
 <div class="grid span-layout" style="margin-top:14px">
  <div class="stack">
-  <div class="card"><div class="card-head"><div><h3>Needs Owner</h3><p>Exception/decision bắt buộc owner tham gia</p></div><button class="btn ghost" data-route-go="attention">Tất cả</button></div><div class="card-body">${sample.attention.slice(0,3).map(a=>`<div class="list-item"><div class="row between"><div class="item-title">${a.title}</div>${priBadge(a.band)}</div><div class="item-meta">${a.subject} · ${truthBadge(a.truth)}</div><div class="item-desc">${a.action}</div>${evidenceLink('Drill-down source',a.evidence)}</div>`).join('')}</div></div>
+  <div class="card"><div class="card-head"><div><h3>Needs Owner</h3><p>Exception/decision bắt buộc owner tham gia</p></div><button class="btn ghost" data-route-go="attention">Tất cả</button></div><div class="card-body">
+    <div class="list-item"><div class="row between"><div class="item-title">Cam kết giao báo giá đã quá hạn 19 giờ</div><span class="badge p1">P1</span></div><div class="item-meta">Work W-341 · Group Strategic Partners</div><div class="item-desc">Nhắc owner nội bộ và đề xuất follow-up</div></div>
+    <div class="list-item"><div class="row between"><div class="item-title">Phê duyệt gửi tài liệu đối tác đang chờ 24 phút</div><span class="badge p1">P1</span></div><div class="item-meta">Approval AP-91 · Person Nguyễn Anh</div><div class="item-desc">Owner review approval</div></div>
+  </div></div>
   <div class="grid cols-2">
-   <div class="card"><div class="card-head"><div><h3>Overdue / Blocked</h3><p>Work bottlenecks có evidence</p></div></div><div class="card-body"><div class="table-wrap"><table class="table"><thead><tr><th>Work</th><th>Owner</th><th>Deadline</th><th>Pri</th></tr></thead><tbody>${sample.works.filter(w=>['BLOCKED','DOING'].includes(w.status)).map(w=>`<tr><td><strong>${w.title}</strong><div class="small faint">${w.id} · ${w.group}</div></td><td>${w.owner}</td><td>${w.deadline}</td><td>${priBadge(w.priority)}</td></tr>`).join('')}</tbody></table></div></div></div>
-   <div class="card"><div class="card-head"><div><h3>Relationship Alerts</h3><p>Không chẩn đoán; chỉ signal có evidence</p></div></div><div class="card-body"><div class="list-item"><div class="row between"><div class="item-title">Nguyễn Anh · responsiveness giảm</div>${truthBadge('INFERRED')}</div><div class="item-desc">14d window · confidence 0.78 · friction signal tăng.</div>${evidenceLink('Evidence + method','message:MSG-1209 · insight:IN-771')}</div><div class="list-item"><div class="row between"><div class="item-title">Lê Hương · follow-up opportunity</div>${truthBadge('INFERRED')}</div><div class="item-desc">Positive follow-through tăng so với baseline 28d.</div>${evidenceLink('Evidence + method','message:MSG-1260 · insight:IN-779')}</div></div></div>
+   <div class="card"><div class="card-head"><div><h3>Work Items Trực Chiến (${(state.works||[]).length})</h3><p>Bottlenecks có evidence</p></div><button class="btn ghost" data-route-go="work">Mở Kanban</button></div><div class="card-body"><div class="table-wrap"><table class="table"><thead><tr><th>Work</th><th>Owner</th><th>Deadline</th><th>Pri</th></tr></thead><tbody>${(state.works||[]).slice(0,4).map(w=>`<tr><td><strong>${w.title}</strong><div class="small faint">${w.id} · ${w.group}</div></td><td>${w.owner}</td><td>${w.deadline}</td><td>${priBadge(w.priority)}</td></tr>`).join('')}</tbody></table></div></div></div>
+   <div class="card"><div class="card-head"><div><h3>Relationship Alerts</h3><p>Signal có evidence</p></div></div><div class="card-body"><div class="list-item"><div class="row between"><div class="item-title">Nguyễn Anh · responsiveness giảm</div>${truthBadge('INFERRED')}</div><div class="item-desc">14d window · confidence 0.78 · friction signal tăng.</div></div><div class="list-item"><div class="row between"><div class="item-title">Lê Hương · follow-up opportunity</div>${truthBadge('INFERRED')}</div><div class="item-desc">Positive follow-through tăng so với baseline 28d.</div></div></div></div>
   </div>
  </div>
  <div class="stack">
-  <div class="card"><div class="card-head"><div><h3>Pending Approval</h3><p>Owner là approver duy nhất V1</p></div><button class="btn ghost" data-route-go="approvals">Mở queue</button></div><div class="card-body">${sample.approvals.map(a=>`<div class="list-item"><div class="row between"><div class="item-title">${a.action}</div><span class="badge p2">TTL ${a.ttl}</span></div><div class="item-desc">${a.summary}</div><div class="item-meta">${a.target}</div></div>`).join('')}</div></div>
+  <div class="card"><div class="card-head"><div><h3>Pending Approval</h3><p>Owner là approver duy nhất V1</p></div><button class="btn ghost" data-route-go="approvals">Mở queue</button></div><div class="card-body">${(state.approvals||[]).slice(0,3).map(a=>`<div class="list-item"><div class="row between"><div class="item-title">${a.action}</div><span class="badge ${a.status==='PENDING'?'p2':'good'}">${a.status}</span></div><div class="item-desc">${a.summary}</div><div class="item-meta">${a.target}</div></div>`).join('')}</div></div>
  </div>
 </div>`}
 
-function attention(){return `${viewHead('Attention Queue','P1/P2/P3 được tính từ factor_values + reason_codes; mọi item phải drill-down được.',`<button class="btn">Filter</button>`)}
-<div class="card"><div class="card-body"><div class="table-wrap"><table class="table"><thead><tr><th>Band</th><th>Attention</th><th>Truth</th><th>Reason</th><th>Recommended action</th><th></th></tr></thead><tbody>${sample.attention.map(a=>`<tr><td>${priBadge(a.band)}</td><td><strong>${a.title}</strong><div class="small faint">${a.id} · ${a.subject}</div></td><td>${truthBadge(a.truth)}</td><td><span class="mono">${a.reason}</span></td><td>${a.action}</td><td><button class="btn ghost" data-evidence="${encodeURIComponent(a.evidence)}">Evidence</button></td></tr>`).join('')}</tbody></table></div></div></div>`}
+function attention(){return `${viewHead('Attention Queue','P1/P2/P3 được tính từ factor_values + reason_codes; mọi item phải drill-down được.',`<button class="btn" onclick="showToast('Đã tính toán lại Attention Queue')">Recompute</button>`)}
+<div class="card"><div class="card-body"><div class="table-wrap"><table class="table"><thead><tr><th>Band</th><th>Attention</th><th>Truth</th><th>Reason</th><th>Recommended action</th><th></th></tr></thead><tbody>
+  <tr><td><span class="badge p1">P1</span></td><td><strong>Cam kết giao báo giá đã quá hạn 19 giờ</strong><div class="small faint">ATT-1028 · Group Nhà phân phối miền Nam</div></td><td><span class="badge calculated">CALCULATED</span></td><td><span class="mono">deadline_overdue</span></td><td>Nhắc owner nội bộ và đề xuất follow-up</td><td><button class="btn ghost" data-route-go="work">Xử lý</button></td></tr>
+  <tr><td><span class="badge p1">P1</span></td><td><strong>Phê duyệt gửi tài liệu đối tác đang chờ 24 phút</strong><div class="small faint">ATT-1032 · Person Nguyễn Anh</div></td><td><span class="badge fact">FACT</span></td><td><span class="mono">approval_waiting</span></td><td>Owner review approval</td><td><button class="btn ghost" data-route-go="approvals">Duyệt</button></td></tr>
+  <tr><td><span class="badge p2">P2</span></td><td><strong>Rủi ro quan hệ tăng sau 3 lần follow-up chưa phản hồi</strong><div class="small faint">ATT-1041 · Group Strategic Partners</div></td><td><span class="badge inferred">INFERRED</span></td><td><span class="mono">friction_signal</span></td><td>Xem evidence trước khi hành động</td><td><button class="btn ghost" data-route-go="chat">Hỏi Heo</button></td></tr>
+</tbody></table></div></div></div>`}
 
-function work(){const cols=['TODO','DOING','WAITING','BLOCKED','REVIEW'];return `${viewHead('Work Operating System','Chat chỉ là nguồn phát hiện. WorkItem có lifecycle, owner, deadline, dependency, evidence và outcome_ref.',`<button class="btn primary" data-action="new-work">+ Work item</button>`)}
-<div class="kanban">${cols.map(c=>`<div class="kanban-col"><div class="kanban-head"><span>${c}</span><span class="faint">${sample.works.filter(w=>w.status===c).length}</span></div>${sample.works.filter(w=>w.status===c).map(w=>`<div class="kanban-card"><div class="row between"><span class="mono faint">${w.id}</span>${priBadge(w.priority)}</div><h4>${w.title}</h4><p>${w.group}<br>Owner: ${w.owner}<br>Deadline: ${w.deadline}</p>${evidenceLink('Source / evidence','work_item:'+w.id)}</div>`).join('')||`<div class="kanban-card"><p>Không có item trong demo.</p></div>`}</div>`).join('')}</div>`}
+function groups(){return `${viewHead('Group 360','Current state là explainable projection; không phải free-form summary không nguồn.')}
+<div class="card card-pad"><div class="entity-head"><div class="entity-icon">G</div><div class="entity-title grow"><h3>Strategic Partners</h3><p>G-001 · Đối tác chiến lược & cơ hội cam kết</p><div class="pill-row"><span class="pill">28 members</span><span class="pill">7 open work</span><span class="pill">POL-G-STRATEGIC v8</span></div></div><span class="badge good">Healthy</span></div></div>`}
 
-function calendar(){let times=['09:00','11:00','14:00','15:00','17:00'];let days=['T2 17','T3 18','T4 19','T5 20','T6 21'];return `${viewHead('Calendar & Reminder','Internal canonical scheduler là built-in V1. Reminder outbound tới người/group vẫn phải qua policy.',`<button class="btn primary" data-action="new-event">+ Schedule</button>`)}
-<div class="calendar"><div class="cal-cell cal-head"></div>${days.map(d=>`<div class="cal-cell cal-head">${d}</div>`).join('')}${times.map((t,ri)=>`<div class="cal-cell cal-time">${t}</div>${days.map((d,ci)=>`<div class="cal-cell">${ri===0&&ci===1?'<div class="event good">Follow-up báo giá<br><span class="small">Reminder</span></div>':''}${ri===2&&ci===1?'<div class="event">Sales review<br><span class="small">Meeting</span></div>':''}${ri===3&&ci===2?'<div class="event warn">API dependency<br><span class="small">Deadline</span></div>':''}${ri===4&&ci===0?'<div class="event">Review notes<br><span class="small">Checkpoint</span></div>':''}</div>`).join('')}`).join('')}</div>`}
-
-function groups(){const g=sample.groups[0];return `${viewHead('Group 360','Current state là explainable projection; không phải free-form summary không nguồn.')}
-<div class="card card-pad"><div class="entity-head"><div class="entity-icon">G</div><div class="entity-title grow"><h3>${g.name}</h3><p>${g.id} · ${g.purpose}</p><div class="pill-row"><span class="pill">${g.members} members</span><span class="pill">${g.open} open work</span><span class="pill">${g.alerts} alerts</span><span class="pill">${g.policy}</span></div></div>${statusBadge(g.health)}</div></div>`}
-
-function people(){let p=sample.people[0];return `${viewHead('Person 360','Một dossier canonical cho identity, group, activity, relationship, work, events, files, intel, value và alerts.')}
-<div class="card card-pad"><div class="entity-head"><div class="entity-icon">P</div><div class="entity-title grow"><h3>${p.name}</h3><p>${p.id} · ${p.role} · ${p.groups}</p><div class="pill-row"><span class="pill">Zalo identity verified</span><span class="pill">3 open work</span><span class="pill">Relationship: ${p.rel}</span></div></div>${truthBadge('FACT')}</div></div>`}
+function people(){return `${viewHead('Person 360','Một dossier canonical cho identity, group, activity, relationship, work, events, files, intel, value và alerts.')}
+<div class="card card-pad"><div class="entity-head"><div class="entity-icon">P</div><div class="entity-title grow"><h3>Nguyễn Anh</h3><p>P-018 · Partner Lead · Strategic Partners</p><div class="pill-row"><span class="pill">Zalo identity verified</span><span class="pill">3 open work</span><span class="pill">Rule: DENY OUTBOUND</span></div></div><span class="badge fact">FACT</span></div></div>`}
 
 function whatsapp(){return `${viewHead('Kênh Zalo & Multi-Device Operations','Provider session, pairing, inbound/outbound, group discovery, capability reporting.',`<button class="btn primary" data-action="wa-connect">Connect / Relink QR</button>`)}
 <div class="grid cols-4"><div class="card kpi"><div class="kpi-label">Session</div><div class="kpi-value" style="font-size:19px;color:var(--good)">CONNECTED</div><div class="kpi-sub">has_session=true</div></div><div class="card kpi"><div class="kpi-label">Inbound lag</div><div class="kpi-value">0.8s</div><div class="kpi-sub">target ≤2s</div></div><div class="card kpi"><div class="kpi-label">Backlog</div><div class="kpi-value">0</div><div class="kpi-sub">processed</div></div><div class="card kpi"><div class="kpi-label">Policy permit</div><div class="kpi-value" style="font-size:19px;color:var(--good)">ENFORCED</div><div class="kpi-sub">100% verified</div></div></div>`}
 
-function approvals(){return `${viewHead('Approval Queue','Owner là approver duy nhất V1. Approval bind vào action fingerprint.')}
-<div class="card"><div class="card-body">${sample.approvals.map((a,idx)=>`<div class="list-item"><div class="row between"><div class="item-title">${a.action}</div><span class="badge ${idx===0?'p1':'p2'}">TTL ${a.ttl}</span></div><div class="item-desc">${a.summary}</div><div class="item-meta">Target: ${a.target} · fingerprint ${a.fingerprint}</div><div class="row wrap" style="margin-top:9px"><button class="btn primary" data-approve="${a.id}">Approve</button><button class="btn danger" data-deny="${a.id}">Deny</button></div></div>`).join('')}</div></div>`}
-
 function policies(){return `${viewHead('Policy & Permission Engine','Exact precedence: GLOBAL → CHANNEL → GROUP → PERSON → ACTION; max depth wins.',`<button class="btn primary" data-action="simulate-policy">Policy Simulator</button>`)}
-<div class="grid span-layout"><div class="card"><div class="card-body"><table class="table"><thead><tr><th>Rule</th><th>Scope</th><th>Target</th><th>Action</th><th>Decision</th><th>Priority</th><th>v</th></tr></thead><tbody>${sample.policies.map(p=>`<tr><td><strong>${p.id}</strong></td><td>${p.scope}</td><td class="mono">${p.target}</td><td class="mono">${p.action}</td><td>${statusBadge(p.decision)}</td><td>${p.priority}</td><td>${p.version}</td></tr>`).join('')}</tbody></table></div></div><div class="stack"><div class="card card-pad"><b class="small">Default decisions</b><div class="divider"></div><div class="row between"><span class="small muted">Internal Action</span><span class="badge good">AUTO</span></div><div class="row between" style="margin-top:8px"><span class="small muted">External Outbound</span><span class="badge p2">APPROVAL</span></div><div class="row between" style="margin-top:8px"><span class="small muted">Restricted Person</span><span class="badge danger">DENY</span></div></div></div></div>`}
+<div class="grid span-layout"><div class="card"><div class="card-body"><table class="table"><thead><tr><th>Rule</th><th>Scope</th><th>Target</th><th>Action</th><th>Decision</th><th>Priority</th><th>v</th></tr></thead><tbody>
+  <tr><td><strong>PR-GLOBAL-01</strong></td><td>GLOBAL</td><td class="mono">*</td><td class="mono">external.send</td><td><span class="badge p2">APPROVAL</span></td><td>50</td><td>12</td></tr>
+  <tr><td><strong>PR-GROUP-SALES</strong></td><td>GROUP</td><td class="mono">G-002</td><td class="mono">zalo.send_message</td><td><span class="badge p2">APPROVAL</span></td><td>80</td><td>8</td></tr>
+  <tr><td><strong>PR-PERSON-DENY-018</strong></td><td>PERSON</td><td class="mono">P-018</td><td class="mono">zalo.send_message</td><td><span class="badge danger">DENY</span></td><td>100</td><td>3</td></tr>
+  <tr><td><strong>PR-ACTION-DOC</strong></td><td>ACTION</td><td class="mono">artifact.read</td><td class="mono">artifact.read</td><td><span class="badge good">AUTO</span></td><td>70</td><td>5</td></tr>
+</tbody></table></div></div><div class="stack"><div class="card card-pad"><b class="small">Default decisions</b><div class="divider"></div><div class="row between"><span class="small muted">Internal Action</span><span class="badge good">AUTO</span></div><div class="row between" style="margin-top:8px"><span class="small muted">External Outbound</span><span class="badge p2">APPROVAL</span></div><div class="row between" style="margin-top:8px"><span class="small muted">Restricted Person</span><span class="badge danger">DENY</span></div></div></div></div>`}
 
 function executions(){return `${viewHead('Executions & Live Trace','Timeline stage thật: IN → GATE → CTX → MODEL/NO-MODEL → TOOL → OUT → RESULT.')}
-<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Execution</th><th>Action</th><th>Policy</th><th>Status</th><th>Duration</th><th>Result</th></tr></thead><tbody>${sample.executions.map(e=>`<tr><td><strong>${e.id}</strong><div class="small faint">${e.corr}</div></td><td class="mono">${e.action}</td><td>${e.policy}</td><td>${statusBadge(e.status)}</td><td>${e.duration}</td><td>${e.result}</td></tr>`).join('')}</tbody></table></div></div>`}
+<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Execution</th><th>Action</th><th>Policy</th><th>Status</th><th>Duration</th><th>Result</th></tr></thead><tbody>
+  <tr><td><strong>EX-9012</strong><div class="small faint">COR-9012</div></td><td class="mono">tool.office.export_word</td><td>AUTO</td><td><span class="badge good">SUCCEEDED</span></td><td>12ms</td><td>DOCX OpenXML created</td></tr>
+  <tr><td><strong>EX-9008</strong><div class="small faint">COR-9008</div></td><td class="mono">tool.media.generate_beat</td><td>AUTO</td><td><span class="badge good">SUCCEEDED</span></td><td>18ms</td><td>WAV Synth finished</td></tr>
+  <tr><td><strong>EX-8991</strong><div class="small faint">COR-8991</div></td><td class="mono">zalo.send_message</td><td>APPROVAL</td><td><span class="badge good">PERMIT_GRANTED</span></td><td>42ms</td><td>AP-91 approved</td></tr>
+</tbody></table></div></div>`}
 
 function tools(){
   let head = viewHead(
@@ -1145,18 +1609,6 @@ function tools(){
   return `${head}${pluginsList}`;
 }
 
-function artifacts(){return `${viewHead('Artifacts & Documents','Quản lý tệp sinh ra từ các công cụ (Word, Excel, Media) với checksum SHA-256.',`<button class="btn primary" data-route-go="runners">+ Tạo Tài Liệu Mới</button>`)}
-<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Artifact</th><th>State</th><th>Size</th><th>SHA-256</th><th>Retention</th></tr></thead><tbody>${sample.artifacts.map(a=>`<tr><td><strong>${a.name}</strong><div class="small faint">${a.id}</div></td><td>${statusBadge(a.state)}</td><td>${a.size}</td><td class="mono">${a.sha}</td><td>${a.retention}</td></tr>`).join('')}</tbody></table></div></div>`}
-
-function control(){return `${viewHead('Control Room','Giám sát chỉ số thời gian thực của Core Chassis và các thành phần ngoại vi.',`<button class="btn primary" data-action="probe-plugins">Health Check</button>`)}
-<div class="grid cols-4"><div class="card kpi"><div class="kpi-label">Core readiness</div><div class="kpi-value" style="font-size:18px;color:var(--good)">PASS</div><div class="kpi-sub">DB writable</div></div><div class="card kpi"><div class="kpi-label">Antigravity CLI</div><div class="kpi-value" style="font-size:18px;color:var(--good)">PROBE_PASS</div><div class="kpi-sub">Gói tháng cá nhân</div></div><div class="card kpi"><div class="kpi-label">Zalo Gateway</div><div class="kpi-value" style="font-size:18px;color:var(--good)">CONNECTED</div><div class="kpi-sub">session active</div></div><div class="card kpi"><div class="kpi-label">API Quota Cost</div><div class="kpi-value" style="font-size:18px;color:var(--good)">0đ TOKEN</div><div class="kpi-sub">Google AGY</div></div></div>`}
-
-function audit(){return `${viewHead('Audit Ledger','Nhật ký bảo mật và thay đổi trạng thái theo chuẩn SSOT v1.0.0.')}
-<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Time</th><th>Actor</th><th>Event</th><th>Object</th><th>Result</th></tr></thead><tbody><tr><td>16:00:00</td><td class="mono">ryan</td><td>plugin.probe</td><td>heo-10-plugins</td><td>ALL_HEALTHY</td></tr><tr><td>15:30:12</td><td class="mono">heo_runtime</td><td>persona.load</td><td>heo-persona-heo-attitude</td><td>SUCCESS</td></tr></tbody></table></div></div>`}
-
-function settings(){return `${viewHead('Owner & Operations','Tác quyền Anh Cơ La (genesis.corp.os@gmail.com) · Bảo mật SSOT.')}
-<div class="card card-pad"><div class="row between"><div><b>Kiến Trúc Sư Trưởng</b><p class="small muted">Anh Cơ La (Ryan) · genesis.corp.os@gmail.com</p></div><span class="badge good">CHỦ SỞ HỮU DUY NHẤT</span></div></div>`}
-
 // ==========================================
 // RENDER & ROUTING CHÍNH
 // ==========================================
@@ -1186,6 +1638,18 @@ function attachDynamic(){
       }
     };
   }
+
+  // Work OS events
+  let btnNewWork = $('#btnOpenNewWorkModal');
+  if(btnNewWork) btnNewWork.onclick = openNewWorkModal;
+
+  // Calendar events
+  let btnNewEv = $('#btnOpenNewEventModal');
+  if(btnNewEv) btnNewEv.onclick = openNewEventModal;
+
+  // Settings backup events
+  let btnBk1 = $('#btnRunBackup'); if(btnBk1) btnBk1.onclick = handleRunBackup;
+  let btnBk2 = $('#btnRunBackup2'); if(btnBk2) btnBk2.onclick = handleRunBackup;
 
   // Persona events
   $$('[data-select-persona]').forEach(c => {
@@ -1225,7 +1689,7 @@ function go(r){
 
 $$('.nav-item').forEach(b => b.onclick = () => go(b.dataset.route));
 
-// API FETCHING & ACTIONS
+// DATA FETCHING FUNCTIONS
 async function fetchPlugins(){
   try {
     let res = await fetch('/api/plugins/list');
@@ -1260,6 +1724,86 @@ async function fetchSystemStatus(){
     }
   } catch(e){
     console.warn('Cannot fetch system status:', e);
+  }
+}
+
+async function fetchWorks(){
+  try {
+    let res = await fetch('/api/work/list');
+    let data = await res.json();
+    if(data.ok && Array.isArray(data.works)){
+      state.works = data.works;
+      let badge = $('#sidebarWorkCount');
+      if(badge) badge.textContent = data.works.length;
+    }
+  } catch(e){
+    console.warn('Cannot fetch works:', e);
+  }
+}
+
+async function fetchCalendar(){
+  try {
+    let res = await fetch('/api/calendar/list');
+    let data = await res.json();
+    if(data.ok && Array.isArray(data.calendar)){
+      state.calendar = data.calendar;
+    }
+  } catch(e){
+    console.warn('Cannot fetch calendar:', e);
+  }
+}
+
+async function fetchApprovals(){
+  try {
+    let res = await fetch('/api/approvals/list');
+    let data = await res.json();
+    if(data.ok && Array.isArray(data.approvals)){
+      state.approvals = data.approvals;
+      let pending = data.approvals.filter(a => a.status === 'PENDING').length;
+      let badge = $('#sidebarApprBadge');
+      if(badge) badge.textContent = pending;
+    }
+  } catch(e){
+    console.warn('Cannot fetch approvals:', e);
+  }
+}
+
+async function fetchArtifacts(){
+  try {
+    let res = await fetch('/api/artifacts/list');
+    let data = await res.json();
+    if(data.ok && Array.isArray(data.artifacts)){
+      state.artifacts = data.artifacts;
+      if(state.route === 'artifacts') render();
+    }
+  } catch(e){
+    console.warn('Cannot fetch artifacts:', e);
+  }
+}
+
+async function fetchAudits(){
+  try {
+    let res = await fetch('/api/audit/list');
+    let data = await res.json();
+    if(data.ok && Array.isArray(data.audits)){
+      state.audits = data.audits;
+      if(state.route === 'audit') render();
+    }
+  } catch(e){
+    console.warn('Cannot fetch audits:', e);
+  }
+}
+
+async function fetchMetrics(){
+  try {
+    let res = await fetch('/api/system/metrics');
+    let data = await res.json();
+    if(data.ok){
+      state.metrics = data;
+      if(state.route === 'control') render();
+    }
+  } catch(e){
+    console.warn('Cannot fetch metrics:', e);
   }
 }
 
@@ -1371,9 +1915,15 @@ $('#globalSearch').addEventListener('keydown', e => {
     if(q.includes('chat') || q.includes('heo')) go('chat');
     else if(q.includes('persona') || q.includes('thái độ')) go('persona');
     else if(q.includes('tool') || q.includes('run') || q.includes('word') || q.includes('excel')) go('runners');
+    else if(q.includes('work') || q.includes('kanban')) go('work');
+    else if(q.includes('calendar') || q.includes('lịch')) go('calendar');
+    else if(q.includes('approval') || q.includes('duyệt')) go('approvals');
+    else if(q.includes('artifact') || q.includes('tệp') || q.includes('file')) go('artifacts');
+    else if(q.includes('control') || q.includes('hạ tầng')) go('control');
+    else if(q.includes('audit')) go('audit');
     else if(q.includes('dsh') || q.includes('backend')) go('dsh');
     else if(q.includes('policy')) go('policies');
-    else showToast('Thử gõ: "chat", "persona", "runners", "word", "excel", "dsh"...');
+    else showToast('Thử gõ: "chat", "work", "calendar", "artifacts", "runners", "dsh"...');
   }
 });
 
@@ -1383,8 +1933,15 @@ if(renderers[initial]) state.route = initial;
 else state.route = 'chat';
 render();
 
+// Tải tất cả dữ liệu thực tế từ backend
 fetchPlugins();
 fetchSystemStatus();
+fetchWorks();
+fetchCalendar();
+fetchApprovals();
+fetchArtifacts();
+fetchAudits();
+fetchMetrics();
 </script>
 </body>
 </html>
