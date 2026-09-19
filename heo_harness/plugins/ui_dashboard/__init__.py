@@ -181,6 +181,14 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
                 "timestamp": time.strftime("%H:%M:%S")
             })
 
+        elif path_clean == "/api/system/open-terminal":
+            try:
+                import subprocess
+                subprocess.Popen(["/home/ryan/heo-harness/scripts/open_backend_console.sh"])
+                self._send_json({"ok": True, "message": "Đã mở cửa sổ Terminal Backend DSH trên màn hình Desktop!"})
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, 500)
+
         else:
             self._send_json({"error": "Endpoint not found"}, 404)
 

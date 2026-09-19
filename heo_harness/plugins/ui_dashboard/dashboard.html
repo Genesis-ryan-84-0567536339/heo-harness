@@ -118,8 +118,9 @@ html[data-theme="light"] .card{background:linear-gradient(180deg,#fff,#fbfdff)}
       <button class="icon-btn mobile-menu" id="mobileMenu">☰</button>
       <div class="top-search"><span class="left">⌕</span><input id="globalSearch" placeholder="Tìm kiếm plugins, policy, work, insights, hạ tầng DSH…" /><span class="kbd">⌘ K</span></div>
       <div class="top-actions">
-        <button class="btn primary" data-route-go="dsh">⚡ DSH Trụ Cột</button>
-        <button class="btn blue" data-route-go="tools">🧩 Plugins</button>
+        <button class="btn primary" data-route-go="dsh">⚡ Backend DSH</button>
+        <button class="btn blue" data-action="open-backend-terminal" title="Mở cửa sổ dòng lệnh Terminal của Backend DSH">🖥️ Mở Terminal DSH</button>
+        <button class="btn ghost" data-route-go="tools">🧩 Plugins</button>
         <button class="btn ghost" data-route-go="dashboard">◫ Command Center</button>
         <button class="icon-btn" id="themeBtn" title="Đổi giao diện">☼</button>
         <button class="icon-btn" id="notifyBtn" title="Thông báo">●</button>
@@ -792,6 +793,13 @@ function action(a, id){
      };
     }
    }, 0);
+   return;
+  }
+  if(a === 'open-backend-terminal'){
+   fetch('/api/system/open-terminal', {method: 'POST'})
+    .then(r => r.json())
+    .then(d => showToast(d.message || 'Đã mở cửa sổ Terminal Backend DSH'))
+    .catch(e => showToast(`Lỗi: ${e.message}`));
    return;
   }
  if(a === 'probe-plugins'){
