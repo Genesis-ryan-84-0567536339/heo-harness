@@ -7,6 +7,7 @@ Tác giả & Chủ nhân duy nhất: Anh Cơ La (genesis.corp.os@gmail.com)
 
 from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory, PluginHealthStatus
 from heo_harness.core.policy import PolicyDecisionType
+import os
 import time
 import uuid
 from typing import Dict, Any, Optional
@@ -26,11 +27,14 @@ class WhatsAppChannelPlugin(BasePlugin):
 
     def on_load(self) -> None:
         self.ctx.provide("channel_whatsapp", self)
-        self.connected = True
-        self.logged_in = True
-        self.session_id = "wa_multidevice_session_v1"
-        self.account_name = "Bé Heo (WhatsApp Executive)"
-        self.phone_number = "+84-0567536339"
+        data_dir = getattr(self.ctx, "data_dir", "data")
+        session_file = os.path.join(data_dir, "whatsapp_session.json")
+        has_real_session = os.path.exists(session_file)
+        self.connected = has_real_session
+        self.logged_in = has_real_session
+        self.session_id = "wa_active_session" if has_real_session else ""
+        self.account_name = "Bé Heo (WhatsApp Executive)" if has_real_session else "Chưa liên kết"
+        self.phone_number = "+84-xxxxxxxxxx" if has_real_session else "Chưa liên kết"
         self.pending_approvals = []
         self.inbound_count = 0
         self.outbound_count = 0

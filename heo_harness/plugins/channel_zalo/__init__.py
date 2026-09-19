@@ -7,6 +7,7 @@ Tác giả: Anh Cơ La (genesis.corp.os@gmail.com)
 
 from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory, PluginHealthStatus
 from heo_harness.core.policy import PolicyDecisionType
+import os
 import time
 import uuid
 
@@ -25,10 +26,13 @@ class ZaloChannelPlugin(BasePlugin):
 
     def on_load(self) -> None:
         self.ctx.provide("channel_zalo", self)
-        self.connected = True
-        self.logged_in = True
-        self.session_id = "zalo_owner_session_v1"
-        self.account_name = "Bé Heo (Assistant)"
+        data_dir = getattr(self.ctx, "data_dir", "data")
+        session_file = os.path.join(data_dir, "zalo_session.json")
+        has_real_session = os.path.exists(session_file)
+        self.connected = has_real_session
+        self.logged_in = has_real_session
+        self.session_id = "zalo_active_session" if has_real_session else ""
+        self.account_name = "Bé Heo (Assistant)" if has_real_session else "Chưa liên kết"
         self.pending_approvals = []
         self.inbound_count = 0
         self.outbound_count = 0
