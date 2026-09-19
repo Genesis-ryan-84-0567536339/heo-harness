@@ -190,6 +190,26 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             audits = store.get_audits() if store else []
             self._send_json({"ok": True, "audits": audits})
 
+        # ================= AUDIT VERIFY =================
+        elif path_clean == "/api/audit/verify":
+            v = store.verify_audit_ledger() if store else {"ok": False}
+            self._send_json(v)
+
+        # ================= OUTCOMES & VALUE =================
+        elif path_clean == "/api/outcomes/list":
+            outcomes = store.get_outcomes() if store else []
+            self._send_json({"ok": True, "outcomes": outcomes})
+
+        # ================= LEARNINGS LOOP =================
+        elif path_clean == "/api/learnings/list":
+            learnings = store.get_learnings() if store else []
+            self._send_json({"ok": True, "learnings": learnings})
+
+        # ================= SYSTEM BACKUPS LIST =================
+        elif path_clean == "/api/system/backups":
+            bks = store.list_backups() if store else []
+            self._send_json({"ok": True, "backups": bks})
+
         # ================= ARTIFACTS =================
         elif path_clean == "/api/artifacts/list":
             base_art = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "artifacts"))
@@ -493,6 +513,75 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
+        # ================= INSIGHTS RECOMPUTE =================
+        elif path_clean == "/api/insights/recompute":
+            if store:
+                att = store.recompute_attention()
+                ins = store.get_insights()
+                store.add_audit("system", "insights.recompute", "INSIGHTS_ENGINE", f"Đã tính toán lại {len(ins)} insights", "UPDATED")
+                self._send_json({"ok": True, "insights": ins, "attention": att, "message": "Đã tính toán lại Insights thành công!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= OUTCOMES CREATE & VERIFY =================
+        elif path_clean == "/api/outcomes/create":
+            title = data.get("title", "Kết quả mới").strip()
+            work_id = data.get("work_id", "W-General")
+            attribution = data.get("attribution", "ESTIMATED")
+            impact_score = data.get("impact_score", "Medium")
+            economic_val = data.get("economic_value", "")
+            evidence = data.get("evidence", "")
+            if store:
+                out = store.add_outcome(title, work_id, attribution, impact_score, economic_val, evidence)
+                self._send_json({"ok": True, "outcome": out, "message": "Đã ghi nhận Outcome thành công!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/outcomes/verify":
+            out_id = data.get("id")
+            if store and out_id:
+                res = store.verify_outcome(out_id)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "Missing outcome id"}, 400)
+
+        # ================= LEARNINGS CREATE & ACTION =================
+        elif path_clean == "/api/learnings/create":
+            ltype = data.get("type", "MEMORY_UPDATE")
+            target = data.get("target", "Core Brain Context")
+            summary = data.get("summary", "Đề xuất học tập mới")
+            content = data.get("content", "")
+            evidence = data.get("evidence", "")
+            if store:
+                lrn = store.add_learning(ltype, target, summary, content, "Sếp Cơ La", evidence)
+                self._send_json({"ok": True, "learning": lrn, "message": "Đã ghi nhận đề xuất học tập mới!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/learnings/action":
+            lrn_id = data.get("id")
+            action_type = data.get("action", "apply")
+            if store and lrn_id:
+                res = store.action_learning(lrn_id, action_type)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "Missing learning id"}, 400)
+
+        # ================= ZALO ADVANCED OPS =================
+        elif path_clean == "/api/zalo/sync":
+            if store:
+                res = store.sync_zalo_groups()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/zalo/toggle_filter":
+            if store:
+                res = store.toggle_zalo_filter()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
         # ================= ZALO SEND TEST =================
         elif path_clean == "/api/zalo/send_test":
             group = data.get("group", "Strategic Partners")
@@ -502,6 +591,40 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json(res)
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= SYSTEM RESTORE & TERMINAL =================
+        elif path_clean == "/api/system/restore":
+            bk_id = data.get("backup_id")
+            if store and bk_id:
+                res = store.restore_backup(bk_id)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "Missing backup_id"}, 400)
+
+        elif path_clean == "/api/system/terminal":
+            cmd = data.get("command", "")
+            if store:
+                res = store.exec_safe_terminal(cmd)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= ARTIFACTS CREATE DIRECT =================
+        elif path_clean == "/api/artifacts/create_doc":
+            doctype = data.get("type", "word")
+            title = data.get("title", "Báo Cáo Điều Hành Heo OS").strip()
+            content = data.get("content", "")
+            office_svc = plugin.ctx.inject("tool_office")
+            if office_svc:
+                if doctype == "word":
+                    res = office_svc.export_word(title, content or f"Tài liệu xuất bản bởi Anh Cơ La - Thời gian: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+                else:
+                    res = office_svc.export_excel(title)
+                if store:
+                    store.add_audit("owner", f"artifact.create_{doctype}", res.get("filename", ""), f"Tạo tài liệu {doctype.upper()}: {title}", "CREATED")
+                self._send_json({"ok": True, "artifact": res, "message": f"Đã xuất bản tài liệu {doctype.upper()} thành công!"})
+            else:
+                self._send_json({"ok": False, "error": "Office tool unavailable"}, 500)
 
         # ================= FIRST-RUN WIZARD TEST =================
         elif path_clean in ["/api/system/wizard_test", "/api/system/run_e2e"]:
