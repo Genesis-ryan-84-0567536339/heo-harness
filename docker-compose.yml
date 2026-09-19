@@ -1,0 +1,24 @@
+services:
+  app:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: localhost/heo-harness:latest
+    container_name: heo-harness-executive
+    restart: unless-stopped
+    ports:
+      - "5088:5088"
+    volumes:
+      - ./config:/app/config:Z
+      - ./data:/app/data:Z
+      - ./logs:/app/logs:Z
+      - ./heo_harness:/app/heo_harness:Z
+      - ./docs:/app/docs:Z
+    environment:
+      - HARNESS_PORT=5088
+      - HARNESS_CONFIG=/app/config/harness.json
+      - BASE_DIR=/app
+    stdin_open: true
+    tty: true
+    command: ["run"]
