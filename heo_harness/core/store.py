@@ -89,10 +89,14 @@ class HeoDataStore:
             try:
                 with open(self.state_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    # Nếu state cũ có chứa dữ liệu mẫu giả (ví dụ: W-341 Báo giá V3 cho Nguyễn Anh), tự động dọn sạch
-                    has_mock = any(w.get("id") in ["W-341", "W-398", "W-403"] for w in data.get("works", []))
-                    if has_mock:
-                        print("[HeoDataStore] Phát hiện dữ liệu mẫu cũ. Đang dọn sạch và nạp dữ liệu thực tế từ Clean Slate.")
+                    # Dọn sạch triệt để mọi dữ liệu mẫu cũ (Clean Slate 100%)
+                    old_group_names = ["Dì Út & Heo", "Thanh niên nghiêm túc", "Nhóm Gia Đình", "Công nghệ AI", "test"]
+                    has_mock_groups = any(g.get("name") in old_group_names for g in data.get("groups", []))
+                    has_mock_works = any(w.get("id") in ["W-341", "W-398", "W-403"] for w in data.get("works", []))
+                    has_mock_people = any(p.get("uid") == "5639130299270793223" and p.get("id") == "P-OWNER" for p in data.get("people", []))
+
+                    if has_mock_groups or has_mock_works or has_mock_people:
+                        print("[HeoDataStore] Phát hiện dữ liệu mẫu cũ trong state. Đang khởi tạo Pure Clean Slate 100%.")
                         data = self._get_default_schema()
                         self._save_state(data)
                         return data
@@ -115,48 +119,49 @@ class HeoDataStore:
         return initial_state
 
     def _get_default_schema(self) -> dict:
-        # 1. Nạp danh sách nhóm thật từ active_groups.json
-        real_groups = self._load_real_groups()
-        # 2. Nạp danh sách người thật từ nhóm Zalo
-        real_people = self._load_real_people(real_groups)
-        # 3. Nạp tin nhắn thật từ group_boss_1on1.jsonl
-        real_messages = self._load_real_zalo_messages()
-        # 4. Nạp cấu hình từ config.json
+        # Nạp cấu hình từ config.json
         app_cfg = self._load_config_file()
 
         return {
-            "works": [],  # Clean slate: Không có công việc mẫu giả!
-            "calendar": [],  # Clean slate: Không có sự kiện mẫu giả!
-            "approvals": [],  # Clean slate: Không có yêu cầu duyệt mẫu giả!
-            "groups": real_groups,
-            "people": real_people,
+            "works": [],  # Clean slate: 100% rỗng, không có dữ liệu mẫu
+            "calendar": [],  # Clean slate: 100% rỗng
+            "approvals": [],  # Clean slate: 100% rỗng
+            "groups": [],  # Clean slate: 100% rỗng, không nạp nhóm mẫu cũ
+            "people": [],  # Clean slate: 100% rỗng, không nạp người mẫu cũ
             "policies": [
                 {"id": "PR-0001", "scope": "GLOBAL", "target": "*", "action": "external.send", "decision": "APPROVAL", "priority": 100, "version": 1, "desc": "Mọi lệnh gửi ra ngoài mạng internet bắt buộc Sếp Cơ La phê duyệt."},
                 {"id": "PR-0002", "scope": "CHANNEL", "target": "zalo", "action": "zalo.send_message", "decision": "AUTO", "priority": 50, "version": 1, "desc": "Cho phép phản hồi tin nhắn trong các nhóm đã đồng bộ khi có tag @."},
                 {"id": "PR-0003", "scope": "ACTION", "target": "scheduler.create", "action": "scheduler.create", "decision": "AUTO", "priority": 70, "version": 1, "desc": "Tự động tạo lịch nhắc việc nội bộ không cần duyệt."}
             ],
             "executions": [],
-            "insights": [],  # Clean slate: Không có insight giả!
-            "outcomes": [],  # Clean slate: Không có outcome giả!
-            "learnings": [],  # Clean slate: Không có learning giả!
+            "insights": [],  # Clean slate: 100% rỗng
+            "outcomes": [],  # Clean slate: 100% rỗng
+            "learnings": [],  # Clean slate: 100% rỗng
             "zalo": {
-                "connected": True,
-                "account_name": "Heo",
-                "account_id": "642589448288134831",
-                "phone": "+84-0567536339",
+                "connected": False,
+                "account_name": "Chưa kết nối",
+                "account_id": "",
+                "phone": "Chưa liên kết",
                 "tag_filter": True,
                 "auto_claim_boss": app_cfg.get("auto_claim_boss", True),
-                "bot_status": "ONLINE",
-                "synced_groups": [g["name"] for g in real_groups],
-                "recent_messages": real_messages
+                "bot_status": "WAITING_FOR_QR",
+                "synced_groups": [],
+                "recent_messages": []
+            },
+            "whatsapp": {
+                "connected": False,
+                "account_name": "Chưa kết nối",
+                "phone": "Chưa liên kết",
+                "bot_status": "WAITING_FOR_QR",
+                "messages": []
             },
             "audits": [
                 {
                     "time": time.strftime("%H:%M:%S"),
                     "actor": "heo_runtime",
                     "event": "system.init",
-                    "object": "heo-10-plugins",
-                    "reason": "Khởi động hệ điều hành Heo OS V6 (Clean Slate - Zero Mock Data)",
+                    "object": "heo-11-plugins",
+                    "reason": "Khởi động hệ điều hành Heo OS V6 (Pure Clean Slate - Zero Mock Data)",
                     "result": "HEALTHY",
                     "corr": "COR-BOOT"
                 }
@@ -180,12 +185,12 @@ class HeoDataStore:
                     return json.load(f)
             except Exception:
                 pass
-        # Mặc định cấu hình chuẩn Sếp Cơ La
+        # Mặc định cấu hình — user điền qua Settings UI
         cfg = {
-            "boss_uid": "5639130299270793223",
-            "boss_name": "Sếp Cơ La",
+            "boss_uid": "",
+            "boss_name": "Sếp",
             "boss_caller_name": "Sếp",
-            "boss_email": "genesis.corp.os@gmail.com",
+            "boss_email": "",
             "bot_name": "Bé Heo",
             "model": "Gemini 3.8 Flash (High)",
             "effort": "high",
@@ -328,7 +333,7 @@ class HeoDataStore:
             cfg = self._load_config_file()
             return {
                 "authenticated": True,
-                "email": email or "cola.bot.mac@gmail.com",
+                "email": email or "",
                 "tier_name": "Google AI Pro (0đ Token API)",
                 "tier_id": "g1-pro-tier",
                 "core_agent": "Google Antigravity (AGY) CLI",
@@ -472,107 +477,6 @@ class HeoDataStore:
         return {"ok": True, "message": "Đã đăng xuất Google an toàn."}
 
     # ==================== ZALO GATEWAY & REAL DATA ====================
-    def _load_real_groups(self) -> list:
-        p = os.path.join(self.data_dir, "active_groups.json")
-        if not os.path.exists(p):
-            return []
-        try:
-            with open(p, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            groups = []
-            for gid, ginfo in data.items():
-                groups.append({
-                    "id": gid,
-                    "name": ginfo.get("groupName", f"Group {gid}"),
-                    "creator_id": ginfo.get("creatorId", ""),
-                    "members": ginfo.get("totalMember", len(ginfo.get("members", []))),
-                    "health": "Healthy",
-                    "bot_active": True,
-                    "created_at": ginfo.get("lastUpdated", "2026-09-17")[:10]
-                })
-            return groups
-        except Exception:
-            return []
-
-    def _load_real_people(self, real_groups: list) -> list:
-        people = [
-            {
-                "id": "P-OWNER",
-                "uid": "5639130299270793223",
-                "name": "Anh Cơ La (Ryan)",
-                "role": "Chủ Nhân & Tổng Chỉ Huy (Owner)",
-                "groups": "Toàn bộ nhóm Zalo hệ sinh thái Genesis OS",
-                "email": "genesis.corp.os@gmail.com",
-                "phone": "+84-0567536339",
-                "rel": "Tác quyền tối cao SSOT",
-                "open": 0,
-                "last": "Đang trực chiến"
-            },
-            {
-                "id": "P-BOT",
-                "uid": "642589448288134831",
-                "name": "Bé Heo (Assistant)",
-                "role": "Trợ Lý Điều Hành Cấp Cao (Executive Assistant)",
-                "groups": "Tất cả nhóm kích hoạt bot",
-                "email": "cola.bot.mac@gmail.com",
-                "phone": "+84-0567536339",
-                "rel": "Phục vụ Sếp 24/7",
-                "open": 0,
-                "last": "Online"
-            }
-        ]
-        # Bổ sung các thành viên từ active_groups.json
-        p_groups = os.path.join(self.data_dir, "active_groups.json")
-        if os.path.exists(p_groups):
-            try:
-                with open(p_groups, "r", encoding="utf-8") as f:
-                    gdict = json.load(f)
-                seen_ids = {"5639130299270793223", "642589448288134831"}
-                for gid, ginfo in gdict.items():
-                    gname = ginfo.get("groupName", "")
-                    for m in ginfo.get("members", []):
-                        mid = str(m.get("id", ""))
-                        mname = m.get("name", "")
-                        if mid and mid not in seen_ids and mname and "${" not in mname:
-                            seen_ids.add(mid)
-                            people.append({
-                                "id": f"P-{mid[:6]}",
-                                "uid": mid,
-                                "name": mname,
-                                "role": "Thành viên nhóm",
-                                "groups": gname,
-                                "email": f"{mname.lower().replace(' ', '')}@zalo.vn",
-                                "phone": "Theo Zalo ID",
-                                "rel": "Đồng nghiệp / Đối tác",
-                                "open": 0,
-                                "last": "Ghi nhận từ nhóm"
-                            })
-            except Exception:
-                pass
-        return people
-
-    def _load_real_zalo_messages(self) -> list:
-        p = os.path.join(self.data_dir, "group_boss_1on1.jsonl")
-        if not os.path.exists(p):
-            return []
-        messages = []
-        try:
-            with open(p, "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.strip():
-                        try:
-                            msg = json.loads(line)
-                            messages.append({
-                                "time": msg.get("time", "")[11:19] if len(msg.get("time", "")) >= 19 else msg.get("time", ""),
-                                "sender": msg.get("senderName", "Sếp"),
-                                "group": "Phiên Riêng 1-1 Với Sếp",
-                                "text": msg.get("text", "")
-                            })
-                        except Exception:
-                            pass
-        except Exception:
-            pass
-        return messages[-12:][::-1]
 
     def get_zalo_qr_base64(self) -> str:
         qr_file = os.path.join(self.data_dir, "zalo_qr.png")
@@ -622,15 +526,17 @@ class HeoDataStore:
     def get_whatsapp_config(self) -> dict:
         cfg = self.get_config()
         wa_cfg = cfg.get("whatsapp", {})
+        session_file = os.path.join(self.data_dir, "whatsapp_session.json")
+        has_real_session = os.path.exists(session_file)
         return {
             "enabled": wa_cfg.get("enabled", True),
-            "phone_number": wa_cfg.get("phone_number", "+84-0567536339"),
-            "bot_name": wa_cfg.get("bot_name", "Bé Heo (WhatsApp Executive)"),
-            "connected": wa_cfg.get("connected", True),
-            "session_id": wa_cfg.get("session_id", "wa_multidevice_session_v1"),
+            "phone_number": wa_cfg.get("phone_number", "Chưa liên kết") if has_real_session else "Chưa liên kết",
+            "bot_name": wa_cfg.get("bot_name", "Bé Heo (WhatsApp Gateway)"),
+            "connected": has_real_session,
+            "session_id": "wa_active_session" if has_real_session else "",
             "filter_tag": wa_cfg.get("filter_tag", True),
-            "device_name": wa_cfg.get("device_name", "Chrome Linux (Multi-Device)"),
-            "status": "ONLINE" if wa_cfg.get("connected", True) else "PAIRING"
+            "device_name": "Chrome Linux (Multi-Device Active)" if has_real_session else "Chờ ghép nối thiết bị di động",
+            "status": "ONLINE" if has_real_session else "WAITING_FOR_QR"
         }
 
     def update_whatsapp_config(self, updates: dict) -> dict:
@@ -657,7 +563,7 @@ class HeoDataStore:
         try:
             node_script = """
             const QRCode = require('qrcode');
-            const token = '2@' + Buffer.from(Date.now().toString()).toString('base64') + ',sF4gH7jK9lP2qW5eR8tY1uI3oP5aS7dF9gH2jK4l,5639130299270793223';
+            const token = '2@' + Buffer.from(Date.now().toString()).toString('base64') + ',sF4gH7jK9lP2qW5eR8tY1uI3oP5aS7dF9gH2jK4l,' + Date.now();
             QRCode.toFile('/home/ryan/heo-harness/data/whatsapp_qr.png', token, {
                 color: { dark: '#052e16', light: '#ffffff' },
                 width: 399,
@@ -696,19 +602,6 @@ class HeoDataStore:
                             msgs.append(json.loads(line))
             except Exception:
                 pass
-        if not msgs:
-            msgs = [
-                {
-                    "id": "WA-INIT-01",
-                    "sender_id": "bot",
-                    "sender_name": "Bé Heo (WhatsApp Executive)",
-                    "target_id": "Sếp Cơ La (+84-0567536339)",
-                    "content": "Dạ em chào Sếp Cơ La! Kênh kết nối WhatsApp Multi-Device của Bé Heo đã kích hoạt sẵn sàng 100% ạ! 📱✨",
-                    "timestamp": time.time() - 3600,
-                    "time_str": "18:30:00",
-                    "is_outgoing": True
-                }
-            ]
         return msgs[-limit:]
 
     def record_whatsapp_message(self, sender_id: str, sender_name: str, target_id: str, group_id: str = None, content: str = "", is_outgoing: bool = True) -> dict:
@@ -822,12 +715,14 @@ class HeoDataStore:
     def get_people(self) -> list:
         return self.state.get("people", [])
 
-    def add_group(self, name: str, purpose: str = "") -> dict:
+    def add_group(self, name: str, purpose: str = "", policy: str = "", instruction: str = "") -> dict:
         gid = f"G-{uuid.uuid4().hex[:6].upper()}"
         item = {
             "id": gid,
             "name": name,
             "purpose": purpose or "Nhóm trực chiến doanh nghiệp",
+            "policy": policy or "POL-G-CUSTOM v1",
+            "instruction": instruction or "INS-G-CUSTOM v1",
             "health": "Healthy",
             "members": 1,
             "bot_active": True,
@@ -837,6 +732,45 @@ class HeoDataStore:
         self._save_state()
         self.add_audit("owner", "group.create", gid, f"Khởi tạo nhóm: {name}", "SUCCESS")
         return item
+
+    def delete_group(self, group_id: str) -> bool:
+        groups = self.state.get("groups", [])
+        new_groups = [g for g in groups if g.get("id") != group_id]
+        if len(new_groups) != len(groups):
+            self.state["groups"] = new_groups
+            self._save_state()
+            self.add_audit("owner", "group.delete", group_id, f"Đã xóa nhóm: {group_id}", "DELETED")
+            return True
+        return False
+
+    def add_person(self, name: str, role: str = "Chuyên viên", groups: str = "", email: str = "", phone: str = "") -> dict:
+        pid = f"P-{uuid.uuid4().hex[:6].upper()}"
+        item = {
+            "id": pid,
+            "uid": str(int(time.time() * 1000) % 100000000),
+            "name": name,
+            "role": role,
+            "groups": groups or "Chưa phân nhóm",
+            "email": email or f"{name.lower().replace(' ', '')}@domain.vn",
+            "phone": phone or "Chưa cập nhật",
+            "rel": "Nhân sự / Đối tác trực tiếp",
+            "open": 0,
+            "last": "Mới thêm vào danh bạ"
+        }
+        self.state.setdefault("people", []).append(item)
+        self._save_state()
+        self.add_audit("owner", "person.create", pid, f"Thêm nhân sự/đối tác: {name}", "SUCCESS")
+        return item
+
+    def delete_person(self, person_id: str) -> bool:
+        people = self.state.get("people", [])
+        new_people = [p for p in people if p.get("id") != person_id]
+        if len(new_people) != len(people):
+            self.state["people"] = new_people
+            self._save_state()
+            self.add_audit("owner", "person.delete", person_id, f"Đã xóa nhân sự: {person_id}", "DELETED")
+            return True
+        return False
 
     # ==================== POLICIES ====================
     def get_policies(self) -> list:
@@ -984,11 +918,10 @@ class HeoDataStore:
 
     # ==================== ZALO GATEWAY STATE ====================
     def get_zalo_state(self) -> dict:
-        # Tự động cập nhật danh sách nhóm và tin nhắn mới nhất
         zalo = self.state.setdefault("zalo", {})
         zalo["groups"] = self.state.get("groups", [])
-        zalo["synced_groups"] = [g["name"] for g in self.state.get("groups", [])]
-        zalo["recent_messages"] = self._load_real_zalo_messages()
+        zalo["synced_groups"] = [g.get("name", "") for g in self.state.get("groups", [])]
+        zalo.setdefault("recent_messages", [])
         return zalo
 
     def send_zalo_test(self, group: str, message: str) -> dict:
