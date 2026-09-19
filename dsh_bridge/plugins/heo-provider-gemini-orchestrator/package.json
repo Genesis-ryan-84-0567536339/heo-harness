@@ -1,0 +1,9 @@
+{
+  "name": "heo-provider-gemini-orchestrator",
+  "version": "1.0.0",
+  "description": "Điều Phối AI Gemini Multi-Key Failover — Bộ điều phối Google Gemini xoay vòng đa key khi cạn hạn mức.",
+  "type": "module",
+  "main": "index.js",
+  "author": "Anh Cơ La (Ryan) <genesis.corp.os@gmail.com>",
+  "license": "MIT"
+}

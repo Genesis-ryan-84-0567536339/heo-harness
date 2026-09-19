@@ -32,9 +32,8 @@ logs/*
 data/*
 !data/.gitkeep
 
-# IDE / OS
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
+# Artifacts generated at runtime
+artifacts/reports/*
+!artifacts/reports/.gitkeep
+artifacts/media/*
+!artifacts/media/.gitkeep

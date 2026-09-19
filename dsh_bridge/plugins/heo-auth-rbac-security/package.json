@@ -1,0 +1,9 @@
+{
+  "name": "heo-auth-rbac-security",
+  "version": "1.0.0",
+  "description": "Tác Quyền Bất Biến Anh Cơ La & PIN Admin — Bảo vệ bất biến danh tính tác giả Anh Cơ La (genesis.corp.os@gmail.com) và PIN Admin.",
+  "type": "module",
+  "main": "index.js",
+  "author": "Anh Cơ La (Ryan) <genesis.corp.os@gmail.com>",
+  "license": "MIT"
+}

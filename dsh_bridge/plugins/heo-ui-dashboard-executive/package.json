@@ -1,0 +1,9 @@
+{
+  "name": "heo-ui-dashboard-executive",
+  "version": "1.0.0",
+  "description": "Giao Diện Điều Hành V6 Executive Intelligence OS — Cổng kết nối tới Dashboard điều hành V6 tại http://127.0.0.1:5088.",
+  "type": "module",
+  "main": "index.js",
+  "author": "Anh Cơ La (Ryan) <genesis.corp.os@gmail.com>",
+  "license": "MIT"
+}

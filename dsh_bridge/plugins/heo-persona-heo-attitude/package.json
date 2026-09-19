@@ -1,0 +1,9 @@
+{
+  "name": "heo-persona-heo-attitude",
+  "version": "1.0.0",
+  "description": "Danh Xưng Em - Sếp & 7 Thái Độ Bé Heo — Giữ vững nhân cách Bé Heo lễ phép, tôn kính Sếp Cơ La và 7 sắc thái cảm xúc.",
+  "type": "module",
+  "main": "index.js",
+  "author": "Anh Cơ La (Ryan) <genesis.corp.os@gmail.com>",
+  "license": "MIT"
+}

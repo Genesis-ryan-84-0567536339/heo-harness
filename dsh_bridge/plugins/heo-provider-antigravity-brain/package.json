@@ -1,0 +1,9 @@
+{
+  "name": "heo-provider-antigravity-brain",
+  "version": "1.0.0",
+  "description": "Core Agent Google Antigravity CLI (0đ API) — Lõi suy luận chính của Heo qua Antigravity CLI gói tháng cá nhân của Sếp Ryan.",
+  "type": "module",
+  "main": "index.js",
+  "author": "Anh Cơ La (Ryan) <genesis.corp.os@gmail.com>",
+  "license": "MIT"
+}

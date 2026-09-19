@@ -1,0 +1,9 @@
+{
+  "name": "heo-tool-media-processor",
+  "version": "1.0.0",
+  "description": "Xử Lý Đa Phương Tiện (Nhạc Beat & Tranh AI) — Lồng ghép beat acoustic/lo-fi tạo bài hát MP3 và vẽ tranh minh họa AI.",
+  "type": "module",
+  "main": "index.js",
+  "author": "Anh Cơ La (Ryan) <genesis.corp.os@gmail.com>",
+  "license": "MIT"
+}

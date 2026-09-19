@@ -1,0 +1,9 @@
+{
+  "name": "heo-provider-deepseek-reasoning",
+  "version": "1.0.0",
+  "description": "Secondary DeepSeek V3/R1 Reasoning — Mô hình dự phòng giá rẻ qua API DeepSeek khi cần phân tích chuyên sâu.",
+  "type": "module",
+  "main": "index.js",
+  "author": "Anh Cơ La (Ryan) <genesis.corp.os@gmail.com>",
+  "license": "MIT"
+}

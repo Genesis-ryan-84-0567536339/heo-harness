@@ -1,0 +1,9 @@
+{
+  "name": "heo-channel-zalo-gateway",
+  "version": "1.0.0",
+  "description": "Cầu Nối Zalo Cá Nhân & Bot 2 Chiều — Đăng nhập QR, đồng bộ tin nhắn cá nhân và nhóm, lọc @tag thông minh.",
+  "type": "module",
+  "main": "index.js",
+  "author": "Anh Cơ La (Ryan) <genesis.corp.os@gmail.com>",
+  "license": "MIT"
+}

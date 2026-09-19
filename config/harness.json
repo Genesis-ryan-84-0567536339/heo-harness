@@ -14,7 +14,7 @@
     "boss_name": "Sếp Cơ La",
     "bot_name": "Bé Heo",
     "bot_about": "Em là Trợ lý Điều hành AI Cấp cao trực thuộc hệ sinh thái Genesis Corp OS, do Sếp quản lý và điều hành. Khi có mặt trong các nhóm làm việc, vai trò của em là hỗ trợ các thành viên xử lý công việc chuyên môn, tra cứu dữ liệu và theo dõi tiến độ. Em chỉ phản hồi khi được @tag tên đích danh.",
-    "active_persona": "default",
+    "active_persona": "executive",
     "custom_tone": ""
   },
   "plugins": {
@@ -44,6 +44,16 @@
     },
     "@heo/ui-dashboard": {
       "enabled": true
-    }
+    },
+    "heo-tool-office-reporter": {},
+    "heo-policy-gate-firewall": {},
+    "heo-ui-dashboard-executive": {},
+    "heo-tool-media-processor": {},
+    "heo-provider-deepseek-reasoning": {},
+    "heo-auth-rbac-security": {},
+    "heo-channel-zalo-gateway": {},
+    "heo-provider-antigravity-brain": {},
+    "heo-provider-gemini-orchestrator": {},
+    "heo-persona-heo-attitude": {}
   }
 }

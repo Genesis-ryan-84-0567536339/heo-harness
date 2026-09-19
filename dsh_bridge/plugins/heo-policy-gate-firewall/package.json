@@ -1,0 +1,9 @@
+{
+  "name": "heo-policy-gate-firewall",
+  "version": "1.0.0",
+  "description": "Tường Lửa 5 Tầng Phê Duyệt SSOT — Kiểm soát 5 tầng (Global, Channel, Group, Person, Action), cấp phép Execution Permit.",
+  "type": "module",
+  "main": "index.js",
+  "author": "Anh Cơ La (Ryan) <genesis.corp.os@gmail.com>",
+  "license": "MIT"
+}

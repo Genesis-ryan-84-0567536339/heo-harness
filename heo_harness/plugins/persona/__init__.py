@@ -102,12 +102,22 @@ class PersonaPlugin(BasePlugin):
     def get_config(self) -> dict:
         cfg = self.ctx.config.get("persona", {})
         return {
-            "boss_name": cfg.get("boss_name", "Sếp"),
+            "boss_name": cfg.get("boss_name", "Sếp Cơ La"),
             "bot_name": cfg.get("bot_name", "Bé Heo"),
             "bot_about": cfg.get("bot_about", "Em là Trợ lý Điều hành AI Cấp cao trực thuộc hệ sinh thái Genesis Corp OS, do Sếp quản lý và điều hành."),
             "active_persona": cfg.get("active_persona", "default"),
             "custom_tone": cfg.get("custom_tone", "")
         }
+
+    def update_config(self, new_cfg: dict) -> dict:
+        current = self.ctx.config.setdefault("persona", {})
+        if "boss_name" in new_cfg: current["boss_name"] = new_cfg["boss_name"]
+        if "bot_name" in new_cfg: current["bot_name"] = new_cfg["bot_name"]
+        if "active_persona" in new_cfg: current["active_persona"] = new_cfg["active_persona"]
+        if "custom_tone" in new_cfg: current["custom_tone"] = new_cfg["custom_tone"]
+        self.ctx.save_config()
+        self.log(f"✔ Đã cập nhật Persona: {current.get('active_persona')} - Bot: {current.get('bot_name')}")
+        return self.get_config()
 
     def _inject_persona(self, prompt: str) -> str:
         cfg = self.get_config()
