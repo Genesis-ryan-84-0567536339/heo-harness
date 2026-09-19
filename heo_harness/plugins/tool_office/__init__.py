@@ -8,7 +8,7 @@ from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory
 
 class OfficeToolPlugin(BasePlugin):
     metadata = PluginMetadata(
-        id="@heo/tool-office",
+        id="heo-tool-office-reporter",
         name="Xuất Báo Cáo Tài Liệu Word & Excel",
         version="1.0.0",
         author="Anh Cơ La",

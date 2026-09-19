@@ -60,6 +60,10 @@ class Context:
         with self._lock:
             return self._services.get(name, default)
 
+    def get(self, name: str, default: Any = None) -> Any:
+        """Alias tương thích DSH Cordis ctx.get(name)."""
+        return self.inject(name, default)
+
     def has_service(self, name: str) -> bool:
         with self._lock:
             return name in self._services

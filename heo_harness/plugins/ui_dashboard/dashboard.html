@@ -555,7 +555,7 @@ function tools(){
  let filterHtml = `<div class="row wrap" style="gap:6px;margin-bottom:14px">${cats.map(c=>`<button class="btn ${currentCat===c.id?'primary':'ghost'}" style="padding:6px 11px;font-size:10px" data-tool-cat="${c.id}">${c.label}</button>`).join('')}</div>`;
 
  let pluginCards = filteredPlugins.map(p => {
-  let isCoreAgy = p.id === '@heo/provider-gemini' || p.id === '@heo/provider-antigravity';
+  let isCoreAgy = p.id.includes('antigravity') || p.id.includes('gemini') || p.id === '@heo/provider-gemini' || p.id === '@heo/provider-antigravity';
   let isCircuitHealthy = (p.circuit_breaker?.status || 'HEALTHY') === 'HEALTHY';
   let failCount = p.circuit_breaker?.failure_count || 0;
   let maxFail = p.circuit_breaker?.max_failures || 3;
@@ -774,7 +774,7 @@ function action(a, id){
  if(a === 'open-add-plugin-modal'){
   modal('Nạp Plugin Mới Vào Hệ Thống DSH', 'Thêm module mở rộng theo chuẩn Chassis SSOT v1.0.0', `
     <div class="form-grid">
-     <div class="field full"><label>Mã Định Danh Plugin (Package ID)</label><input id="newPluginId" class="mono" placeholder="@heo/tool-example" /></div>
+     <div class="field full"><label>Mã Định Danh Plugin (heo-tên-chức năng)</label><input id="newPluginId" class="mono" placeholder="heo-tool-example-runner" /></div>
      <div class="field"><label>Tên Hiển Thị (Display Name)</label><input id="newPluginName" placeholder="Ví dụ: Tra Cứu Tỷ Giá" /></div>
      <div class="field"><label>Phân Loại (Category)</label><select id="newPluginCat"><option value="tool">Tool / MCP</option><option value="channel">Channel (Kênh Chat)</option><option value="provider">AI Provider</option><option value="agent">Core Agent</option></select></div>
      <div class="field full"><label>Đường Dẫn Mã Nguồn / Gói Cài Đặt (Module Path)</label><input id="newPluginPath" placeholder="heo_harness.plugins.my_tool hoặc /path/to/plugin" /></div>

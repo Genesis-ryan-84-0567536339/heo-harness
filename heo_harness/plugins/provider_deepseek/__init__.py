@@ -10,8 +10,8 @@ import os
 
 class DeepSeekProviderPlugin(BasePlugin):
     metadata = PluginMetadata(
-        id="@heo/provider-deepseek",
-        name="Secondary Provider: DeepSeek V3 / R1 (Optional)",
+        id="heo-provider-deepseek-reasoning",
+        name="Secondary Provider: DeepSeek V3 / R1 (Reasoning)",
         version="1.0.0",
         author="Anh Cơ La (Ryan)",
         author_email="genesis.corp.os@gmail.com",

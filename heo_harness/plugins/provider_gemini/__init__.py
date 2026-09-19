@@ -9,8 +9,8 @@ import time
 
 class GeminiProviderPlugin(BasePlugin):
     metadata = PluginMetadata(
-        id="@heo/provider-gemini",
-        name="Bộ Điều Phối AI Gemini (Multi-Key)",
+        id="heo-provider-gemini-orchestrator",
+        name="Bộ Điều Phối AI Gemini (Multi-Key Failover)",
         version="1.0.0",
         author="Anh Cơ La",
         author_email="genesis.corp.os@gmail.com",

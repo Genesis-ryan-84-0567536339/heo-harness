@@ -12,8 +12,8 @@ import time
 
 class AntigravityProviderPlugin(BasePlugin):
     metadata = PluginMetadata(
-        id="@heo/provider-antigravity",
-        name="Core Agent: Google Antigravity CLI (Gói tháng)",
+        id="heo-provider-antigravity-brain",
+        name="Core Agent: Google Antigravity CLI (0đ Token API)",
         version="1.0.0",
         author="Anh Cơ La (Ryan)",
         author_email="genesis.corp.os@gmail.com",

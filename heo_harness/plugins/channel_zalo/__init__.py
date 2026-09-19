@@ -12,7 +12,7 @@ import uuid
 
 class ZaloChannelPlugin(BasePlugin):
     metadata = PluginMetadata(
-        id="@heo/channel-zalo",
+        id="heo-channel-zalo-gateway",
         name="Kênh Kết Nối Zalo Cá Nhân (Bảo Mật QR)",
         version="1.0.0",
         author="Anh Cơ La (Ryan)",

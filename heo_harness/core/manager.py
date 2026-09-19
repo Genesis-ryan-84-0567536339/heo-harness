@@ -18,8 +18,8 @@ from heo_harness.core.plugin import BasePlugin, PluginHealthStatus, PluginCatego
 # Kho Catalog Marketplace có sẵn để người dùng có thể cài đặt thêm trên Web UI
 MARKETPLACE_CATALOG: List[Dict[str, Any]] = [
     {
-        "id": "@heo/provider-antigravity",
-        "name": "Core Agent: Google Antigravity CLI (Gói tháng)",
+        "id": "heo-provider-antigravity-brain",
+        "name": "Core Agent: Google Antigravity CLI (0đ Token API)",
         "version": "1.0.0",
         "author": "Anh Cơ La (Ryan)",
         "category": "provider",
@@ -29,8 +29,8 @@ MARKETPLACE_CATALOG: List[Dict[str, Any]] = [
         "is_default": True
     },
     {
-        "id": "@heo/provider-deepseek",
-        "name": "Secondary Provider: DeepSeek V3 / R1",
+        "id": "heo-provider-deepseek-reasoning",
+        "name": "Secondary Provider: DeepSeek V3 / R1 (Reasoning)",
         "version": "1.0.0",
         "author": "Anh Cơ La (Ryan)",
         "category": "provider",
@@ -40,7 +40,7 @@ MARKETPLACE_CATALOG: List[Dict[str, Any]] = [
         "is_default": False
     },
     {
-        "id": "@heo/channel-zalo",
+        "id": "heo-channel-zalo-gateway",
         "name": "Kênh Kết Nối Zalo Cá Nhân (Bảo Mật QR)",
         "version": "1.0.0",
         "author": "Anh Cơ La (Ryan)",
@@ -51,29 +51,40 @@ MARKETPLACE_CATALOG: List[Dict[str, Any]] = [
         "is_default": True
     },
     {
-        "id": "@heo/channel-whatsapp",
-        "name": "Kênh Kết Nối WhatsApp Multi-Device",
-        "version": "1.0.0",
-        "author": "Genesis Corp OS",
-        "category": "channel",
-        "description": "Mở rộng khả năng tiếp cận đối tác quốc tế qua giao thức WhatsApp Multi-Device.",
-        "icon": "📱",
-        "installed": False,
-        "is_default": False
-    },
-    {
-        "id": "@heo/plugin-crm",
-        "name": "HubSpot & Customer Pipeline CRM",
+        "id": "heo-policy-gate-firewall",
+        "name": "Tường Lửa 5 Tầng Phê Duyệt & Cấp Phép SSOT",
         "version": "1.0.0",
         "author": "Anh Cơ La (Ryan)",
-        "category": "tool",
-        "description": "Tự động trích xuất thông tin khách hàng tiềm năng, đồng bộ deals và lịch sử liên hệ từ Zalo vào CRM.",
-        "icon": "📇",
-        "installed": False,
-        "is_default": False
+        "category": "core",
+        "description": "Kiểm soát toàn diện 5 tầng (Global, Channel, Group, Person, Action), cấp Execution Permit cho mọi hoạt động.",
+        "icon": "🛡️",
+        "installed": True,
+        "is_default": True
     },
     {
-        "id": "@heo/tool-office",
+        "id": "heo-persona-heo-attitude",
+        "name": "Danh Xưng & 7 Persona Thái Độ Bé Heo",
+        "version": "1.0.0",
+        "author": "Anh Cơ La (Ryan)",
+        "category": "core",
+        "description": "Quản lý danh xưng Sếp Cơ La, tên bot, văn hóa giới thiệu nhóm và 7 phong cách thái độ ứng xử.",
+        "icon": "🎭",
+        "installed": True,
+        "is_default": True
+    },
+    {
+        "id": "heo-auth-rbac-security",
+        "name": "Định Danh Tác Quyền & Bảo Mật RBAC",
+        "version": "1.0.0",
+        "author": "Anh Cơ La (Ryan)",
+        "category": "core",
+        "description": "Bảo vệ bất biến danh tính tác giả Anh Cơ La, quản lý mã PIN Admin và phân quyền Chủ nhân.",
+        "icon": "🔐",
+        "installed": True,
+        "is_default": True
+    },
+    {
+        "id": "heo-tool-office-reporter",
         "name": "Bộ Công Cụ Văn Phòng (Word, Excel, PDF)",
         "version": "1.0.0",
         "author": "Anh Cơ La (Ryan)",
@@ -84,7 +95,7 @@ MARKETPLACE_CATALOG: List[Dict[str, Any]] = [
         "is_default": True
     },
     {
-        "id": "@heo/tool-media",
+        "id": "heo-tool-media-processor",
         "name": "Bộ Xử Lý Đa Phương Tiện (Image, Voice, Video)",
         "version": "1.0.0",
         "author": "Anh Cơ La (Ryan)",
@@ -95,7 +106,29 @@ MARKETPLACE_CATALOG: List[Dict[str, Any]] = [
         "is_default": True
     },
     {
-        "id": "@heo/channel-telegram",
+        "id": "heo-channel-whatsapp-bridge",
+        "name": "Kênh Kết Nối WhatsApp Multi-Device",
+        "version": "1.0.0",
+        "author": "Genesis Corp OS",
+        "category": "channel",
+        "description": "Mở rộng khả năng tiếp cận đối tác quốc tế qua giao thức WhatsApp Multi-Device.",
+        "icon": "📱",
+        "installed": False,
+        "is_default": False
+    },
+    {
+        "id": "heo-tool-crm-pipeline",
+        "name": "HubSpot & Customer Pipeline CRM",
+        "version": "1.0.0",
+        "author": "Anh Cơ La (Ryan)",
+        "category": "tool",
+        "description": "Tự động trích xuất thông tin khách hàng tiềm năng, đồng bộ deals và lịch sử liên hệ từ Zalo vào CRM.",
+        "icon": "📇",
+        "installed": False,
+        "is_default": False
+    },
+    {
+        "id": "heo-channel-telegram-bot",
         "name": "Kênh Kết Nối Telegram Bot",
         "version": "1.0.0",
         "author": "Genesis Corp OS",

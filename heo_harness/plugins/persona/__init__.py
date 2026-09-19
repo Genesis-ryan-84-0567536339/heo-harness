@@ -82,8 +82,8 @@ PERSONA_STYLES = [
 
 class PersonaPlugin(BasePlugin):
     metadata = PluginMetadata(
-        id="@heo/plugin-persona",
-        name="Danh Xưng & 7 Persona Thái Độ",
+        id="heo-persona-heo-attitude",
+        name="Danh Xưng & 7 Persona Thái Độ Bé Heo",
         version="1.0.0",
         author="Anh Cơ La",
         author_email="genesis.corp.os@gmail.com",

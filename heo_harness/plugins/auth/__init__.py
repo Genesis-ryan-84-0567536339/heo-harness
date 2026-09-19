@@ -11,8 +11,8 @@ AUTHOR_EMAIL = "genesis.corp.os@gmail.com"
 
 class AuthPlugin(BasePlugin):
     metadata = PluginMetadata(
-        id="@heo/plugin-auth",
-        name="Định Danh Tác Quyền & Bảo Mật",
+        id="heo-auth-rbac-security",
+        name="Định Danh Tác Quyền & Bảo Mật RBAC",
         version="1.0.0",
         author="Anh Cơ La",
         author_email="genesis.corp.os@gmail.com",

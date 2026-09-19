@@ -195,7 +195,7 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
 
 class DashboardUIPlugin(BasePlugin):
     metadata = PluginMetadata(
-        id="@heo/ui-dashboard",
+        id="heo-ui-dashboard-executive",
         name="Giao Diện Điều Hành V6 & Kho Add-in Hub",
         version="1.0.0",
         author="Anh Cơ La (Ryan)",

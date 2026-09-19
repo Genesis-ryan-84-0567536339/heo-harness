@@ -39,27 +39,27 @@ class TestSSOTCompleteArchitecture(unittest.TestCase):
             os.remove(self.test_cfg)
 
     def test_01_all_official_plugins_registered(self):
-        """Kiểm tra có đầy đủ cả 9 official plugins chuẩn SSOT."""
-        self.assertIn("@heo/plugin-auth", self.manager._plugins)
-        self.assertIn("@heo/plugin-persona", self.manager._plugins)
-        self.assertIn("@heo/provider-antigravity", self.manager._plugins)
-        self.assertIn("@heo/provider-deepseek", self.manager._plugins)
-        self.assertIn("@heo/channel-zalo", self.manager._plugins)
-        self.assertIn("@heo/tool-media", self.manager._plugins)
-        self.assertIn("@heo/tool-office", self.manager._plugins)
-        self.assertIn("@heo/ui-dashboard", self.manager._plugins)
+        """Kiểm tra có đầy đủ cả các official plugins chuẩn SSOT."""
+        self.assertIn("heo-auth-rbac-security", self.manager._plugins)
+        self.assertIn("heo-persona-heo-attitude", self.manager._plugins)
+        self.assertIn("heo-provider-antigravity-brain", self.manager._plugins)
+        self.assertIn("heo-provider-deepseek-reasoning", self.manager._plugins)
+        self.assertIn("heo-channel-zalo-gateway", self.manager._plugins)
+        self.assertIn("heo-tool-media-processor", self.manager._plugins)
+        self.assertIn("heo-tool-office-reporter", self.manager._plugins)
+        self.assertIn("heo-ui-dashboard-executive", self.manager._plugins)
 
         # DeepSeek mặc định tắt theo SSOT
-        deepseek = self.manager._plugins["@heo/provider-deepseek"]
+        deepseek = self.manager._plugins["heo-provider-deepseek-reasoning"]
         self.assertFalse(deepseek.enabled)
 
         # Antigravity Core mặc định bật
-        antigravity = self.manager._plugins["@heo/provider-antigravity"]
+        antigravity = self.manager._plugins["heo-provider-antigravity-brain"]
         self.assertTrue(antigravity.enabled)
 
     def test_02_antigravity_core_provider(self):
         """Kiểm tra Core Agent Antigravity CLI gói tháng."""
-        agy = self.manager._plugins["@heo/provider-antigravity"]
+        agy = self.manager._plugins["heo-provider-antigravity-brain"]
         probe = agy.probe_health()
         self.assertEqual(probe["status"], "PASS")
         self.assertEqual(probe["circuit_breaker"], "CLOSED (HEALTHY)")
@@ -105,7 +105,7 @@ class TestSSOTCompleteArchitecture(unittest.TestCase):
 
     def test_04_channel_zalo_policy_gate(self):
         """Kiểm tra Kênh Zalo từ chối gửi tin nếu bị Policy DENY."""
-        zalo = self.manager._plugins["@heo/channel-zalo"]
+        zalo = self.manager._plugins["heo-channel-zalo-gateway"]
         
         # Thử gửi tin tới P-018 (đối tượng rủi ro bị cấm)
         res = zalo.send_message(target_id="P-018", content="Xin chào bạn!")
@@ -115,7 +115,7 @@ class TestSSOTCompleteArchitecture(unittest.TestCase):
 
     def test_05_channel_zalo_group_tag_filtering(self):
         """Kiểm tra bộ lọc @tag thông minh của Zalo trên nhóm làm việc."""
-        zalo = self.manager._plugins["@heo/channel-zalo"]
+        zalo = self.manager._plugins["heo-channel-zalo-gateway"]
 
         # 1. Tin nhắn trong nhóm không tag bot -> Im lặng hoàn toàn (Observe only)
         res_untagged = zalo.handle_incoming_message({
@@ -140,7 +140,7 @@ class TestSSOTCompleteArchitecture(unittest.TestCase):
 
     def test_06_optional_deepseek_toggle(self):
         """Kiểm tra bật/tắt Provider dự phòng DeepSeek mà không ảnh hưởng Core."""
-        dsh_id = "@heo/provider-deepseek"
+        dsh_id = "heo-provider-deepseek-reasoning"
         
         # Bật DeepSeek
         self.assertTrue(self.manager.enable_plugin(dsh_id))
@@ -154,7 +154,7 @@ class TestSSOTCompleteArchitecture(unittest.TestCase):
         self.assertFalse(dsh_plugin.enabled)
 
         # Core Agent Antigravity vẫn hoạt động 100%
-        agy = self.manager._plugins["@heo/provider-antigravity"]
+        agy = self.manager._plugins["heo-provider-antigravity-brain"]
         self.assertTrue(agy.enabled)
 
 if __name__ == "__main__":

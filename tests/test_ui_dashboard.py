@@ -31,14 +31,14 @@ class TestUIDashboardPlugin(unittest.TestCase):
 
         cls.manager.scan_and_register_builtin()
         cls.manager.load_all_registered()
-        cls.manager.enable_plugin("@heo/ui-dashboard")
+        cls.manager.enable_plugin("heo-ui-dashboard-executive")
         time.sleep(0.1) # Chờ HTTP server sẵn sàng
 
     @classmethod
     def tearDownClass(cls):
-        ui_plugin = cls.manager._plugins.get("@heo/ui-dashboard")
+        ui_plugin = cls.manager._plugins.get("heo-ui-dashboard-executive")
         if ui_plugin:
-            cls.manager.unload_plugin("@heo/ui-dashboard")
+            cls.manager.unload_plugin("heo-ui-dashboard-executive")
 
     def _get_url(self, path: str):
         return f"http://127.0.0.1:{self.test_port}{path}"
@@ -89,7 +89,7 @@ class TestUIDashboardPlugin(unittest.TestCase):
 
     def test_05_plugins_toggle_api(self):
         """Kiểm tra toggle Bật / Tắt plugin qua API POST."""
-        target_id = "@heo/tool-media"
+        target_id = "heo-tool-media-processor"
         
         # 1. Tắt plugin
         payload = json.dumps({"id": target_id, "enable": False}).encode("utf-8")

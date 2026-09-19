@@ -8,7 +8,7 @@ from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory
 
 class MediaToolPlugin(BasePlugin):
     metadata = PluginMetadata(
-        id="@heo/tool-media",
+        id="heo-tool-media-processor",
         name="Sáng Tạo Media (Nhạc Beat & Vẽ Tranh AI)",
         version="1.0.0",
         author="Anh Cơ La",
