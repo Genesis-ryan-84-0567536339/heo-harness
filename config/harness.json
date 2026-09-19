@@ -24,8 +24,14 @@
     "@heo/plugin-persona": {
       "enabled": true
     },
+    "@heo/provider-antigravity": {
+      "enabled": true
+    },
     "@heo/provider-gemini": {
       "enabled": true
+    },
+    "@heo/provider-deepseek": {
+      "enabled": false
     },
     "@heo/channel-zalo": {
       "enabled": true

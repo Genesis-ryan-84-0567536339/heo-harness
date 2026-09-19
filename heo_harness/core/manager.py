@@ -149,7 +149,7 @@ class PluginManager:
                 cfg = self.ctx.get_plugin_config(plugin_id)
                 should_enable = cfg.get("enabled", instance.metadata.default_enabled)
                 if should_enable:
-                    self.enable_plugin(plugin_id)
+                    self.enable_plugin(plugin_id, persist=False)
                 else:
                     instance.health_status = PluginHealthStatus.DISABLED
                 return True
@@ -158,7 +158,7 @@ class PluginManager:
                 traceback.print_exc()
                 return False
 
-    def enable_plugin(self, plugin_id: str) -> bool:
+    def enable_plugin(self, plugin_id: str, persist: bool = True) -> bool:
         """Kích hoạt hoạt động của plugin."""
         with self._lock:
             instance = self._plugins.get(plugin_id)
@@ -177,7 +177,8 @@ class PluginManager:
                 instance.on_enable()
                 instance.enabled = True
                 instance.health_status = PluginHealthStatus.HEALTHY
-                self.ctx.set_plugin_config(plugin_id, {"enabled": True})
+                if persist:
+                    self.ctx.set_plugin_config(plugin_id, {"enabled": True})
                 instance.log("Đã kích hoạt hoạt động thành công.")
                 self.bus.emit("plugin:enabled", plugin_id=plugin_id)
                 return True
@@ -186,7 +187,7 @@ class PluginManager:
                 instance.log(f"Lỗi khi kích hoạt: {e}")
                 return False
 
-    def disable_plugin(self, plugin_id: str) -> bool:
+    def disable_plugin(self, plugin_id: str, persist: bool = True) -> bool:
         """Vô hiệu hóa hoạt động của plugin (Gạt công tắc OFF tức thì)."""
         with self._lock:
             instance = self._plugins.get(plugin_id)
@@ -199,7 +200,8 @@ class PluginManager:
                 instance.on_disable()
                 instance.enabled = False
                 instance.health_status = PluginHealthStatus.DISABLED
-                self.ctx.set_plugin_config(plugin_id, {"enabled": False})
+                if persist:
+                    self.ctx.set_plugin_config(plugin_id, {"enabled": False})
                 instance.log("Đã tạm dừng hoạt động.")
                 self.bus.emit("plugin:disabled", plugin_id=plugin_id)
                 return True
@@ -210,7 +212,7 @@ class PluginManager:
     def unload_plugin(self, plugin_id: str) -> bool:
         """Gỡ sạch một plugin ra khỏi bộ nhớ."""
         with self._lock:
-            self.disable_plugin(plugin_id)
+            self.disable_plugin(plugin_id, persist=False)
             instance = self._plugins.pop(plugin_id, None)
             if instance:
                 try:
