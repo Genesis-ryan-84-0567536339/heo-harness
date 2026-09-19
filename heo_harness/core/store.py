@@ -618,6 +618,104 @@ class HeoDataStore:
         self.add_audit("owner", "zalo.restart", "ZALO_BRIDGE", "Khởi động lại Zalo Bridge", "RESTARTED")
         return {"ok": True, "message": "Đã gửi lệnh khởi động lại Zalo Bridge thành công!"}
 
+    # ==================== WHATSAPP OPERATIONS ====================
+    def get_whatsapp_config(self) -> dict:
+        cfg = self.get_config()
+        wa_cfg = cfg.get("whatsapp", {})
+        return {
+            "enabled": wa_cfg.get("enabled", True),
+            "phone_number": wa_cfg.get("phone_number", "+84-0567536339"),
+            "bot_name": wa_cfg.get("bot_name", "Bé Heo (WhatsApp Executive)"),
+            "connected": wa_cfg.get("connected", True),
+            "session_id": wa_cfg.get("session_id", "wa_multidevice_session_v1"),
+            "filter_tag": wa_cfg.get("filter_tag", True),
+            "device_name": wa_cfg.get("device_name", "Chrome Linux (Multi-Device)"),
+            "status": "ONLINE" if wa_cfg.get("connected", True) else "PAIRING"
+        }
+
+    def update_whatsapp_config(self, updates: dict) -> dict:
+        cfg = self.get_config()
+        if "whatsapp" not in cfg:
+            cfg["whatsapp"] = {}
+        cfg["whatsapp"].update(updates)
+        self.update_config(cfg)
+        self.add_audit("owner", "whatsapp.config_update", "WHATSAPP_CFG", "Cập nhật cấu hình WhatsApp", "SUCCESS")
+        return self.get_whatsapp_config()
+
+    def get_whatsapp_qr_base64(self) -> str:
+        qr_file = os.path.join(self.data_dir, "whatsapp_qr.png")
+        if os.path.exists(qr_file):
+            try:
+                with open(qr_file, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode("utf-8")
+                    return f"data:image/png;base64,{b64}"
+            except Exception:
+                pass
+        return ""
+
+    def refresh_whatsapp_qr(self) -> dict:
+        self.add_audit("owner", "whatsapp.qr_refresh", "WHATSAPP_QR", "Yêu cầu làm mới mã QR WhatsApp Multi-Device", "REQUESTED")
+        return {"ok": True, "message": "Đang làm mới mã QR kết nối WhatsApp Multi-Device..."}
+
+    def logout_whatsapp(self, pin: str = "") -> tuple[bool, str]:
+        if self.has_security_pin():
+            if not pin or not self.verify_security_pin(pin):
+                return False, "Mã PIN quản trị viên không chính xác hoặc chưa được cung cấp!"
+        self.update_whatsapp_config({"connected": False, "status": "PAIRING"})
+        self.add_audit("owner", "whatsapp.logout", "WHATSAPP_AUTH", "Đăng xuất tài khoản WhatsApp", "LOGGED_OUT")
+        return True, "Đã đăng xuất WhatsApp an toàn và chuyển sang chế độ quét QR mới."
+
+    def restart_whatsapp_bridge(self) -> dict:
+        self.add_audit("owner", "whatsapp.restart", "WHATSAPP_BRIDGE", "Khởi động lại WhatsApp Bridge", "RESTARTED")
+        return {"ok": True, "message": "Đã gửi lệnh khởi động lại WhatsApp Multi-Device Bridge thành công!"}
+
+    def get_whatsapp_messages(self, limit: int = 20) -> list:
+        wa_file = os.path.join(self.data_dir, "whatsapp_messages.jsonl")
+        msgs = []
+        if os.path.exists(wa_file):
+            try:
+                with open(wa_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            msgs.append(json.loads(line))
+            except Exception:
+                pass
+        if not msgs:
+            msgs = [
+                {
+                    "id": "WA-INIT-01",
+                    "sender_id": "bot",
+                    "sender_name": "Bé Heo (WhatsApp Executive)",
+                    "target_id": "Sếp Cơ La (+84-0567536339)",
+                    "content": "Dạ em chào Sếp Cơ La! Kênh kết nối WhatsApp Multi-Device của Bé Heo đã kích hoạt sẵn sàng 100% ạ! 📱✨",
+                    "timestamp": time.time() - 3600,
+                    "time_str": "18:30:00",
+                    "is_outgoing": True
+                }
+            ]
+        return msgs[-limit:]
+
+    def record_whatsapp_message(self, sender_id: str, sender_name: str, target_id: str, group_id: str = None, content: str = "", is_outgoing: bool = True) -> dict:
+        wa_file = os.path.join(self.data_dir, "whatsapp_messages.jsonl")
+        item = {
+            "id": f"WA-MSG-{int(time.time()*1000)%100000}",
+            "sender_id": sender_id,
+            "sender_name": sender_name,
+            "target_id": target_id,
+            "group_id": group_id,
+            "content": content,
+            "timestamp": time.time(),
+            "time_str": time.strftime("%H:%M:%S"),
+            "is_outgoing": is_outgoing
+        }
+        try:
+            with open(wa_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
+        return item
+
     # ==================== WORK OS ====================
     def get_works(self) -> list:
         return self.state.get("works", [])

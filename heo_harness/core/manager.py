@@ -106,15 +106,15 @@ MARKETPLACE_CATALOG: List[Dict[str, Any]] = [
         "is_default": True
     },
     {
-        "id": "heo-channel-whatsapp-bridge",
-        "name": "Kênh Kết Nối WhatsApp Multi-Device",
+        "id": "heo-channel-whatsapp-gateway",
+        "name": "Kênh Kết Nối WhatsApp Gateway (Multi-Device & QR)",
         "version": "1.0.0",
-        "author": "Genesis Corp OS",
+        "author": "Anh Cơ La (Ryan)",
         "category": "channel",
-        "description": "Mở rộng khả năng tiếp cận đối tác quốc tế qua giao thức WhatsApp Multi-Device.",
+        "description": "Mở rộng khả năng tiếp cận đối tác quốc tế qua giao thức WhatsApp Multi-Device và mã QR bảo mật.",
         "icon": "📱",
-        "installed": False,
-        "is_default": False
+        "installed": True,
+        "is_default": True
     },
     {
         "id": "heo-tool-crm-pipeline",

@@ -322,6 +322,31 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             qr_b64 = store.get_zalo_qr_base64() if store else ""
             self._send_json({"ok": True, "qr_data": qr_b64})
 
+        elif path_clean in ["/api/whatsapp/status", "/api/whatsapp/info"]:
+            wcfg = store.get_whatsapp_config() if store else {}
+            self._send_json({"ok": True, "whatsapp": wcfg})
+
+        elif path_clean in ["/api/whatsapp/qr.png", "/api/whatsapp_qr.png"]:
+            qr_file = Path("/home/ryan/heo-harness/data/whatsapp_qr.png")
+            if qr_file.exists():
+                img_data = qr_file.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(img_data)))
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(img_data)
+                return
+            self._send_json({"error": "WhatsApp QR file not found"}, 404)
+
+        elif path_clean in ["/api/whatsapp/qr", "/api/whatsapp/qr_code"]:
+            qr_b64 = store.get_whatsapp_qr_base64() if store else ""
+            self._send_json({"ok": True, "qr_data": qr_b64})
+
+        elif path_clean in ["/api/whatsapp/messages", "/api/whatsapp/logs"]:
+            msgs = store.get_whatsapp_messages() if store else []
+            self._send_json({"ok": True, "messages": msgs, "count": len(msgs)})
+
         else:
             self._send_json({"error": "Endpoint not found"}, 404)
 
@@ -637,6 +662,60 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json(res)
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= WHATSAPP OPERATIONS =================
+        elif path_clean == "/api/whatsapp/config":
+            if store:
+                res = store.update_whatsapp_config(data)
+                self._send_json({"ok": True, "whatsapp": res, "message": "Đã lưu cấu hình WhatsApp thành công!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/whatsapp/refresh_qr":
+            if store:
+                res = store.refresh_whatsapp_qr()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/whatsapp/logout":
+            pin = data.get("pin", "")
+            if store:
+                ok, msg = store.logout_whatsapp(pin)
+                self._send_json({"ok": ok, "message": msg}, 200 if ok else 400)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/whatsapp/restart_bridge":
+            if store:
+                res = store.restart_whatsapp_bridge()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/whatsapp/send", "/api/whatsapp/send_test"]:
+            target = data.get("target", "+84-0567536339")
+            msg = data.get("message", "").strip()
+            if not msg:
+                self._send_json({"ok": False, "error": "Nội dung tin nhắn không được để trống"}, 400)
+                return
+            rec = None
+            if store:
+                rec = store.record_whatsapp_message(
+                    sender_id="bot",
+                    sender_name="Bé Heo (WhatsApp Executive)",
+                    target_id=target,
+                    content=msg,
+                    is_outgoing=True
+                )
+            wa_plugin = plugin.ctx.inject("channel_whatsapp")
+            if wa_plugin:
+                res = wa_plugin.send_message(target_id=target, content=msg)
+                self._send_json({"ok": True, "result": res, "record": rec, "message": f"Đã phát lệnh gửi tin nhắn WhatsApp tới {target}!"})
+            elif rec:
+                self._send_json({"ok": True, "result": rec, "message": f"Đã ghi nhận tin nhắn WhatsApp gửi tới {target}!"})
+            else:
+                self._send_json({"ok": False, "error": "Channel WhatsApp unavailable"}, 500)
 
         # ================= SYSTEM RESTORE & TERMINAL =================
         elif path_clean == "/api/system/restore":
