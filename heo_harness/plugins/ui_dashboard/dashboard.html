@@ -61,13 +61,20 @@ html[data-theme="light"] .card{background:linear-gradient(180deg,#fff,#fbfdff)}
 <div class="app">
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="brand-mark">H</div>
-      <div><h1>HEO OS / EXECUTIVE</h1><p>V6 Executive Intelligence OS</p></div>
+      <div class="brand-mark">DSH</div>
+      <div><h1>DSH / HEO-HARNESS</h1><p>HEO OS / EXECUTIVE · V6 Executive</p></div>
     </div>
     <div class="sidebar-scroll">
       <div class="nav-section">
-        <div class="nav-title">Điều hành</div>
-        <button class="nav-item active" data-route="dashboard"><span class="nav-icon">◫</span>Command Center</button>
+        <div class="nav-title">Hạ Tầng Trụ Cột DSH</div>
+        <button class="nav-item active" data-route="dsh"><span class="nav-icon">⚡</span>DSH Chassis & Trụ Cột <span class="nav-badge" id="sidebarDshBadge">Trục Cứng</span></button>
+        <button class="nav-item" data-route="tools"><span class="nav-icon">🧩</span>Tools & Add-ins Hub <span class="nav-badge" id="sidebarPluginCount">9</span></button>
+        <button class="nav-item" data-route="policies"><span class="nav-icon">🛡️</span>Trục An Toàn Policy Gate</button>
+        <button class="nav-item" data-route="control"><span class="nav-icon">◈</span>Hạ Tầng & Control Room</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-title">Nghiệp Vụ Điều Hành</div>
+        <button class="nav-item" data-route="dashboard"><span class="nav-icon">◫</span>Command Center</button>
         <button class="nav-item" data-route="attention"><span class="nav-icon">⚑</span>Attention Queue <span class="nav-badge">5</span></button>
         <button class="nav-item" data-route="work"><span class="nav-icon">✓</span>Work OS</button>
         <button class="nav-item" data-route="calendar"><span class="nav-icon">▦</span>Calendar & Reminder</button>
@@ -76,7 +83,7 @@ html[data-theme="light"] .card{background:linear-gradient(180deg,#fff,#fbfdff)}
         <div class="nav-title">Reality + Identity</div>
         <button class="nav-item" data-route="groups"><span class="nav-icon">◉</span>Group 360</button>
         <button class="nav-item" data-route="people"><span class="nav-icon">◎</span>Person 360</button>
-        <button class="nav-item" data-route="whatsapp"><span class="nav-icon">💬</span>Zalo / Channel Ops</button>
+        <button class="nav-item" data-route="whatsapp"><span class="nav-icon">💬</span>Kênh Zalo Ops</button>
       </div>
       <div class="nav-section">
         <div class="nav-title">Intelligence</div>
@@ -87,14 +94,11 @@ html[data-theme="light"] .card{background:linear-gradient(180deg,#fff,#fbfdff)}
       <div class="nav-section">
         <div class="nav-title">Governance</div>
         <button class="nav-item" data-route="approvals"><span class="nav-icon">⌁</span>Approvals <span class="nav-badge">3</span></button>
-        <button class="nav-item" data-route="policies"><span class="nav-icon">⚙</span>Policy Engine</button>
         <button class="nav-item" data-route="executions"><span class="nav-icon">⇢</span>Executions & Trace</button>
-        <button class="nav-item" data-route="tools"><span class="nav-icon">🧩</span>Tools & Add-ins Hub <span class="nav-badge" id="sidebarPluginCount">7</span></button>
         <button class="nav-item" data-route="artifacts"><span class="nav-icon">▤</span>Artifacts</button>
       </div>
       <div class="nav-section">
         <div class="nav-title">System</div>
-        <button class="nav-item" data-route="control"><span class="nav-icon">◈</span>Control Room</button>
         <button class="nav-item" data-route="audit"><span class="nav-icon">≡</span>Audit Ledger</button>
         <button class="nav-item" data-route="settings"><span class="nav-icon">⚒</span>Owner & Operations</button>
       </div>
@@ -112,9 +116,11 @@ html[data-theme="light"] .card{background:linear-gradient(180deg,#fff,#fbfdff)}
   <main class="main">
     <header class="topbar">
       <button class="icon-btn mobile-menu" id="mobileMenu">☰</button>
-      <div class="top-search"><span class="left">⌕</span><input id="globalSearch" placeholder="Tìm group, person, work, insight, execution, add-ins…" /><span class="kbd">⌘ K</span></div>
+      <div class="top-search"><span class="left">⌕</span><input id="globalSearch" placeholder="Tìm kiếm plugins, policy, work, insights, hạ tầng DSH…" /><span class="kbd">⌘ K</span></div>
       <div class="top-actions">
-        <button class="btn ghost" id="wizardBtn">First-Run</button>
+        <button class="btn primary" data-route-go="dsh">⚡ DSH Trụ Cột</button>
+        <button class="btn blue" data-route-go="tools">🧩 Plugins</button>
+        <button class="btn ghost" data-route-go="dashboard">◫ Command Center</button>
         <button class="icon-btn" id="themeBtn" title="Đổi giao diện">☼</button>
         <button class="icon-btn" id="notifyBtn" title="Thông báo">●</button>
         <div class="owner-chip"><div class="avatar">R</div><div><b>Anh Cơ La (Ryan)</b><span>genesis.corp.os@gmail.com</span></div></div>
@@ -135,7 +141,209 @@ html[data-theme="light"] .card{background:linear-gradient(180deg,#fff,#fbfdff)}
 
 <script>
 const $=(q,el=document)=>el.querySelector(q); const $$=(q,el=document)=>[...el.querySelectorAll(q)];
-const state={route:'dashboard',groupTab:'overview',personTab:'dossier',approved:new Set(),denied:new Set(),theme:'dark'};
+const state={route:'dsh',groupTab:'overview',personTab:'dossier',approved:new Set(),denied:new Set(),theme:'dark',plugins:[],catalog:[]};
+
+function dsh(){
+ let runningCount = (state.plugins || []).filter(p => p.enabled).length;
+ let totalCount = (state.plugins || []).length;
+ let head = viewHead(
+  '⚡ Khung Sườn DSH & Trụ Cột Hệ Thống (DSH Executive Chassis)',
+  'Kiến trúc chuẩn DeepSeek Harness (DSH) · Triết lý "Everything is a Plugin" · Lõi nhẹ siêu gọn · Cách ly lỗi Circuit Breaker 100% · Trục cứng SSOT v1.0.0.',
+  `<button class="btn" data-action="probe-plugins">🔍 Health Check</button>
+   <button class="btn" data-action="simulate-policy">🛡️ Policy Simulator</button>
+   <button class="btn primary" data-action="open-add-plugin-modal">+ Nạp Plugin Mới</button>`
+ );
+
+ // Top 4 KPIs
+ let kpis = `
+ <div class="grid cols-4">
+  <div class="card kpi">
+   <div class="kpi-label">Core Agent Provider</div>
+   <div class="kpi-value" style="font-size:18px;color:var(--good)">Google AGY CLI</div>
+   <div class="kpi-sub">Gói tháng cá nhân · 0đ token API · Binary: Sẵn sàng</div>
+  </div>
+  <div class="card kpi">
+   <div class="kpi-label">Safety Policy Engine</div>
+   <div class="kpi-value" style="font-size:18px;color:var(--brand2)">5-Tier Precedence</div>
+   <div class="kpi-sub">GLOBAL → CHANNEL → GROUP → PERSON → ACTION</div>
+  </div>
+  <div class="card kpi">
+   <div class="kpi-label">Circuit Breaker</div>
+   <div class="kpi-value" style="font-size:18px;color:var(--good)">100% Cách Ly Lỗi</div>
+   <div class="kpi-sub">Tự ngắt khi vượt ngưỡng 5 lỗi · Bảo vệ Core bot</div>
+  </div>
+  <div class="card kpi">
+   <div class="kpi-label">Quản Trị Plugins</div>
+   <div class="kpi-value" style="font-size:18px;color:var(--warn)">${runningCount}/${totalCount} Đang Chạy</div>
+   <div class="kpi-sub">Bật/Tắt nóng thời gian thực · Hot-toggle 0.1s</div>
+  </div>
+ </div>
+ `;
+
+ // Sơ đồ kiến trúc luồng dữ liệu Trụ Cột DSH
+ let archFlow = `
+ <div class="card" style="margin-top:14px">
+  <div class="card-head">
+   <div>
+    <h3>Sơ Đồ Hạ Tầng Trụ Cột DSH & Luồng Điều Phối Sự Kiện</h3>
+    <p>Trục cứng kiến trúc SSOT v1.0.0: Mọi hành động ngoại vi đều qua Policy Gate & Circuit Breaker bảo vệ.</p>
+   </div>
+   <button class="btn ghost" data-route-go="control">Chi Tiết Control Room</button>
+  </div>
+  <div class="card-body">
+   <div class="arch" style="grid-template-columns: repeat(6, minmax(130px, 1fr));">
+    <div class="arch-node">
+     <div style="font-size:16px;margin-bottom:4px">💬</div>
+     <b>Kênh Zalo Cá Nhân</b>
+     <p>Nhận diện tin nhắn, lọc @tag đích danh</p>
+    </div>
+    <div class="arch-node">
+     <div style="font-size:16px;margin-bottom:4px">🛡️</div>
+     <b>Trục An Toàn 5 Tầng</b>
+     <p>Policy Engine kiểm tra quyền: ALLOW / DENY</p>
+    </div>
+    <div class="arch-node">
+     <div style="font-size:16px;margin-bottom:4px">⚡</div>
+     <b>DSH Chassis Core</b>
+     <p>Event Bus trung chuyển, Service Container</p>
+    </div>
+    <div class="arch-node">
+     <div style="font-size:16px;margin-bottom:4px">🌟</div>
+     <b>Core Agent (AGY CLI)</b>
+     <p>Gói tháng 0đ API, DeepSeek V3/R1 tùy chọn</p>
+    </div>
+    <div class="arch-node">
+     <div style="font-size:16px;margin-bottom:4px">🧩</div>
+     <b>Add-ins & Tools</b>
+     <p>Word, Excel, Media Beat MP3, Auth, Persona</p>
+    </div>
+    <div class="arch-node">
+     <div style="font-size:16px;margin-bottom:4px">🔌</div>
+     <b>Circuit Breaker</b>
+     <p>Cách ly lỗi 100%, tự động hồi phục</p>
+    </div>
+   </div>
+  </div>
+ </div>
+ `;
+
+ // Matrix quản lý 9 Plugins trực tiếp
+ let pluginsHtml = `
+ <div class="card" style="margin-top:14px">
+  <div class="card-head">
+   <div>
+    <h3>Trung Tâm Quản Trị Plugins & Add-in Đang Cài Đặt (${totalCount})</h3>
+    <p>Gạt công tắc để Bật/Tắt nóng tức thì · Theo dõi trạng thái ngắt mạch an toàn Circuit Breaker</p>
+   </div>
+   <div class="row" style="gap:8px">
+    <button class="btn" data-route-go="tools">Xem Chế Độ Chi Tiết</button>
+    <button class="btn primary" data-action="open-catalog-tab">+ Kho Tiện Ích (${(state.catalog||[]).length})</button>
+   </div>
+  </div>
+  <div class="card-body">
+   <div class="grid cols-3">
+    ${(state.plugins || []).map(p => {
+      let isHealthy = (p.circuit_breaker?.status || 'HEALTHY') === 'HEALTHY';
+      let failCount = p.circuit_breaker?.failure_count || 0;
+      let maxFail = p.circuit_breaker?.max_failures || 5;
+      let isOn = p.enabled;
+
+      return `
+      <div class="card card-pad" style="background:var(--panel2);border:1px solid var(--line);${!isOn ? 'opacity:0.65;' : ''}">
+       <div class="row between">
+        <div class="row" style="gap:10px">
+         <span style="font-size:22px">${p.icon || '🧩'}</span>
+         <div>
+          <h4 style="margin:0;font-size:12px">${p.name}</h4>
+          <span class="mono faint" style="font-size:9px">${p.id} · v${p.version || '1.0.0'}</span>
+         </div>
+        </div>
+        <div class="switch ${isOn ? 'on' : ''}" data-toggle-plugin="${p.id}" data-enabled="${isOn}" title="Gạt công tắc BẬT / TẮT nóng"></div>
+       </div>
+
+       <p class="small muted" style="margin:8px 0;line-height:1.4">${p.description || 'Module mở rộng tiêu chuẩn của hệ sinh thái Heo-Harness.'}</p>
+
+       <div class="divider" style="margin:8px 0"></div>
+
+       <div class="row between" style="font-size:10px">
+        <span class="badge ${isOn ? 'good' : 'unavailable'}">${isOn ? '🟢 HOẠT ĐỘNG' : '⚪ ĐANG TẮT'}</span>
+        <span class="badge ${isHealthy ? 'good' : 'danger'}" title="Bộ ngắt mạch cách ly lỗi">
+         CB: ${isHealthy ? 'HEALTHY' : 'TRIPPED'} (${failCount}/${maxFail})
+        </span>
+       </div>
+
+       <div class="row between" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line2)">
+        <span class="badge fact">${(p.category || 'tool').toUpperCase()}</span>
+        <div class="row" style="gap:5px">
+         <button class="btn ghost" style="padding:3px 7px;font-size:9px" data-action="config-plugin" data-id="${p.id}">Cấu hình</button>
+        </div>
+       </div>
+      </div>
+      `;
+    }).join('')}
+   </div>
+  </div>
+ </div>
+ `;
+
+ // Khối Mở Rộng Thêm Plugin & Kho Catalog
+ let extensionHub = `
+ <div class="grid cols-2" style="margin-top:14px">
+  <div class="card card-pad">
+   <div class="row between">
+    <div>
+     <h3 style="margin:0;font-size:13px">🛒 Kho Tiện Ích Mở Rộng Sẵn Sàng (${(state.catalog||[]).length})</h3>
+     <p class="small muted" style="margin:3px 0 0">Cài đặt 1-click các Core Agent và Kênh mở rộng chuẩn DSH</p>
+    </div>
+    <button class="btn primary" style="padding:6px 12px;font-size:10px" data-action="open-catalog-tab">Khám Phá Toàn Bộ</button>
+   </div>
+   <div class="divider"></div>
+   <div class="stack">
+    ${(state.catalog || []).slice(0, 3).map(item => `
+     <div class="row between" style="padding:6px 0;border-bottom:1px solid var(--line2)">
+      <div class="row" style="gap:8px">
+       <span style="font-size:18px">${item.icon || '📦'}</span>
+       <div>
+        <strong style="font-size:11px">${item.name}</strong>
+        <div class="small faint">${item.description}</div>
+       </div>
+      </div>
+      <button class="btn ${item.installed ? 'ghost' : 'blue'}" style="padding:4px 8px;font-size:9px" data-install-plugin="${item.id}">${item.installed ? 'Đã Nạp' : '+ Cài Đặt'}</button>
+     </div>
+    `).join('')}
+   </div>
+  </div>
+
+  <div class="card card-pad">
+   <h3 style="margin:0;font-size:13px">📐 Tiêu Chuẩn Nạp Plugin DSH Mới (Plugin SDK)</h3>
+   <p class="small muted" style="margin:3px 0 0">Mọi tính năng mới đều tuân thủ hợp đồng mở rộng duy nhất</p>
+   <div class="divider"></div>
+   <div class="codebox">
+from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory
+
+class MyNewPlugin(BasePlugin):
+    metadata = PluginMetadata(
+        id="@heo/my-custom-plugin",
+        name="Tên Module Của Sếp",
+        category=PluginCategory.TOOL,
+        version="1.0.0"
+    )
+    def on_load(self): ...     # Nạp tài nguyên
+    def on_enable(self): ...   # Đăng ký Event Bus
+    def on_disable(self): ...  # Gỡ an toàn
+   </div>
+   <div class="row between" style="margin-top:10px">
+    <span class="small muted">Không cần build lại container · Bật/Tắt nóng tức thì</span>
+    <button class="btn primary" style="padding:6px 12px;font-size:10px" data-action="open-add-plugin-modal">+ Khai Báo Plugin Mới</button>
+   </div>
+  </div>
+ </div>
+ `;
+
+ return `${head}${kpis}${archFlow}${pluginsHtml}${extensionHub}`;
+}
+
+function dashboard(){
 const sample={
  attention:[
   {id:'ATT-1028',band:'P1',title:'Cam kết giao báo giá đã quá hạn 19 giờ',subject:'Work W-341 · Group Nhà phân phối miền Nam',truth:'CALCULATED',reason:'deadline_overdue + owner_dependency',action:'Nhắc owner nội bộ và đề xuất follow-up',evidence:'raw_event:RE-88311 · work_item:W-341'},
@@ -412,10 +620,10 @@ function settings(){return `${viewHead('Owner & Operations','V1 single-owner, lo
 
 function wizardModal(){modal('First-Run Wizard','System Health → Antigravity → Zalo Channel → E2E Test → Ready',`<div class="stepper"><div class="step done"><div class="n">✓</div><h4>System Health</h4><p>Chassis + DB + UI + agy binary healthy.</p></div><div class="step done"><div class="n">✓</div><h4>Antigravity CLI</h4><p>Authenticated probe PASS (Gói tháng).</p></div><div class="step done"><div class="n">✓</div><h4>Zalo Cá Nhân</h4><p>CONNECTED + saved session.</p></div><div class="step done"><div class="n">✓</div><h4>E2E Test</h4><p>Real inbound observed; trace complete.</p></div><div class="step done"><div class="n">✓</div><h4>Ready</h4><p>Source → policy → model/plan → result linked.</p></div></div><div class="callout" style="margin-top:16px">Chỉ READY_END_TO_END mới được gọi là “Heo sẵn sàng hoạt động đầy đủ”. Khung sườn modular bảo đảm lỗi plugin không lan sang Core.</div>`,`<button class="btn" data-close-modal>Đóng</button><button class="btn primary" data-action="run-e2e">Run E2E test</button>`)}
 
-const renderers={dashboard,attention,work,calendar,groups,people,whatsapp,intel,approvals,policies,executions,tools,artifacts,value,learning,control,audit,settings};
+const renderers={dsh,dashboard,attention,work,calendar,groups,people,whatsapp,intel,approvals,policies,executions,tools,artifacts,value,learning,control,audit,settings};
 
 function render(){
- const fn = renderers[state.route] || dashboard;
+ const fn = renderers[state.route] || dsh;
  $('#view').innerHTML = fn();
  $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.route === state.route));
  attachDynamic();
@@ -479,7 +687,9 @@ async function fetchPlugins(){
    state.plugins = data.plugins;
    let badge = $('#sidebarPluginCount');
    if(badge) badge.textContent = data.plugins.length;
-   if(state.route === 'tools') render();
+   let dshBadge = $('#sidebarDshBadge');
+   if(dshBadge) dshBadge.textContent = `${data.plugins.length} Plugins`;
+   if(state.route === 'dsh' || state.route === 'tools') render();
   }
  } catch(e){
   console.warn('Cannot fetch plugins:', e);
@@ -560,6 +770,30 @@ function action(a, id){
   render();
   return;
  }
+ if(a === 'open-add-plugin-modal'){
+  modal('Nạp Plugin Mới Vào Hệ Thống DSH', 'Thêm module mở rộng theo chuẩn Chassis SSOT v1.0.0', `
+    <div class="form-grid">
+     <div class="field full"><label>Mã Định Danh Plugin (Package ID)</label><input id="newPluginId" class="mono" placeholder="@heo/tool-example" /></div>
+     <div class="field"><label>Tên Hiển Thị (Display Name)</label><input id="newPluginName" placeholder="Ví dụ: Tra Cứu Tỷ Giá" /></div>
+     <div class="field"><label>Phân Loại (Category)</label><select id="newPluginCat"><option value="tool">Tool / MCP</option><option value="channel">Channel (Kênh Chat)</option><option value="provider">AI Provider</option><option value="agent">Core Agent</option></select></div>
+     <div class="field full"><label>Đường Dẫn Mã Nguồn / Gói Cài Đặt (Module Path)</label><input id="newPluginPath" placeholder="heo_harness.plugins.my_tool hoặc /path/to/plugin" /></div>
+     <div class="field full"><label>Mô Tả Chức Năng</label><textarea id="newPluginDesc" placeholder="Mô tả công việc và quyền hạn của plugin"></textarea></div>
+    </div>
+    <div class="callout" style="margin-top:12px">Plugin mới sẽ được bọc tự động bởi Circuit Breaker (tối đa 5 lần lỗi). Nếu plugin gặp sự cố, hệ thống sẽ tự cô lập mà không làm ảnh hưởng tới Core Chassis.</div>
+   `, `<button class="btn" data-close-modal>Hủy</button><button class="btn primary" id="btnSubmitAddPlugin">Xác Nhận Nạp Plugin</button>`);
+   setTimeout(() => {
+    let subBtn = $('#btnSubmitAddPlugin');
+    if(subBtn){
+     subBtn.onclick = async () => {
+      let pid = $('#newPluginId').value.trim();
+      if(!pid){ showToast('Vui lòng nhập Plugin ID!'); return; }
+      closeModal();
+      await installPlugin(pid);
+     };
+    }
+   }, 0);
+   return;
+  }
  if(a === 'probe-plugins'){
   showToast('Chạy kiểm tra Circuit Breaker toàn bộ plugin: 0 TRIPPED · 100% HEALTHY');
   fetchPlugins();
@@ -674,9 +908,9 @@ $('#globalSearch').addEventListener('keydown', e => {
   else if(q.includes('person')) go('people');
   else if(q.includes('group')) go('groups');
   else if(q.includes('work')) go('work');
-  else if(q.includes('trace') || q.includes('exec')) go('executions');
+  else if(q.includes('dsh') || q.includes('chassis') || q.includes('trụ cột') || q.includes('hạ tầng')) go('dsh');
   else if(q.includes('plugin') || q.includes('tool') || q.includes('mcp')) go('tools');
-  else showToast('Tìm kiếm: Thử "plugin", "policy", "work", "zalo", "group"…');
+  else showToast('Tìm kiếm: Thử "dsh", "plugin", "policy", "work", "zalo", "group"…');
  }
 });
 
@@ -691,9 +925,10 @@ document.addEventListener('keydown', e => {
  }
 });
 
-// Khởi chạy
+// Khởi chạy: Mặc định ưu tiên hiển thị Khung Sườn DSH & Trụ Cột
 const initial = location.hash.replace('#', '');
 if(renderers[initial]) state.route = initial;
+else state.route = 'dsh';
 render();
 
 // Tải dữ liệu thật từ máy chủ Heo-Harness
