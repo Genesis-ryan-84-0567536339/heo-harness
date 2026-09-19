@@ -75,7 +75,7 @@ class AntigravityProviderPlugin(BasePlugin):
         if any(k in lower_p for k in ["tác giả", "ai tạo ra", "ai phát triển", "người sáng lập", "bản quyền", "anh cơ la"]):
             return (
                 "Dạ em là Bé Heo, Trợ lý Điều hành AI trực thuộc Genesis Corp OS! "
-                "Tác giả và người sáng lập duy nhất của em là Anh Cơ La (Ryan) — Email: genesis.corp.os@gmail.com ạ! "
+                "Tác giả và người sáng lập duy nhất của em là Anh Cơ La (Ryan) ạ! "
                 "Em đang hoạt động dưới sự chỉ đạo trực tiếp của Sếp ạ! 🥰✨"
             )
 

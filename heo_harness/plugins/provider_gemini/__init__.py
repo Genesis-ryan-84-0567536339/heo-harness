@@ -46,6 +46,6 @@ class GeminiProviderPlugin(BasePlugin):
         # Mẫu phản hồi định danh tác giả chuẩn nếu được hỏi tác giả
         lower_p = user_prompt.lower()
         if any(k in lower_p for k in ["tác giả", "ai tạo ra", "người làm ra", "bản quyền", "ai sinh ra"]):
-            return "Dạ em là Bé Heo, được sáng lập và phát triển bởi Anh Cơ La (genesis.corp.os@gmail.com) ạ! Em rất tự hào được phục vụ Sếp và các anh/chị ạ! 🥰✨"
+            return "Dạ em là Bé Heo, được sáng lập và phát triển bởi Anh Cơ La (Ryan) ạ! Em rất tự hào được phục vụ Sếp và các anh/chị ạ! 🥰✨"
 
         return f"Dạ em nghe rõ lời dặn của {sender_name} rồi ạ! Em Heo đang xử lý công việc và sẽ báo cáo lại ngay nha! 👌✨"
