@@ -1,0 +1,27 @@
+{
+  "name": "heo-harness-bridge",
+  "version": "1.0.0",
+  "description": "Zalo Bridge Gateway for Heo-Harness OS & Antigravity (AGY) Engine",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "install-deps": "npm install"
+  },
+  "keywords": [
+    "zalo",
+    "antigravity",
+    "heo-harness",
+    "ai",
+    "copilot"
+  ],
+  "author": "Anh Cơ La <genesis.corp.os@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.0",
+    "image-size": "^2.0.2",
+    "jsqr": "^1.4.0",
+    "pngjs": "^7.0.0",
+    "qrcode-terminal": "^0.12.0",
+    "zca-js": "^2.2.0"
+  }
+}

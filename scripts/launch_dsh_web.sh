@@ -4,14 +4,14 @@
 # Cổng mặc định: 3080
 # ==============================================================================
 
-export PATH="/home/ryan/.nvm/versions/node/v24.21.0/bin:/usr/local/bin:/usr/bin:$PATH"
+export PATH="$HOME/.nvm/versions/node/v24.21.0/bin:/usr/local/bin:/usr/bin:$PATH"
 export DISPLAY="${DISPLAY:-:0}"
 export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
-export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/1000}"
-export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/1000/bus}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}"
 
 SESSION_NAME="dsh-official-web"
-URL_FILE="/home/ryan/.dsh/web_url.txt"
+URL_FILE="$HOME/.dsh/web_url.txt"
 
 # 1. Kiểm tra session tmux
 if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then

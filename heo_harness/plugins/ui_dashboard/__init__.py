@@ -18,7 +18,9 @@ from pathlib import Path
 import yaml
 import re
 
-def get_skills_list(base_dir: str = "/home/ryan/heo-harness") -> list:
+def get_skills_list(base_dir: str = None) -> list:
+    if not base_dir:
+        base_dir = str(Path(__file__).resolve().parents[3])
     skills_dir = os.path.join(base_dir, "skills")
     state_file = os.path.join(base_dir, "data", "skills_state.json")
     enabled_map = {}
@@ -401,7 +403,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"ok": True, "logs": logs, "count": len(logs)})
 
         elif path_clean in ["/api/zalo/qr.png", "/api/qr.png"]:
-            qr_file = Path("/home/ryan/heo-harness/data/zalo_qr.png")
+            qr_dir = Path(store.data_dir if store else "data")
+            qr_file = qr_dir / "zalo_qr.png"
             if not qr_file.exists() or (time.time() - qr_file.stat().st_mtime) > 100:
                 if store and hasattr(store, "spawn_zalo_bridge"):
                     store.spawn_zalo_bridge(force_restart=False)
@@ -443,7 +446,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
 
         elif path_clean in ["/api/zalo/qr", "/api/qr"]:
             if "image" in self.headers.get("Accept", ""):
-                qr_file = Path("/home/ryan/heo-harness/data/zalo_qr.png")
+                qr_dir = Path(store.data_dir if store else "data")
+                qr_file = qr_dir / "zalo_qr.png"
                 if qr_file.exists() and qr_file.stat().st_size > 100:
                     img_data = qr_file.read_bytes()
                     self.send_response(200)
@@ -461,7 +465,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"ok": True, "whatsapp": wcfg})
 
         elif path_clean in ["/api/whatsapp/qr.png", "/api/whatsapp_qr.png"]:
-            qr_file = Path("/home/ryan/heo-harness/data/whatsapp_qr.png")
+            qr_dir = Path(store.data_dir if store else "data")
+            qr_file = qr_dir / "whatsapp_qr.png"
             if qr_file.exists():
                 img_data = qr_file.read_bytes()
                 self.send_response(200)
@@ -1126,7 +1131,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
         elif path_clean == "/api/skills/toggle":
             skill_id = data.get("id")
             enable_val = data.get("enable", True)
-            data_dir = getattr(plugin.ctx, "data_dir", "/home/ryan/heo-harness/data")
+            data_dir = getattr(plugin.ctx, "data_dir", os.path.join(str(Path(__file__).resolve().parents[3]), "data"))
             os.makedirs(data_dir, exist_ok=True)
             state_file = os.path.join(data_dir, "skills_state.json")
             enabled_map = {}

@@ -569,8 +569,7 @@ class HeoDataStore:
     def get_google_auth_info(self) -> dict:
         candidates = [
             os.path.join(self.data_dir, "antigravity-oauth-token"),
-            os.path.expanduser("~/.gemini/antigravity-cli/antigravity-oauth-token"),
-            "/home/ryan/Documents/Ryan-Workplace/Heo-Agent/auth/home/.gemini/antigravity-cli/antigravity-oauth-token"
+            os.path.expanduser("~/.gemini/antigravity-cli/antigravity-oauth-token")
         ]
         token_file = None
         for c in candidates:
@@ -749,9 +748,33 @@ class HeoDataStore:
 
     # ==================== ZALO GATEWAY & REAL DATA ====================
 
+    def check_zalo_bridge_prerequisites(self) -> dict:
+        """Kiểm tra điều kiện môi trường thực thi (Node.js & packages) cho Zalo Bridge."""
+        has_node = shutil.which("node") is not None
+        base_dir = os.path.dirname(self.data_dir)
+        bridge_dir = os.path.join(base_dir, "bridge")
+        bot_js = os.path.join(bridge_dir, "bot.js")
+        has_bot_js = os.path.exists(bot_js)
+
+        node_modules_dir = os.path.join(bridge_dir, "node_modules")
+        has_modules = os.path.exists(node_modules_dir) and (
+            os.path.exists(os.path.join(node_modules_dir, "zca-js")) or os.path.islink(node_modules_dir)
+        )
+
+        return {
+            "has_node": has_node,
+            "has_bot_js": has_bot_js,
+            "has_dependencies": has_modules,
+            "ready": has_node and has_bot_js and has_modules
+        }
+
     def spawn_zalo_bridge(self, force_restart: bool = False) -> bool:
         """Tự động kiểm tra và khởi động tiến trình Node.js Zalo Bridge kết nối zca-js."""
         try:
+            if not shutil.which("node"):
+                self.add_live_log("zalo", "WARN", "Không tìm thấy Node.js trong môi trường hệ thống. Vui lòng cài đặt Node.js để chạy Zalo Bridge.")
+                return False
+
             if force_restart:
                 subprocess.run(["pkill", "-9", "-f", "node.*bot.js"], timeout=5)
                 time.sleep(0.5)
@@ -764,14 +787,39 @@ class HeoDataStore:
             bridge_dir = os.path.join(base_dir, "bridge")
             bot_js = os.path.join(bridge_dir, "bot.js")
             if not os.path.exists(bot_js):
-                # Fallback to /home/ryan/heo-agent/bridge/bot.js
-                bot_js = "/home/ryan/heo-agent/bridge/bot.js"
-                bridge_dir = "/home/ryan/heo-agent/bridge"
+                candidate = os.path.join(os.getcwd(), "bridge", "bot.js")
+                if os.path.exists(candidate):
+                    bot_js = candidate
+                    bridge_dir = os.path.dirname(candidate)
+                else:
+                    self.add_live_log("zalo", "ERROR", f"Không tìm thấy file bridge/bot.js tại {bridge_dir}")
+                    return False
+
+            # Tự động cài đặt dependencies nếu thiếu zca-js và có sẵn npm
+            node_modules_dir = os.path.join(bridge_dir, "node_modules")
+            if (not os.path.exists(node_modules_dir) or not os.path.exists(os.path.join(node_modules_dir, "zca-js"))) and shutil.which("npm"):
+                pkg_json = os.path.join(bridge_dir, "package.json")
+                if os.path.exists(pkg_json):
+                    self.add_live_log("zalo", "INFO", "Đang tự động cài đặt dependencies cho Zalo Bridge qua npm...")
+                    try:
+                        subprocess.run(["npm", "install", "--no-audit", "--no-fund"], cwd=bridge_dir, timeout=60)
+                    except Exception as npm_err:
+                        self.add_live_log("zalo", "WARN", f"Lỗi chạy npm install tự động: {npm_err}")
 
             log_dir = os.path.join(base_dir, "logs")
             os.makedirs(log_dir, exist_ok=True)
             log_file = os.path.join(log_dir, "zalo.log")
             log_f = open(log_file, "a", encoding="utf-8")
+
+            # Xây dựng danh sách NODE_PATH linh hoạt và portable trên mọi máy
+            node_paths = [
+                os.path.join(bridge_dir, "node_modules"),
+                os.path.join(base_dir, "node_modules")
+            ]
+            existing_np = os.environ.get("NODE_PATH", "")
+            if existing_np:
+                node_paths.extend(existing_np.split(":"))
+            valid_node_paths = [p for p in node_paths if os.path.exists(p)]
 
             env = os.environ.copy()
             env["BASE_DIR"] = base_dir
@@ -781,7 +829,8 @@ class HeoDataStore:
             env["CONFIG_FILE"] = self.config_file
             env["AGY_ENGINE_URL"] = "http://127.0.0.1:5088"
             env["BRIDGE_PORT"] = "5051"
-            env["NODE_PATH"] = "/home/ryan/zalo-agy/bridge/node_modules:/home/ryan/heo-harness/bridge/node_modules"
+            if valid_node_paths:
+                env["NODE_PATH"] = ":".join(valid_node_paths)
 
             subprocess.Popen(
                 ["node", bot_js],
@@ -816,6 +865,7 @@ class HeoDataStore:
         qr_file = os.path.join(self.data_dir, "zalo_qr.png")
         info_file = os.path.join(self.data_dir, "zalo_qr_info.json")
         session_file = os.path.join(self.data_dir, "zalo_session.json")
+        prereqs = self.check_zalo_bridge_prerequisites()
 
         logged_in = os.path.exists(session_file) and os.path.getsize(session_file) > 20
         has_qr = os.path.exists(qr_file) and os.path.getsize(qr_file) > 100
@@ -823,8 +873,8 @@ class HeoDataStore:
         qr_age = int(time.time() - qr_mtime) if has_qr else 999
         qr_expired = qr_age > 100
 
-        # Nếu chưa đăng nhập và bot.js chưa chạy thì tự động khởi động
-        if not logged_in:
+        # Nếu chưa đăng nhập và bot.js chưa chạy thì tự động khởi động nếu đủ điều kiện
+        if not logged_in and prereqs.get("has_node", False):
             proc = subprocess.run(["pgrep", "-f", "node.*bot.js"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if proc.returncode != 0:
                 self.spawn_zalo_bridge(force_restart=False)
@@ -839,8 +889,16 @@ class HeoDataStore:
             "declined": False,
             "user_name": "",
             "avatar": "",
-            "logged_in": logged_in
+            "logged_in": logged_in,
+            "prerequisites": prereqs
         }
+
+        if not prereqs.get("has_node"):
+            info["error_code"] = "MISSING_NODE"
+            info["error_message"] = "Máy chủ chưa cài đặt Node.js. Vui lòng cài đặt Node.js (>=18) để kích hoạt Zalo Bridge."
+        elif not prereqs.get("has_dependencies"):
+            info["error_code"] = "MISSING_DEPS"
+            info["error_message"] = "Chưa cài đặt dependencies cho Zalo Bridge. Chạy 'npm install' trong thư mục bridge."
 
         if os.path.exists(info_file):
             try:
@@ -941,18 +999,28 @@ class HeoDataStore:
 
     def refresh_whatsapp_qr(self) -> dict:
         try:
-            node_script = """
+            target_qr = os.path.join(self.data_dir, "whatsapp_qr.png")
+            node_script = f"""
             const QRCode = require('qrcode');
             const token = '2@' + Buffer.from(Date.now().toString()).toString('base64') + ',sF4gH7jK9lP2qW5eR8tY1uI3oP5aS7dF9gH2jK4l,' + Date.now();
-            QRCode.toFile('/home/ryan/heo-harness/data/whatsapp_qr.png', token, {
-                color: { dark: '#052e16', light: '#ffffff' },
+            QRCode.toFile({json.dumps(target_qr)}, token, {{
+                color: {{ dark: '#052e16', light: '#ffffff' }},
                 width: 399,
                 margin: 2
-            });
+            }});
             """
             env = dict(os.environ)
-            env["NODE_PATH"] = "/home/ryan/.nvm/versions/node/v24.21.0/lib/node_modules/openclaw/node_modules"
-            subprocess.run(["node", "-e", node_script], env=env, timeout=5)
+            node_paths = [
+                os.path.join(os.path.dirname(self.data_dir), "bridge", "node_modules"),
+                "/usr/local/lib/node_modules"
+            ]
+            if os.environ.get("NODE_PATH"):
+                node_paths.insert(0, os.environ["NODE_PATH"])
+            valid_np = [p for p in node_paths if os.path.exists(p)]
+            if valid_np:
+                env["NODE_PATH"] = ":".join(valid_np)
+            if shutil.which("node"):
+                subprocess.run(["node", "-e", node_script], env=env, timeout=5)
         except Exception:
             pass
         self.add_audit("owner", "whatsapp.qr_refresh", "WHATSAPP_QR", "Yêu cầu làm mới mã QR WhatsApp Multi-Device", "REQUESTED")

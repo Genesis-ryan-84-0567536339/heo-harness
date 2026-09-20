@@ -2388,12 +2388,24 @@ function renderZaloGatewayView() {
         </div>
 
         <div style="display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start">
-          <!-- Real QR Image Box -->
-          <div style="text-align:center;background:#fff;padding:10px;border-radius:12px;border:1px solid var(--border)">
-            <img id="zalo-qr-image" src="/api/zalo/qr.png?t=${Date.now()}" style="width:160px;height:160px;display:block;margin:0 auto;object-fit:contain;border-radius:6px" alt="Zalo QR Code" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 fill=%22%23f1f5f9%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%230284c7%22 font-size=%2214%22 font-weight=%22bold%22>Đang tạo mã QR...</text></svg>';" />
-            <div id="zalo-qr-status-msg" style="font-size:11px;color:#0f172a;margin-top:6px;font-weight:600">Quét bằng App Zalo Điện Thoại</div>
-            <div id="zalo-qr-timer" style="font-size:10px;color:#64748b;margin-top:2px">Đang kết nối Zalo...</div>
-          </div>
+          ${isConn ? `
+            <!-- Connected Status Box -->
+            <div style="text-align:center;background:var(--bg-body);padding:18px 10px;border-radius:12px;border:1px solid rgba(16,185,129,0.3)">
+              <div style="width:72px;height:72px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:36px;border:2px solid var(--good)">
+                💬
+              </div>
+              <div style="font-weight:700;color:var(--good);font-size:13px;margin-bottom:4px">ĐÃ LIÊN KẾT ZALO</div>
+              <div class="text-sm" style="font-weight:600;color:var(--text)">${escapeHtml(state.zalo.account_name || 'Heo')}</div>
+              <div style="font-size:10px;color:var(--good);margin-top:8px;font-weight:700">🟢 TRỰC CHIẾN 24/7</div>
+            </div>
+          ` : `
+            <!-- Real QR Image Box -->
+            <div style="text-align:center;background:#fff;padding:10px;border-radius:12px;border:1px solid var(--border)">
+              <img id="zalo-qr-image" src="/api/zalo/qr.png?t=${Date.now()}" style="width:160px;height:160px;display:block;margin:0 auto;object-fit:contain;border-radius:6px" alt="Zalo QR Code" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 fill=%22%23f1f5f9%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%230284c7%22 font-size=%2214%22 font-weight=%22bold%22>Đang tạo mã QR...</text></svg>';" />
+              <div id="zalo-qr-status-msg" style="font-size:11px;color:#0f172a;margin-top:6px;font-weight:600">Quét bằng App Zalo Điện Thoại</div>
+              <div id="zalo-qr-timer" style="font-size:10px;color:#64748b;margin-top:2px">Đang kết nối Zalo...</div>
+            </div>
+          `}
 
           <!-- Connection Details & Actions -->
           <div style="display:flex;flex-direction:column;gap:10px">
@@ -2403,7 +2415,7 @@ function renderZaloGatewayView() {
             </div>
             <div>
               <div class="text-sm muted">Số điện thoại / ID:</div>
-              <div style="font-family:var(--mono);color:var(--text)">${isConn ? (state.zalo.phone || '') + ' (UID: ' + (state.zalo.account_id || '') + ')' : '<span class="muted">Chưa có thông tin (Vui lòng quét QR bên cạnh)</span>'}</div>
+              <div style="font-family:var(--mono);color:var(--text)">${isConn ? (state.zalo.phone ? state.zalo.phone + ' ' : '') + '(UID: ' + (state.zalo.account_id || '') + ')' : '<span class="muted">Chưa có thông tin (Vui lòng quét QR bên cạnh)</span>'}</div>
             </div>
             <div>
               <div class="text-sm muted">Chế độ lọc tin nhắn:</div>
@@ -2419,9 +2431,9 @@ function renderZaloGatewayView() {
 
             <!-- Action Buttons -->
             <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-              <button class="btn sm" onclick="refreshZaloQR()">🔄 Làm Mới QR</button>
+              ${!isConn ? `<button class="btn sm" onclick="refreshZaloQR()">🔄 Làm Mới QR</button>` : ''}
               <button class="btn sm" onclick="restartZaloBridge()">⚡ Restart Bridge</button>
-              <button class="btn sm danger" onclick="openZaloLogoutModal()">🚪 Đăng Xuất</button>
+              ${isConn ? `<button class="btn sm danger" onclick="openZaloLogoutModal()">🚪 Đăng Xuất</button>` : ''}
             </div>
           </div>
         </div>
@@ -2690,9 +2702,38 @@ function handleZaloQrResponse(data) {
 
   if (!img) return;
 
+  if (data.error_code === 'MISSING_NODE') {
+    if (alertBox) {
+      alertBox.style.display = 'block';
+      alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+      alertBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+      alertBox.style.color = '#ef4444';
+      alertBox.innerHTML = '⚠️ <strong>Chưa cài đặt Node.js:</strong> Hệ thống cần Node.js (phiên bản >=18) để vận hành Zalo Bridge. Vui lòng cài đặt Node.js trên máy chủ.';
+    }
+    if (statusMsg) statusMsg.textContent = 'Thiếu môi trường Node.js';
+    if (timerText) timerText.textContent = 'Cần cài Node.js để kích hoạt';
+    return;
+  }
+
+  if (data.error_code === 'MISSING_DEPS') {
+    if (alertBox) {
+      alertBox.style.display = 'block';
+      alertBox.style.background = 'rgba(245, 158, 11, 0.15)';
+      alertBox.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+      alertBox.style.color = '#f59e0b';
+      alertBox.innerHTML = '📦 <strong>Chưa cài đặt thư viện Zalo:</strong> Vui lòng chạy lệnh <code>./scripts/setup_bridge.sh</code> hoặc <code>cd bridge && npm install</code>.';
+    }
+    if (statusMsg) statusMsg.textContent = 'Chưa cài đặt dependencies';
+    if (timerText) timerText.textContent = 'Chạy ./scripts/setup_bridge.sh';
+    return;
+  }
+
   if (data.logged_in) {
     if (alertBox) {
       alertBox.style.display = 'block';
+      alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+      alertBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+      alertBox.style.color = 'var(--good)';
       alertBox.textContent = '🎉 Đã đăng nhập Zalo thành công!';
     }
     if (timerText) timerText.textContent = 'Đã kết nối!';
