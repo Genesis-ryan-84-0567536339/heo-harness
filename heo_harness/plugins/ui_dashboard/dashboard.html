@@ -2279,11 +2279,19 @@ function renderWhatsAppGatewayView() {
         </div>
 
         <div style="display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start">
-          <!-- Real QR Image Box -->
-          <div style="text-align:center;background:#fff;padding:10px;border-radius:12px;border:1px solid var(--border)">
-            <img id="whatsapp-qr-image" src="/api/whatsapp/qr.png" style="width:160px;height:160px;display:block;margin:0 auto;object-fit:contain" alt="WhatsApp QR Code" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 fill=%22%23f1f5f9%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2325D366%22 font-size=%2214%22>WhatsApp QR</text></svg>';" />
-            <div style="font-size:10px;color:#0f172a;margin-top:6px;font-weight:600">Quét bằng WhatsApp > Thiết bị liên kết</div>
-          </div>
+          ${isConn ? `
+            <div style="text-align:center;background:rgba(37,211,102,0.08);padding:24px 12px;border-radius:12px;border:1px solid rgba(37,211,102,0.25)">
+              <div style="font-size:42px;line-height:1">🟢</div>
+              <div style="font-weight:700;color:#25D366;font-size:13px;margin-top:10px">TRỰC CHIẾN 24/7</div>
+              <div style="font-size:11px;color:var(--text-sec);margin-top:4px">Đã Kết Nối WhatsApp</div>
+            </div>
+          ` : `
+            <!-- Real Meta QR Image Box -->
+            <div style="text-align:center;background:#fff;padding:10px;border-radius:12px;border:1px solid var(--border)">
+              <img id="whatsapp-qr-image" src="/api/whatsapp/qr.png" style="width:160px;height:160px;display:block;margin:0 auto;object-fit:contain" alt="WhatsApp QR Code" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 fill=%22%23f1f5f9%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2325D366%22 font-size=%2214%22>WhatsApp QR</text></svg>';" />
+              <div style="font-size:10px;color:#0f172a;margin-top:6px;font-weight:600">Quét bằng WhatsApp > Thiết bị liên kết</div>
+            </div>
+          `}
 
           <!-- Connection Details & Actions -->
           <div style="display:flex;flex-direction:column;gap:10px">

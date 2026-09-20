@@ -838,7 +838,8 @@ class HeoDataStore:
                 env=env,
                 stdout=log_f,
                 stderr=subprocess.STDOUT,
-                close_fds=True
+                close_fds=True,
+                start_new_session=True
             )
             self.add_live_log("zalo", "INFO", "Đã khởi động tiến trình Zalo Bridge (node bot.js) thành công.", f"File: {bot_js}")
             return True
@@ -961,19 +962,90 @@ class HeoDataStore:
         return {"ok": True, "message": "Đã khởi động lại Zalo Bridge thành công!"}
 
     # ==================== WHATSAPP OPERATIONS ====================
+    def spawn_whatsapp_bridge(self, force_restart: bool = False) -> bool:
+        """Tự động kiểm tra và khởi động tiến trình Node.js WhatsApp Bridge kết nối @whiskeysockets/baileys."""
+        try:
+            if not shutil.which("node"):
+                self.add_live_log("whatsapp", "WARN", "Không tìm thấy Node.js trong môi trường hệ thống.")
+                return False
+
+            if force_restart:
+                subprocess.run(["pkill", "-9", "-f", "node.*wa_bridge.js"], timeout=5)
+                time.sleep(0.5)
+            else:
+                proc = subprocess.run(["pgrep", "-f", "node.*wa_bridge.js"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if proc.returncode == 0:
+                    return True  # Bridge đã đang chạy
+
+            base_dir = os.path.dirname(self.data_dir)
+            bridge_dir = os.path.join(base_dir, "bridge")
+            wa_bridge_js = os.path.join(bridge_dir, "wa_bridge.js")
+            if not os.path.exists(wa_bridge_js):
+                self.add_live_log("whatsapp", "ERROR", f"Không tìm thấy file bridge/wa_bridge.js tại {bridge_dir}")
+                return False
+
+            log_dir = os.path.join(base_dir, "logs")
+            os.makedirs(log_dir, exist_ok=True)
+            log_file = os.path.join(log_dir, "whatsapp.log")
+            log_f = open(log_file, "a", encoding="utf-8")
+
+            node_paths = [
+                os.path.join(bridge_dir, "node_modules"),
+                os.path.join(base_dir, "node_modules")
+            ]
+            existing_np = os.environ.get("NODE_PATH", "")
+            if existing_np:
+                node_paths.extend(existing_np.split(":"))
+            valid_node_paths = [p for p in node_paths if os.path.exists(p)]
+
+            env = os.environ.copy()
+            env["BASE_DIR"] = base_dir
+            env["DATA_DIR"] = self.data_dir
+            env["WORKSPACE_DIR"] = self.data_dir
+            env["LOG_DIR"] = log_dir
+            env["CONFIG_FILE"] = self.config_file
+            env["AGY_ENGINE_URL"] = "http://127.0.0.1:5088"
+            env["WA_BRIDGE_PORT"] = "5052"
+            if valid_node_paths:
+                env["NODE_PATH"] = ":".join(valid_node_paths)
+
+            subprocess.Popen(
+                ["node", wa_bridge_js],
+                cwd=bridge_dir,
+                env=env,
+                stdout=log_f,
+                stderr=subprocess.STDOUT,
+                close_fds=True,
+                start_new_session=True
+            )
+            self.add_live_log("whatsapp", "INFO", "Đã khởi động tiến trình WhatsApp Multi-Device Bridge (node wa_bridge.js) thành công.")
+            return True
+        except Exception as e:
+            self.add_live_log("whatsapp", "ERROR", f"Không thể khởi động WhatsApp Bridge: {e}")
+            return False
+
     def get_whatsapp_config(self) -> dict:
         cfg = self.get_config()
         wa_cfg = cfg.get("whatsapp", {})
         session_file = os.path.join(self.data_dir, "whatsapp_session.json")
-        has_real_session = os.path.exists(session_file)
+        auth_creds = os.path.join(self.data_dir, "whatsapp_auth", "creds.json")
+        has_real_session = os.path.exists(session_file) or os.path.exists(auth_creds)
+
+        # Kiểm tra xem wa_bridge.js có đang chạy không, nếu chưa thì tự kích hoạt
+        proc = subprocess.run(["pgrep", "-f", "node.*wa_bridge.js"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        bridge_running = (proc.returncode == 0)
+        if not bridge_running and wa_cfg.get("enabled", True):
+            self.spawn_whatsapp_bridge()
+
+        phone = wa_cfg.get("phone_number", "Chưa liên kết") if has_real_session else "Chờ quét mã QR"
         return {
             "enabled": wa_cfg.get("enabled", True),
-            "phone_number": wa_cfg.get("phone_number", "Chưa liên kết") if has_real_session else "Chưa liên kết",
+            "phone_number": phone,
             "bot_name": wa_cfg.get("bot_name", "Bé Heo (WhatsApp Gateway)"),
             "connected": has_real_session,
             "session_id": "wa_active_session" if has_real_session else "",
             "filter_tag": wa_cfg.get("filter_tag", True),
-            "device_name": "Chrome Linux (Multi-Device Active)" if has_real_session else "Chờ ghép nối thiết bị di động",
+            "device_name": "Chrome Linux (Multi-Device Active)" if has_real_session else "Chờ quét mã QR trên điện thoại",
             "status": "ONLINE" if has_real_session else "WAITING_FOR_QR"
         }
 
@@ -987,6 +1059,12 @@ class HeoDataStore:
         return self.get_whatsapp_config()
 
     def get_whatsapp_qr_base64(self) -> str:
+        # Nếu chưa có mã QR và bridge chưa chạy, khởi chạy bridge
+        proc = subprocess.run(["pgrep", "-f", "node.*wa_bridge.js"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if proc.returncode != 0:
+            self.spawn_whatsapp_bridge()
+            time.sleep(1.0)
+
         qr_file = os.path.join(self.data_dir, "whatsapp_qr.png")
         if os.path.exists(qr_file):
             try:
@@ -998,43 +1076,42 @@ class HeoDataStore:
         return ""
 
     def refresh_whatsapp_qr(self) -> dict:
-        try:
-            target_qr = os.path.join(self.data_dir, "whatsapp_qr.png")
-            node_script = f"""
-            const QRCode = require('qrcode');
-            const token = '2@' + Buffer.from(Date.now().toString()).toString('base64') + ',sF4gH7jK9lP2qW5eR8tY1uI3oP5aS7dF9gH2jK4l,' + Date.now();
-            QRCode.toFile({json.dumps(target_qr)}, token, {{
-                color: {{ dark: '#052e16', light: '#ffffff' }},
-                width: 399,
-                margin: 2
-            }});
-            """
-            env = dict(os.environ)
-            node_paths = [
-                os.path.join(os.path.dirname(self.data_dir), "bridge", "node_modules"),
-                "/usr/local/lib/node_modules"
-            ]
-            if os.environ.get("NODE_PATH"):
-                node_paths.insert(0, os.environ["NODE_PATH"])
-            valid_np = [p for p in node_paths if os.path.exists(p)]
-            if valid_np:
-                env["NODE_PATH"] = ":".join(valid_np)
-            if shutil.which("node"):
-                subprocess.run(["node", "-e", node_script], env=env, timeout=5)
-        except Exception:
-            pass
-        self.add_audit("owner", "whatsapp.qr_refresh", "WHATSAPP_QR", "Yêu cầu làm mới mã QR WhatsApp Multi-Device", "REQUESTED")
-        return {"ok": True, "message": "Đã tạo mã QR WhatsApp Multi-Device mới thành công!"}
+        qr_file = os.path.join(self.data_dir, "whatsapp_qr.png")
+        if os.path.exists(qr_file):
+            try:
+                os.remove(qr_file)
+            except Exception:
+                pass
+        self.spawn_whatsapp_bridge(force_restart=True)
+        self.add_audit("owner", "whatsapp.qr_refresh", "WHATSAPP_QR", "Làm mới mã QR WhatsApp Multi-Device (Khởi động lại Baileys Socket)", "REQUESTED")
+        return {"ok": True, "message": "Đang kết nối lại máy chủ WhatsApp để tạo mã QR thật mới..."}
 
     def logout_whatsapp(self, pin: str = "") -> tuple[bool, str]:
         if self.has_security_pin():
             if not pin or not self.verify_security_pin(pin):
                 return False, "Mã PIN quản trị viên không chính xác hoặc chưa được cung cấp!"
-        self.update_whatsapp_config({"connected": False, "status": "PAIRING"})
+        try:
+            import urllib.request
+            req = urllib.request.Request("http://127.0.0.1:5052/api/logout", method="POST", data=b"{}")
+            urllib.request.urlopen(req, timeout=3)
+        except Exception:
+            pass
+        auth_dir = os.path.join(self.data_dir, "whatsapp_auth")
+        if os.path.exists(auth_dir):
+            shutil.rmtree(auth_dir, ignore_errors=True)
+        qr_file = os.path.join(self.data_dir, "whatsapp_qr.png")
+        if os.path.exists(qr_file):
+            try:
+                os.remove(qr_file)
+            except Exception:
+                pass
+        self.update_whatsapp_config({"connected": False, "status": "PAIRING", "phone_number": "Chờ quét mã QR"})
+        self.spawn_whatsapp_bridge(force_restart=True)
         self.add_audit("owner", "whatsapp.logout", "WHATSAPP_AUTH", "Đăng xuất tài khoản WhatsApp", "LOGGED_OUT")
         return True, "Đã đăng xuất WhatsApp an toàn và chuyển sang chế độ quét QR mới."
 
     def restart_whatsapp_bridge(self) -> dict:
+        self.spawn_whatsapp_bridge(force_restart=True)
         self.add_audit("owner", "whatsapp.restart", "WHATSAPP_BRIDGE", "Khởi động lại WhatsApp Bridge", "RESTARTED")
         return {"ok": True, "message": "Đã gửi lệnh khởi động lại WhatsApp Multi-Device Bridge thành công!"}
 

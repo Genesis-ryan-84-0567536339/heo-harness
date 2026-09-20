@@ -171,7 +171,21 @@ class WhatsAppChannelPlugin(BasePlugin):
                 }
 
         self.outbound_count += 1
-        self.log(f"🚀 [WHATSAPP SENT] Đã phát tin nhắn tới {target_id} (Nhóm: {group_id}): '{content[:60]}...'")
+        self.log(f"🚀 [WHATSAPP SENT] Đang phát tin nhắn tới {target_id} (Nhóm: {group_id}): '{content[:60]}...'")
+
+        # Phát tin nhắn thật qua WhatsApp Bridge Socket cổng 5052
+        send_ok = False
+        try:
+            import urllib.request
+            import json
+            req_data = json.dumps({"target_id": target_id, "content": content}).encode("utf-8")
+            req = urllib.request.Request("http://127.0.0.1:5052/api/send", data=req_data, headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                if resp.status == 200:
+                    send_ok = True
+                    self.log(f"✔ [WHATSAPP OUTBOUND OK] Socket đã chuyển tin tới {target_id}")
+        except Exception as send_err:
+            self.log(f"⚠️ Chưa thể đẩy tin qua WhatsApp Bridge socket (Bridge offline hoặc chưa ghép nối): {send_err}")
         
         # Ghi nhật ký vào store
         store = self.ctx.inject("data_store")
@@ -187,7 +201,7 @@ class WhatsAppChannelPlugin(BasePlugin):
 
         return {
             "sent": True,
-            "status": "SUCCEEDED",
+            "status": "SUCCEEDED" if send_ok else "QUEUED_LOCAL",
             "target": target_id,
             "correlation_id": corr,
             "timestamp": time.time()
