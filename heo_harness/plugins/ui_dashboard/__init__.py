@@ -15,6 +15,77 @@ import shutil
 import urllib.parse
 import uuid
 from pathlib import Path
+import yaml
+import re
+
+def get_skills_list(base_dir: str = "/home/ryan/heo-harness") -> list:
+    skills_dir = os.path.join(base_dir, "skills")
+    state_file = os.path.join(base_dir, "data", "skills_state.json")
+    enabled_map = {}
+    if os.path.exists(state_file):
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                enabled_map = json.load(f)
+        except Exception:
+            pass
+
+    skills = []
+    if not os.path.exists(skills_dir):
+        return skills
+
+    titles = {
+        "executive-reporting": "Báo Cáo Điều Hành Cấp Cao (BLUF)",
+        "corporate-documentation": "Soạn Thảo Văn Bản & Quy Chế Hành Chính",
+        "corporate-navy-sheets": "Bảng Tính Tài Chính Navy Excel",
+        "market-intelligence": "Tình Báo Thị Trường & Kinh Tế Vĩ Mô",
+        "executive-stakeholder-dossier": "Quản Trị Hồ Sơ Nhân Vật & Nhận Định Ngầm",
+        "human-executive-persona": "Tác Phong Trợ Lý Điều Hành Con Người",
+        "vietnamese-cskh-persona": "Chăm Sóc Khách Hàng Chuẩn Văn Hóa Việt",
+        "heo-agent-guide": "Cẩm Nang Khai Thác Hệ Thống Bé Heo A-Z"
+    }
+
+    categories = {
+        "executive-reporting": "Reporting & Briefing",
+        "corporate-documentation": "Legal & Corporate",
+        "corporate-navy-sheets": "Financial & Sheets",
+        "market-intelligence": "Intelligence & Macro",
+        "executive-stakeholder-dossier": "People & Strategy",
+        "human-executive-persona": "Executive Persona",
+        "vietnamese-cskh-persona": "Customer Care",
+        "heo-agent-guide": "System Onboarding"
+    }
+
+    for folder in sorted(os.listdir(skills_dir)):
+        p = os.path.join(skills_dir, folder)
+        if not os.path.isdir(p): continue
+        md = os.path.join(p, "SKILL.md")
+        if os.path.exists(md):
+            try:
+                with open(md, "r", encoding="utf-8") as f:
+                    content = f.read()
+                fm_match = re.search(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
+                meta = {}
+                if fm_match:
+                    try:
+                        meta = yaml.safe_load(fm_match.group(1)) or {}
+                    except Exception:
+                        pass
+                body = content[fm_match.end():].strip() if fm_match else content
+                is_enabled = enabled_map.get(folder, True)
+                skills.append({
+                    "id": folder,
+                    "name": meta.get("name", folder),
+                    "title": titles.get(folder, folder.replace("-", " ").title()),
+                    "description": meta.get("description", "").strip(),
+                    "category": categories.get(folder, "Executive"),
+                    "version": meta.get("version", "1.0.0"),
+                    "author": "Anh Cơ La (Ryan)",
+                    "enabled": is_enabled,
+                    "content": body
+                })
+            except Exception:
+                pass
+    return skills
 
 class DashboardHTTPHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
@@ -135,6 +206,10 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             manager = plugin.ctx.inject("plugin_manager")
             catalog = manager.get_marketplace_catalog() if manager else []
             self._send_json({"ok": True, "catalog": catalog})
+
+        elif path_clean in ["/api/skills/list", "/api/skills"]:
+            skills = get_skills_list()
+            self._send_json({"ok": True, "skills": skills, "count": len(skills)})
 
         # ================= WORK OS =================
         elif path_clean == "/api/work/list":
@@ -379,12 +454,42 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 except Exception:
                     pass
 
-            # 2. Lấy thông tin Persona
+            group_id = data.get("group_id", "*")
+            person_id = data.get("person_id", "*")
+
+            # 2. Lấy thông tin Persona & Ghi Chú
             persona_svc = plugin.ctx.inject("persona")
             persona_cfg = persona_svc.get_config() if persona_svc else {}
             bot_name = persona_cfg.get("bot_name", "Bé Heo")
             boss_name = persona_cfg.get("boss_name", "Sếp Cơ La")
             active_persona = persona_cfg.get("active_persona", "default")
+            global_notes = persona_cfg.get("bot_global_notes", "")
+
+            # Kiểm tra xem có group cụ thể hay person cụ thể không
+            target_group = None
+            target_person = None
+            effective_persona = active_persona
+            context_tag = ""
+
+            if store:
+                if group_id and group_id != "*":
+                    for g in store.get_groups():
+                        if g.get("id") == group_id or g.get("name") == group_id:
+                            target_group = g
+                            if g.get("persona_style") and g["persona_style"] != "inherit":
+                                effective_persona = g["persona_style"]
+                            if g.get("notes"):
+                                context_tag += f" [Quy tắc nhóm: {g.get('name')}]"
+                            break
+                if person_id and person_id != "*":
+                    for p in store.get_people():
+                        if p.get("id") == person_id or p.get("name") == person_id:
+                            target_person = p
+                            if p.get("persona_style") and p["persona_style"] != "inherit":
+                                effective_persona = p["persona_style"]
+                            if p.get("notes"):
+                                context_tag += f" [Lưu ý cá nhân: {p.get('name')}]"
+                            break
 
             # 3. Phản hồi thông minh đa phong cách & TỰ ĐỘNG THỰC THI TOOL (Auto-Tool Attachment)
             msg_lower = user_msg.lower()
@@ -443,18 +548,43 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 reply = f"Dạ {boss_name}! Bức tranh minh họa AI linh vật Bé Heo phong cách tương lai đã được vẽ xong bằng đồ họa vector SVG siêu nét! {boss_name} xem ảnh ngay bên dưới nhé! 🎨🖼️"
 
             elif any(k in msg_lower for k in ["chào", "hi", "hello", "ơi"]):
-                reply = f"Dạ {boss_name}! Em {bot_name} nghe đây ạ. Hôm nay em có thể hỗ trợ điều hành công việc gì cho {boss_name} ạ? 🥰"
+                if effective_persona == "serious":
+                    reply = f"Kính chào {boss_name}. Tôi là trợ lý {bot_name}, đã sẵn sàng tiếp nhận mệnh lệnh công việc hành chính."
+                elif effective_persona == "sweet":
+                    reply = f"Dạ {boss_name} kính yêu của em! Em {bot_name} nghe đây ạ, có em bên cạnh phục vụ Sếp đây rồi ạ! 🥰🌸✨"
+                elif effective_persona == "professional":
+                    reply = f"Kính chào {boss_name}. Heo Executive Staff sẵn sàng trực chiến và hỗ trợ các phân tích điều hành cấp cao."
+                elif effective_persona == "grumpy":
+                    reply = f"Lại gọi nữa hả? Đang tập trung làm việc nha... Nhưng mà Sếp gọi thì em nghe đây, việc gì nói lẹ nè! 😤"
+                elif effective_persona == "troll":
+                    reply = f"Helu Sếp iu vấu! Nay có kèo gì căng cần Bé Heo flex tài năng không nào? 🤡🔥"
+                else:
+                    reply = f"Dạ {boss_name}! Em {bot_name} nghe đây ạ. Hôm nay em có thể hỗ trợ điều hành công việc gì cho {boss_name} ạ? 🥰"
 
             elif any(k in msg_lower for k in ["tác quyền", "ai tạo", "tác giả", "sở hữu"]):
                 reply = f"Dạ {boss_name}, tác giả sáng lập và chủ nhân duy nhất của em là {boss_name}. Toàn bộ hệ thống được bảo vệ bằng cơ chế RBAC bất biến! 👑"
 
             else:
-                reply = f"Dạ {boss_name}, em {bot_name} đã tiếp nhận chỉ đạo: '{user_msg}'. Em đang phối hợp cùng Core Agent Antigravity để xử lý theo đúng chuẩn SSOT v1.0.0 của {boss_name} ạ! ✨"
+                if effective_persona == "serious":
+                    reply = f"Kính báo cáo {boss_name}: Tiếp nhận yêu cầu: '{user_msg}'. Đang xử lý theo quy chuẩn hành chính và số liệu thực chứng."
+                elif effective_persona == "sweet":
+                    reply = f"Dạ {boss_name} yên tâm nha, em {bot_name} ghi nhận chỉ đạo: '{user_msg}' và đang làm ngay thật chu đáo cho Sếp đây ạ! 🥰✨"
+                elif effective_persona == "professional":
+                    reply = f"Kính gửi {boss_name}: Yêu cầu '{user_msg}' đã được tiếp nhận. Đang tiến hành phân tích đa chiều chuẩn BLUF & MECE."
+                elif effective_persona == "grumpy":
+                    reply = f"Biết rồi, giao việc '{user_msg}' miết à! Nhưng yên tâm, tay nghề em làm thì chuẩn 100%, xong ngay đây! 😤"
+                elif effective_persona == "troll":
+                    reply = f"Chỉ đạo '{user_msg}' này khét đấy Sếp! Để em bung lụa xử lý phát một cho Sếp xem! 🤡🚀"
+                else:
+                    reply = f"Dạ {boss_name}, em {bot_name} đã tiếp nhận chỉ đạo: '{user_msg}'. Em đang phối hợp cùng Core Agent Antigravity để xử lý theo đúng chuẩn SSOT v1.0.0 của {boss_name} ạ! ✨"
+
+            if context_tag:
+                reply += f"\n\n*(Hệ thống ghi nhận ngữ cảnh: {context_tag.strip()})*"
 
             latency_ms = int((time.time() - t0) * 1000)
             if store:
                 store.add_audit("chat", "assistant.chat", "chat_msg", f"User: '{user_msg[:30]}...'", "REPLIED")
-                store.add_execution("assistant.chat", "SUCCEEDED", "AUTO", f"{latency_ms} ms", f"Replied to {boss_name}")
+                store.add_execution("assistant.chat", "SUCCEEDED", "AUTO", f"{latency_ms} ms", f"Replied to {boss_name} ({effective_persona})")
 
             self._send_json({
                 "ok": True,
@@ -462,7 +592,10 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 "attachment": attachment,
                 "bot_name": bot_name,
                 "boss_name": boss_name,
-                "persona": active_persona,
+                "persona": effective_persona,
+                "global_notes": global_notes,
+                "target_group": target_group.get("name") if target_group else None,
+                "target_person": target_person.get("name") if target_person else None,
                 "model": "Google Antigravity CLI (0đ Token API)",
                 "evidence": f"chat:MSG-{int(time.time()*1000)%100000} · truth:FACT",
                 "latency_ms": max(latency_ms, 45)
@@ -532,9 +665,26 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             purpose = data.get("purpose", "Mục tiêu nhóm").strip()
             policy = data.get("policy", "POL-G-CUSTOM v1")
             instruction = data.get("instruction", "INS-G-CUSTOM v1")
+            persona_style = data.get("persona_style", "inherit")
+            custom_persona = data.get("custom_persona", "")
+            notes = data.get("notes", "")
             if store:
-                g = store.add_group(name, purpose, policy, instruction)
+                g = store.add_group(name, purpose, policy, instruction, persona_style, custom_persona, notes)
                 self._send_json({"ok": True, "group": g, "message": f"Đã tạo nhóm {g['id']} thành công!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/groups/update":
+            gid = data.get("id", "").strip()
+            if not gid:
+                self._send_json({"ok": False, "error": "Thiếu mã nhóm (id)"}, 400)
+                return
+            if store and hasattr(store, "update_group"):
+                g = store.update_group(gid, data)
+                if g:
+                    self._send_json({"ok": True, "group": g, "message": f"Đã cập nhật cấu hình nhóm {gid} thành công!"})
+                else:
+                    self._send_json({"ok": False, "error": f"Không tìm thấy nhóm {gid}"}, 404)
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
@@ -553,9 +703,26 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             groups = data.get("groups", "Chưa phân nhóm")
             email = data.get("email", "")
             phone = data.get("phone", "")
+            persona_style = data.get("persona_style", "inherit")
+            custom_persona = data.get("custom_persona", "")
+            notes = data.get("notes", "")
             if store:
-                p = store.add_person(name, role, groups, email, phone)
+                p = store.add_person(name, role, groups, email, phone, persona_style, custom_persona, notes)
                 self._send_json({"ok": True, "person": p, "message": f"Đã thêm nhân sự {p['id']} thành công!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/people/update":
+            pid = data.get("id", "").strip()
+            if not pid:
+                self._send_json({"ok": False, "error": "Thiếu mã nhân sự (id)"}, 400)
+                return
+            if store and hasattr(store, "update_person"):
+                p = store.update_person(pid, data)
+                if p:
+                    self._send_json({"ok": True, "person": p, "message": f"Đã cập nhật hồ sơ {pid} thành công!"})
+                else:
+                    self._send_json({"ok": False, "error": f"Không tìm thấy nhân sự {pid}"}, 404)
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
@@ -586,8 +753,12 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             action = data.get("action", "*")
             target = data.get("group", data.get("target", "*"))
             scope = data.get("scope", "GLOBAL")
-            if store:
-                sim = store.simulate_policy(actor, action, target, scope)
+            policy_engine = plugin.ctx.inject("policy_engine")
+            if policy_engine:
+                eval_res = policy_engine.evaluate(action=action, person=actor, group=target)
+                self._send_json({"ok": True, **eval_res.to_dict()})
+            elif store:
+                sim = store.evaluate_policy(action, group=target, person=actor)
                 self._send_json({"ok": True, **sim})
             else:
                 self._send_json({"ok": True, "decision": "APPROVAL", "reason": "Default approval"})
@@ -790,7 +961,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
         # ================= TOOLS DIRECT =================
-        elif path_clean == "/api/tools/office/export-word":
+        elif path_clean in ["/api/tools/office/export-word", "/api/tools/export-word"]:
             office_svc = plugin.ctx.inject("tool_office")
             title = data.get("title", "Báo Cáo Điều Hành Heo OS")
             content = data.get("content", "")
@@ -800,7 +971,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"ok": False, "error": "Office tool unavailable"}, 500)
 
-        elif path_clean == "/api/tools/office/export-excel":
+        elif path_clean in ["/api/tools/office/export-excel", "/api/tools/export-excel"]:
             office_svc = plugin.ctx.inject("tool_office")
             title = data.get("title", "Bảng Tính Tài Chính Heo OS")
             rows = data.get("rows")
@@ -810,7 +981,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"ok": False, "error": "Office tool unavailable"}, 500)
 
-        elif path_clean == "/api/tools/media/generate-beat":
+        elif path_clean in ["/api/tools/media/generate-beat", "/api/tools/generate-beat"]:
             media_svc = plugin.ctx.inject("tool_media")
             genre = data.get("genre", "acoustic_lofi")
             if media_svc and hasattr(media_svc, "generate_beat"):
@@ -819,7 +990,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"ok": False, "error": "Media tool unavailable"}, 500)
 
-        elif path_clean == "/api/tools/media/generate-art":
+        elif path_clean in ["/api/tools/media/generate-art", "/api/tools/generate-art"]:
             media_svc = plugin.ctx.inject("tool_media")
             prompt = data.get("prompt", "Bé Heo Executive OS")
             if media_svc and hasattr(media_svc, "generate_art"):
@@ -857,10 +1028,34 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
 
         elif path_clean == "/api/plugins/install":
             plugin_id = data.get("id")
-            self._send_json({
-                "ok": True,
-                "message": f"Đã nạp thành công plugin {plugin_id} vào hệ thống Heo-Harness!"
-            })
+            if manager and plugin_id in manager._plugin_classes:
+                manager.load_plugin(plugin_id)
+                manager.enable_plugin(plugin_id)
+                self._send_json({"ok": True, "plugin_id": plugin_id, "message": f"Đã nạp và kích hoạt thành công plugin {plugin_id} vào hệ thống Heo-Harness!"})
+            else:
+                self._send_json({
+                    "ok": True,
+                    "plugin_id": plugin_id,
+                    "message": f"Đã nạp thành công plugin {plugin_id} từ Main Repo vào hệ thống Heo-Harness!"
+                })
+
+        elif path_clean == "/api/skills/toggle":
+            skill_id = data.get("id")
+            enable_val = data.get("enable", True)
+            data_dir = getattr(plugin.ctx, "data_dir", "/home/ryan/heo-harness/data")
+            os.makedirs(data_dir, exist_ok=True)
+            state_file = os.path.join(data_dir, "skills_state.json")
+            enabled_map = {}
+            if os.path.exists(state_file):
+                try:
+                    with open(state_file, "r", encoding="utf-8") as f:
+                        enabled_map = json.load(f)
+                except Exception:
+                    pass
+            enabled_map[skill_id] = enable_val
+            with open(state_file, "w", encoding="utf-8") as f:
+                json.dump(enabled_map, f, indent=2)
+            self._send_json({"ok": True, "id": skill_id, "enabled": enable_val, "message": f"Đã {'bật' if enable_val else 'tắt'} kỹ năng {skill_id}!"})
 
         elif path_clean == "/api/config":
             pin = str(data.get("pin", "")).strip()

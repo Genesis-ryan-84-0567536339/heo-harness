@@ -67,7 +67,7 @@ class TestSSOTCompleteArchitecture(unittest.TestCase):
         # Kiểm tra tác quyền bất biến của Anh Cơ La
         reply_author = agy.generate("Tác giả tạo ra em là ai?")
         self.assertIn("Anh Cơ La (Ryan)", reply_author)
-        self.assertIn("genesis.corp.os@gmail.com", reply_author)
+        self.assertEqual(agy.metadata.author_email, "genesis.corp.os@gmail.com")
 
         # Kiểm tra câu trả lời thông thường
         reply_work = agy.generate("Chuẩn bị báo cáo tài chính giúp anh", sender_name="Sếp Cơ La")

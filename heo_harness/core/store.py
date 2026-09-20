@@ -202,7 +202,8 @@ class HeoDataStore:
             "disclaimer_accepted_at": "2026-09-17T12:00:00.000Z",
             "bot_about": DEFAULT_BOT_ABOUT,
             "bot_persona": "default",
-            "bot_custom_persona": ""
+            "bot_custom_persona": "",
+            "bot_global_notes": "Chỉ đạo điều hành chung: Tuyệt đối bảo mật thông tin nội bộ của Sếp và doanh nghiệp. Luôn trả lời ngắn gọn, chuẩn xác, trung thực và chủ động hỗ trợ."
         }
         try:
             with open(self.config_file, "w", encoding="utf-8") as f:
@@ -225,7 +226,7 @@ class HeoDataStore:
         allowed_keys = [
             "boss_name", "boss_caller_name", "boss_uid", "boss_email", "bot_name",
             "model", "effort", "auto_claim_boss", "disclaimer_accepted",
-            "bot_about", "bot_persona", "bot_custom_persona"
+            "bot_about", "bot_persona", "bot_custom_persona", "bot_global_notes"
         ]
         for k in allowed_keys:
             if k in new_data:
@@ -715,7 +716,7 @@ class HeoDataStore:
     def get_people(self) -> list:
         return self.state.get("people", [])
 
-    def add_group(self, name: str, purpose: str = "", policy: str = "", instruction: str = "") -> dict:
+    def add_group(self, name: str, purpose: str = "", policy: str = "", instruction: str = "", persona_style: str = "inherit", custom_persona: str = "", notes: str = "") -> dict:
         gid = f"G-{uuid.uuid4().hex[:6].upper()}"
         item = {
             "id": gid,
@@ -726,12 +727,27 @@ class HeoDataStore:
             "health": "Healthy",
             "members": 1,
             "bot_active": True,
+            "persona_style": persona_style or "inherit",
+            "custom_persona": custom_persona or "",
+            "notes": notes or "",
             "created_at": time.strftime("%Y-%m-%d")
         }
         self.state.setdefault("groups", []).append(item)
         self._save_state()
         self.add_audit("owner", "group.create", gid, f"Khởi tạo nhóm: {name}", "SUCCESS")
         return item
+
+    def update_group(self, group_id: str, data: dict) -> dict:
+        groups = self.state.get("groups", [])
+        for g in groups:
+            if g.get("id") == group_id:
+                for k in ["name", "purpose", "policy", "instruction", "persona_style", "custom_persona", "notes", "bot_active"]:
+                    if k in data:
+                        g[k] = data[k]
+                self._save_state()
+                self.add_audit("owner", "group.update", group_id, f"Cập nhật cấu hình nhóm: {g.get('name')}", "SUCCESS")
+                return g
+        return {}
 
     def delete_group(self, group_id: str) -> bool:
         groups = self.state.get("groups", [])
@@ -743,7 +759,7 @@ class HeoDataStore:
             return True
         return False
 
-    def add_person(self, name: str, role: str = "Chuyên viên", groups: str = "", email: str = "", phone: str = "") -> dict:
+    def add_person(self, name: str, role: str = "Chuyên viên", groups: str = "", email: str = "", phone: str = "", persona_style: str = "inherit", custom_persona: str = "", notes: str = "") -> dict:
         pid = f"P-{uuid.uuid4().hex[:6].upper()}"
         item = {
             "id": pid,
@@ -755,12 +771,27 @@ class HeoDataStore:
             "phone": phone or "Chưa cập nhật",
             "rel": "Nhân sự / Đối tác trực tiếp",
             "open": 0,
-            "last": "Mới thêm vào danh bạ"
+            "last": "Mới thêm vào danh bạ",
+            "persona_style": persona_style or "inherit",
+            "custom_persona": custom_persona or "",
+            "notes": notes or ""
         }
         self.state.setdefault("people", []).append(item)
         self._save_state()
         self.add_audit("owner", "person.create", pid, f"Thêm nhân sự/đối tác: {name}", "SUCCESS")
         return item
+
+    def update_person(self, person_id: str, data: dict) -> dict:
+        people = self.state.get("people", [])
+        for p in people:
+            if p.get("id") == person_id:
+                for k in ["name", "role", "groups", "email", "phone", "rel", "persona_style", "custom_persona", "notes"]:
+                    if k in data:
+                        p[k] = data[k]
+                self._save_state()
+                self.add_audit("owner", "person.update", person_id, f"Cập nhật hồ sơ nhân sự: {p.get('name')}", "SUCCESS")
+                return p
+        return {}
 
     def delete_person(self, person_id: str) -> bool:
         people = self.state.get("people", [])
@@ -950,6 +981,29 @@ class HeoDataStore:
         status_str = "BẬT (Chỉ trả lời khi có @tag)" if zalo["tag_filter"] else "TẮT (Trả lời mọi tin nhắn)"
         self.add_audit("owner", "zalo.filter_toggle", "ZALO_FILTER", f"Chuyển chế độ lọc tag: {status_str}", "UPDATED")
         return {"ok": True, "tag_filter": zalo["tag_filter"], "status_str": status_str}
+
+    def sync_zalo_groups(self) -> dict:
+        active_groups_file = os.path.join(self.data_dir, "active_groups.json")
+        loaded_count = 0
+        if os.path.exists(active_groups_file):
+            try:
+                with open(active_groups_file, "r", encoding="utf-8") as f:
+                    ag = json.load(f)
+                    existing_ids = {g.get("id") for g in self.state.get("groups", [])}
+                    for g in ag:
+                        if g.get("id") not in existing_ids:
+                            self.state.setdefault("groups", []).append(g)
+                            loaded_count += 1
+                    self._save_state()
+            except Exception:
+                pass
+        groups = self.state.get("groups", [])
+        self.add_audit("zalo", "groups.sync", "ZALO_SYNC", f"Đồng bộ {loaded_count} nhóm từ Zalo", "SYNCED")
+        return {
+            "ok": True,
+            "message": f"Đồng bộ danh sách nhóm Zalo thành công! Hiện có {len(groups)} nhóm.",
+            "count": len(groups)
+        }
 
     # ==================== AUDIT LEDGER ====================
     def get_audits(self, limit: int = 50) -> list:

@@ -100,13 +100,16 @@ class PersonaPlugin(BasePlugin):
         self.bus.register_hook("prompt:system", self._inject_persona, priority=20, plugin_id=self.metadata.id)
 
     def get_config(self) -> dict:
+        store = (self.ctx.inject("data_store") or self.ctx.inject("store")) if hasattr(self.ctx, "inject") else None
+        store_cfg = store.get_config() if store and hasattr(store, "get_config") else {}
         cfg = self.ctx.config.get("persona", {})
         return {
-            "boss_name": cfg.get("boss_name", "Sếp Cơ La"),
-            "bot_name": cfg.get("bot_name", "Bé Heo"),
-            "bot_about": cfg.get("bot_about", "Em là Trợ lý Điều hành AI Cấp cao trực thuộc hệ sinh thái Genesis Corp OS, do Sếp quản lý và điều hành."),
-            "active_persona": cfg.get("active_persona", "default"),
-            "custom_tone": cfg.get("custom_tone", "")
+            "boss_name": store_cfg.get("boss_name") or cfg.get("boss_name", "Sếp Cơ La"),
+            "bot_name": store_cfg.get("bot_name") or cfg.get("bot_name", "Bé Heo"),
+            "bot_about": store_cfg.get("bot_about") or cfg.get("bot_about", "Em là Trợ lý Điều hành AI Cấp cao trực thuộc hệ sinh thái Genesis Corp OS, do Sếp quản lý và điều hành."),
+            "active_persona": store_cfg.get("bot_persona") or cfg.get("active_persona", "default"),
+            "custom_tone": store_cfg.get("bot_custom_persona") or cfg.get("custom_tone", ""),
+            "bot_global_notes": store_cfg.get("bot_global_notes") or cfg.get("bot_global_notes", "")
         }
 
     def update_config(self, new_cfg: dict) -> dict:
@@ -115,31 +118,105 @@ class PersonaPlugin(BasePlugin):
         if "bot_name" in new_cfg: current["bot_name"] = new_cfg["bot_name"]
         if "active_persona" in new_cfg: current["active_persona"] = new_cfg["active_persona"]
         if "custom_tone" in new_cfg: current["custom_tone"] = new_cfg["custom_tone"]
+        if "bot_global_notes" in new_cfg: current["bot_global_notes"] = new_cfg["bot_global_notes"]
         self.ctx.save_config()
+
+        store = (self.ctx.inject("data_store") or self.ctx.inject("store")) if hasattr(self.ctx, "inject") else None
+        if store and hasattr(store, "update_config"):
+            store_payload = {}
+            if "boss_name" in new_cfg: store_payload["boss_name"] = new_cfg["boss_name"]
+            if "bot_name" in new_cfg: store_payload["bot_name"] = new_cfg["bot_name"]
+            if "active_persona" in new_cfg: store_payload["bot_persona"] = new_cfg["active_persona"]
+            if "custom_tone" in new_cfg: store_payload["bot_custom_persona"] = new_cfg["custom_tone"]
+            if "bot_global_notes" in new_cfg: store_payload["bot_global_notes"] = new_cfg["bot_global_notes"]
+            if store_payload:
+                store.update_config(store_payload)
+
         self.log(f"✔ Đã cập nhật Persona: {current.get('active_persona')} - Bot: {current.get('bot_name')}")
         return self.get_config()
 
-    def _inject_persona(self, prompt: str) -> str:
+    def build_context_prompt(self, group_id: str = None, person_id: str = None) -> str:
+        """
+        Xây dựng khối prompt phong thái ứng xử và ghi chú chuyên biệt
+        kết hợp: Global Notes + Group Persona/Notes + Person Persona/Notes.
+        """
         cfg = self.get_config()
         bot_name = cfg["bot_name"]
         boss_name = cfg["boss_name"]
         active_persona = cfg["active_persona"]
 
+        store = (self.ctx.inject("data_store") or self.ctx.inject("store")) if hasattr(self.ctx, "inject") else None
+        target_group = None
+        target_person = None
+
+        if store:
+            if group_id and group_id != "*":
+                for g in store.get_groups():
+                    if g.get("id") == group_id or g.get("name") == group_id:
+                        target_group = g
+                        break
+            if person_id and person_id != "*":
+                for p in store.get_people():
+                    if p.get("id") == person_id or p.get("name") == person_id:
+                        target_person = p
+                        break
+
+        # 1. Xác định Persona ưu tiên (Group > Global)
+        effective_persona = active_persona
+        custom_tone_text = cfg.get("custom_tone", "")
+
+        if target_group and target_group.get("persona_style") and target_group["persona_style"] != "inherit":
+            effective_persona = target_group["persona_style"]
+            if target_group.get("custom_persona"):
+                custom_tone_text = target_group["custom_persona"]
+
+        # 2. Xây dựng tone text
         tone_text = ""
         for p in PERSONA_STYLES:
-            if p["id"] == active_persona:
+            if p["id"] == effective_persona:
                 tone_text = p["tone"].replace("{bot_name}", bot_name)
                 break
 
-        if active_persona == "custom" and cfg["custom_tone"]:
-            tone_text = f"- THÁI ĐỘ & PHONG CÁCH TÙY CHỈNH:\n  {cfg['custom_tone']}\n"
+        if effective_persona == "custom" and custom_tone_text:
+            tone_text = f"- THÁI ĐỘ & PHONG CÁCH TÙY CHỈNH:\n  {custom_tone_text}\n"
 
-        persona_rule = (
-            f"\n\n[HỆ THỐNG DANH XƯNG & THÁI ĐỘ ỨNG XỬ]:\n"
+        # 3. Ghi chú chung (Global Notes)
+        global_notes_block = ""
+        if cfg.get("bot_global_notes"):
+            global_notes_block = f"- 📝 LỜI DẶN ĐIỀU HÀNH CHUNG TỪ SẾP (GLOBAL DIRECTIVES):\n  {cfg['bot_global_notes']}\n"
+
+        # 4. Ghi chú riêng Group (Group Memo)
+        group_notes_block = ""
+        if target_group:
+            g_name = target_group.get("name", group_id)
+            g_notes = target_group.get("notes", "").strip()
+            group_notes_block = f"- 👥 LƯU Ý RIÊNG VỀ NHÓM [{g_name}]:\n  + Mục tiêu: {target_group.get('purpose', '')}\n"
+            if g_notes:
+                group_notes_block += f"  + Chỉ đạo đặc thù: {g_notes}\n"
+
+        # 5. Ghi chú riêng Person (Person Dossier Memo)
+        person_notes_block = ""
+        if target_person:
+            p_name = target_person.get("name", person_id)
+            p_notes = target_person.get("notes", "").strip()
+            p_tone = target_person.get("persona_style", "inherit")
+            person_notes_block = f"- 👤 HỒ SƠ & LƯU Ý VỀ NHÂN SỰ/ĐỐI TÁC [{p_name}]:\n  + Vai trò: {target_person.get('role', '')} ({target_person.get('rel', '')})\n"
+            if p_tone and p_tone != "inherit":
+                person_notes_block += f"  + Phong cách xưng hô yêu cầu: {p_tone}\n"
+            if p_notes:
+                person_notes_block += f"  + Ghi chú lưu ý: {p_notes}\n"
+
+        return (
+            f"\n\n[HỆ THỐNG DANH XƯNG, THÁI ĐỘ & GHI CHÚ ĐIỀU HÀNH]:\n"
             f"- Tên của bạn: {bot_name}\n"
             f"- Chủ nhân tối cao: {boss_name}\n"
             f"- Giới thiệu về bạn: {cfg['bot_about']}\n"
             f"{tone_text}"
+            f"{global_notes_block}"
+            f"{group_notes_block}"
+            f"{person_notes_block}"
             f"- QUY TẮC PHẢN HỒI NHÓM: Bạn chỉ phản hồi khi được @tag tên đích danh (@{bot_name}). Nếu không được tag, tuyệt đối giữ im lặng để không làm phiền nhóm.\n"
         )
-        return prompt + persona_rule
+
+    def _inject_persona(self, prompt: str) -> str:
+        return prompt + self.build_context_prompt()

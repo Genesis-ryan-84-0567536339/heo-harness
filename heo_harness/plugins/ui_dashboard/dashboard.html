@@ -683,6 +683,48 @@
       margin: 0 auto 16px;
       line-height: 1.6;
     }
+
+    /* Persona Visual Grid & Studio Styles */
+    .persona-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+    .persona-card-item {
+      background: var(--bg-body);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .persona-card-item:hover {
+      border-color: var(--brand);
+      background: #1e293b;
+    }
+    .persona-card-item.active {
+      border-color: var(--brand);
+      background: rgba(16, 185, 129, 0.08);
+      box-shadow: 0 0 0 1px var(--brand);
+    }
+    .persona-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .persona-card-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -751,6 +793,15 @@
           <span class="nav-hub-icon">◈</span>
           <span>Intelligence & Value</span>
         </div>
+      </button>
+
+      <div class="nav-section-label" style="padding-left:10px;margin-top:10px">Khung Gầm & Mở Rộng</div>
+      <button class="nav-hub-item" data-hub="modules" onclick="switchHub('modules')">
+        <div class="nav-hub-left">
+          <span class="nav-hub-icon">🧩</span>
+          <span>Module & Skills Hub</span>
+        </div>
+        <span class="nav-badge good" id="badge-modules-count">11/8</span>
       </button>
 
       <div class="nav-section-label" style="padding-left:10px;margin-top:10px">An Ninh & Quản Trị</div>
@@ -851,7 +902,8 @@ let state = {
     directory: 'zalo',       // Default to Zalo Gateway & QR
     intelligence: 'insights',
     assistant: 'chat',       // Default to Live Chat
-    governance: 'pin'        // Default to Admin PIN & Security
+    governance: 'pin',       // Default to Admin PIN & Security
+    modules: 'plugins'       // Default to Active Plugins
   },
   config: {},
   google: {},
@@ -869,6 +921,9 @@ let state = {
   outcomes: [],
   learnings: [],
   artifacts: [],
+  plugins: [],
+  catalog: [],
+  skills: [],
   metrics: {},
   backups: [],
   audits: [],
@@ -922,7 +977,8 @@ async function fetchAllData() {
   try {
     const [
       cfgRes, gRes, qRes, pinRes, wRes, cRes, aRes, grpRes, pplRes,
-      polRes, exRes, attRes, insRes, outRes, lrnRes, artRes, mtrRes, bkRes, audRes, zRes, waRes, waMsgRes
+      polRes, exRes, attRes, insRes, outRes, lrnRes, artRes, mtrRes, bkRes, audRes, zRes, waRes, waMsgRes,
+      plgRes, catRes, sklRes
     ] = await Promise.all([
       fetch('/api/config').then(r => r.json()).catch(() => ({})),
       fetch('/api/google/info').then(r => r.json()).catch(() => ({})),
@@ -945,7 +1001,10 @@ async function fetchAllData() {
       fetch('/api/audit/list').then(r => r.json()).catch(() => ({ audits: [] })),
       fetch('/api/zalo/status').then(r => r.json()).catch(() => ({ zalo: {} })),
       fetch('/api/whatsapp/status').then(r => r.json()).catch(() => ({ whatsapp: {} })),
-      fetch('/api/whatsapp/messages').then(r => r.json()).catch(() => ({ messages: [] }))
+      fetch('/api/whatsapp/messages').then(r => r.json()).catch(() => ({ messages: [] })),
+      fetch('/api/plugins/list').then(r => r.json()).catch(() => ({ plugins: [] })),
+      fetch('/api/plugins/catalog').then(r => r.json()).catch(() => ({ catalog: [] })),
+      fetch('/api/skills/list').then(r => r.json()).catch(() => ({ skills: [] }))
     ]);
 
     state.config = cfgRes.config || {};
@@ -970,6 +1029,9 @@ async function fetchAllData() {
     state.zalo = zRes.zalo || {};
     state.whatsapp = (waRes && waRes.whatsapp) ? waRes.whatsapp : {};
     state.whatsapp_messages = (waMsgRes && waMsgRes.messages) ? waMsgRes.messages : [];
+    state.plugins = plgRes.plugins || [];
+    state.catalog = catRes.catalog || [];
+    state.skills = sklRes.skills || [];
 
     updateBadges();
     renderActiveHub();
@@ -980,7 +1042,16 @@ async function fetchAllData() {
 
 function updateBadges() {
   const p1Att = state.attention.filter(a => a.band === 'P1').length;
-  $('#badge-attention').textContent = p1Att || state.attention.length || 0;
+  const attBadge = $('#badge-attention');
+  if (attBadge) {
+    attBadge.textContent = p1Att > 0 ? p1Att : '0';
+    attBadge.className = `nav-badge ${p1Att > 0 ? 'danger' : 'neutral'}`;
+  }
+
+  const modBadge = $('#badge-modules-count');
+  if (modBadge) {
+    modBadge.textContent = `${state.plugins.length}/${state.skills.length}`;
+  }
   $('#badge-works').textContent = state.works.length || 0;
   const pendingAppr = state.approvals.filter(a => a.status === 'PENDING').length;
   $('#badge-approvals').textContent = pendingAppr || 0;
@@ -1085,6 +1156,12 @@ function renderActiveHub() {
       titleEl.textContent = 'Intelligence & Value';
       subEl.textContent = 'Dự Báo Rủi Ro, Quy Đổi Giá Trị Thực, Vòng Lặp Học Tập & Kho Báo Cáo';
       container.innerHTML = renderIntelligenceHub();
+      break;
+
+    case 'modules':
+      titleEl.textContent = 'Module & Skills Hub';
+      subEl.textContent = 'Quản Lý 11 Plugins DSH, 8 Kỹ Năng Nghiệp Vụ Bé Heo & Kho Thư Viện Main Repo';
+      container.innerHTML = renderModulesHub();
       break;
 
     case 'governance':
@@ -1531,6 +1608,32 @@ function openNewCalendarModal() {
   });
 }
 
+function getPersonaBadge(style) {
+  const map = {
+    inherit: '<span class="badge" style="background:#1e293b;color:var(--text-sec);border:1px solid var(--border)">🔄 Kế Thừa Chung</span>',
+    default: '<span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)">🌸 Mặc Định</span>',
+    serious: '<span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">🏛️ Nghiêm Túc</span>',
+    sweet: '<span class="badge" style="background:rgba(236,72,153,0.15);color:#ec4899;border:1px solid rgba(236,72,153,0.3)">🥰 Ngọt Ngào</span>',
+    professional: '<span class="badge" style="background:rgba(168,85,247,0.15);color:#a855f7;border:1px solid rgba(168,85,247,0.3)">💼 Chuyên Nghiệp</span>',
+    grumpy: '<span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)">😤 Cọc Cằn</span>',
+    troll: '<span class="badge" style="background:rgba(234,179,8,0.15);color:#eab308;border:1px solid rgba(234,179,8,0.3)">🤡 Hài Hước</span>',
+    custom: '<span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3)">🎨 Tùy Chỉnh</span>'
+  };
+  return map[style] || map.inherit;
+}
+
+function getPersonToneBadge(style) {
+  const map = {
+    inherit: '<span class="badge" style="background:#1e293b;color:var(--text-sec);border:1px solid var(--border)">🔄 Kế Thừa Chung</span>',
+    boss_respect: '<span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)">👑 Kính Cẩn Sếp Lớn</span>',
+    professional: '<span class="badge" style="background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)">💼 Chuyên Nghiệp</span>',
+    friendly: '<span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)">🤝 Thân Mật</span>',
+    cautious: '<span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)">🛡️ Cảnh Giác</span>',
+    custom: '<span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3)">🎨 Tùy Chỉnh</span>'
+  };
+  return map[style] || map.inherit;
+}
+
 function openNewGroupModal() {
   openModal('Khởi Tạo Nhóm Làm Việc Mới', `
     <div class="form-group">
@@ -1542,29 +1645,104 @@ function openNewGroupModal() {
       <input type="text" class="form-input" id="new-group-purpose" placeholder="Ví dụ: Phối hợp tác chiến, duyệt dự toán...">
     </div>
     <div class="form-group">
-      <label class="form-label">Mã Chính Sách Áp Dụng</label>
-      <input type="text" class="form-input" id="new-group-policy" value="POL-G-CUSTOM v1">
+      <label class="form-label">🎭 Phong Cách Thái Độ Riêng Cho Nhóm Này (Group Persona)</label>
+      <select class="form-select" id="new-group-persona" onchange="$('#new-group-custom-grp').style.display = this.value === 'custom' ? 'block' : 'none'">
+        <option value="inherit">🔄 Kế thừa phong cách chung của Bé Heo</option>
+        <option value="default">🌸 Mặc định (Duyên dáng, tôn trọng)</option>
+        <option value="serious">🏛️ Nghiêm túc hành chính (BLUF, chuẩn xác con số)</option>
+        <option value="sweet">🥰 Ngọt ngào & Dẻo miệng (Chu đáo, khéo léo)</option>
+        <option value="professional">💼 Chuyên nghiệp cấp cao (Executive Staff)</option>
+        <option value="grumpy">😤 Cọc cằn Tsundere (Gắt nhẹ nhưng việc siêu chuẩn)</option>
+        <option value="troll">🤡 Hài hước & Chọc ngoáy (Tếu táo, meme)</option>
+        <option value="custom">🎨 Tùy chỉnh (Prompt văn phong riêng)</option>
+      </select>
+    </div>
+    <div class="form-group" id="new-group-custom-grp" style="display:none">
+      <label class="form-label">Lời Dặn Custom Prompt Cho Nhóm</label>
+      <textarea class="form-textarea" id="new-group-custom-persona" placeholder="Nhập văn phong riêng cho nhóm này..."></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">Chỉ Dẫn Cho Bé Heo (Instruction)</label>
-      <input type="text" class="form-input" id="new-group-instruction" value="Hỗ trợ trả lời nhanh, bảo mật thông tin nội bộ">
+      <label class="form-label">📝 Ghi Chú & Lưu Ý Riêng Cho Nhóm (Group Directives / Notes)</label>
+      <textarea class="form-textarea" id="new-group-notes" placeholder="Ví dụ: Nhóm có đối tác ngoài, tuyệt đối không bàn chuyện tài chính nội bộ; Chỉ Sếp mới có quyền duyệt chi..."></textarea>
     </div>
   `, async () => {
     const name = $('#new-group-name').value.trim();
     if (!name) { showToast('Tên nhóm không được để trống!'); return; }
     const purpose = $('#new-group-purpose').value.trim();
-    const policy = $('#new-group-policy').value.trim();
-    const instruction = $('#new-group-instruction').value.trim();
+    const persona_style = $('#new-group-persona').value;
+    const custom_persona = $('#new-group-custom-persona') ? $('#new-group-custom-persona').value.trim() : '';
+    const notes = $('#new-group-notes').value.trim();
 
     const res = await fetch('/api/groups/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, purpose, policy, instruction })
+      body: JSON.stringify({ name, purpose, persona_style, custom_persona, notes })
     });
     const d = await res.json();
     if (d.ok) {
       closeModal();
       showToast(d.message || 'Đã khởi tạo nhóm thành công!');
+      fetchAllData();
+    } else {
+      showToast('Lỗi: ' + (d.error || d.message));
+    }
+  });
+}
+
+function openEditGroupModal(gid) {
+  const g = (state.groups || []).find(item => item.id === gid);
+  if (!g) { showToast('Không tìm thấy thông tin nhóm!'); return; }
+  const currentPersona = g.persona_style || 'inherit';
+
+  openModal(`⚙️ Cấu Hình Phong Cách & Ghi Chú: ${escapeHtml(g.name)}`, `
+    <div class="form-group">
+      <label class="form-label">Tên Nhóm Làm Việc</label>
+      <input type="text" class="form-input" id="edit-group-name" value="${escapeHtml(g.name)}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mục Tiêu & Chức Năng Của Nhóm</label>
+      <input type="text" class="form-input" id="edit-group-purpose" value="${escapeHtml(g.purpose || '')}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">🎭 Phong Cách Thái Độ Riêng Cho Nhóm Này (Group Persona)</label>
+      <select class="form-select" id="edit-group-persona" onchange="$('#edit-group-custom-grp').style.display = this.value === 'custom' ? 'block' : 'none'">
+        <option value="inherit" ${currentPersona === 'inherit' ? 'selected' : ''}>🔄 Kế thừa phong cách chung của Bé Heo</option>
+        <option value="default" ${currentPersona === 'default' ? 'selected' : ''}>🌸 Mặc định (Duyên dáng, tôn trọng)</option>
+        <option value="serious" ${currentPersona === 'serious' ? 'selected' : ''}>🏛️ Nghiêm túc hành chính (BLUF, chuẩn xác con số)</option>
+        <option value="sweet" ${currentPersona === 'sweet' ? 'selected' : ''}>🥰 Ngọt ngào & Dẻo miệng (Chu đáo, khéo léo)</option>
+        <option value="professional" ${currentPersona === 'professional' ? 'selected' : ''}>💼 Chuyên nghiệp cấp cao (Executive Staff)</option>
+        <option value="grumpy" ${currentPersona === 'grumpy' ? 'selected' : ''}>😤 Cọc cằn Tsundere (Gắt nhẹ nhưng việc siêu chuẩn)</option>
+        <option value="troll" ${currentPersona === 'troll' ? 'selected' : ''}>🤡 Hài hước & Chọc ngoáy (Tếu táo, meme)</option>
+        <option value="custom" ${currentPersona === 'custom' ? 'selected' : ''}>🎨 Tùy chỉnh (Prompt văn phong riêng)</option>
+      </select>
+    </div>
+    <div class="form-group" id="edit-group-custom-grp" style="display:${currentPersona === 'custom' ? 'block' : 'none'}">
+      <label class="form-label">Lời Dặn Custom Prompt Riêng Cho Nhóm</label>
+      <textarea class="form-textarea" id="edit-group-custom-persona" placeholder="Nhập văn phong riêng cho nhóm này...">${escapeHtml(g.custom_persona || '')}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📝 Ghi Chú & Lưu Ý Riêng Cho Nhóm (Group Directives / Notes)</label>
+      <textarea class="form-textarea" id="edit-group-notes" style="height:80px" placeholder="Ví dụ: Nhóm có đối tác ngoài, tuyệt đối không bàn chuyện tài chính nội bộ; Chỉ Sếp mới có quyền duyệt chi...">${escapeHtml(g.notes || '')}</textarea>
+      <div style="font-size:11px;color:var(--text-sec);margin-top:4px">Bé Heo sẽ ghi nhớ và áp dụng phong cách + lưu ý này trong toàn bộ trao đổi ở nhóm này.</div>
+    </div>
+  `, async () => {
+    const name = $('#edit-group-name').value.trim();
+    if (!name) { showToast('Tên nhóm không được để trống!'); return; }
+    const purpose = $('#edit-group-purpose').value.trim();
+    const persona_style = $('#edit-group-persona').value;
+    const custom_persona = $('#edit-group-custom-persona') ? $('#edit-group-custom-persona').value.trim() : '';
+    const notes = $('#edit-group-notes').value.trim();
+
+    showToast('Đang cập nhật cấu hình nhóm...');
+    const res = await fetch('/api/groups/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: gid, name, purpose, persona_style, custom_persona, notes })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      closeModal();
+      showToast(d.message || 'Đã cập nhật cấu hình nhóm thành công!');
       fetchAllData();
     } else {
       showToast('Lỗi: ' + (d.error || d.message));
@@ -1614,6 +1792,25 @@ function openNewPersonModal() {
         <input type="text" class="form-input" id="new-person-phone" placeholder="+84-...">
       </div>
     </div>
+    <div class="form-group">
+      <label class="form-label">🎭 Phong Thái & Xưng Hô Riêng Với Người Này</label>
+      <select class="form-select" id="new-person-persona" onchange="$('#new-person-custom-grp').style.display = this.value === 'custom' ? 'block' : 'none'">
+        <option value="inherit">🔄 Kế thừa phong cách chung của Bé Heo</option>
+        <option value="boss_respect">👑 Kính cẩn tối đa (Sếp Lớn / Chủ nhân tối cao)</option>
+        <option value="professional">💼 Chuyên nghiệp & Chuẩn mực (Đối tác / Khách VIP)</option>
+        <option value="friendly">🤝 Thân mật & Gần gũi (Đồng nghiệp thân thiết)</option>
+        <option value="cautious">🛡️ Thận trọng & Bảo mật (Cảnh giác thông tin)</option>
+        <option value="custom">🎨 Tùy chỉnh xưng hô riêng</option>
+      </select>
+    </div>
+    <div class="form-group" id="new-person-custom-grp" style="display:none">
+      <label class="form-label">Lời Dặn Xưng Hô Tùy Chỉnh</label>
+      <textarea class="form-textarea" id="new-person-custom-persona" placeholder="Nhập quy tắc xưng hô riêng với người này..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📝 Ghi Chú Hồ Sơ & Lưu Ý Riêng Về Người Này (Dossier Notes)</label>
+      <textarea class="form-textarea" id="new-person-notes" placeholder="Ví dụ: Thích trao đổi ngắn gọn buổi sáng; Hay họp dự án AI; Sở thích cà phê đen..."></textarea>
+    </div>
   `, async () => {
     const name = $('#new-person-name').value.trim();
     if (!name) { showToast('Họ tên không được để trống!'); return; }
@@ -1621,16 +1818,92 @@ function openNewPersonModal() {
     const groups = $('#new-person-group').value.trim();
     const email = $('#new-person-email').value.trim();
     const phone = $('#new-person-phone').value.trim();
+    const persona_style = $('#new-person-persona').value;
+    const custom_persona = $('#new-person-custom-persona') ? $('#new-person-custom-persona').value.trim() : '';
+    const notes = $('#new-person-notes').value.trim();
 
     const res = await fetch('/api/people/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, role, groups, email, phone })
+      body: JSON.stringify({ name, role, groups, email, phone, persona_style, custom_persona, notes })
     });
     const d = await res.json();
     if (d.ok) {
       closeModal();
       showToast(d.message || 'Đã thêm nhân sự thành công!');
+      fetchAllData();
+    } else {
+      showToast('Lỗi: ' + (d.error || d.message));
+    }
+  });
+}
+
+function openEditPersonModal(pid) {
+  const p = (state.people || []).find(item => item.id === pid);
+  if (!p) { showToast('Không tìm thấy thông tin nhân sự!'); return; }
+  const currentPersona = p.persona_style || 'inherit';
+
+  openModal(`⚙️ Cấu Hình Thái Độ & Ghi Chú: ${escapeHtml(p.name)}`, `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Họ Và Tên</label>
+        <input type="text" class="form-input" id="edit-person-name" value="${escapeHtml(p.name)}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Chức Vụ / Vai Trò</label>
+        <input type="text" class="form-input" id="edit-person-role" value="${escapeHtml(p.role || '')}">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Nhóm Trực Thuộc</label>
+        <input type="text" class="form-input" id="edit-person-group" value="${escapeHtml(p.groups || '')}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Số Điện Thoại / Email</label>
+        <input type="text" class="form-input" id="edit-person-phone" value="${escapeHtml(p.phone || p.email || '')}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🎭 Phong Thái & Xưng Hô Riêng Với Người Này</label>
+      <select class="form-select" id="edit-person-persona" onchange="$('#edit-person-custom-grp').style.display = this.value === 'custom' ? 'block' : 'none'">
+        <option value="inherit" ${currentPersona === 'inherit' ? 'selected' : ''}>🔄 Kế thừa phong cách chung của Bé Heo</option>
+        <option value="boss_respect" ${currentPersona === 'boss_respect' ? 'selected' : ''}>👑 Kính cẩn tối đa (Sếp Lớn / Chủ nhân tối cao)</option>
+        <option value="professional" ${currentPersona === 'professional' ? 'selected' : ''}>💼 Chuyên nghiệp & Chuẩn mực (Đối tác / Khách VIP)</option>
+        <option value="friendly" ${currentPersona === 'friendly' ? 'selected' : ''}>🤝 Thân mật & Gần gũi (Đồng nghiệp thân thiết)</option>
+        <option value="cautious" ${currentPersona === 'cautious' ? 'selected' : ''}>🛡️ Thận trọng & Bảo mật (Cảnh giác thông tin)</option>
+        <option value="custom" ${currentPersona === 'custom' ? 'selected' : ''}>🎨 Tùy chỉnh xưng hô riêng</option>
+      </select>
+    </div>
+    <div class="form-group" id="edit-person-custom-grp" style="display:${currentPersona === 'custom' ? 'block' : 'none'}">
+      <label class="form-label">Lời Dặn Xưng Hô Tùy Chỉnh</label>
+      <textarea class="form-textarea" id="edit-person-custom-persona" placeholder="Nhập quy tắc xưng hô riêng với người này...">${escapeHtml(p.custom_persona || '')}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📝 Ghi Chú Hồ Sơ & Lưu Ý Riêng Về Người Này (Person Dossier Memo)</label>
+      <textarea class="form-textarea" id="edit-person-notes" style="height:80px" placeholder="Ví dụ: Anh này thích trao đổi ngắn gọn buổi sáng; Hay họp dự án AI; Sở thích cà phê đen...">${escapeHtml(p.notes || '')}</textarea>
+      <div style="font-size:11px;color:var(--text-sec);margin-top:4px">Bé Heo sẽ lưu giữ hồ sơ này và nhớ ngữ cảnh khi tương tác với người này.</div>
+    </div>
+  `, async () => {
+    const name = $('#edit-person-name').value.trim();
+    if (!name) { showToast('Tên nhân sự không được để trống!'); return; }
+    const role = $('#edit-person-role').value.trim();
+    const groups = $('#edit-person-group').value.trim();
+    const phone = $('#edit-person-phone').value.trim();
+    const persona_style = $('#edit-person-persona').value;
+    const custom_persona = $('#edit-person-custom-persona') ? $('#edit-person-custom-persona').value.trim() : '';
+    const notes = $('#edit-person-notes').value.trim();
+
+    showToast('Đang cập nhật hồ sơ nhân sự...');
+    const res = await fetch('/api/people/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: pid, name, role, groups, phone, persona_style, custom_persona, notes })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      closeModal();
+      showToast(d.message || 'Đã cập nhật hồ sơ thành công!');
       fetchAllData();
     } else {
       showToast('Lỗi: ' + (d.error || d.message));
@@ -1969,9 +2242,9 @@ function renderGroup360View() {
                 <th>Mã Nhóm (GID)</th>
                 <th>Tên Nhóm</th>
                 <th>Mục Tiêu Nhóm</th>
-                <th>Số Thành Viên</th>
-                <th>Trạng Thái</th>
-                <th>Ngày Tạo</th>
+                <th>Phong Thái Thái Độ</th>
+                <th>Ghi Chú & Lưu Ý Riêng</th>
+                <th>Thành Viên</th>
                 <th style="text-align:center">Thao Tác</th>
               </tr>
             </thead>
@@ -1979,12 +2252,17 @@ function renderGroup360View() {
               ${state.groups.map(g => `
                 <tr>
                   <td style="font-family:var(--mono)">${g.id}</td>
-                  <td style="font-weight:700;color:var(--text)">${g.name}</td>
-                  <td class="muted">${g.purpose || 'Nhóm trực chiến doanh nghiệp'}</td>
+                  <td style="font-weight:700;color:var(--text)">${escapeHtml(g.name)}</td>
+                  <td class="muted">${escapeHtml(g.purpose || 'Nhóm trực chiến')}</td>
+                  <td>${getPersonaBadge(g.persona_style || 'inherit')}</td>
+                  <td style="font-size:12px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                    ${g.notes ? `<span title="${escapeHtml(g.notes)}" style="color:var(--brand)">📝 ${escapeHtml(g.notes)}</span>` : '<span class="muted">Chưa có ghi chú</span>'}
+                  </td>
                   <td><span class="badge good">${g.members || 1} thành viên</span></td>
-                  <td><span class="badge good">HOẠT ĐỘNG</span></td>
-                  <td class="muted">${g.created_at || '—'}</td>
-                  <td style="text-align:center"><button class="btn sm danger" onclick="deleteGroup('${g.id}')">Xóa</button></td>
+                  <td style="text-align:center;white-space:nowrap">
+                    <button class="btn sm" style="background:#1e293b;border:1px solid var(--border);color:var(--brand);margin-right:6px" onclick="openEditGroupModal('${g.id}')">⚙️ Cấu Hình / Sửa</button>
+                    <button class="btn sm danger" onclick="deleteGroup('${g.id}')">Xóa</button>
+                  </td>
                 </tr>
               `).join('')}
             </tbody>
@@ -2022,22 +2300,27 @@ function renderPerson360View() {
                 <th>Họ Và Tên</th>
                 <th>Vai Trò</th>
                 <th>Nhóm Trực Thuộc</th>
-                <th>Email / SĐT</th>
-                <th>Mối Quan Hệ</th>
-                <th>Trạng Thái</th>
+                <th>Thái Độ & Xưng Hô</th>
+                <th>Ghi Chú Hồ Sơ Riêng</th>
+                <th>Liên Hệ</th>
                 <th style="text-align:center">Thao Tác</th>
               </tr>
             </thead>
             <tbody>
               ${state.people.map(p => `
                 <tr>
-                  <td style="font-weight:700;color:var(--text)">${p.name}</td>
-                  <td><span class="badge ${p.id === 'P-OWNER' ? 'good' : 'neutral'}">${p.role}</span></td>
-                  <td>${p.groups}</td>
-                  <td style="font-family:var(--mono);font-size:11px" class="muted">${p.phone || p.email}</td>
-                  <td class="muted">${p.rel || 'Đối tác / Thành viên'}</td>
-                  <td><span class="badge good">${p.last || 'Hoạt động'}</span></td>
-                  <td style="text-align:center"><button class="btn sm danger" onclick="deletePerson('${p.id}')">Xóa</button></td>
+                  <td style="font-weight:700;color:var(--text)">${escapeHtml(p.name)}</td>
+                  <td><span class="badge ${p.id === 'P-OWNER' ? 'good' : 'neutral'}">${escapeHtml(p.role)}</span></td>
+                  <td>${escapeHtml(p.groups)}</td>
+                  <td>${getPersonToneBadge(p.persona_style || 'inherit')}</td>
+                  <td style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                    ${p.notes ? `<span title="${escapeHtml(p.notes)}" style="color:var(--brand)">📝 ${escapeHtml(p.notes)}</span>` : '<span class="muted">Chưa có ghi chú</span>'}
+                  </td>
+                  <td style="font-family:var(--mono);font-size:11px" class="muted">${escapeHtml(p.phone || p.email)}</td>
+                  <td style="text-align:center;white-space:nowrap">
+                    <button class="btn sm" style="background:#1e293b;border:1px solid var(--border);color:var(--brand);margin-right:6px" onclick="openEditPersonModal('${p.id}')">⚙️ Cấu Hình / Sửa</button>
+                    <button class="btn sm danger" onclick="deletePerson('${p.id}')">Xóa</button>
+                  </td>
                 </tr>
               `).join('')}
             </tbody>
@@ -2247,13 +2530,23 @@ function renderAssistantHub() {
 function renderAssistantChatView() {
   return `
     <div class="card" style="display:flex;flex-direction:column;height:calc(100vh - 220px)">
-      <!-- Tool Attach Shortcuts -->
-      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:#090e1a;flex-wrap:wrap">
-        <span class="text-sm muted">Chỉ đạo nhanh:</span>
-        <button class="btn sm" onclick="sendChatPrompt('Lập báo cáo tiến độ công việc hôm nay dạng Word')">📄 Báo Cáo Word</button>
-        <button class="btn sm" onclick="sendChatPrompt('Tạo bảng tính dự toán chi phí Heo OS bằng Excel')">📊 Bảng Tính Excel</button>
-        <button class="btn sm" onclick="sendChatPrompt('Sinh bản beat Lo-Fi acoustic êm dịu thư giãn')">🎵 Beat Lo-Fi WAV</button>
-        <button class="btn sm" onclick="sendChatPrompt('Vẽ tranh minh họa Bé Heo Cyberpunk vector AI')">🎨 Tranh Vector AI</button>
+      <!-- Tool Attach Shortcuts & Context Selector -->
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#090e1a;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="text-sm muted">Chỉ đạo nhanh:</span>
+          <button class="btn sm" onclick="sendChatPrompt('Lập báo cáo tiến độ công việc hôm nay dạng Word')">📄 Báo Cáo Word</button>
+          <button class="btn sm" onclick="sendChatPrompt('Tạo bảng tính dự toán chi phí Heo OS bằng Excel')">📊 Bảng Tính Excel</button>
+          <button class="btn sm" onclick="sendChatPrompt('Sinh bản beat Lo-Fi acoustic êm dịu thư giãn')">🎵 Beat Lo-Fi WAV</button>
+          <button class="btn sm" onclick="sendChatPrompt('Vẽ tranh minh họa Bé Heo Cyberpunk vector AI')">🎨 Tranh Vector AI</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <label class="text-sm muted" style="white-space:nowrap;font-size:12px">🎭 Ngữ Cảnh Thử Nghiệm:</label>
+          <select class="form-select sm" id="chat-context-select" style="max-width:240px;height:28px;padding:2px 8px;font-size:11px">
+            <option value="global">🌐 Toàn Cục (Trực tiếp với Sếp)</option>
+            ${state.groups.map(g => `<option value="group:${g.id}">👥 Nhóm: ${escapeHtml(g.name)} (${g.persona_style || 'kế thừa'})</option>`).join('')}
+            ${state.people.map(p => `<option value="person:${p.id}">👤 Nhân sự: ${escapeHtml(p.name)} (${p.persona_style || 'kế thừa'})</option>`).join('')}
+          </select>
+        </div>
       </div>
 
       <!-- Chat Log Area -->
@@ -2261,7 +2554,7 @@ function renderAssistantChatView() {
         <div style="display:flex;gap:12px;align-items:flex-start">
           <div class="brand-logo" style="width:30px;height:30px;font-size:16px;flex-shrink:0">🐷</div>
           <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:8px;padding:12px 16px;max-width:80%">
-            <div style="font-weight:700;color:var(--brand);margin-bottom:4px">Bé Heo Assistant</div>
+            <div style="font-weight:700;color:var(--brand);margin-bottom:4px">Bé Heo Assistant (${state.config.bot_persona || 'default'})</div>
             <div style="color:var(--text);font-size:13px;line-height:1.6">
               Dạ Em chào ${state.config.boss_name || 'Sếp Cơ La'}! Em Bé Heo đã sẵn sàng hỗ trợ Sếp điều hành công việc với 100% dữ liệu thật và không dùng token tốn phí (Core Antigravity 0đ Token). Hôm nay Sếp có chỉ đạo gì cho em ạ? 🥰✨
             </div>
@@ -2278,76 +2571,174 @@ function renderAssistantChatView() {
   `;
 }
 
+function getPersonaSpeechPreview(styleId) {
+  const previews = {
+    default: '🌸 "Dạ Sếp Cơ La! Em Bé Heo nghe đây ạ. Em đã sẵn sàng hỗ trợ Sếp giải quyết công việc hôm nay rồi nhé! 🥰✨"',
+    serious: '🏛️ "Kính báo cáo Sếp Cơ La. Yêu cầu công việc đã được ghi nhận vào hệ thống. Đang tiến hành xử lý chuẩn xác từng số liệu thực chứng."',
+    sweet: '🥰 "Dạ Sếp kính yêu của em! Em nghe lời Sếp dặn rồi ạ, có em bên cạnh phục vụ chu đáo thì Sếp cứ yên tâm công tác nhé ạ! 🌸💖"',
+    professional: '💼 "Kính chào Sếp Cơ La. Heo Executive Advisor đã sẵn sàng kích hoạt quy chuẩn phân tích logic BLUF & MECE nhằm tối ưu hóa quyết định điều hành."',
+    grumpy: '😤 "Lại việc nữa hả Sếp? Biết rồi, mệt ghê á... Nhưng mà giao việc cho em là chuẩn bài rồi, em làm xong ngay đây, cấm ai đụng vào Sếp nha!"',
+    troll: '🤡 "Helu Sếp iu vấu! Quả kèo này mặn mòi phết! Để Bé Heo bật mode max ping flex tài năng cho Sếp xem độ uy tín nè! 🔥"',
+    custom: '🎨 "Dạ Sếp! Em đang phản hồi theo đúng văn phong tùy chỉnh mà Sếp đã huấn luyện riêng cho em trong phần Custom Persona Prompt."'
+  };
+  return previews[styleId] || previews.default;
+}
+
+function selectPersonaStyle(styleId) {
+  const sel = $('#cfg-persona-style');
+  if (sel) {
+    sel.value = styleId;
+    toggleCustomPersonaPrompt(styleId);
+  }
+  document.querySelectorAll('.persona-card-item').forEach(el => {
+    if (el.dataset.style === styleId) {
+      el.classList.add('active');
+      const title = el.querySelector('.persona-card-title');
+      if (title && !title.querySelector('.sel-chk')) {
+        title.innerHTML += '<span class="sel-chk" style="color:var(--brand);font-size:14px">✔</span>';
+      }
+    } else {
+      el.classList.remove('active');
+      const chk = el.querySelector('.sel-chk');
+      if (chk) chk.remove();
+    }
+  });
+  const badge = $('#active-persona-badge');
+  if (badge) badge.textContent = styleId.toUpperCase();
+  const box = $('#persona-preview-box');
+  if (box) box.innerHTML = getPersonaSpeechPreview(styleId);
+}
+
 function renderHeoSettingsView() {
   const cfg = state.config || {};
+  const currentPersona = cfg.bot_persona || 'default';
+
+  const personaList = [
+    { id: 'default', icon: '🌸', name: 'Mặc Định', sub: 'Duyên dáng, nhiệt tình', desc: 'Ấm áp, nhã nhặn, tôn kính Sếp, emoji vừa phải (🥰, ✨, 👌).' },
+    { id: 'serious', icon: '🏛️', name: 'Nghiêm Túc', sub: 'Kỷ luật hành chính', desc: 'Chuẩn mực văn phòng, chuẩn xác từng con số, không bông đùa, không emoji.' },
+    { id: 'sweet', icon: '🥰', name: 'Ngọt Ngào', sub: 'Dẻo miệng, nịnh Sếp', desc: 'Ngọt như mía lùi, tài ăn nói khéo léo, tôn vinh tài năng của Sếp (🌸, 🥰, 💖).' },
+    { id: 'professional', icon: '💼', name: 'Chuyên Nghiệp', sub: 'Cố vấn Executive', desc: 'Cố vấn cấp cao, chuẩn quốc tế BLUF & MECE, đánh giá rủi ro và giải pháp sắc bén.' },
+    { id: 'grumpy', icon: '😤', name: 'Cọc Cằn', sub: 'Tsundere bảo vệ Sếp', desc: 'Cộc lốc, hay cằn nhằn "Lại việc nữa hả", nhưng tay làm chuẩn 100%, bảo vệ Sếp tuyệt đối.' },
+    { id: 'troll', icon: '🤡', name: 'Hài Hước', sub: 'Tếu táo, meme', desc: 'Mặn mòi, cà khịa duyên dáng, bắt trend meme, tạo tiếng cười giải tỏa căng thẳng.' },
+    { id: 'custom', icon: '🎨', name: 'Tùy Chỉnh', sub: 'Prompt riêng của Sếp', desc: 'Tự do định nghĩa tính cách, lời răn và văn phong riêng biệt theo ý muốn của Sếp.' }
+  ];
 
   return `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-      <!-- Boss Configuration -->
-      <div class="card card-pad">
-        <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:14px">
-          👑 Thiết Lập Chủ Sở Hữu (Boss Configuration)
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tên Chủ Nhân (Boss Name)</label>
-          <input type="text" class="form-input" id="cfg-boss-name" value="${cfg.boss_name || 'Sếp Cơ La'}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Danh Xưng Gọi Sếp (Boss Caller Name)</label>
-          <input type="text" class="form-input" id="cfg-boss-caller" value="${cfg.boss_caller_name || 'Sếp'}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Zalo UID Của Sếp (Owner UID)</label>
-          <input type="text" class="form-input" id="cfg-boss-uid" value="${cfg.boss_uid || ''}" placeholder="Zalo UID của Sếp (cần điền để nhận lệnh)...">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email Tác Quyền Chủ Nhân</label>
-          <input type="text" class="form-input" id="cfg-boss-email" value="${cfg.boss_email || ''}" placeholder="Email tác quyền..." disabled style="opacity:0.7">
-        </div>
-        <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:16px">
-          <input type="checkbox" id="cfg-auto-claim" ${cfg.auto_claim_boss ? 'checked' : ''}>
-          <label for="cfg-auto-claim" style="font-size:12px;color:var(--text);cursor:pointer">
-            Tự động nhận diện Sếp khi tài khoản mới kết bạn gửi đúng mã PIN
-          </label>
+    <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start">
+      <!-- Cột Trái: Thiết Lập Chủ Sở Hữu & Lời Dặn Điều Hành Toàn Cục -->
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <!-- Boss Configuration Card -->
+        <div class="card card-pad">
+          <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px">
+            <span>👑 Thiết Lập Tác Quyền Chủ Nhân (Owner & Boss)</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tên Chủ Nhân (Boss Name)</label>
+            <input type="text" class="form-input" id="cfg-boss-name" value="${escapeHtml(cfg.boss_name || 'Sếp Cơ La')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Danh Xưng Gọi Sếp (Boss Caller Name)</label>
+            <input type="text" class="form-input" id="cfg-boss-caller" value="${escapeHtml(cfg.boss_caller_name || 'Sếp')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Zalo UID Của Sếp (Owner UID)</label>
+            <input type="text" class="form-input" id="cfg-boss-uid" value="${escapeHtml(cfg.boss_uid || '')}" placeholder="Zalo UID của Sếp (để nhận lệnh)...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Tác Quyền Tối Cao</label>
+            <input type="text" class="form-input" id="cfg-boss-email" value="${escapeHtml(cfg.boss_email || 'genesis.corp.os@gmail.com')}" disabled style="opacity:0.7">
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:14px">
+            <input type="checkbox" id="cfg-auto-claim" ${cfg.auto_claim_boss ? 'checked' : ''}>
+            <label for="cfg-auto-claim" style="font-size:12px;color:var(--text);cursor:pointer">
+              Tự động nhận diện Sếp khi tài khoản mới gửi đúng mã PIN
+            </label>
+          </div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <button class="btn sm danger" onclick="openUnpairBossModal()">Hủy Ghép Nối (Unpair)</button>
+            <button class="btn primary sm" onclick="saveHeoConfig()">Lưu Thiết Lập Sếp</button>
+          </div>
         </div>
 
-        <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-          <button class="btn sm danger" onclick="openUnpairBossModal()">Hủy Ghép Nối Chủ Nhân (Unpair)</button>
-          <button class="btn primary" onclick="saveHeoConfig()">Lưu Thiết Lập Sếp</button>
+        <!-- Global Notes / Directives Card -->
+        <div class="card card-pad" style="border:1px solid rgba(16,185,129,0.3);background:linear-gradient(135deg, rgba(16,185,129,0.04), rgba(59,130,246,0.04))">
+          <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:8px">
+            <span>📝 Cài Đặt Ghi Chú Chung & Lời Dặn Cốt Lõi (Global Executive Directives)</span>
+          </div>
+          <p class="muted" style="font-size:12px;margin-bottom:12px;line-height:1.5">
+            Các chỉ đạo, cấm kỵ và khẩu vị làm việc mang tính toàn cục mà Bé Heo <strong>bắt buộc phải ghi nhớ</strong> khi phản hồi ở bất kỳ đâu (Zalo, WhatsApp, Web Console).
+          </p>
+          <div class="form-group">
+            <textarea class="form-textarea" id="cfg-bot-global-notes" style="height:120px;font-size:13px;line-height:1.6" placeholder="Nhập lời dặn chung (VD: Tuyệt đối bảo mật thông tin tài chính và dự án Phoenix; Khi giải quyết việc gấp luôn ưu tiên trước; Không xưng hô cợt nhả với người ngoài; Luôn dùng tiếng Việt chuẩn mực...).">${escapeHtml(cfg.bot_global_notes || '')}</textarea>
+          </div>
+          <button class="btn primary" style="width:100%;justify-content:center" onclick="saveHeoConfig()">
+            💾 Lưu Ghi Chú & Lời Dặn Điều Hành
+          </button>
         </div>
       </div>
 
-      <!-- Assistant Persona Configuration -->
+      <!-- Cột Phải: Persona Studio & 7 Sắc Thái Trực Quan -->
       <div class="card card-pad">
-        <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:14px">
-          🐷 Thiết Lập Bé Heo & 7 Sắc Thái
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
+            <span>🎭 Studio 7 Phong Cách Thái Độ Của Bé Heo (Persona Attitude)</span>
+          </div>
+          <span class="badge good" id="active-persona-badge">${currentPersona.toUpperCase()}</span>
         </div>
+
         <div class="form-group">
           <label class="form-label">Tên Trợ Lý (Bot Name)</label>
-          <input type="text" class="form-input" id="cfg-bot-name" value="${cfg.bot_name || 'Bé Heo'}">
+          <input type="text" class="form-input" id="cfg-bot-name" value="${escapeHtml(cfg.bot_name || 'Bé Heo')}">
         </div>
         <div class="form-group">
           <label class="form-label">Lời Giới Thiệu Trợ Lý (Bot About)</label>
-          <textarea class="form-textarea" id="cfg-bot-about">${cfg.bot_about || ''}</textarea>
+          <textarea class="form-textarea" id="cfg-bot-about" style="height:70px">${escapeHtml(cfg.bot_about || '')}</textarea>
         </div>
-        <div class="form-group">
-          <label class="form-label">Phong Thái Phản Hồi (Persona Style)</label>
-          <select class="form-select" id="cfg-persona-style" onchange="toggleCustomPersonaPrompt(this.value)">
-            <option value="default" ${cfg.bot_persona === 'default' ? 'selected' : ''}>Mặc định (Duyên dáng, tôn kính Sếp)</option>
-            <option value="serious" ${cfg.bot_persona === 'serious' ? 'selected' : ''}>Nghiêm túc hành chính (Chuẩn xác con số)</option>
-            <option value="sweet" ${cfg.bot_persona === 'sweet' ? 'selected' : ''}>Ngọt ngào & Chu đáo (Em - Sếp chu đáo)</option>
-            <option value="professional" ${cfg.bot_persona === 'professional' ? 'selected' : ''}>Chuyên nghiệp cấp cao (Executive Staff)</option>
-            <option value="grumpy" ${cfg.bot_persona === 'grumpy' ? 'selected' : ''}>Đanh đá bảo vệ Sếp (Trước đối tác ngoài)</option>
-            <option value="troll" ${cfg.bot_persona === 'troll' ? 'selected' : ''}>Hài hước giải tỏa căng thẳng</option>
-            <option value="custom" ${cfg.bot_persona === 'custom' ? 'selected' : ''}>Tùy chỉnh (Custom Persona Prompt)</option>
-          </select>
+
+        <!-- Visual Selector for 7 Persona Styles -->
+        <label class="form-label" style="margin-top:14px">Chọn 1 Trong 7 Phong Cách Thái Độ (Click chọn trực quan):</label>
+        <div class="persona-card-grid">
+          ${personaList.map(p => `
+            <div class="persona-card-item ${p.id === currentPersona ? 'active' : ''}" data-style="${p.id}" onclick="selectPersonaStyle('${p.id}')">
+              <div class="persona-card-title">
+                <span>${p.icon} ${p.name}</span>
+                ${p.id === currentPersona ? '<span class="sel-chk" style="color:var(--brand);font-size:14px">✔</span>' : ''}
+              </div>
+              <div style="font-size:10px;font-weight:600;color:var(--brand)">${p.sub}</div>
+              <div class="persona-card-desc">${p.desc}</div>
+            </div>
+          `).join('')}
         </div>
-        <div class="form-group" id="custom-persona-group" style="display:${cfg.bot_persona === 'custom' ? 'block' : 'none'}">
-          <label class="form-label">Lời Dặn Custom Persona</label>
-          <textarea class="form-textarea" id="cfg-custom-persona" placeholder="Nhập lời dặn văn phong riêng biệt...">${cfg.bot_custom_persona || ''}</textarea>
+
+        <!-- Hidden Select for form sync -->
+        <select class="form-select" id="cfg-persona-style" style="display:none" onchange="toggleCustomPersonaPrompt(this.value)">
+          <option value="default" ${currentPersona === 'default' ? 'selected' : ''}>default</option>
+          <option value="serious" ${currentPersona === 'serious' ? 'selected' : ''}>serious</option>
+          <option value="sweet" ${currentPersona === 'sweet' ? 'selected' : ''}>sweet</option>
+          <option value="professional" ${currentPersona === 'professional' ? 'selected' : ''}>professional</option>
+          <option value="grumpy" ${currentPersona === 'grumpy' ? 'selected' : ''}>grumpy</option>
+          <option value="troll" ${currentPersona === 'troll' ? 'selected' : ''}>troll</option>
+          <option value="custom" ${currentPersona === 'custom' ? 'selected' : ''}>custom</option>
+        </select>
+
+        <!-- Custom Prompt Textarea -->
+        <div class="form-group" id="custom-persona-group" style="display:${currentPersona === 'custom' ? 'block' : 'none'};margin-top:12px">
+          <label class="form-label">Lời Dặn Custom Persona (Dành riêng cho phong cách tùy chỉnh)</label>
+          <textarea class="form-textarea" id="cfg-custom-persona" style="height:90px" placeholder="Nhập chi tiết văn phong, tính cách riêng biệt mà Sếp muốn Bé Heo mô phỏng...">${escapeHtml(cfg.bot_custom_persona || '')}</textarea>
         </div>
-        <button class="btn primary" style="width:100%;justify-content:center;margin-top:10px" onclick="saveHeoConfig()">
-          Lưu Cấu Hình Bé Heo
+
+        <!-- Live Persona Speech Preview Box -->
+        <div style="margin-top:14px;padding:12px 14px;background:var(--bg-body);border:1px solid var(--border);border-radius:8px">
+          <div style="font-size:11px;font-weight:700;color:var(--text-sec);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <span>📢 Xem Trước Giọng Điệu (Live Speech Preview):</span>
+          </div>
+          <div id="persona-preview-box" style="font-size:13px;color:var(--text);font-style:italic;line-height:1.5">
+            ${getPersonaSpeechPreview(currentPersona)}
+          </div>
+        </div>
+
+        <button class="btn primary" style="width:100%;justify-content:center;margin-top:16px" onclick="saveHeoConfig()">
+          💾 Lưu Toàn Bộ Cấu Hình Bé Heo & 7 Sắc Thái
         </button>
       </div>
     </div>
@@ -2473,15 +2864,39 @@ function renderRunnersHubView() {
   `;
 }
 
-async function saveHeoConfig() {
-  const boss_name = $('#cfg-boss-name').value.trim();
-  const boss_caller_name = $('#cfg-boss-caller').value.trim();
-  const boss_uid = $('#cfg-boss-uid').value.trim();
-  const auto_claim_boss = $('#cfg-auto-claim').checked;
-  const bot_name = $('#cfg-bot-name').value.trim();
-  const bot_about = $('#cfg-bot-about').value.trim();
-  const bot_persona = $('#cfg-persona-style').value;
+async function saveHeoConfig(forcedPin) {
+  let pin = forcedPin || sessionStorage.getItem('admin_pin') || '';
+  if (state.has_pin && !pin) {
+    openModal('Xác Thực Mã PIN Quản Trị Viên', `
+      <div style="margin-bottom:12px;color:var(--text-muted);font-size:13px">
+        Hệ thống đang được bảo vệ bằng mã PIN bảo mật. Vui lòng nhập mã PIN Admin để lưu các thay đổi cấu hình & lời dặn điều hành:
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mã PIN Quản Trị</label>
+        <input type="password" class="form-input" id="cfg-save-pin" placeholder="Nhập PIN (4-16 số)..." autofocus>
+      </div>
+    `, async () => {
+      const enteredPin = $('#cfg-save-pin') ? $('#cfg-save-pin').value.trim() : '';
+      if (!enteredPin) {
+        showToast('Vui lòng nhập mã PIN!');
+        return;
+      }
+      sessionStorage.setItem('admin_pin', enteredPin);
+      closeModal();
+      saveHeoConfig(enteredPin);
+    });
+    return;
+  }
+
+  const boss_name = $('#cfg-boss-name') ? $('#cfg-boss-name').value.trim() : '';
+  const boss_caller_name = $('#cfg-boss-caller') ? $('#cfg-boss-caller').value.trim() : '';
+  const boss_uid = $('#cfg-boss-uid') ? $('#cfg-boss-uid').value.trim() : '';
+  const auto_claim_boss = $('#cfg-auto-claim') ? $('#cfg-auto-claim').checked : true;
+  const bot_name = $('#cfg-bot-name') ? $('#cfg-bot-name').value.trim() : '';
+  const bot_about = $('#cfg-bot-about') ? $('#cfg-bot-about').value.trim() : '';
+  const bot_persona = $('#cfg-persona-style') ? $('#cfg-persona-style').value : 'default';
   const bot_custom_persona = $('#cfg-custom-persona') ? $('#cfg-custom-persona').value.trim() : '';
+  const bot_global_notes = $('#cfg-bot-global-notes') ? $('#cfg-bot-global-notes').value.trim() : '';
 
   showToast('Đang lưu cấu hình...');
   const res = await fetch('/api/config', {
@@ -2489,14 +2904,19 @@ async function saveHeoConfig() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       boss_name, boss_caller_name, boss_uid, auto_claim_boss,
-      bot_name, bot_about, bot_persona, bot_custom_persona
+      bot_name, bot_about, bot_persona, bot_custom_persona, bot_global_notes,
+      pin
     })
   });
   const d = await res.json();
   if (d.ok) {
+    if (pin) sessionStorage.setItem('admin_pin', pin);
     showToast(d.message);
     fetchAllData();
   } else {
+    if (d.message && d.message.includes('PIN')) {
+      sessionStorage.removeItem('admin_pin');
+    }
     showToast('Lỗi: ' + (d.error || d.message));
   }
 }
@@ -2594,11 +3014,29 @@ async function sendChatMessage() {
   const msg = inp.value.trim();
   if (!msg) return;
 
+  const ctxSelect = $('#chat-context-select');
+  const ctxVal = ctxSelect ? ctxSelect.value : 'global';
+  let group_id = '*';
+  let person_id = '*';
+  let contextLabel = 'Toàn Cục (Executive)';
+  if (ctxVal.startsWith('group:')) {
+    group_id = ctxVal.replace('group:', '');
+    const grp = (state.groups || []).find(g => g.id === group_id);
+    if (grp) contextLabel = `Nhóm: ${grp.name}`;
+  } else if (ctxVal.startsWith('person:')) {
+    person_id = ctxVal.replace('person:', '');
+    const prs = (state.people || []).find(p => p.id === person_id);
+    if (prs) contextLabel = `Nhân sự: ${prs.name}`;
+  }
+
   const box = $('#chat-messages');
   box.innerHTML += `
     <div style="display:flex;gap:12px;align-items:flex-start;justify-content:flex-end">
       <div style="background:#1e293b;border:1px solid var(--border);border-radius:8px;padding:12px 16px;max-width:80%">
-        <div style="font-weight:700;color:#38bdf8;margin-bottom:4px;text-align:right">${state.config.boss_name || 'Sếp Cơ La'}</div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:4px">
+          <span class="badge neutral" style="font-size:10px">${contextLabel}</span>
+          <span style="font-weight:700;color:#38bdf8">${state.config.boss_name || 'Sếp Cơ La'}</span>
+        </div>
         <div style="color:var(--text);font-size:13px;line-height:1.6">${msg}</div>
       </div>
     </div>
@@ -2610,7 +3048,7 @@ async function sendChatMessage() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg })
+      body: JSON.stringify({ message: msg, group_id, person_id })
     });
     const d = await res.json();
     if (d.ok) {
@@ -2688,7 +3126,39 @@ function renderInsightsView() {
       </div>
     `;
   }
-  return `<div class="card card-pad">Insights List</div>`;
+  return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">✦ Thông Tin Chi Tiết & Rủi Ro Phát Hiện (${state.insights.length})</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Mức Độ</th>
+              <th>Tiêu Đề</th>
+              <th>Nguồn</th>
+              <th>Phân Loại</th>
+              <th>Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.insights.map(i => `
+              <tr>
+                <td style="font-family:var(--mono)">${i.id}</td>
+                <td><span class="badge ${i.severity === 'HIGH' ? 'bad' : i.severity === 'MEDIUM' ? 'warn' : 'neutral'}">${i.severity || 'INFO'}</span></td>
+                <td style="font-weight:600">${i.title}</td>
+                <td class="muted">${i.source || 'Hệ thống'}</td>
+                <td>${i.category || 'General'}</td>
+                <td><span class="badge good">${i.status || 'Active'}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
 }
 
 function renderOutcomesView() {
@@ -2704,7 +3174,98 @@ function renderOutcomesView() {
       </div>
     `;
   }
-  return `<div class="card card-pad">Outcomes List</div>`;
+  return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">◈ Bảng Giá Trị Thực Chứng Kinh Tế (Outcomes - ${state.outcomes.length})</div>
+        <button class="btn primary sm" onclick="openNewOutcomeModal()">+ Ghi Nhận Outcome Mới</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Tiêu Đề Kết Quả</th>
+              <th>Công Việc Liên Quan</th>
+              <th>Mức Độ Tác Động</th>
+              <th>Giá Trị Kinh Tế</th>
+              <th>Chứng Thực</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.outcomes.map(o => `
+              <tr>
+                <td style="font-family:var(--mono);font-weight:600">${o.id}</td>
+                <td style="font-weight:600">${o.title}</td>
+                <td class="muted">${o.work_id || '-'}</td>
+                <td><span class="badge ${o.impact_score === 'High' ? 'good' : 'neutral'}">${o.impact_score || 'Medium'}</span></td>
+                <td style="color:var(--brand);font-weight:700">${o.economic_value || '0 VNĐ'}</td>
+                <td><span class="badge ${o.attribution === 'VERIFIED' ? 'good' : 'warn'}">${o.attribution || 'ESTIMATED'}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function openNewOutcomeModal() {
+  openModal('Ghi Nhận Kết Quả / Giá Trị Thực Tế (Outcome)', `
+    <div class="form-group">
+      <label class="form-label">Tiêu Đề Kết Quả</label>
+      <input type="text" class="form-input" id="new-outcome-title" placeholder="Tự động hóa báo cáo tuần, Tiết kiệm 50h lao động...">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Công Việc Liên Kết</label>
+        <select class="form-select" id="new-outcome-work">
+          ${state.works.map(w => `<option value="${w.id}">${w.title} (${w.id})</option>`).join('')}
+          <option value="General">Toàn hệ thống (General)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mức Độ Tác Động</label>
+        <select class="form-select" id="new-outcome-impact">
+          <option value="High">Cao (High)</option>
+          <option value="Medium" selected>Vừa (Medium)</option>
+          <option value="Low">Nhỏ (Low)</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Giá Trị Kinh Tế Ước Tính</label>
+        <input type="text" class="form-input" id="new-outcome-value" placeholder="Ví dụ: 50,000,000 VNĐ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Chứng Thực (Attribution)</label>
+        <select class="form-select" id="new-outcome-attr">
+          <option value="ESTIMATED">Ước Tính (ESTIMATED)</option>
+          <option value="VERIFIED" selected>Đã Kiểm Chứng (VERIFIED)</option>
+        </select>
+      </div>
+    </div>
+  `, async () => {
+    const title = $('#new-outcome-title').value.trim();
+    if (!title) { showToast('Tiêu đề không được để trống!'); return; }
+    const work_id = $('#new-outcome-work').value;
+    const impact_score = $('#new-outcome-impact').value;
+    const economic_value = $('#new-outcome-value').value.trim() || '0 VNĐ';
+    const attribution = $('#new-outcome-attr').value;
+
+    const res = await fetch('/api/outcomes/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, work_id, impact_score, economic_value, attribution })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      closeModal();
+      showToast(d.message || 'Đã ghi nhận Outcome thành công!');
+      fetchAllData();
+    }
+  });
 }
 
 function renderArtifactsView() {
@@ -2856,7 +3417,61 @@ function renderApprovalsView() {
       </div>
     `;
   }
-  return `<div class="card card-pad">Approvals List</div>`;
+  return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🛡️ Hàng Đợi Phê Duyệt An Ninh (${state.approvals.length})</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã Yêu Cầu</th>
+              <th>Hành Động</th>
+              <th>Mục Tiêu</th>
+              <th>Nội Dung / Tóm Tắt</th>
+              <th>Trạng Thái</th>
+              <th>Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.approvals.map(a => `
+              <tr>
+                <td style="font-family:var(--mono);font-weight:600">${a.id}</td>
+                <td><span class="badge neutral">${a.action}</span></td>
+                <td>${a.target || '*'}</td>
+                <td>${a.summary || a.content || '-'}</td>
+                <td><span class="badge ${a.status === 'APPROVED' ? 'good' : a.status === 'DENIED' ? 'bad' : 'warn'}">${a.status || 'PENDING'}</span></td>
+                <td>
+                  ${a.status === 'PENDING' || !a.status ? `
+                    <div style="display:flex;gap:6px">
+                      <button class="btn sm primary" onclick="actionApproval('${a.id}', 'approve')">Phê Duyệt</button>
+                      <button class="btn sm danger" onclick="actionApproval('${a.id}', 'deny')">Từ Chối</button>
+                    </div>
+                  ` : `<span class="muted text-sm">${a.decided_by || 'Đã xử lý'}</span>`}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+async function actionApproval(id, action) {
+  const res = await fetch('/api/approvals/action', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, action })
+  });
+  const d = await res.json();
+  if (d.ok) {
+    showToast(`Đã ${action === 'approve' ? 'phê duyệt' : 'từ chối'} yêu cầu ${id}!`);
+    fetchAllData();
+  } else {
+    showToast(d.error || 'Lỗi xử lý phê duyệt');
+  }
 }
 
 function renderAuditsView() {
@@ -3070,6 +3685,296 @@ async function runHealthWizard() {
     }
   } catch (e) {
     showToast('Lỗi: ' + e.message);
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+// ==========================================
+// MODULE & SKILLS HUB
+// ==========================================
+function renderModulesHub() {
+  const currentSub = state.subtabs.modules || 'plugins';
+  const installedCount = state.plugins.length;
+  const skillsCount = state.skills.length;
+  const catalogCount = state.catalog.length;
+
+  return `
+    <div class="hub-header">
+      <div class="hub-header-top">
+        <div>
+          <h1 class="hub-title">🧩 Trung Tâm Quản Trị Module Plugins & Skills</h1>
+          <p class="hub-desc">
+            Khung gầm DSH "Everything is a Plugin" · Quản lý vòng đời 11 Plugins · 8 Kỹ năng điều hành Bé Heo · Cài đặt mở rộng từ Main Repo
+          </p>
+        </div>
+      </div>
+
+      <!-- Hub Subtabs (Hàng ngang chuẩn) -->
+      <div class="hub-subnav" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button class="hub-subnav-btn ${currentSub === 'plugins' ? 'active' : ''}" onclick="switchSubtab('modules', 'plugins')">
+            🧩 Module Plugins Đang Nạp (${installedCount})
+          </button>
+          <button class="hub-subnav-btn ${currentSub === 'skills' ? 'active' : ''}" onclick="switchSubtab('modules', 'skills')">
+            🎯 Kỹ Năng Bé Heo (${skillsCount})
+          </button>
+          <button class="hub-subnav-btn ${currentSub === 'marketplace' ? 'active' : ''}" onclick="switchSubtab('modules', 'marketplace')">
+            🏪 Kho Thư Viện Main Repo (${catalogCount})
+          </button>
+        </div>
+        <div>
+          <button class="btn primary sm" onclick="fetchAllData()" style="height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 14px;white-space:nowrap">
+            🔄 Làm Mới Danh Mục
+          </button>
+        </div>
+      </div>
+    </div>
+
+    ${currentSub === 'plugins' ? renderInstalledPluginsView() : currentSub === 'skills' ? renderExecutiveSkillsView() : renderMarketplaceCatalogView()}
+  `;
+}
+
+function renderInstalledPluginsView() {
+  return `
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Tổng Số Module Đang Nạp</div>
+        <div class="kpi-val" style="color:var(--brand)">${state.plugins.length}</div>
+        <div class="kpi-sub">Chuẩn Chassis DeepSeek Harness</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Circuit Breaker Bảo Vệ</div>
+        <div class="kpi-val" style="color:var(--brand)">100%</div>
+        <div class="kpi-sub">Tự ngắt khi gặp lỗi - Không sập chéo</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Tác Quyền Sáng Lập</div>
+        <div class="kpi-val" style="color:#38bdf8">Anh Cơ La</div>
+        <div class="kpi-sub">genesis.corp.os@gmail.com</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Khung Kiến Trúc</div>
+        <div class="kpi-val" style="color:var(--p2)">V6 OS</div>
+        <div class="kpi-sub">Everything is a Plugin</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🧩 Danh Sách 11 Module Plugin Cấu Thành Hệ Điều Hành Heo OS</div>
+        <span class="badge good">${state.plugins.length} Active Modules</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));gap:14px;padding:16px">
+        ${state.plugins.map(p => {
+          const cb = p.circuit_breaker || {};
+          const isEnabled = p.enabled;
+          return `
+            <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;justify-content:space-between">
+              <div>
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-size:22px">${p.icon || '🧩'}</span>
+                    <div>
+                      <div style="font-weight:700;font-size:13px;color:var(--text)">${p.name}</div>
+                      <div style="font-family:var(--mono);font-size:10px;color:var(--text-faint)">${p.id}</div>
+                    </div>
+                  </div>
+                  <span class="badge ${isEnabled ? 'good' : 'neutral'}">${isEnabled ? 'BẬT' : 'TẮT'}</span>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);margin:8px 0;line-height:1.4">
+                  ${p.description || 'Module thành phần trực thuộc khung sườn Heo-Harness.'}
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+                  <span class="badge neutral" style="font-size:10px">v${p.version || '1.0.0'}</span>
+                  <span class="badge neutral" style="font-size:10px">${p.category || 'plugin'}</span>
+                  <span class="badge ${cb.status === 'CLOSED (HEALTHY)' ? 'good' : 'warn'}" style="font-size:10px">CB: ${cb.status || 'CLOSED'} (${cb.failure_count || 0}/${cb.max_failures || 3})</span>
+                </div>
+              </div>
+              <div style="padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
+                <span class="text-sm muted">Tác giả: ${p.author || 'Anh Cơ La'}</span>
+                <div style="display:flex;gap:6px">
+                  ${p.id === 'heo-persona-heo-attitude' ? `
+                    <button class="btn sm" style="background:#1e293b;border:1px solid var(--brand);color:var(--brand)" onclick="switchHub('assistant', 'heo_cfg')">
+                      🎭 Chỉnh Phong Thái & Ghi Chú
+                    </button>
+                  ` : ''}
+                  <button class="btn sm ${isEnabled ? 'danger' : 'primary'}" onclick="togglePluginModule('${p.id}', ${!isEnabled})">
+                    ${isEnabled ? 'Tạm Dừng' : 'Kích Hoạt'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderExecutiveSkillsView() {
+  return `
+    <div class="card card-pad" style="margin-bottom:16px;background:linear-gradient(135deg, rgba(16,185,129,0.06), rgba(59,130,246,0.06));border:1px solid rgba(16,185,129,0.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-weight:700;font-size:15px;color:var(--text)">🎯 8 Bộ Kỹ Năng Nghiệp Vụ Cấp Cao (Executive Skills) Của Bé Heo</div>
+          <div class="muted" style="font-size:12px;margin-top:4px">
+            Được kế thừa từ bộ chuẩn nghiệp vụ Heo-Agent v2.1. Triệt tiêu mùi AI, tuân thủ nguyên tắc BLUF, Corporate Navy Sheets, và chăm sóc đối tác tinh tế.
+          </div>
+        </div>
+        <span class="badge good">${state.skills.length} Kỹ Năng Kích Hoạt</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));gap:14px">
+      ${state.skills.map(s => `
+        <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;padding:16px">
+          <div>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+              <div>
+                <span class="badge neutral" style="font-size:10px;margin-bottom:4px">${s.category || 'Executive'}</span>
+                <div style="font-weight:700;font-size:14px;color:var(--text)">${s.title}</div>
+                <div style="font-family:var(--mono);font-size:11px;color:var(--text-faint)">skills/${s.id}/SKILL.md</div>
+              </div>
+              <span class="badge ${s.enabled ? 'good' : 'warn'}">${s.enabled ? 'SẴN SÀNG' : 'TẠM TẮT'}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:10px 0;min-height:50px">
+              ${s.description}
+            </div>
+          </div>
+          <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <button class="btn sm" onclick="openSkillModal('${s.id}')">📖 Xem Cẩm Nang Kỹ Năng</button>
+            <button class="btn sm ${s.enabled ? 'danger' : 'primary'}" onclick="toggleSkillItem('${s.id}', ${!s.enabled})">
+              ${s.enabled ? 'Tắt Kỹ Năng' : 'Bật Kỹ Năng'}
+            </button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderMarketplaceCatalogView() {
+  const installedIds = new Set(state.plugins.map(p => p.id));
+  return `
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-weight:700;font-size:15px;color:var(--text)">🏪 Kho Thư Viện Module Mở Rộng Từ Main Repo</div>
+          <div class="muted" style="font-size:12px;margin-top:4px">
+            Khám phá các Plugin và Adapter mới nhất trên GitHub repository để cài thêm về phục vụ nhu cầu mở rộng quy mô doanh nghiệp.
+          </div>
+        </div>
+        <span class="badge neutral">${state.catalog.length} Modules Có Sẵn</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));gap:14px">
+      ${state.catalog.map(item => {
+        const isInstalled = installedIds.has(item.id);
+        return `
+          <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;padding:16px">
+            <div>
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:24px">${item.icon || '📦'}</span>
+                  <div>
+                    <div style="font-weight:700;font-size:14px;color:var(--text)">${item.name}</div>
+                    <div style="font-family:var(--mono);font-size:11px;color:var(--text-faint)">${item.id}</div>
+                  </div>
+                </div>
+                <span class="badge ${isInstalled ? 'good' : 'neutral'}">${isInstalled ? 'ĐÃ CÀI ĐẶT' : 'CÓ SẴN'}</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:10px 0;min-height:45px">
+                ${item.description}
+              </div>
+              <div style="display:flex;gap:6px;margin-bottom:10px">
+                <span class="badge neutral" style="font-size:10px">v${item.version || '1.0.0'}</span>
+                <span class="badge neutral" style="font-size:10px">${item.category || 'addon'}</span>
+                <span class="badge neutral" style="font-size:10px">Tác giả: ${item.author || 'Genesis Corp'}</span>
+              </div>
+            </div>
+            <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+              <span class="text-sm muted">${isInstalled ? 'Module đang trực chiến' : 'Sẵn sàng tải về'}</span>
+              ${isInstalled ? `
+                <button class="btn sm" onclick="switchSubtab('modules', 'plugins')">⚙ Quản Lý</button>
+              ` : `
+                <button class="btn sm primary" onclick="installCatalogPlugin('${item.id}')">⬇ Cài Thêm Về</button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+async function togglePluginModule(id, enable) {
+  const res = await fetch('/api/plugins/toggle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, enable })
+  });
+  const d = await res.json();
+  if (d.ok) {
+    showToast(`Đã ${enable ? 'kích hoạt' : 'tạm dừng'} plugin ${id}!`);
+    fetchAllData();
+  } else {
+    showToast(d.error || 'Lỗi thao tác plugin');
+  }
+}
+
+async function toggleSkillItem(id, enable) {
+  const res = await fetch('/api/skills/toggle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, enable })
+  });
+  const d = await res.json();
+  if (d.ok) {
+    showToast(d.message || `Đã ${enable ? 'bật' : 'tắt'} kỹ năng ${id}!`);
+    fetchAllData();
+  } else {
+    showToast('Lỗi cập nhật kỹ năng');
+  }
+}
+
+function openSkillModal(skillId) {
+  const skill = state.skills.find(s => s.id === skillId);
+  if (!skill) return;
+
+  openModal(`📖 Cẩm Nang Nghiệp Vụ: ${skill.title}`, `
+    <div style="max-height:65vh;overflow-y:auto;padding-right:8px">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <span class="badge good">v${skill.version}</span>
+        <span class="badge neutral">${skill.category}</span>
+        <span class="badge neutral">Tác giả: ${skill.author}</span>
+      </div>
+      <div class="card card-pad" style="background:var(--bg-body);margin-bottom:14px">
+        <b>Tóm tắt nghiệp vụ:</b>
+        <div class="text-sm muted" style="margin-top:4px">${skill.description}</div>
+      </div>
+      <pre style="white-space:pre-wrap;font-family:var(--font);font-size:13px;line-height:1.6;background:var(--bg-body);padding:14px;border-radius:6px;border:1px solid var(--border);color:var(--text)">${escapeHtml(skill.content)}</pre>
+    </div>
+  `);
+}
+
+async function installCatalogPlugin(id) {
+  showToast(`Đang tải và cài đặt plugin ${id} từ Main Repo...`);
+  const res = await fetch('/api/plugins/install', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
+  const d = await res.json();
+  if (d.ok) {
+    showToast(d.message || `Đã cài đặt thành công ${id}!`);
+    fetchAllData();
+  } else {
+    showToast(d.error || 'Lỗi cài đặt plugin');
   }
 }
 

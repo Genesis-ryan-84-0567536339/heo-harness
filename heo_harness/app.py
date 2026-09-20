@@ -28,6 +28,7 @@ class HeoHarnessApp:
         self.ctx.provide("policy_engine", self.policy_engine)
         self.ctx.provide("event_bus", self.bus)
         self.ctx.provide("data_store", self.store)
+        self.ctx.provide("store", self.store)
         self.running = False
 
     def start(self) -> None:
