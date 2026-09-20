@@ -300,6 +300,16 @@ class HeoDataStore:
         self.add_audit("owner", "pin.set", "SECURITY_PIN", "Cập nhật mã PIN quản trị viên SHA-256", "SUCCESS")
         return True, "Đã thiết lập mã PIN bảo mật thành công!"
 
+    def clear_security_pin(self) -> tuple[bool, str]:
+        """Xóa mã PIN khẩn cấp (Emergency Reset) — không cần PIN cũ."""
+        cfg = self._load_config_file()
+        cfg.pop("pin_hash", None)
+        cfg.pop("pin_code", None)
+        with open(self.config_file, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=2)
+        self.add_audit("owner", "pin.clear", "SECURITY_PIN", "Xóa mã PIN khẩn cấp (Emergency Reset)", "SUCCESS")
+        return True, "Đã xóa mã PIN bảo mật! Vui lòng thiết lập PIN mới ngay."
+
     def unpair_boss(self, pin: str = "") -> tuple[bool, str]:
         if self.has_security_pin():
             if not pin or not self.verify_security_pin(pin):

@@ -1259,6 +1259,14 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
+        elif path_clean == "/api/pin/clear":
+            # Xóa PIN khẩn cấp (Emergency Reset) — không cần PIN cũ
+            if store:
+                ok, msg = store.clear_security_pin()
+                self._send_json({"ok": ok, "message": msg})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
         elif path_clean == "/api/switch_model":
             model = str(data.get("model", "")).strip()
             if store and model:
