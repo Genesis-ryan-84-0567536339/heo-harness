@@ -657,6 +657,59 @@
       margin-top: 2px;
     }
 
+    /* Live Log Chat Classification Styles */
+    .log-type-nav {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .log-type-btn {
+      background: var(--bg-body);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .log-type-btn:hover {
+      border-color: var(--brand);
+      color: var(--text);
+    }
+    .log-type-btn.active {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+    .log-row-1on1 {
+      border-left: 3px solid #38bdf8 !important;
+      background: rgba(56, 189, 248, 0.04);
+    }
+    .log-row-group {
+      border-left: 3px solid #a855f7 !important;
+      background: rgba(168, 85, 247, 0.04);
+    }
+    .log-row-reply {
+      border-left: 3px solid #10b981 !important;
+      background: rgba(16, 185, 129, 0.04);
+    }
+    .log-badge-chat {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .log-badge-1on1 { background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .log-badge-group { background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
+    .log-badge-reply { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .log-badge-system { background: rgba(100, 116, 139, 0.18); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.4); }
+
     /* Onboarding Wizard Stepper */
     .wizard-stepper {
       display: flex;
@@ -1066,6 +1119,8 @@ let state = {
   logs_autoscroll: true,
   logs_filter_channel: 'all',
   logs_filter_level: 'ALL',
+  logs_filter_type: 'all',
+  logs_search_query: '',
   last_log_id: 0,
   config: {},
   google: {},
@@ -5045,14 +5100,45 @@ function openAddAccountModal() {
 function renderRealTimeLogsView(fixedChannel = 'all') {
   const ch = fixedChannel !== 'all' ? fixedChannel : (state.logs_filter_channel || 'all');
   const lvl = state.logs_filter_level || 'ALL';
+  const curType = state.logs_filter_type || 'all';
 
   // Trigger poll immediately
   setTimeout(() => pollLiveLogs(true, fixedChannel), 50);
 
   return `
     <div style="display:flex;flex-direction:column;gap:12px">
+      <!-- Chat Classification Subtabs & Search Bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+        <div class="log-type-nav">
+          <button class="log-type-btn ${curType === 'all' ? 'active' : ''}" onclick="setLogTypeFilter('all', '${fixedChannel}')">
+            📋 Tất Cả
+          </button>
+          <button class="log-type-btn ${curType === '1on1' ? 'active' : ''}" onclick="setLogTypeFilter('1on1', '${fixedChannel}')">
+            💬 Chat 1-1
+          </button>
+          <button class="log-type-btn ${curType === 'group' ? 'active' : ''}" onclick="setLogTypeFilter('group', '${fixedChannel}')">
+            👥 Chat Nhóm
+          </button>
+          <button class="log-type-btn ${curType === 'system' ? 'active' : ''}" onclick="setLogTypeFilter('system', '${fixedChannel}')">
+            ⚙️ Hệ Thống
+          </button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:6px;flex:1;max-width:360px">
+          <div style="position:relative;width:100%">
+            <input type="text" class="form-input" placeholder="🔍 Tìm kiếm tin nhắn, người gửi, nhóm..." 
+                   value="${escapeHtml(state.logs_search_query || '')}" 
+                   oninput="setLogSearchFilter(this.value, '${fixedChannel}')"
+                   style="width:100%;padding:6px 12px;padding-right:28px;font-size:12px;border-radius:6px;background:var(--bg-body)">
+            ${state.logs_search_query ? `
+              <button onclick="setLogSearchFilter('', '${fixedChannel}')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:var(--text-muted);cursor:pointer;font-size:12px">✕</button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+
       <!-- Toolbar Controls -->
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px 14px">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <button class="btn sm ${state.logs_paused ? 'primary' : ''}" onclick="togglePauseLiveLogs()" style="font-weight:700">
             ${state.logs_paused ? '▶ Tiếp Tục Stream' : '⏸ Tạm Dừng Stream'}
@@ -5102,7 +5188,7 @@ function renderRealTimeLogsView(fixedChannel = 'all') {
       </div>
 
       <!-- Live Terminal Stream Box -->
-      <div class="live-log-container" id="live-log-container">
+      <div class="live-log-container" id="live-log-container" style="min-height:480px;max-height:650px;overflow-y:auto;background:#0b0f19;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.6">
         ${renderLogRows(fixedChannel)}
       </div>
 
@@ -5112,7 +5198,7 @@ function renderRealTimeLogsView(fixedChannel = 'all') {
           <span>${state.logs_paused ? 'Stream đang tạm dừng (Nhấn Tiếp Tục để stream lại)' : 'Stream trực tiếp đang hoạt động (Chu kỳ 1.5s)'}</span>
         </div>
         <div>
-          Tổng số sự kiện hiển thị: <b style="color:var(--text)" id="log-count-badge">${(state.live_logs || []).length}</b> dòng
+          Phân nhóm: <b style="color:var(--brand)">${curType === 'all' ? 'TẤT CẢ' : curType === '1on1' ? 'CHAT 1-1' : curType === 'group' ? 'CHAT NHÓM' : 'HỆ THỐNG'}</b> | Hiển thị: <b style="color:var(--text)" id="log-count-badge">${(state.live_logs || []).length}</b> dòng
         </div>
       </div>
     </div>
@@ -5121,7 +5207,7 @@ function renderRealTimeLogsView(fixedChannel = 'all') {
 
 function renderLogRows(fixedChannel = 'all') {
   let logs = state.live_logs || [];
-  const targetCh = fixedChannel !== 'all' ? fixedChannel : state.logs_filter_channel;
+  const targetCh = fixedChannel !== 'all' ? fixedChannel : (state.logs_filter_channel || 'all');
 
   if (targetCh && targetCh !== 'all') {
     logs = logs.filter(l => (l.channel || '').toLowerCase() === targetCh.toLowerCase());
@@ -5131,22 +5217,86 @@ function renderLogRows(fixedChannel = 'all') {
     logs = logs.filter(l => (l.level || '').toUpperCase() === state.logs_filter_level.toUpperCase());
   }
 
+  const curType = state.logs_filter_type || 'all';
+  if (curType !== 'all') {
+    logs = logs.filter(l => {
+      const t = l.chat_type || (l.metadata && l.metadata.chat_type) || '';
+      const msg = l.message || '';
+      if (curType === '1on1') {
+        return t === '1on1' || msg.includes('[1-1]') || msg.includes('1-1');
+      } else if (curType === 'group') {
+        return t === 'group' || msg.includes('[NHÓM') || msg.toLowerCase().includes('nhóm') || msg.toLowerCase().includes('group');
+      } else if (curType === 'system') {
+        return (t === 'system' || !t) && !msg.includes('[1-1]') && !msg.includes('[NHÓM');
+      }
+      return true;
+    });
+  }
+
+  const q = (state.logs_search_query || '').trim().toLowerCase();
+  if (q) {
+    logs = logs.filter(l => {
+      const msg = (l.message || '').toLowerCase();
+      const det = (l.details || '').toLowerCase();
+      const sender = (l.metadata?.sender || l.metadata?.sender_name || '').toLowerCase();
+      const grp = (l.metadata?.group_name || l.metadata?.group_id || '').toLowerCase();
+      return msg.includes(q) || det.includes(q) || sender.includes(q) || grp.includes(q);
+    });
+  }
+
   if (logs.length === 0) {
-    return `<div style="padding:24px;text-align:center;color:#64748b">Chưa có nhật ký nào phù hợp với bộ lọc hiện tại. Đang lắng nghe luồng sự kiện...</div>`;
+    return `<div style="padding:32px 16px;text-align:center;color:#64748b;font-size:13px">
+      Chưa có nhật ký nào phù hợp bộ lọc (${curType === 'all' ? 'Tất cả' : curType === '1on1' ? 'Chat 1-1' : curType === 'group' ? 'Chat Nhóm' : 'Hệ thống'}${q ? ', từ khóa: "' + escapeHtml(q) + '"' : ''}).<br>
+      <span style="font-size:11px;opacity:0.75">Đang tiếp tục lắng nghe sự kiện luồng tin nhắn và thông báo hệ thống...</span>
+    </div>`;
   }
 
   return logs.map(l => {
     const chanClass = `log-chan-${(l.channel || 'core').toLowerCase()}`;
     const lvlClass = `log-lvl-${(l.level || 'INFO').toUpperCase()}`;
     const timeStr = l.time || (typeof l.timestamp === 'string' ? l.timestamp.substring(11, 19) : (l.timestamp ? new Date(l.timestamp * 1000).toLocaleTimeString('vi-VN') : '00:00:00'));
+    
+    // Determine chat classification
+    const msg = l.message || '';
+    const rawType = l.chat_type || (l.metadata && l.metadata.chat_type) || '';
+    const isReply = msg.startsWith('🚀') || msg.includes('[PHẢN HỒI') || Boolean(l.metadata?.is_outbound);
+    const isGroup = rawType === 'group' || msg.includes('[NHÓM') || msg.includes('QUAN SÁT NHÓM') || msg.toLowerCase().includes('nhóm');
+    const is1on1 = rawType === '1on1' || msg.includes('[1-1]');
+
+    let rowClass = 'log-row';
+    let typeBadge = `<span class="log-badge-chat log-badge-system">⚙️ SYSTEM</span>`;
+
+    if (isReply) {
+      rowClass += ' log-row-reply';
+      typeBadge = `<span class="log-badge-chat log-badge-reply">🚀 PHẢN HỒI</span>`;
+    } else if (isGroup) {
+      rowClass += ' log-row-group';
+      typeBadge = `<span class="log-badge-chat log-badge-group">👥 NHÓM</span>`;
+    } else if (is1on1) {
+      rowClass += ' log-row-1on1';
+      typeBadge = `<span class="log-badge-chat log-badge-1on1">💬 1-1</span>`;
+    }
+
+    // Sender or group subtitle if metadata has it
+    let senderHeader = '';
+    if (l.metadata && (l.metadata.sender_name || l.metadata.sender || l.metadata.group_name)) {
+      const sender = l.metadata.sender_name || l.metadata.sender || '';
+      const group = l.metadata.group_name ? ` (Nhóm: ${l.metadata.group_name})` : '';
+      if (sender) {
+        senderHeader = `<div style="font-size:11px;font-weight:700;color:var(--brand);margin-bottom:2px">👤 ${escapeHtml(sender)}${escapeHtml(group)}</div>`;
+      }
+    }
+
     return `
-      <div class="log-row">
+      <div class="${rowClass}">
         <span class="log-time">[${timeStr}]</span>
         <span class="log-chan-badge ${chanClass}">${l.channel || 'core'}</span>
         <span class="log-lvl-badge ${lvlClass}">${l.level || 'INFO'}</span>
-        <div class="log-content-col">
-          <div class="log-msg-text">${escapeHtml(l.message || '')}</div>
-          ${l.details ? `<div class="log-details-text">${escapeHtml(l.details)}</div>` : ''}
+        ${typeBadge}
+        <div class="log-content-col" style="flex:1;min-width:0">
+          ${senderHeader}
+          <div class="log-msg-text" style="word-break:break-word;white-space:pre-wrap">${escapeHtml(msg)}</div>
+          ${l.details ? `<div class="log-details-text" style="margin-top:2px;font-size:10px;opacity:0.75">${escapeHtml(l.details)}</div>` : ''}
         </div>
       </div>
     `;
@@ -5158,9 +5308,11 @@ async function pollLiveLogs(force = false, fixedChannel = 'all') {
 
   const targetCh = fixedChannel !== 'all' ? fixedChannel : (state.logs_filter_channel || 'all');
   const lvl = state.logs_filter_level || 'ALL';
+  const type = state.logs_filter_type || 'all';
+  const q = state.logs_search_query || '';
 
   try {
-    const url = `/api/logs/live?channel=${targetCh}&level=${lvl}&limit=60`;
+    const url = `/api/logs/live?channel=${targetCh}&level=${lvl}&type=${type}&search=${encodeURIComponent(q)}&limit=100`;
     const res = await fetch(url);
     const d = await res.json();
     if (d.ok && Array.isArray(d.logs)) {
@@ -5223,7 +5375,7 @@ function downloadLiveLogs(fixedChannel = 'all') {
   }
   const content = logs.map(l => {
     const timeStr = l.time || (typeof l.timestamp === 'string' ? l.timestamp : (l.timestamp ? new Date(l.timestamp * 1000).toLocaleString('vi-VN') : ''));
-    return `[${timeStr}] [${(l.channel||'core').toUpperCase()}] [${l.level}] ${l.message} ${l.details ? ':: ' + l.details : ''}`;
+    return `[${timeStr}] [${(l.channel||'core').toUpperCase()}] [${l.level}] [${l.chat_type || 'SYSTEM'}] ${l.message} ${l.details ? ':: ' + l.details : ''}`;
   }).join('\n');
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
   const a = document.createElement('a');
@@ -5241,6 +5393,39 @@ function setLogChannelFilter(ch) {
 function setLogLevelFilter(lvl, fixedChannel = 'all') {
   state.logs_filter_level = lvl;
   pollLiveLogs(true, fixedChannel);
+}
+
+function setLogTypeFilter(type, fixedChannel = 'all') {
+  state.logs_filter_type = type;
+  const nav = document.querySelector('.log-type-nav');
+  if (nav) {
+    nav.querySelectorAll('.log-type-btn').forEach(btn => {
+      const isAct = btn.getAttribute('onclick')?.includes(`'${type}'`);
+      btn.classList.toggle('active', isAct);
+    });
+  }
+  const container = $('#live-log-container');
+  if (container) {
+    container.innerHTML = renderLogRows(fixedChannel);
+    const countBadge = $('#log-count-badge');
+    if (countBadge) countBadge.textContent = (container.querySelectorAll('.log-row') || []).length;
+  }
+  pollLiveLogs(true, fixedChannel);
+}
+
+let searchDebounceTimer = null;
+function setLogSearchFilter(val, fixedChannel = 'all') {
+  state.logs_search_query = val;
+  const container = $('#live-log-container');
+  if (container) {
+    container.innerHTML = renderLogRows(fixedChannel);
+    const countBadge = $('#log-count-badge');
+    if (countBadge) countBadge.textContent = (container.querySelectorAll('.log-row') || []).length;
+  }
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    pollLiveLogs(true, fixedChannel);
+  }, 250);
 }
 
 // ==========================================

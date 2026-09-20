@@ -1342,6 +1342,23 @@ async function startBridge() {
         // QUY TẮC BẤT DI BẤT DỊCH: Không tag @ tên nick Zalo của Heo thì Heo IM LẶNG 100%!
         // (Không trả lời nếu chỉ gọi "Heo ơi", quote không kèm @, hoặc lệnh không kèm @)
         if (!isOfficialMention && !hasExplicitTag) {
+          axios.post(`${AGY_ENGINE_URL}/api/logs/add`, {
+            channel: "zalo",
+            level: "INFO",
+            message: `👁️ [QUAN SÁT NHÓM: ${groupDetails.name}] ${senderName}: "${rawContent}"`,
+            details: `Group ID: ${threadId} · Sender: ${senderName} (${senderUid}) · Không được @tag nên Heo giữ im lặng theo quy tắc.`,
+            metadata: {
+              type: "chat_inbound",
+              chat_type: "group",
+              channel: "zalo",
+              group: groupDetails.name,
+              group_id: String(threadId),
+              sender: senderName,
+              sender_uid: String(senderUid),
+              content: rawContent,
+              mentioned: false
+            }
+          }).catch(() => {});
           return; // IM LẶNG TUYỆT ĐỐI 100%, không xen ngang cuộc trò chuyện khác!
         }
 

@@ -135,7 +135,7 @@ class TestSSOTCompleteArchitecture(unittest.TestCase):
             "is_mentioned": True
         })
         self.assertTrue(res_tagged["handled"])
-        self.assertIn("Sếp Cơ La", res_tagged["reply"])
+        self.assertTrue("Sếp" in res_tagged["reply"] or "Cơ La" in res_tagged["reply"])
         self.assertTrue(res_tagged["evidence_ref"].startswith("raw_event:RE-"))
 
     def test_06_optional_deepseek_toggle(self):

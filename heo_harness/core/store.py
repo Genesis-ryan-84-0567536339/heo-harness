@@ -21,6 +21,7 @@ Tác giả & Chủ nhân duy nhất: Anh Cơ La (genesis.corp.os@gmail.com)
 
 import json
 import os
+import re
 import time
 import uuid
 import shutil
@@ -408,20 +409,137 @@ class HeoDataStore:
                     "channel": ch,
                     "level": lvl,
                     "message": msg,
-                    "details": ""
+                    "details": "",
+                    "metadata": {"chat_type": "system"}
                 })
+        # Nạp bổ sung các dòng nhật ký thực chiến từ bridge log files
+        self.sync_bridge_files_to_live_logs()
+
+    def sync_bridge_files_to_live_logs(self):
+        """Đồng bộ các dòng nhật ký thực tế từ file log của Zalo và WhatsApp vào bộ nhớ Live Logs."""
+        log_dir = os.path.join(os.path.dirname(self.data_dir), "logs")
+        if not os.path.exists(log_dir):
+            return
+
+        existing_msgs = {l.get("message") for l in self.live_logs[-200:]}
+
+        # 1. Quét file logs/whatsapp.log
+        wa_log_path = os.path.join(log_dir, "whatsapp.log")
+        if os.path.exists(wa_log_path):
+            try:
+                with open(wa_log_path, "r", encoding="utf-8", errors="replace") as f:
+                    lines = f.readlines()[-80:]
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    m = re.search(r"\[(\d{4}-\d{2}-\d{2}\s+(\d{2}:\d{2}:\d{2}))\]\s+\[AGY-WhatsApp\]\s+(.*)", line)
+                    if m:
+                        t_str = m.group(2)
+                        body = m.group(3).strip()
+                        if body in existing_msgs:
+                            continue
+                        chat_type = "system"
+                        lvl = "INFO"
+                        if "[INBOUND] 1-1" in body or "1-1 từ" in body:
+                            chat_type = "1on1"
+                        elif "[INBOUND] Group" in body or "Group từ" in body or "NHÓM" in body:
+                            chat_type = "group"
+                        elif "[OUTBOUND REPLIED]" in body:
+                            chat_type = "1on1"
+                            lvl = "SUCCESS"
+                        elif "KẾT NỐI THÀNH CÔNG" in body:
+                            lvl = "SUCCESS"
+                        elif "Lỗi" in body or "Mất kết nối" in body:
+                            lvl = "WARN"
+
+                        self._log_counter += 1
+                        self.live_logs.append({
+                            "id": self._log_counter,
+                            "time": t_str,
+                            "timestamp": int(time.time()),
+                            "channel": "whatsapp",
+                            "level": lvl,
+                            "chat_type": chat_type,
+                            "message": body,
+                            "details": f"Nguồn: logs/whatsapp.log · {line[:60]}",
+                            "metadata": {"chat_type": chat_type, "channel": "whatsapp", "source": "file_log"}
+                        })
+                        existing_msgs.add(body)
+            except Exception:
+                pass
+
+        # 2. Quét file logs/zalo.log
+        zalo_log_path = os.path.join(log_dir, "zalo.log")
+        if os.path.exists(zalo_log_path):
+            try:
+                with open(zalo_log_path, "r", encoding="utf-8", errors="replace") as f:
+                    lines = f.readlines()[-80:]
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    m = re.search(r"\[(\d{4}-\d{2}-\d{2}\s+(\d{2}:\d{2}:\d{2}))\]\s+\[AGY-Zalo\]\s+(.*)", line)
+                    if m:
+                        t_str = m.group(2)
+                        body = m.group(3).strip()
+                        if body in existing_msgs:
+                            continue
+                        chat_type = "system"
+                        lvl = "INFO"
+                        if "type=1-1" in body or "[1-1" in body:
+                            chat_type = "1on1"
+                        elif "type=group" in body or "[Group" in body or "NHÓM" in body:
+                            chat_type = "group"
+                        elif "KẾT NỐI TRỰC TIẾP" in body or "Đăng nhập Zalo thành công" in body or "Owner Paired" in body:
+                            lvl = "SUCCESS"
+                        elif "Lỗi" in body or "mất kết nối" in body or "EADDRINUSE" in body:
+                            lvl = "WARN"
+
+                        self._log_counter += 1
+                        self.live_logs.append({
+                            "id": self._log_counter,
+                            "time": t_str,
+                            "timestamp": int(time.time()),
+                            "channel": "zalo",
+                            "level": lvl,
+                            "chat_type": chat_type,
+                            "message": body,
+                            "details": f"Nguồn: logs/zalo.log · {line[:60]}",
+                            "metadata": {"chat_type": chat_type, "channel": "zalo", "source": "file_log"}
+                        })
+                        existing_msgs.add(body)
+            except Exception:
+                pass
+
+        if len(self.live_logs) > 1000:
+            self.live_logs = self.live_logs[-1000:]
+        self.state["recent_live_logs"] = self.live_logs[-35:]
 
     def add_live_log(self, channel: str, level: str, message: str, details: str = "", metadata: dict = None) -> dict:
         self._log_counter += 1
+        meta = dict(metadata or {})
+        
+        # Tự động suy luận chat_type nếu chưa được gán nhãn tường minh
+        if "chat_type" not in meta:
+            msg_str = str(message)
+            if "[1-1]" in msg_str or "1-1" in msg_str:
+                meta["chat_type"] = "1on1"
+            elif "[NHÓM" in msg_str or "NHÓM" in msg_str or "Group" in msg_str:
+                meta["chat_type"] = "group"
+            else:
+                meta["chat_type"] = "system"
+
         entry = {
             "id": self._log_counter,
             "time": time.strftime("%H:%M:%S"),
             "timestamp": int(time.time()),
             "channel": str(channel).lower(),
             "level": str(level).upper(),
+            "chat_type": meta.get("chat_type", "system"),
             "message": str(message),
             "details": str(details) if details else "",
-            "metadata": metadata or {}
+            "metadata": meta
         }
         self.live_logs.append(entry)
         if len(self.live_logs) > 1000:
@@ -429,10 +547,12 @@ class HeoDataStore:
         self.state["recent_live_logs"] = self.live_logs[-35:]
         return entry
 
-    def get_live_logs(self, channel: str = "all", level: str = "ALL", since_id: int = 0, limit: int = 200) -> list[dict]:
+    def get_live_logs(self, channel: str = "all", level: str = "ALL", since_id: int = 0, limit: int = 200, chat_type: str = "all", search: str = "") -> list[dict]:
         res = []
         c_filter = channel.lower().strip() if channel else "all"
         l_filter = level.upper().strip() if level else "ALL"
+        t_filter = chat_type.lower().strip() if chat_type else "all"
+        s_filter = search.lower().strip() if search else ""
 
         for entry in self.live_logs:
             if entry.get("id", 0) <= since_id:
@@ -441,6 +561,24 @@ class HeoDataStore:
                 continue
             if l_filter != "ALL" and entry.get("level") != l_filter:
                 continue
+
+            entry_type = entry.get("metadata", {}).get("chat_type", "")
+            msg_str = entry.get("message", "")
+            if t_filter == "1on1":
+                if entry_type != "1on1" and "[1-1]" not in msg_str and "1-1" not in msg_str:
+                    continue
+            elif t_filter == "group":
+                if entry_type != "group" and "[NHÓM" not in msg_str and "group" not in msg_str.lower() and "nhóm" not in msg_str.lower():
+                    continue
+            elif t_filter == "system":
+                if entry_type in ["1on1", "group"] or "[1-1]" in msg_str or "[NHÓM" in msg_str:
+                    continue
+
+            if s_filter:
+                content = (entry.get("message", "") + " " + entry.get("details", "")).lower()
+                if s_filter not in content:
+                    continue
+
             res.append(entry)
         return res[-limit:]
 

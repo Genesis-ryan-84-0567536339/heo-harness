@@ -392,6 +392,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             params = urllib.parse.parse_qs(parsed.query)
             channel = params.get("channel", ["all"])[0]
             level = params.get("level", ["ALL"])[0]
+            chat_type = params.get("type", ["all"])[0]
+            search = params.get("search", [""])[0]
             try:
                 since_id = int(params.get("since_id", [0])[0])
             except Exception:
@@ -400,7 +402,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 limit = int(params.get("limit", [150])[0])
             except Exception:
                 limit = 150
-            logs = store.get_live_logs(channel=channel, level=level, since_id=since_id, limit=limit) if store and hasattr(store, "get_live_logs") else []
+            logs = store.get_live_logs(channel=channel, level=level, since_id=since_id, limit=limit, chat_type=chat_type, search=search) if store and hasattr(store, "get_live_logs") else []
             self._send_json({"ok": True, "logs": logs, "count": len(logs)})
 
         elif path_clean in ["/api/zalo/qr.png", "/api/qr.png"]:
@@ -617,7 +619,33 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                                 context_tag += f" [Lưu ý cá nhân: {p.get('name')}]"
                             break
 
-            # 3. Lấy cấu hình model và effort hiện hành của hệ thống
+            # 3. Ghi nhận nhật ký tin nhắn đến theo đúng kênh & phân nhóm
+            is_grp = bool(data.get("is_group", False))
+            grp_name = str(data.get("group_name", "")).strip() or (target_group.get("name") if target_group else "")
+            if not grp_name and is_grp:
+                grp_name = str(group_id)[:20]
+
+            chat_type_str = "group" if is_grp else "1on1"
+            chat_badge = f"👥 [NHÓM: {grp_name}]" if is_grp else "💬 [1-1]"
+
+            if store and hasattr(store, "add_live_log"):
+                store.add_live_log(
+                    channel=req_channel,
+                    level="INFO",
+                    message=f"{chat_badge} {sender_name}: \"{user_msg}\"",
+                    details=f"Kênh: {req_channel.upper()} · Loại: {'Nhóm' if is_grp else '1-1'} · Người gửi: {sender_name} ({data.get('sender_id') or data.get('sender_uid') or 'Direct'})",
+                    metadata={
+                        "type": "chat_inbound",
+                        "chat_type": chat_type_str,
+                        "channel": req_channel,
+                        "sender": sender_name,
+                        "group": grp_name if is_grp else None,
+                        "group_id": group_id if is_grp else None,
+                        "content": user_msg
+                    }
+                )
+
+            # 4. Lấy cấu hình model và effort hiện hành của hệ thống
             raw_model = "gemini-3.8"
             raw_effort = "high"
             if store and hasattr(store, "get_config"):
@@ -807,7 +835,23 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 "latency_ms": max(latency_ms, 45)
             })
             if store and hasattr(store, "add_live_log"):
-                store.add_live_log("core", "SUCCESS", f"Bé Heo phản hồi ({effective_persona}): '{reply[:60]}...'", reply)
+                reply_preview = reply[:140].replace("\n", " ")
+                store.add_live_log(
+                    channel=req_channel,
+                    level="SUCCESS",
+                    message=f"🚀 [PHẢN HỒI {chat_badge}] Bé Heo -> {sender_name}: \"{reply_preview}...\"",
+                    details=reply,
+                    metadata={
+                        "type": "chat_outbound",
+                        "chat_type": chat_type_str,
+                        "channel": req_channel,
+                        "sender": sender_name,
+                        "group": grp_name if is_grp else None,
+                        "group_id": group_id if is_grp else None,
+                        "content": reply,
+                        "model": display_model
+                    }
+                )
 
         elif path_clean == "/api/persona/update":
             persona_svc = plugin.ctx.inject("persona")
@@ -1434,13 +1478,25 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
-        # ================= LIVE LOGS CLEAR =================
+        # ================= LIVE LOGS CLEAR & ADD =================
         elif path_clean in ["/api/logs/clear", "/api/live_logs/clear"]:
             if store and hasattr(store, "clear_live_logs"):
                 store.clear_live_logs()
                 self._send_json({"ok": True, "message": "Đã dọn sạch màn hình nhật ký thời gian thực!"})
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/logs/add", "/api/live_logs/add"]:
+            channel = str(data.get("channel", "system")).lower()
+            level = str(data.get("level", "INFO")).upper()
+            message = str(data.get("message", "")).strip()
+            details = str(data.get("details", "")).strip()
+            metadata = data.get("metadata") or {}
+            if store and hasattr(store, "add_live_log") and message:
+                entry = store.add_live_log(channel=channel, level=level, message=message, details=details, metadata=metadata)
+                self._send_json({"ok": True, "entry": entry})
+            else:
+                self._send_json({"ok": False, "error": "Invalid log data or store unavailable"}, 400)
 
         # ================= ONBOARDING WIZARD =================
         elif path_clean in ["/api/onboarding/complete", "/api/onboarding_complete"]:

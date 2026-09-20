@@ -38,8 +38,73 @@ let sock = null;
 let isConnected = false;
 let userJid = null;
 let userPhone = null;
+let userLid = null;
 let userName = null;
 const processedMsgIds = new Set();
+const groupNameCache = new Map();
+
+async function getWhatsAppGroupName(gid) {
+  if (!gid || !gid.endsWith("@g.us")) return "";
+  if (groupNameCache.has(gid)) return groupNameCache.get(gid);
+  try {
+    if (sock) {
+      const meta = await sock.groupMetadata(gid);
+      if (meta && meta.subject) {
+        groupNameCache.set(gid, meta.subject);
+        return meta.subject;
+      }
+    }
+  } catch (e) {}
+  return gid.replace("@g.us", "");
+}
+
+function isBotMentionedOrReplied(m, text) {
+  const myId = sock?.user?.id || userJid || "";
+  const myLid = sock?.user?.lid || userLid || "";
+  const myPhone = userPhone || (myId ? myId.split(":")[0].split("@")[0] : "84567536339");
+  const myLidNum = myLid ? myLid.split(":")[0].split("@")[0] : "171443048472761";
+
+  const contextInfo = m.message?.extendedTextMessage?.contextInfo;
+  const mentionedJid = contextInfo?.mentionedJid || [];
+  const quotedParticipant = contextInfo?.participant || "";
+
+  // 1. Tag menu WhatsApp (@) chứa JID / LID / Phone của bot
+  const inMentions = mentionedJid.some(j => {
+    if (!j) return false;
+    return (myPhone && j.includes(myPhone)) ||
+           (myLidNum && j.includes(myLidNum)) ||
+           (myId && j.split(":")[0] === myId.split(":")[0]) ||
+           (myLid && j.split(":")[0] === myLid.split(":")[0]);
+  });
+  if (inMentions) return true;
+
+  // 2. Trả lời (quote / reply) tin nhắn của Bot
+  if (quotedParticipant) {
+    if ((myPhone && quotedParticipant.includes(myPhone)) ||
+        (myLidNum && quotedParticipant.includes(myLidNum)) ||
+        (myId && quotedParticipant.split(":")[0] === myId.split(":")[0]) ||
+        (myLid && quotedParticipant.split(":")[0] === myLid.split(":")[0])) {
+      return true;
+    }
+  }
+
+  // 3. Tag dạng text trong nội dung tin nhắn (@84567536339 hoặc @171443048472761)
+  if (myPhone && text.includes(`@${myPhone}`)) return true;
+  if (myLidNum && text.includes(`@${myLidNum}`)) return true;
+
+  // 4. Nhắc đến tên bot (không phân biệt hoa thường)
+  const lower = text.toLowerCase();
+  const keywords = [
+    "bé heo", "be heo", "heo ơi", "heo oi", "@heo", "@bé heo", "@be heo",
+    "@heo-agent", "heo-agent", "/heo", "heo bot", "bot heo", "@bot", "bot ơi", "bot oi"
+  ];
+  if (keywords.some(k => lower.includes(k))) return true;
+
+  // Regex từ khóa đứng độc lập (vd: "heo cho hỏi...", "alo heo...")
+  if (/\b(?:heo|bé\s*heo)\b/i.test(lower)) return true;
+
+  return false;
+}
 
 function log(msg) {
   const ts = new Date().toISOString().replace(/T/, " ").replace(/\..+/, "");
@@ -58,14 +123,17 @@ function updateSystemState(connected, phone = "", name = "") {
 
       // Đồng bộ vào whatsapp_profiles
       if (Array.isArray(data.accounts?.whatsapp_profiles) && data.accounts.whatsapp_profiles.length > 0) {
-        data.accounts.whatsapp_profiles[0].status = connected ? "Đã ghép nối" : "Chờ quét QR";
-        if (phone) data.accounts.whatsapp_profiles[0].phone = "+" + phone;
+        data.accounts.whatsapp_profiles[0].phone = phone ? "+" + phone : "Chưa liên kết";
+        data.accounts.whatsapp_profiles[0].name = name || "Bé Heo (WhatsApp Gateway)";
+        data.accounts.whatsapp_profiles[0].connected = connected;
+        data.accounts.whatsapp_profiles[0].status = connected ? "ONLINE" : "WAITING_FOR_QR";
       }
+
       fs.writeFileSync(STATE_FILE, JSON.stringify(data, null, 2), "utf-8");
       log(`💾 Đã đồng bộ trạng thái WhatsApp (${connected ? 'ONLINE' : 'OFFLINE'}) vào heo_state.json`);
     }
-  } catch (e) {
-    log(`⚠️ Lỗi cập nhật heo_state.json: ${e.message}`);
+  } catch (err) {
+    log(`⚠️ Lỗi cập nhật heo_state.json: ${err.message}`);
   }
 }
 
@@ -101,20 +169,36 @@ async function handleIncomingMessage(m) {
     text = (text || "").trim();
     if (!text) return;
 
-    // Kiểm tra bộ lọc tin nhắn nhóm (Chỉ trả lời khi được tag hoặc nhắc tên)
+    let groupName = "";
     if (isGroup) {
-      const mentionedJid = m.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-      const isMentioned = (userPhone && mentionedJid.some(j => j.includes(userPhone))) ||
-                          text.includes(`@${BOT_NAME}`) ||
-                          text.toLowerCase().includes("bé heo") ||
-                          text.toLowerCase().includes("heo ơi");
+      groupName = await getWhatsAppGroupName(remoteJid);
+      const isMentioned = isBotMentionedOrReplied(m, text);
+
       if (!isMentioned) {
-        // Quan sát trong im lặng theo SSOT Silence Policy
+        log(`👁️ [QUAN SÁT NHÓM: ${groupName}] ${pushName}: "${text.substring(0, 60)}" (Im lặng theo SSOT)`);
+        // Bắn log trực tiếp vào Core Store để Sếp thấy Heo đang quan sát nhóm
+        axios.post(`${AGY_ENGINE_URL}/api/logs/add`, {
+          channel: "whatsapp",
+          level: "INFO",
+          message: `👁️ [QUAN SÁT NHÓM: ${groupName}] ${pushName}: "${text}"`,
+          details: `Group: ${groupName} (${remoteJid}) · Sender: ${pushName} [${senderJid}] · Trạng thái: Không được @tag nên Heo giữ im lặng theo quy tắc.`,
+          metadata: {
+            type: "chat_inbound",
+            chat_type: "group",
+            channel: "whatsapp",
+            group: groupName,
+            group_id: remoteJid,
+            sender: pushName,
+            sender_id: senderJid,
+            content: text,
+            mentioned: false
+          }
+        }).catch(() => {});
         return;
       }
     }
 
-    log(`📩 [INBOUND] ${isGroup ? 'Group' : '1-1'} từ ${pushName} [${senderJid}]: "${text.substring(0, 60)}"`);
+    log(`📩 [INBOUND ${isGroup ? `NHÓM: ${groupName}` : '1-1'}] từ ${pushName} [${senderJid}]: "${text.substring(0, 60)}"`);
 
     // Gửi trạng thái đang soạn tin (typing / composing) lên WhatsApp để người dùng biết Heo đang xử lý
     let typingTimer = null;
@@ -136,6 +220,7 @@ async function handleIncomingMessage(m) {
         sender_id: senderJid,
         sender_name: pushName,
         group_id: isGroup ? remoteJid : "*",
+        group_name: groupName,
         is_group: isGroup,
         channel: "whatsapp"
       }, { timeout: 90000 });
@@ -143,7 +228,7 @@ async function handleIncomingMessage(m) {
       const reply = resp.data?.reply || resp.data?.answer || resp.data?.content || resp.data?.message;
       if (reply && sock) {
         await sock.sendMessage(remoteJid, { text: reply }, { quoted: m });
-        log(`🚀 [OUTBOUND REPLIED] -> ${remoteJid}: "${reply.substring(0, 60)}..."`);
+        log(`🚀 [OUTBOUND REPLIED -> ${isGroup ? groupName : '1-1'}]: "${reply.substring(0, 60)}..."`);
       }
     } finally {
       if (typingTimer) clearInterval(typingTimer);
@@ -216,6 +301,7 @@ async function connectToWhatsApp() {
         isConnected = true;
         userJid = sock.user?.id || "";
         userPhone = userJid.split(":")[0].split("@")[0];
+        userLid = sock.user?.lid ? sock.user.lid.split(":")[0].split("@")[0] : "";
         userName = sock.user?.name || "Bé Heo (WhatsApp)";
         log(`🎉 KẾT NỐI THÀNH CÔNG WHATSAPP MULTI-DEVICE! Số ĐT: +${userPhone} (${userName})`);
 

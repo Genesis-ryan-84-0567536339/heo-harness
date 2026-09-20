@@ -139,7 +139,7 @@ class AntigravityProviderPlugin(BasePlugin):
         except Exception:
             pass
         # Fallback nếu binary không khả dụng
-        return f"Dạ {sender_name}, em Heo ({display_model}) đã nhận lệnh: '{user_prompt}'. Hệ thống đang hoàn tất xử lý ạ! ✨"
+        return f"Dạ {sender_name}, em Heo ({display_model}) đã nhận lệnh: '{user_prompt}'. Lõi AGY CLI gói tháng đang hoàn tất xử lý ạ! ✨"
 
     def probe_health(self) -> dict:
         """Kiểm tra sức khỏe kết nối của Core Agent CLI."""
