@@ -721,21 +721,21 @@
           <span class="nav-hub-icon">💬</span>
           <span>Kênh Zalo Gateway</span>
         </div>
-        <span class="nav-badge live">ONLINE</span>
+        <span class="nav-badge" id="badge-zalo-status" style="background:rgba(245,158,11,0.15);color:#f59e0b">QR</span>
       </button>
       <button class="nav-hub-item" data-hub="whatsapp" onclick="switchHub('whatsapp')">
         <div class="nav-hub-left">
           <span class="nav-hub-icon">📱</span>
           <span>Kênh WhatsApp Gateway</span>
         </div>
-        <span class="nav-badge live">ONLINE</span>
+        <span class="nav-badge" id="badge-whatsapp-status" style="background:rgba(245,158,11,0.15);color:#f59e0b">QR</span>
       </button>
       <button class="nav-hub-item" data-hub="directory" onclick="switchHub('directory')">
         <div class="nav-hub-left">
           <span class="nav-hub-icon">👥</span>
           <span>Danh Bạ & Nhóm 360</span>
         </div>
-        <span class="nav-badge neutral" id="badge-groups">5 Nhóm</span>
+        <span class="nav-badge neutral" id="badge-groups">0</span>
       </button>
 
       <div class="nav-section-label" style="padding-left:10px;margin-top:10px">Trí Tuệ & Trợ Lý</div>
@@ -985,6 +985,32 @@ function updateBadges() {
   const pendingAppr = state.approvals.filter(a => a.status === 'PENDING').length;
   $('#badge-approvals').textContent = pendingAppr || 0;
 
+  // Cập nhật số lượng nhóm thực tế
+  const groupBadge = $('#badge-groups');
+  if (groupBadge) {
+    groupBadge.textContent = state.groups.length > 0 ? `${state.groups.length} Nhóm` : '0';
+  }
+
+  // Cập nhật trạng thái Zalo
+  const zaloBadge = $('#badge-zalo-status');
+  if (zaloBadge) {
+    const isZaloConn = state.zalo && state.zalo.connected === true;
+    zaloBadge.className = `nav-badge ${isZaloConn ? 'live' : ''}`;
+    zaloBadge.style.background = isZaloConn ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)';
+    zaloBadge.style.color = isZaloConn ? '#10b981' : '#f59e0b';
+    zaloBadge.textContent = isZaloConn ? 'ONLINE' : 'QR';
+  }
+
+  // Cập nhật trạng thái WhatsApp
+  const waBadge = $('#badge-whatsapp-status');
+  if (waBadge) {
+    const isWaConn = state.whatsapp && state.whatsapp.connected === true;
+    waBadge.className = `nav-badge ${isWaConn ? 'live' : ''}`;
+    waBadge.style.background = isWaConn ? 'rgba(37,211,102,0.15)' : 'rgba(245,158,11,0.15)';
+    waBadge.style.color = isWaConn ? '#25D366' : '#f59e0b';
+    waBadge.textContent = isWaConn ? 'ONLINE' : 'QR';
+  }
+
   // Cập nhật tên Sếp và Trợ lý từ config
   if (state.config.boss_name) {
     $('#sidebar-user-name').textContent = `${state.config.boss_name} (Ryan)`;
@@ -1045,7 +1071,7 @@ function renderActiveHub() {
 
     case 'directory':
       titleEl.textContent = 'Danh Bạ & Nhóm Thực Tế (Directory 360)';
-      subEl.textContent = 'Quản trị 5 nhóm Zalo trực chiến và 38 nhân sự, đối tác liên hệ';
+      subEl.textContent = `Quản lý ${state.groups.length} nhóm trực chiến và ${state.people.length} nhân sự, đối tác liên hệ (Clean Slate)`;
       container.innerHTML = renderDirectoryHub();
       break;
 
@@ -1148,8 +1174,11 @@ function renderCommandCenterHub() {
           <button class="btn primary" style="justify-content:center;padding:10px" onclick="switchHub('assistant', 'chat')">
             💬 Trò Chuyện Trực Tiếp Bé Heo
           </button>
-          <button class="btn" style="justify-content:center;padding:10px" onclick="switchHub('directory', 'zalo')">
-            📲 Quản Trị Kênh Zalo & Quét QR
+          <button class="btn" style="justify-content:center;padding:10px" onclick="switchHub('zalo', 'qr')">
+            💬 Kênh Zalo & Quét QR Code
+          </button>
+          <button class="btn" style="justify-content:center;padding:10px" onclick="switchHub('whatsapp', 'qr')">
+            📱 Kênh WhatsApp Multi-Device & QR
           </button>
           <button class="btn" style="justify-content:center;padding:10px" onclick="switchHub('assistant', 'quota')">
             🧠 Đổi Model & Kiểm Tra Quota AI
@@ -1502,6 +1531,129 @@ function openNewCalendarModal() {
   });
 }
 
+function openNewGroupModal() {
+  openModal('Khởi Tạo Nhóm Làm Việc Mới', `
+    <div class="form-group">
+      <label class="form-label">Tên Nhóm Làm Việc</label>
+      <input type="text" class="form-input" id="new-group-name" placeholder="Ví dụ: Ban Điều Hành Genesis, Đội Dự Án AI...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mục Tiêu & Chức Năng Của Nhóm</label>
+      <input type="text" class="form-input" id="new-group-purpose" placeholder="Ví dụ: Phối hợp tác chiến, duyệt dự toán...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mã Chính Sách Áp Dụng</label>
+      <input type="text" class="form-input" id="new-group-policy" value="POL-G-CUSTOM v1">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Chỉ Dẫn Cho Bé Heo (Instruction)</label>
+      <input type="text" class="form-input" id="new-group-instruction" value="Hỗ trợ trả lời nhanh, bảo mật thông tin nội bộ">
+    </div>
+  `, async () => {
+    const name = $('#new-group-name').value.trim();
+    if (!name) { showToast('Tên nhóm không được để trống!'); return; }
+    const purpose = $('#new-group-purpose').value.trim();
+    const policy = $('#new-group-policy').value.trim();
+    const instruction = $('#new-group-instruction').value.trim();
+
+    const res = await fetch('/api/groups/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, purpose, policy, instruction })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      closeModal();
+      showToast(d.message || 'Đã khởi tạo nhóm thành công!');
+      fetchAllData();
+    } else {
+      showToast('Lỗi: ' + (d.error || d.message));
+    }
+  });
+}
+
+async function deleteGroup(id) {
+  if (!confirm(`Bạn có chắc chắn muốn xóa nhóm ${id} không?`)) return;
+  const res = await fetch('/api/groups/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
+  const d = await res.json();
+  if (d.ok) {
+    showToast(d.message || 'Đã xóa nhóm thành công!');
+    fetchAllData();
+  } else {
+    showToast('Lỗi: ' + (d.error || d.message));
+  }
+}
+
+function openNewPersonModal() {
+  openModal('Thêm Nhân Sự / Đối Tác Mới', `
+    <div class="form-group">
+      <label class="form-label">Họ Và Tên</label>
+      <input type="text" class="form-input" id="new-person-name" placeholder="Ví dụ: Nguyễn Văn A, Đối tác Alpha...">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Chức Vụ / Vai Trò</label>
+        <input type="text" class="form-input" id="new-person-role" value="Chuyên viên">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nhóm Trực Thuộc</label>
+        <input type="text" class="form-input" id="new-person-group" placeholder="Ví dụ: Ban Điều Hành...">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="new-person-email" placeholder="email@domain.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Số Điện Thoại</label>
+        <input type="text" class="form-input" id="new-person-phone" placeholder="+84-...">
+      </div>
+    </div>
+  `, async () => {
+    const name = $('#new-person-name').value.trim();
+    if (!name) { showToast('Họ tên không được để trống!'); return; }
+    const role = $('#new-person-role').value.trim();
+    const groups = $('#new-person-group').value.trim();
+    const email = $('#new-person-email').value.trim();
+    const phone = $('#new-person-phone').value.trim();
+
+    const res = await fetch('/api/people/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, role, groups, email, phone })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      closeModal();
+      showToast(d.message || 'Đã thêm nhân sự thành công!');
+      fetchAllData();
+    } else {
+      showToast('Lỗi: ' + (d.error || d.message));
+    }
+  });
+}
+
+async function deletePerson(id) {
+  if (!confirm(`Bạn có chắc chắn muốn xóa nhân sự ${id} không?`)) return;
+  const res = await fetch('/api/people/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
+  const d = await res.json();
+  if (d.ok) {
+    showToast(d.message || 'Đã xóa nhân sự thành công!');
+    fetchAllData();
+  } else {
+    showToast('Lỗi: ' + (d.error || d.message));
+  }
+}
+
 // ==========================================
 // 3. DIRECTORY 360 & ZALO HUB (REAL QR & CONNECTION)
 // ==========================================
@@ -1572,15 +1724,15 @@ function renderDirectoryHub() {
 
 function renderWhatsAppGatewayView() {
   const wa = state.whatsapp || {
-    connected: true,
-    status: 'ONLINE',
-    phone_number: '+84-0567536339',
-    bot_name: 'Bé Heo (WhatsApp Executive)',
-    session_id: 'wa_multidevice_session_v1',
-    device_name: 'Chrome Linux (Multi-Device Active)',
+    connected: false,
+    status: 'WAITING_FOR_QR',
+    phone_number: 'Chưa liên kết',
+    bot_name: 'Bé Heo (WhatsApp Gateway)',
+    session_id: '',
+    device_name: 'Chờ kết nối thiết bị di động',
     filter_tag: true
   };
-  const isConn = wa.connected !== false;
+  const isConn = wa.connected === true;
   const msgs = state.whatsapp_messages || [];
 
   return `
@@ -1589,10 +1741,12 @@ function renderWhatsAppGatewayView() {
       <div class="card card-pad">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
-            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#25D366"></span>
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${isConn ? '#25D366' : '#f59e0b'}"></span>
             Trạng Thái WhatsApp Multi-Device Gateway
           </div>
-          <span class="badge ${isConn ? 'good' : 'p1'}">${isConn ? 'CONNECTED (ONLINE)' : 'PAIRING / DISCONNECTED'}</span>
+          <span class="badge" style="background:${isConn ? 'rgba(37,211,102,0.15)' : 'rgba(245,158,11,0.15)'};color:${isConn ? '#25D366' : '#f59e0b'};border:1px solid ${isConn ? 'rgba(37,211,102,0.3)' : 'rgba(245,158,11,0.3)'};font-weight:700">
+            ${isConn ? 'CONNECTED (ONLINE)' : 'CHỜ KẾT NỐI (CHỜ QUÉT QR)'}
+          </span>
         </div>
 
         <div style="display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start">
@@ -1606,27 +1760,26 @@ function renderWhatsAppGatewayView() {
           <div style="display:flex;flex-direction:column;gap:10px">
             <div>
               <div class="text-sm muted">Tài khoản WhatsApp Bot:</div>
-              <div style="font-weight:700;color:var(--text)">${wa.bot_name || 'Bé Heo (WhatsApp Executive)'}</div>
+              <div style="font-weight:700;color:var(--text)">${isConn ? (wa.bot_name || 'Bé Heo (WhatsApp)') : '<span class="muted">Chưa liên kết</span>'}</div>
             </div>
             <div>
-              <div class="text-sm muted">Số điện thoại / Session:</div>
-              <div style="font-family:var(--mono);color:var(--text)">${wa.phone_number || '+84-0567536339'} (UID: ${wa.session_id || 'wa_multidevice_v1'})</div>
+              <div class="text-sm muted">Số điện thoại / Phiên:</div>
+              <div style="font-family:var(--mono);color:var(--text)">${isConn ? (wa.phone_number || 'Theo SIM') : '<span class="muted">Chưa có thông tin (Vui lòng quét QR bên cạnh)</span>'}</div>
             </div>
             <div>
               <div class="text-sm muted">Thiết bị Multi-Device:</div>
-              <div style="font-size:12px;color:var(--text-sec)">${wa.device_name || 'Chrome Linux (Multi-Device Active)'}</div>
+              <div style="font-size:12px;color:var(--text-sec)">${isConn ? (wa.device_name || 'Chrome Linux') : '<span class="muted">Chưa ghép nối thiết bị</span>'}</div>
             </div>
             <div>
               <div class="text-sm muted">Chế độ lọc tin nhắn nhóm:</div>
               <div style="display:flex;gap:8px;margin-top:4px">
                 <span class="badge ${wa.filter_tag !== false ? 'good' : 'neutral'}">BẬT (@tag Only)</span>
-                <span class="badge ${wa.filter_tag === false ? 'good' : 'neutral'}">TẤT CẢ</span>
               </div>
             </div>
             <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
               <button class="btn sm" onclick="refreshWhatsAppQR()">🔄 Làm Mới QR</button>
               <button class="btn sm" onclick="restartWhatsAppBridge()">⚡ Restart Bridge</button>
-              <button class="btn sm danger" onclick="openWhatsAppLogoutModal()">🚪 Đăng Xuất WhatsApp</button>
+              <button class="btn sm danger" onclick="openWhatsAppLogoutModal()">🚪 Đăng Xuất</button>
             </div>
           </div>
         </div>
@@ -1640,11 +1793,11 @@ function renderWhatsAppGatewayView() {
         <div style="display:flex;flex-direction:column;gap:12px">
           <div>
             <label class="text-sm muted" style="display:block;margin-bottom:4px">SỐ ĐIỆN THOẠI / NHÓM ĐÍCH (E.164):</label>
-            <input id="wa-target-input" class="form-input" style="width:100%" value="+84-0567536339" placeholder="Ví dụ: +84-0567536339 hoặc 12036302...@g.us" />
+            <input id="wa-target-input" class="form-input" style="width:100%" placeholder="Ví dụ: +84-xxxxxxxxx hoặc ID nhóm WhatsApp" />
           </div>
           <div>
             <label class="text-sm muted" style="display:block;margin-bottom:4px">NỘI DUNG CHỈ ĐẠO:</label>
-            <textarea id="wa-message-input" class="form-input" style="width:100%;height:68px;resize:none" placeholder="Nhập tin nhắn WhatsApp gửi tới đối tác...">Dạ Em Bé Heo báo cáo: Kênh WhatsApp Gateway đã kết nối ổn định theo chỉ đạo của Sếp!</textarea>
+            <textarea id="wa-message-input" class="form-input" style="width:100%;height:68px;resize:none" placeholder="Nhập tin nhắn WhatsApp gửi tới đối tác...">Dạ Bé Heo báo cáo: Kênh WhatsApp Gateway đã sẵn sàng trực chiến theo chỉ đạo của Sếp!</textarea>
           </div>
           <button class="btn primary" style="background:#25D366;border-color:#25D366;color:#052e16;font-weight:700" onclick="sendWhatsAppTestMessage()">
             Gửi Tin Nhắn WhatsApp ➔
@@ -1659,11 +1812,15 @@ function renderWhatsAppGatewayView() {
         <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
           <span>📱 Nhật Ký Tin Nhắn WhatsApp Thực Tế (Session Log)</span>
         </div>
-        <span class="badge neutral">${msgs.length} Tin Nhắn</span>
+        <span class="badge ${msgs.length > 0 ? 'good' : 'neutral'}">${msgs.length} Tin Nhắn</span>
       </div>
       <div style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
         ${msgs.length === 0 ? `
-          <div style="text-align:center;padding:24px;color:var(--text-sec)">Chưa có tin nhắn WhatsApp nào được ghi nhận.</div>
+          <div style="text-align:center;padding:36px 20px;color:var(--text-muted);background:var(--bg-body);border:1px dashed var(--border);border-radius:10px">
+            <div style="font-size:32px;margin-bottom:8px">📱</div>
+            <div style="font-weight:600;color:var(--text)">Chưa Có Tin Nhắn WhatsApp Nào Trong Phiên Trực Chiến</div>
+            <div style="font-size:12px;margin-top:4px">Dùng ứng dụng WhatsApp (Thiết bị liên kết) quét mã QR bên trên để bắt đầu giao tiếp 2 chiều.</div>
+          </div>
         ` : msgs.map(m => `
           <div style="background:var(--card-sub);border:1px solid var(--border);border-radius:10px;padding:10px 14px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -1681,15 +1838,20 @@ function renderWhatsAppGatewayView() {
 }
 
 function renderZaloGatewayView() {
-  const isConn = state.zalo.connected !== false;
+  const isConn = state.zalo && state.zalo.connected === true;
 
   return `
     <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;margin-bottom:20px">
       <!-- Connection Status & QR Code -->
       <div class="card card-pad">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div style="font-weight:700;font-size:14px;color:var(--text)">Trạng Thái Kết Nối Zalo Gateway</div>
-          <span class="badge ${isConn ? 'good' : 'p1'}">${isConn ? 'CONNECTED (ONLINE)' : 'DISCONNECTED'}</span>
+          <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${isConn ? 'var(--good)' : '#f59e0b'}"></span>
+            Trạng Thái Kết Nối Zalo Gateway
+          </div>
+          <span class="badge" style="background:${isConn ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)'};color:${isConn ? 'var(--good)' : '#f59e0b'};border:1px solid ${isConn ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)'};font-weight:700">
+            ${isConn ? 'CONNECTED (ONLINE)' : 'CHỜ KẾT NỐI (CHỜ QUÉT QR)'}
+          </span>
         </div>
 
         <div style="display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start">
@@ -1703,11 +1865,11 @@ function renderZaloGatewayView() {
           <div style="display:flex;flex-direction:column;gap:10px">
             <div>
               <div class="text-sm muted">Tài khoản Bot:</div>
-              <div style="font-weight:700;color:var(--text)">${state.zalo.account_name || 'Heo'} (Personal Bot)</div>
+              <div style="font-weight:700;color:var(--text)">${isConn ? (state.zalo.account_name || 'Heo') + ' (Personal Bot)' : '<span class="muted">Chưa liên kết</span>'}</div>
             </div>
             <div>
               <div class="text-sm muted">Số điện thoại / ID:</div>
-              <div style="font-family:var(--mono);color:var(--text)">${state.zalo.phone || '+84-0567536339'} (UID: ${state.zalo.account_id || '642589448288134831'})</div>
+              <div style="font-family:var(--mono);color:var(--text)">${isConn ? (state.zalo.phone || '') + ' (UID: ' + (state.zalo.account_id || '') + ')' : '<span class="muted">Chưa có thông tin (Vui lòng quét QR bên cạnh)</span>'}</div>
             </div>
             <div>
               <div class="text-sm muted">Chế độ lọc tin nhắn:</div>
@@ -1725,7 +1887,7 @@ function renderZaloGatewayView() {
             <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
               <button class="btn sm" onclick="refreshZaloQR()">🔄 Làm Mới QR</button>
               <button class="btn sm" onclick="restartZaloBridge()">⚡ Restart Bridge</button>
-              <button class="btn sm danger" onclick="openZaloLogoutModal()">🚪 Đăng Xuất Zalo</button>
+              <button class="btn sm danger" onclick="openZaloLogoutModal()">🚪 Đăng Xuất</button>
             </div>
           </div>
         </div>
@@ -1737,26 +1899,34 @@ function renderZaloGatewayView() {
         <div class="form-group">
           <label class="form-label">Chọn Nhóm Đích</label>
           <select class="form-select" id="zalo-test-group">
-            ${state.groups.map(g => `<option value="${g.name}">${g.name} (${g.members} thành viên)</option>`).join('')}
+            ${state.groups.length === 0 ? `
+              <option value="">(Chưa có nhóm nào - vui lòng tạo nhóm trước)</option>
+            ` : state.groups.map(g => `<option value="${g.name}">${g.name} (${g.members || 1} thành viên)</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">Nội Dung Chỉ Đạo</label>
           <input type="text" class="form-input" id="zalo-test-msg" value="@Bé Heo báo cáo tiến độ công việc hôm nay!">
         </div>
-        <button class="btn primary" style="width:100%;justify-content:center" onclick="sendZaloTestMessage()">Gửi Tin Nhắn Kiểm Thử ➔</button>
+        <button class="btn primary" style="width:100%;justify-content:center" onclick="sendZaloTestMessage()" ${state.groups.length === 0 ? 'disabled' : ''}>
+          Gửi Tin Nhắn Kiểm Thử ➔
+        </button>
       </div>
     </div>
 
-    <!-- Recent Real Messages from group_boss_1on1.jsonl -->
+    <!-- Recent Messages Session Log -->
     <div class="card">
       <div class="card-header">
         <div class="card-title">💬 Nhật Ký Tin Nhắn Zalo Thực Tế (Session Log)</div>
-        <span class="badge good">${(state.zalo.recent_messages || []).length} Tin Nhắn</span>
+        <span class="badge ${(state.zalo.recent_messages || []).length > 0 ? 'good' : 'neutral'}">${(state.zalo.recent_messages || []).length} Tin Nhắn</span>
       </div>
       <div class="card-pad" style="display:flex;flex-direction:column;gap:12px;max-height:400px;overflow-y:auto">
         ${(state.zalo.recent_messages || []).length === 0 ? `
-          <div style="text-align:center;color:var(--text-muted);padding:20px">Chưa có tin nhắn nào trong phiên.</div>
+          <div style="text-align:center;padding:36px 20px;color:var(--text-muted);background:var(--bg-body);border:1px dashed var(--border);border-radius:10px">
+            <div style="font-size:32px;margin-bottom:8px">💬</div>
+            <div style="font-weight:600;color:var(--text)">Chưa Có Tin Nhắn Nào Trong Phiên Trực Chiến</div>
+            <div style="font-size:12px;margin-top:4px">Quét mã QR bằng ứng dụng Zalo trên điện thoại để bắt đầu phiên làm việc.</div>
+          </div>
         ` : (state.zalo.recent_messages || []).map(m => `
           <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:8px;padding:12px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -1776,35 +1946,51 @@ function renderGroup360View() {
   return `
     <div class="card">
       <div class="card-header">
-        <div class="card-title">◉ Danh Sách Nhóm Zalo Đã Kết Nối Thực Tế (active_groups.json)</div>
-        <span class="badge good">${state.groups.length} Nhóm</span>
+        <div class="card-title">◉ Danh Sách Nhóm Trực Tuyến & Phối Hợp Đa Kênh</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="badge ${state.groups.length > 0 ? 'good' : 'neutral'}">${state.groups.length} Nhóm</span>
+          <button class="btn primary sm" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới</button>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Mã Nhóm (Zalo GID)</th>
-              <th>Tên Nhóm</th>
-              <th>Số Thành Viên</th>
-              <th>ID Người Tạo</th>
-              <th>Trạng Thái Bot</th>
-              <th>Ngày Đồng Bộ</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.groups.map(g => `
+      ${state.groups.length === 0 ? `
+        <div style="text-align:center;padding:48px 24px;background:var(--bg-body);border:1px dashed var(--border);border-radius:12px;margin:16px">
+          <div style="font-size:40px;margin-bottom:12px">👥</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Chưa Có Nhóm Trực Chiến Nào Trong Hệ Thống</div>
+          <div style="font-size:13px;color:var(--text-muted);max-width:540px;margin:0 auto 20px auto;line-height:1.5">
+            Hệ thống Heo OS đang ở trạng thái Pure Clean Slate sẵn sàng. Bạn có thể chủ động khởi tạo nhóm làm việc mới hoặc kết nối Zalo / WhatsApp để tự động đồng bộ danh sách nhóm thực tế.
+          </div>
+          <button class="btn primary" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới Ngay</button>
+        </div>
+      ` : `
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
               <tr>
-                <td style="font-family:var(--mono)">${g.id}</td>
-                <td style="font-weight:700;color:var(--text)">${g.name}</td>
-                <td><span class="badge good">${g.members} thành viên</span></td>
-                <td style="font-family:var(--mono);color:var(--text-muted)">${g.creator_id || '—'}</td>
-                <td><span class="badge good">HOẠT ĐỘNG (@tag)</span></td>
-                <td class="muted">${g.created_at || '—'}</td>
+                <th>Mã Nhóm (GID)</th>
+                <th>Tên Nhóm</th>
+                <th>Mục Tiêu Nhóm</th>
+                <th>Số Thành Viên</th>
+                <th>Trạng Thái</th>
+                <th>Ngày Tạo</th>
+                <th style="text-align:center">Thao Tác</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              ${state.groups.map(g => `
+                <tr>
+                  <td style="font-family:var(--mono)">${g.id}</td>
+                  <td style="font-weight:700;color:var(--text)">${g.name}</td>
+                  <td class="muted">${g.purpose || 'Nhóm trực chiến doanh nghiệp'}</td>
+                  <td><span class="badge good">${g.members || 1} thành viên</span></td>
+                  <td><span class="badge good">HOẠT ĐỘNG</span></td>
+                  <td class="muted">${g.created_at || '—'}</td>
+                  <td style="text-align:center"><button class="btn sm danger" onclick="deleteGroup('${g.id}')">Xóa</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
     </div>
   `;
 }
@@ -1814,34 +2000,50 @@ function renderPerson360View() {
     <div class="card">
       <div class="card-header">
         <div class="card-title">◎ Danh Bạ Nhân Sự & Đối Tác Thực Tế</div>
-        <span class="badge good">${state.people.length} Nhân Sự</span>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="badge ${state.people.length > 0 ? 'good' : 'neutral'}">${state.people.length} Nhân Sự</span>
+          <button class="btn primary sm" onclick="openNewPersonModal()">+ Thêm Nhân Sự Mới</button>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Họ Và Tên</th>
-              <th>Vai Trò</th>
-              <th>Nhóm Trực Thuộc</th>
-              <th>Zalo UID / Email</th>
-              <th>Mối Quan Hệ</th>
-              <th>Trạng Thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.people.map(p => `
+      ${state.people.length === 0 ? `
+        <div style="text-align:center;padding:48px 24px;background:var(--bg-body);border:1px dashed var(--border);border-radius:12px;margin:16px">
+          <div style="font-size:40px;margin-bottom:12px">👤</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Danh Bạ Hiện Đang Trống (Pure Clean Slate)</div>
+          <div style="font-size:13px;color:var(--text-muted);max-width:540px;margin:0 auto 20px auto;line-height:1.5">
+            Chưa có nhân sự hoặc đối tác nào trong danh bạ liên hệ. Bấm nút bên dưới để thêm thành viên hoặc hệ thống sẽ tự động cập nhật khi có tin nhắn từ kênh Zalo / WhatsApp.
+          </div>
+          <button class="btn primary" onclick="openNewPersonModal()">+ Thêm Nhân Sự / Đối Tác Mới</button>
+        </div>
+      ` : `
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
               <tr>
-                <td style="font-weight:700;color:var(--text)">${p.name}</td>
-                <td><span class="badge ${p.id === 'P-OWNER' ? 'good' : 'neutral'}">${p.role}</span></td>
-                <td>${p.groups}</td>
-                <td style="font-family:var(--mono);font-size:11px" class="muted">${p.uid || p.email}</td>
-                <td class="muted">${p.rel || 'Thành viên nhóm'}</td>
-                <td><span class="badge good">${p.last || 'Hoạt động'}</span></td>
+                <th>Họ Và Tên</th>
+                <th>Vai Trò</th>
+                <th>Nhóm Trực Thuộc</th>
+                <th>Email / SĐT</th>
+                <th>Mối Quan Hệ</th>
+                <th>Trạng Thái</th>
+                <th style="text-align:center">Thao Tác</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              ${state.people.map(p => `
+                <tr>
+                  <td style="font-weight:700;color:var(--text)">${p.name}</td>
+                  <td><span class="badge ${p.id === 'P-OWNER' ? 'good' : 'neutral'}">${p.role}</span></td>
+                  <td>${p.groups}</td>
+                  <td style="font-family:var(--mono);font-size:11px" class="muted">${p.phone || p.email}</td>
+                  <td class="muted">${p.rel || 'Đối tác / Thành viên'}</td>
+                  <td><span class="badge good">${p.last || 'Hoạt động'}</span></td>
+                  <td style="text-align:center"><button class="btn sm danger" onclick="deletePerson('${p.id}')">Xóa</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
     </div>
   `;
 }
@@ -2096,11 +2298,11 @@ function renderHeoSettingsView() {
         </div>
         <div class="form-group">
           <label class="form-label">Zalo UID Của Sếp (Owner UID)</label>
-          <input type="text" class="form-input" id="cfg-boss-uid" value="${cfg.boss_uid || '5639130299270793223'}" placeholder="Zalo UID của Sếp...">
+          <input type="text" class="form-input" id="cfg-boss-uid" value="${cfg.boss_uid || ''}" placeholder="Zalo UID của Sếp (cần điền để nhận lệnh)...">
         </div>
         <div class="form-group">
           <label class="form-label">Email Tác Quyền Chủ Nhân</label>
-          <input type="text" class="form-input" id="cfg-boss-email" value="${cfg.boss_email || 'genesis.corp.os@gmail.com'}" disabled style="opacity:0.7">
+          <input type="text" class="form-input" id="cfg-boss-email" value="${cfg.boss_email || ''}" placeholder="Email tác quyền..." disabled style="opacity:0.7">
         </div>
         <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:16px">
           <input type="checkbox" id="cfg-auto-claim" ${cfg.auto_claim_boss ? 'checked' : ''}>
@@ -2174,7 +2376,7 @@ function renderQuotaView() {
         <div style="display:flex;flex-direction:column;gap:8px">
           <div>
             <div class="text-sm muted">Tài khoản Google:</div>
-            <div style="font-weight:700;font-size:14px;color:var(--text)">${g.email || 'cola.bot.mac@gmail.com'}</div>
+            <div style="font-weight:700;font-size:14px;color:var(--text)">${g.email || 'Chưa đăng nhập'}</div>
           </div>
           <div>
             <div class="text-sm muted">Gói dịch vụ cước:</div>
@@ -2623,7 +2825,7 @@ function renderAdminPinView() {
           <div>
             <div class="text-sm muted">Tác quyền duy nhất:</div>
             <div style="font-weight:700;color:var(--text)">Anh Cơ La (Ryan)</div>
-            <div class="muted" style="font-size:11px">genesis.corp.os@gmail.com</div>
+            <div class="muted" style="font-size:11px">${state?.config?.boss_email || 'Chưa cấu hình'}</div>
           </div>
           <div>
             <div class="text-sm muted">Điều khoản miễn trừ trách nhiệm (DISCLAIMER.md):</div>
@@ -2807,7 +3009,7 @@ function openDisclaimerModal() {
       <h4 style="color:var(--brand);margin-bottom:8px">1. Mục Đích Nghiên Cứu & Tự Trị Cá Nhân</h4>
       <p style="margin-bottom:12px">Phần mềm Heo-Harness / Heo OS do tác giả Ryan sáng lập phục vụ công tác nghiên cứu khoa học, tự động hóa trợ lý cá nhân và điều hành trực chiến.</p>
       <h4 style="color:var(--brand);margin-bottom:8px">2. Tác Quyền & Cam Kết</h4>
-      <p style="margin-bottom:12px">Tác quyền thuộc về Anh Cơ La (genesis.corp.os@gmail.com). Người sử dụng tự chịu trách nhiệm về các phát ngôn và nội dung do mô hình AI tạo ra.</p>
+      <p style="margin-bottom:12px">Tác quyền thuộc về Anh Cơ La (Ryan). Người sử dụng tự chịu trách nhiệm về các phát ngôn và nội dung do mô hình AI tạo ra.</p>
     </div>
   `);
 }
