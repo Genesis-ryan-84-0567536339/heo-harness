@@ -5,10 +5,11 @@ Chi phí 0đ API · Sử dụng trực tiếp mô hình Gemini 3.8 / Pro / Sonne
 Tác giả: Anh Cơ La (genesis.corp.os@gmail.com)
 """
 
-from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory, PluginHealthStatus
+import subprocess
 import shutil
 import os
 import time
+from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory, PluginHealthStatus
 
 class AntigravityProviderPlugin(BasePlugin):
     metadata = PluginMetadata(
@@ -79,8 +80,26 @@ class AntigravityProviderPlugin(BasePlugin):
                 "Em đang hoạt động dưới sự chỉ đạo trực tiếp của Sếp ạ! 🥰✨"
             )
 
-        # 4. Phản hồi xử lý chuẩn mực
-        return f"Dạ em Heo đã nhận lệnh từ {sender_name}: '{user_prompt}'. Lõi AGY CLI gói tháng đang xử lý chuẩn xác ạ! 👌🚀"
+        # 4. Gọi thật agy CLI để sinh phản hồi
+        full_prompt = (
+            f"{system_instruction}\n\n"
+            f"Người dùng ({sender_name}) nhắn: {user_prompt}"
+        )
+        try:
+            result = subprocess.run(
+                [self.cli_binary, "--disable-slash-commands", "--print", full_prompt],
+                capture_output=True, text=True, timeout=60,
+                env={**os.environ, "NO_COLOR": "1"}
+            )
+            out = (result.stdout or "").strip()
+            if out:
+                return out
+        except subprocess.TimeoutExpired:
+            pass
+        except Exception:
+            pass
+        # Fallback nếu binary không khả dụng
+        return f"Dạ {sender_name}, em Heo đã nhận lệnh: '{user_prompt}'. Hệ thống AGY CLI đang tải lại, em sẽ phản hồi đầy đủ ngay ạ! ✨"
 
     def probe_health(self) -> dict:
         """Kiểm tra sức khỏe kết nối của Core Agent CLI."""

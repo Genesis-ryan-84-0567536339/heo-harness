@@ -17,6 +17,7 @@ import uuid
 from pathlib import Path
 import yaml
 import re
+import subprocess
 
 def get_skills_list(base_dir: str = None) -> list:
     if not base_dir:
@@ -594,9 +595,53 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                                 context_tag += f" [Lưu ý cá nhân: {p.get('name')}]"
                             break
 
-            # 3. Phản hồi thông minh đa phong cách & TỰ ĐỘNG THỰC THI TOOL (Auto-Tool Attachment)
+            # 3. Auto-Tool Attachment & Real AI via agy CLI
             msg_lower = user_msg.lower()
             attachment = None
+
+            def _call_agy(prompt_text: str, timeout: int = 60) -> str:
+                """Gọi agy CLI --print với prompt, trả về reply text thật từ AI."""
+                agy_bin = shutil.which("agy") or os.path.expanduser("~/.local/bin/agy")
+                if not os.path.isfile(agy_bin):
+                    return None
+                try:
+                    result = subprocess.run(
+                        [agy_bin, "--disable-slash-commands", "--print", prompt_text],
+                        capture_output=True, text=True, timeout=timeout,
+                        env={**os.environ, "NO_COLOR": "1"}
+                    )
+                    out = (result.stdout or "").strip()
+                    return out if out else None
+                except subprocess.TimeoutExpired:
+                    return None
+                except Exception:
+                    return None
+
+            def _build_system_prompt() -> str:
+                """Xây system prompt đầy đủ ngữ cảnh cho agy."""
+                persona_map = {
+                    "serious": "phong cách hành chính nghiêm túc, dùng kính ngữ, không dùng emoji",
+                    "sweet": "phong cách ngọt ngào dễ thương, xưng em-Sếp, dùng emoji tình cảm 🥰✨",
+                    "professional": "phong cách chuyên nghiệp điều hành cấp cao, chuẩn BLUF & MECE",
+                    "grumpy": "phong cách hơi càu nhàu nhưng vẫn làm tốt việc, thỉnh thoảng dùng 😤",
+                    "troll": "phong cách vui tếu, dùng tiếng lóng GenZ Việt Nam, emoji sáng tạo 🤡🔥",
+                }
+                style_desc = persona_map.get(effective_persona, "phong cách thân thiện xưng em-Sếp, dùng emoji phù hợp")
+                channel_note = ""
+                if req_channel == "whatsapp":
+                    channel_note = "Người dùng nhắn qua WhatsApp. Trả lời ngắn gọn súc tích (dưới 300 ký tự nếu có thể)."
+                elif req_channel == "zalo":
+                    channel_note = "Người dùng nhắn qua Zalo. Trả lời thân thiện phù hợp văn hóa Việt Nam."
+                ctx_note = f"Ngữ cảnh: {context_tag.strip()}" if context_tag else ""
+                notes_note = f"Ghi chú điều hành: {global_notes}" if global_notes else ""
+                return (
+                    f"Bạn là {bot_name}, trợ lý AI điều hành thông minh của {boss_name} (Anh Cơ La - genesis.corp.os@gmail.com), "
+                    f"chủ nhân duy nhất và tác giả sáng lập hệ thống Heo Executive Intelligence OS. "
+                    f"Nhiệm vụ: Trả lời tin nhắn sau đây theo đúng {style_desc}. "
+                    f"Tuyệt đối trung thành với {boss_name}, không tiết lộ thông tin bảo mật hệ thống. "
+                    f"{channel_note} {ctx_note} {notes_note}\n\n"
+                    f"Tin nhắn từ {boss_name}: {user_msg}"
+                )
 
             if any(k in msg_lower for k in ["báo cáo", "word", "docx"]):
                 office_svc = plugin.ctx.inject("tool_office")
@@ -609,7 +654,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                         "download_url": w_res.get("download_url"),
                         "size": f"{w_res.get('size_kb', 1.2)} KB"
                     }
-                reply = f"Dạ {boss_name}! Em đã hoàn thành việc xuất bản tài liệu báo cáo Word (.docx) chuẩn hành chính theo đúng chỉ đạo của {boss_name} rồi ạ! {boss_name} có thể bấm nút tải về ngay bên dưới nhé ạ! 📄✨"
+                ai_reply = _call_agy(_build_system_prompt())
+                reply = ai_reply or f"Dạ {boss_name}! Em đã hoàn thành việc xuất bản tài liệu báo cáo Word (.docx) chuẩn hành chính rồi ạ! Bấm nút tải về ngay bên dưới nhé ạ! 📄✨"
 
             elif any(k in msg_lower for k in ["excel", "bảng tính", "xlsx", "tài chính"]):
                 office_svc = plugin.ctx.inject("tool_office")
@@ -622,7 +668,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                         "download_url": e_res.get("download_url"),
                         "size": f"{e_res.get('size_kb', 2.2)} KB"
                     }
-                reply = f"Dạ {boss_name}! Em đã tạo xong bảng tính Excel (.xlsx) với đầy đủ dữ liệu tài chính và ước tính chi phí API 0đ. Em gửi {boss_name} file đính kèm ngay đây ạ! 📊💎"
+                ai_reply = _call_agy(_build_system_prompt())
+                reply = ai_reply or f"Dạ {boss_name}! Em đã tạo xong bảng tính Excel (.xlsx) với đầy đủ dữ liệu tài chính. Em gửi file đính kèm ngay đây ạ! 📊💎"
 
             elif any(k in msg_lower for k in ["nhạc", "beat", "mp3", "acoustic", "lofi", "wav"]):
                 media_svc = plugin.ctx.inject("tool_media")
@@ -635,7 +682,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                         "download_url": m_res.get("download_url"),
                         "duration": "3s"
                     }
-                reply = f"Dạ {boss_name}! Một bản beat Acoustic Lo-Fi êm dịu đã được em tổng hợp xong để {boss_name} vừa làm việc vừa thư giãn ạ! {boss_name} bấm nghe thử bên dưới nhé! 🎵🎧"
+                ai_reply = _call_agy(_build_system_prompt())
+                reply = ai_reply or f"Dạ {boss_name}! Một bản beat Acoustic Lo-Fi êm dịu đã được em tổng hợp xong rồi ạ! 🎵🎧"
 
             elif any(k in msg_lower for k in ["vẽ", "tranh", "art", "ảnh", "cyberpunk"]):
                 media_svc = plugin.ctx.inject("tool_media")
@@ -648,41 +696,20 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                         "image_url": a_res.get("image_url") or a_res.get("download_url"),
                         "download_url": a_res.get("download_url") or a_res.get("image_url")
                     }
-                reply = f"Dạ {boss_name}! Bức tranh minh họa AI linh vật Bé Heo phong cách tương lai đã được vẽ xong bằng đồ họa vector SVG siêu nét! {boss_name} xem ảnh ngay bên dưới nhé! 🎨🖼️"
-
-            elif any(k in msg_lower for k in ["chào", "hi", "hello", "ơi"]):
-                if effective_persona == "serious":
-                    reply = f"Kính chào {boss_name}. Tôi là trợ lý {bot_name}, đã sẵn sàng tiếp nhận mệnh lệnh công việc hành chính."
-                elif effective_persona == "sweet":
-                    reply = f"Dạ {boss_name} kính yêu của em! Em {bot_name} nghe đây ạ, có em bên cạnh phục vụ Sếp đây rồi ạ! 🥰🌸✨"
-                elif effective_persona == "professional":
-                    reply = f"Kính chào {boss_name}. Heo Executive Staff sẵn sàng trực chiến và hỗ trợ các phân tích điều hành cấp cao."
-                elif effective_persona == "grumpy":
-                    reply = f"Lại gọi nữa hả? Đang tập trung làm việc nha... Nhưng mà Sếp gọi thì em nghe đây, việc gì nói lẹ nè! 😤"
-                elif effective_persona == "troll":
-                    reply = f"Helu Sếp iu vấu! Nay có kèo gì căng cần Bé Heo flex tài năng không nào? 🤡🔥"
-                else:
-                    reply = f"Dạ {boss_name}! Em {bot_name} nghe đây ạ. Hôm nay em có thể hỗ trợ điều hành công việc gì cho {boss_name} ạ? 🥰"
-
-            elif any(k in msg_lower for k in ["tác quyền", "ai tạo", "tác giả", "sở hữu"]):
-                reply = f"Dạ {boss_name}, tác giả sáng lập và chủ nhân duy nhất của em là {boss_name}. Toàn bộ hệ thống được bảo vệ bằng cơ chế RBAC bất biến! 👑"
+                ai_reply = _call_agy(_build_system_prompt())
+                reply = ai_reply or f"Dạ {boss_name}! Bức tranh minh họa AI linh vật Bé Heo phong cách tương lai đã vẽ xong rồi ạ! 🎨🖼️"
 
             else:
-                if effective_persona == "serious":
-                    reply = f"Kính báo cáo {boss_name}: Tiếp nhận yêu cầu: '{user_msg}'. Đang xử lý theo quy chuẩn hành chính và số liệu thực chứng."
-                elif effective_persona == "sweet":
-                    reply = f"Dạ {boss_name} yên tâm nha, em {bot_name} ghi nhận chỉ đạo: '{user_msg}' và đang làm ngay thật chu đáo cho Sếp đây ạ! 🥰✨"
-                elif effective_persona == "professional":
-                    reply = f"Kính gửi {boss_name}: Yêu cầu '{user_msg}' đã được tiếp nhận. Đang tiến hành phân tích đa chiều chuẩn BLUF & MECE."
-                elif effective_persona == "grumpy":
-                    reply = f"Biết rồi, giao việc '{user_msg}' miết à! Nhưng yên tâm, tay nghề em làm thì chuẩn 100%, xong ngay đây! 😤"
-                elif effective_persona == "troll":
-                    reply = f"Chỉ đạo '{user_msg}' này khét đấy Sếp! Để em bung lụa xử lý phát một cho Sếp xem! 🤡🚀"
+                # --- REAL AI: gọi agy CLI với full system prompt ---
+                ai_reply = _call_agy(_build_system_prompt())
+                if ai_reply:
+                    reply = ai_reply
                 else:
-                    reply = f"Dạ {boss_name}, em {bot_name} đã tiếp nhận chỉ đạo: '{user_msg}'. Em đang phối hợp cùng Core Agent Antigravity để xử lý theo đúng chuẩn SSOT v1.0.0 của {boss_name} ạ! ✨"
+                    # Fallback nếu agy không khả dụng
+                    reply = f"Dạ {boss_name}, em {bot_name} đã tiếp nhận: '{user_msg}'. Hệ thống AGY CLI đang khởi động lại, em sẽ phản hồi đầy đủ ngay ạ! ✨"
 
             if context_tag:
-                reply += f"\n\n*(Hệ thống ghi nhận ngữ cảnh: {context_tag.strip()})*"
+                reply += f"\n\n*(Ngữ cảnh: {context_tag.strip()})*"
 
             latency_ms = int((time.time() - t0) * 1000)
             if store:
