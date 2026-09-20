@@ -649,6 +649,75 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                     }
                 )
 
+            # Xác định tác quyền Boss / Owner
+            is_boss = bool(data.get("is_boss", False))
+            sender_uid = str(data.get("sender_uid") or data.get("sender_id") or "").strip()
+            sender_clean = sender_uid.lower()
+            boss_cfg_uid = str(store.get_config().get("boss_uid", "")).strip() if store else ""
+            if req_channel == "web_console":
+                is_boss = True
+            elif req_channel == "zalo" and boss_cfg_uid and sender_clean == boss_cfg_uid.lower():
+                is_boss = True
+            elif req_channel == "whatsapp" and ("265408057712772" in sender_clean or sender_name.lower() in ["cơ la", "cola", "anh cơ la", "sếp cơ la"]):
+                is_boss = True
+
+            # 3.1. Nếu là Sếp Cơ La: Xử lý lệnh điều hành hệ thống (/auto-on, /auto-off, /block, /unblock, /groups...)
+            if is_boss and store and hasattr(store, "handle_owner_command"):
+                handled, cmd_reply = store.handle_owner_command(
+                    message=user_msg,
+                    channel=req_channel,
+                    is_group=is_grp,
+                    group_id=str(group_id),
+                    sender_id=sender_uid
+                )
+                if handled:
+                    self._send_json({
+                        "ok": True,
+                        "reply": cmd_reply,
+                        "answer": cmd_reply,
+                        "content": cmd_reply,
+                        "attachment": None,
+                        "bot_name": bot_name,
+                        "boss_name": boss_name,
+                        "persona": "executive",
+                        "model": "Admin Command Processor (0ms)",
+                        "evidence": "owner_command:PROCESSED",
+                        "latency_ms": 1
+                    })
+                    return
+
+            # 3.2. Nếu là tin nhắn trong NHÓM và KHÔNG PHẢI SẾP CƠ LA:
+            # Kiểm tra bot_active, reply_non_owners, allow_reply và blocked_members
+            if is_grp and not is_boss and store and hasattr(store, "can_reply_in_group"):
+                can_reply, reason = store.can_reply_in_group(str(group_id), sender_uid, is_boss=False)
+                if not can_reply:
+                    if store and hasattr(store, "add_live_log"):
+                        store.add_live_log(
+                            channel=req_channel,
+                            level="INFO",
+                            message=f"👁️ [QUAN SÁT NHÓM: {grp_name}] Heo giữ im lặng với {sender_name}: \"{user_msg}\"",
+                            details=f"Lý do im lặng: {reason}. Nhóm chưa bật /auto-on hoặc thành viên bị tắt quyền trả lời.",
+                            metadata={
+                                "type": "chat_silent",
+                                "chat_type": "group",
+                                "channel": req_channel,
+                                "sender": sender_name,
+                                "group": grp_name,
+                                "group_id": group_id,
+                                "content": user_msg,
+                                "silent_reason": reason
+                            }
+                        )
+                    self._send_json({
+                        "ok": True,
+                        "should_reply": False,
+                        "reply": None,
+                        "answer": None,
+                        "content": None,
+                        "reason": reason
+                    })
+                    return
+
             # 4. Lấy cấu hình model và effort hiện hành của hệ thống
             raw_model = "gemini-3.8"
             raw_effort = "high"
@@ -946,10 +1015,15 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
         elif path_clean == "/api/groups/delete":
-            gid = data.get("id", "").strip()
+            gid = str(data.get("id", "")).strip()
+            pin = str(data.get("pin", "")).strip()
+            if store and store.has_security_pin():
+                if not pin or not store.verify_security_pin(pin):
+                    self._send_json({"ok": False, "error": "Mã PIN bảo mật không chính xác!"}, 403)
+                    return
             if store and hasattr(store, "delete_group"):
-                ok = store.delete_group(gid)
-                self._send_json({"ok": ok, "message": f"Đã xóa nhóm {gid}!" if ok else "Không tìm thấy nhóm"})
+                ok, msg = store.delete_group(gid, pin)
+                self._send_json({"ok": ok, "message": msg}, 200 if ok else 400)
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
@@ -970,16 +1044,68 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
         elif path_clean in ["/api/groups/leave", "/api/group/leave"]:
-            gid = data.get("id") or data.get("group_id") or ""
-            channel = data.get("channel", "")
+            gid = str(data.get("id") or data.get("group_id") or "").strip()
+            channel = str(data.get("channel", "")).strip()
+            pin = str(data.get("pin", "")).strip()
             if not gid:
                 self._send_json({"ok": False, "error": "Thiếu id nhóm"}, 400)
                 return
+            if store and store.has_security_pin():
+                if not pin or not store.verify_security_pin(pin):
+                    self._send_json({"ok": False, "error": "Mã PIN bảo mật không chính xác!"}, 403)
+                    return
             if store and hasattr(store, "leave_group"):
-                res = store.leave_group(gid, channel)
+                res = store.leave_group(gid, channel, pin)
+                self._send_json(res, 200 if res.get("ok") else 400)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/groups/toggle_reply_non_owners":
+            gid = str(data.get("id", "")).strip()
+            allow = bool(data.get("reply_non_owners", False))
+            if store and hasattr(store, "toggle_group_reply_non_owners"):
+                res = store.toggle_group_reply_non_owners(gid, allow)
                 self._send_json(res)
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/groups/toggle_bot_active":
+            gid = str(data.get("id", "")).strip()
+            active = bool(data.get("bot_active", True))
+            if store and hasattr(store, "toggle_group_bot_active"):
+                res = store.toggle_group_bot_active(gid, active)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/groups/toggle_member_reply":
+            gid = str(data.get("group_id", "")).strip()
+            mid = str(data.get("member_id", "")).strip()
+            allow = bool(data.get("allow_reply", False))
+            if store and hasattr(store, "toggle_member_reply_permission"):
+                res = store.toggle_member_reply_permission(gid, mid, allow)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/people/toggle_reply":
+            pid = str(data.get("id", "")).strip()
+            allow = bool(data.get("allow_reply", False))
+            if store and hasattr(store, "toggle_person_reply_permission"):
+                res = store.toggle_person_reply_permission(pid, allow)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/groups/can_reply":
+            gid = str(data.get("group_id", "")).strip()
+            sid = str(data.get("sender_id", "")).strip()
+            is_b = bool(data.get("is_boss", False))
+            if store and hasattr(store, "can_reply_in_group"):
+                can_rep, rsn = store.can_reply_in_group(gid, sid, is_boss=is_b)
+                self._send_json({"ok": True, "can_reply": can_rep, "reason": rsn})
+            else:
+                self._send_json({"ok": False, "can_reply": True, "reason": "Default"}, 200)
 
         # ================= PEOPLE MUTATION =================
         elif path_clean == "/api/people/create":

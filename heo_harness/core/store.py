@@ -1460,23 +1460,28 @@ class HeoDataStore:
         groups = self.get_groups()
         for g in groups:
             if g.get("id") == group_id:
-                for k in ["name", "purpose", "policy", "instruction", "persona_style", "custom_persona", "notes", "bot_active", "channel"]:
+                for k in ["name", "purpose", "policy", "instruction", "persona_style", "custom_persona", "notes", "bot_active", "reply_non_owners", "blocked_members", "member_list", "channel"]:
                     if k in data:
                         g[k] = data[k]
                 self._save_state()
+                self._sync_all_group_files_from_state()
                 self.add_audit("owner", "group.update", group_id, f"Cập nhật cấu hình nhóm: {g.get('name')}", "SUCCESS")
                 return g
         return {}
 
-    def delete_group(self, group_id: str) -> bool:
+    def delete_group(self, group_id: str, pin: str = "") -> tuple[bool, str]:
+        if self.has_security_pin():
+            if not pin or not self.verify_security_pin(pin):
+                return False, "Mã PIN bảo mật không chính xác!"
         groups = self.state.get("groups", [])
-        new_groups = [g for g in groups if g.get("id") != group_id]
+        new_groups = [g for g in groups if str(g.get("id")) != str(group_id)]
         if len(new_groups) != len(groups):
             self.state["groups"] = new_groups
             self._save_state()
-            self.add_audit("owner", "group.delete", group_id, f"Đã xóa nhóm: {group_id}", "DELETED")
-            return True
-        return False
+            self._sync_all_group_files_from_state()
+            self.add_audit("owner", "group.delete", str(group_id), f"Đã xóa nhóm: {group_id}", "DELETED")
+            return True, "Đã xóa nhóm thành công!"
+        return False, "Không tìm thấy nhóm cần xóa"
 
     def add_person(self, name: str, role: str = "Chuyên viên", groups: str = "", email: str = "", phone: str = "", persona_style: str = "inherit", custom_persona: str = "", notes: str = "", channel: str = "zalo") -> dict:
         pid = f"P-{uuid.uuid4().hex[:6].upper()}"
@@ -1568,6 +1573,7 @@ class HeoDataStore:
 
         c_lower = str(channel).lower().strip()
         boss_name = self.get_config().get("boss_name", "Anh Cơ La (Ryan)")
+        boss_uid = str(self.get_config().get("boss_uid", "5639130299270793223")).strip()
 
         for g in groups_data:
             gid = str(g.get("id") or g.get("groupId") or "").strip()
@@ -1583,10 +1589,25 @@ class HeoDataStore:
                 item["name"] = name
                 item["status"] = status
                 item["members"] = total_members
-                item["member_list"] = members
                 item["channel"] = c_lower
                 item["last_synced_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+                item.setdefault("reply_non_owners", False)
+                item.setdefault("bot_active", True)
+                item.setdefault("blocked_members", [])
+                existing_member_map = {str(x.get("id")): x.get("allow_reply") for x in item.get("member_list", [])}
+                for m in members:
+                    mid = str(m.get("id"))
+                    is_b = bool("${BOSS_NAME}" in str(m.get("name", "")) or m.get("isBoss") or m.get("is_boss") or mid == boss_uid)
+                    if mid in existing_member_map and existing_member_map[mid] is not None:
+                        m["allow_reply"] = existing_member_map[mid]
+                    else:
+                        m["allow_reply"] = True if is_b else False
+                item["member_list"] = members
             else:
+                for m in members:
+                    mid = str(m.get("id"))
+                    is_b = bool("${BOSS_NAME}" in str(m.get("name", "")) or m.get("isBoss") or m.get("is_boss") or mid == boss_uid)
+                    m["allow_reply"] = True if is_b else False
                 item = {
                     "id": gid,
                     "name": name,
@@ -1599,6 +1620,8 @@ class HeoDataStore:
                     "members": total_members,
                     "member_list": members,
                     "bot_active": True,
+                    "reply_non_owners": False,  # Mặc định KHÔNG reply bất kỳ ai khi mới add nhóm
+                    "blocked_members": [],
                     "persona_style": "inherit",
                     "custom_persona": "",
                     "notes": "",
@@ -1614,7 +1637,7 @@ class HeoDataStore:
                 if not m_id:
                     continue
                 m_name = m.get("name", "")
-                is_boss = bool("${BOSS_NAME}" in m_name or m.get("isBoss") or m.get("is_boss"))
+                is_boss = bool("${BOSS_NAME}" in m_name or m.get("isBoss") or m.get("is_boss") or m_id == boss_uid)
                 if is_boss:
                     m_name = boss_name
                     role = "Chủ Nhân Tối Cao (Owner)"
@@ -1631,6 +1654,7 @@ class HeoDataStore:
                         current_grps.append(name)
                         p["groups"] = ", ".join(current_grps)
                     p["status"] = status
+                    p.setdefault("allow_reply", True if is_boss else False)
                 else:
                     new_p = {
                         "id": f"P-{uuid.uuid4().hex[:6].upper()}",
@@ -1644,6 +1668,7 @@ class HeoDataStore:
                         "phone": m.get("phone", m_id.split("@")[0] if c_lower == "whatsapp" else "Chưa có"),
                         "rel": f"Thành viên {name}",
                         "persona_style": "inherit",
+                        "allow_reply": True if is_boss else False,
                         "status": "active",
                         "created_at": time.strftime("%Y-%m-%d")
                     }
@@ -1693,16 +1718,21 @@ class HeoDataStore:
         self.sync_local_group_files()
         return {"ok": True, "bridges": results, "groups_count": len(self.state.get("groups", []))}
 
-    def leave_group(self, group_id: str, channel: str = "") -> dict:
+    def leave_group(self, group_id: str, channel: str = "", pin: str = "") -> dict:
+        if self.has_security_pin():
+            if not pin or not self.verify_security_pin(pin):
+                return {"ok": False, "error": "Mã PIN bảo mật không chính xác!"}
         c_lower = str(channel).lower()
         if not c_lower:
             c_lower = "whatsapp" if "@g.us" in str(group_id) else "zalo"
 
         # Đánh dấu trong Store là đã rời nhóm
+        target_name = group_id
         for g in self.state.get("groups", []):
             if str(g.get("id")) == str(group_id):
                 g["status"] = "left"
                 g["bot_active"] = False
+                target_name = g.get("name", group_id)
                 break
 
         # Gửi lệnh rời nhóm tới Bridge
@@ -1717,8 +1747,311 @@ class HeoDataStore:
             pass
 
         self._save_state()
-        self.add_audit("owner", "group.leave", group_id, f"Heo rời khỏi nhóm ({c_lower.upper()}): {group_id}", "SUCCESS")
+        self._sync_all_group_files_from_state()
+        self.add_audit("owner", "group.leave", str(group_id), f"Heo rời khỏi nhóm ({c_lower.upper()}): {target_name}", "SUCCESS")
         return {"ok": True, "group_id": group_id, "status": "left"}
+
+    def find_group(self, query: str) -> dict | None:
+        if not query:
+            return None
+        q = str(query).strip().lower()
+        groups = self.state.get("groups", [])
+        for g in groups:
+            if str(g.get("id")).lower() == q:
+                return g
+        for g in groups:
+            if str(g.get("name", "")).lower() == q:
+                return g
+        for g in groups:
+            if q in str(g.get("name", "")).lower():
+                return g
+        return None
+
+    def toggle_group_reply_non_owners(self, group_id: str, allow: bool) -> dict:
+        for g in self.state.get("groups", []):
+            if str(g.get("id")) == str(group_id):
+                g["reply_non_owners"] = bool(allow)
+                self._save_state()
+                self._sync_all_group_files_from_state()
+                self.add_audit("owner", "group.toggle_reply", str(group_id), f"{'BẬT' if allow else 'TẮT'} tự động trả lời người ngoài trong nhóm {g.get('name')}", "SUCCESS")
+                return {"ok": True, "id": group_id, "reply_non_owners": g["reply_non_owners"]}
+        return {"ok": False, "error": f"Không tìm thấy nhóm {group_id}"}
+
+    def toggle_group_bot_active(self, group_id: str, active: bool) -> dict:
+        for g in self.state.get("groups", []):
+            if str(g.get("id")) == str(group_id):
+                g["bot_active"] = bool(active)
+                self._save_state()
+                self._sync_all_group_files_from_state()
+                self.add_audit("owner", "group.toggle_bot", str(group_id), f"{'BẬT' if active else 'TẮT'} bot trực chiến trong nhóm {g.get('name')}", "SUCCESS")
+                return {"ok": True, "id": group_id, "bot_active": g["bot_active"]}
+        return {"ok": False, "error": f"Không tìm thấy nhóm {group_id}"}
+
+    def toggle_member_reply_permission(self, group_id: str, member_id: str, allow: bool) -> dict:
+        m_clean = str(member_id).strip()
+        for g in self.state.get("groups", []):
+            if str(g.get("id")) == str(group_id):
+                for m in g.get("member_list", []):
+                    if str(m.get("id")) == m_clean:
+                        m["allow_reply"] = bool(allow)
+                        g.setdefault("blocked_members", [])
+                        if not allow:
+                            if m_clean not in g["blocked_members"]:
+                                g["blocked_members"].append(m_clean)
+                        else:
+                            if m_clean in g["blocked_members"]:
+                                g["blocked_members"].remove(m_clean)
+                        self._save_state()
+                        self._sync_all_group_files_from_state()
+                        return {"ok": True, "group_id": group_id, "member_id": m_clean, "allow_reply": m["allow_reply"]}
+        return {"ok": False, "error": "Không tìm thấy thành viên trong nhóm"}
+
+    def toggle_person_reply_permission(self, person_id: str, allow: bool) -> dict:
+        p_clean = str(person_id).strip()
+        for p in self.state.get("people", []):
+            if str(p.get("id")) == p_clean or str(p.get("uid")) == p_clean:
+                p["allow_reply"] = bool(allow)
+                self._save_state()
+                return {"ok": True, "id": p_clean, "allow_reply": p["allow_reply"]}
+        return {"ok": False, "error": "Không tìm thấy nhân sự"}
+
+    def can_reply_in_group(self, group_id: str, sender_id: str, is_boss: bool = False) -> tuple[bool, str]:
+        if is_boss:
+            return True, "Chủ nhân tối cao luôn được phép"
+        grp = self.find_group(group_id)
+        if not grp:
+            return False, "Nhóm mới chưa đăng ký, mặc định chỉ phản hồi Sếp Cơ La"
+        if grp.get("bot_active") is False or grp.get("status") == "left":
+            return False, "Bé Heo đang TẮT trực chiến trong nhóm này"
+        if not grp.get("reply_non_owners", False):
+            return False, "Nhóm đang ở chế độ MẶC ĐỊNH (Chỉ phản hồi Sếp Cơ La, chưa bật /auto-on)"
+        s_clean = str(sender_id).lower().strip()
+        blocked = [str(x).lower() for x in grp.get("blocked_members", [])]
+        if s_clean in blocked or any(b in s_clean for b in blocked if len(b) >= 4):
+            return False, "Thành viên đã bị Sếp chặn phản hồi trong nhóm"
+        for m in grp.get("member_list", []):
+            if str(m.get("id")).lower() == s_clean or str(m.get("phone", "")).lower() == s_clean:
+                if m.get("allow_reply") is False:
+                    return False, "Thành viên bị tắt quyền nhận phản hồi"
+                break
+        for p in self.state.get("people", []):
+            if (p.get("uid") and str(p["uid"]).lower() == s_clean) or (p.get("phone") and str(p["phone"]).lower() == s_clean):
+                if p.get("allow_reply") is False:
+                    return False, "Hồ sơ nhân sự bị tắt quyền nhận phản hồi"
+                break
+        return True, "Allowed"
+
+    def handle_owner_command(self, message: str, channel: str = "zalo", is_group: bool = False, group_id: str = "", sender_id: str = "") -> tuple[bool, str]:
+        msg = (message or "").strip()
+        if not msg:
+            return False, ""
+        first_token = msg.split()[0].lower()
+        if not (first_token.startswith("/") or first_token.startswith("!")):
+            return False, ""
+        cmd = first_token.lstrip("/!").replace("_", "-")
+        arg = msg[len(first_token):].strip()
+
+        if cmd in ["auto-on", "autoon"]:
+            target_gid = arg or (group_id if is_group else "")
+            grp = self.find_group(target_gid) if target_gid else (self.find_group(group_id) if is_group else None)
+            if grp:
+                grp["reply_non_owners"] = True
+                grp["bot_active"] = True
+                self._save_state()
+                self._sync_all_group_files_from_state()
+                self.add_audit("owner", "group.auto_on", grp["id"], f"Bật tự động phản hồi thành viên nhóm {grp['name']}", "SUCCESS")
+                return True, f"Dạ Sếp Cơ La! 🐷✨ Bé Heo đã **BẬT** chế độ tự động phản hồi các thành viên trong nhóm **{grp['name']}** khi được tag @.\nEm sẽ hỗ trợ mọi người chu đáo theo đúng chỉ thị của Sếp!"
+            else:
+                active_groups = [f"• {g.get('name')} (ID: `{g.get('id')}`) - [{ '🟢 BẬT' if g.get('reply_non_owners') else '⚪ TẮT' }]" for g in self.state.get("groups", []) if g.get("status") != "left"]
+                return True, f"Dạ Sếp Cơ La, Sếp vui lòng chỉ định tên hoặc mã nhóm cần bật tự động trả lời:\n👉 Cú pháp: `/auto-on <tên nhóm>`\n\nDanh sách các nhóm hiện tại:\n" + ("\n".join(active_groups) if active_groups else "Chưa có nhóm nào.")
+
+        elif cmd in ["auto-off", "autooff"]:
+            target_gid = arg or (group_id if is_group else "")
+            grp = self.find_group(target_gid) if target_gid else (self.find_group(group_id) if is_group else None)
+            if grp:
+                grp["reply_non_owners"] = False
+                self._save_state()
+                self._sync_all_group_files_from_state()
+                self.add_audit("owner", "group.auto_off", grp["id"], f"Tắt tự động phản hồi thành viên nhóm {grp['name']}", "SUCCESS")
+                return True, f"Dạ Sếp Cơ La! 🐷🔒 Bé Heo đã **TẮT** phản hồi đối với các thành viên khác trong nhóm **{grp['name']}**.\nTừ giờ em sẽ chỉ phản hồi duy nhất khi Sếp gọi/tag thôi ạ!"
+            else:
+                active_groups = [f"• {g.get('name')} (ID: `{g.get('id')}`) - [{ '🟢 BẬT' if g.get('reply_non_owners') else '⚪ TẮT' }]" for g in self.state.get("groups", []) if g.get("status") != "left"]
+                return True, f"Dạ Sếp Cơ La, Sếp vui lòng chỉ định tên hoặc mã nhóm cần tắt tự động trả lời:\n👉 Cú pháp: `/auto-off <tên nhóm>`\n\nDanh sách các nhóm hiện tại:\n" + ("\n".join(active_groups) if active_groups else "Chưa có nhóm nào.")
+
+        elif cmd in ["block", "chan", "mute"]:
+            if not arg:
+                return True, "Dạ Sếp, vui lòng nhập tên, số điện thoại hoặc UID người cần chặn:\n👉 Ví dụ: `/block Tabaro` hoặc `/block 0912345678` ạ!"
+            return True, self.block_target_member(arg, group_id if is_group else "")
+
+        elif cmd in ["unblock", "mochan", "unmute"]:
+            if not arg:
+                return True, "Dạ Sếp, vui lòng nhập tên, số điện thoại hoặc UID người cần mở chặn:\n👉 Ví dụ: `/unblock Tabaro` ạ!"
+            return True, self.unblock_target_member(arg, group_id if is_group else "")
+
+        elif cmd in ["groups", "nhom", "danhsachnhom"]:
+            groups = self.state.get("groups", [])
+            if not groups:
+                return True, "Dạ Sếp, hiện chưa có nhóm nào được ghi nhận trong Heo OS ạ."
+            lines = ["📋 **DANH SÁCH NHÓM QUẢN TRỊ HEO OS:**\n"]
+            for g in groups:
+                ch = (g.get("channel") or "zalo").upper()
+                st = "🟢 Đang tham gia" if g.get("status") != "left" else "⚪ Đã rời"
+                bot = "BẬT" if g.get("bot_active") is not False else "TẮT"
+                reply_all = "BẬT (Mọi người)" if g.get("reply_non_owners") else "TẮT (Chỉ Sếp)"
+                lines.append(f"• **[{ch}] {g.get('name')}** (ID: `{g.get('id')}`)\n  - Bot trực chiến: **{bot}** | Reply thành viên: **{reply_all}** ({st})")
+            lines.append("\n👉 Sếp có thể dùng lệnh `/auto-on <tên nhóm>` hoặc `/auto-off <tên nhóm>` để điều khiển nhanh.")
+            return True, "\n".join(lines)
+
+        return False, ""
+
+    def block_target_member(self, target: str, group_id: str = "") -> str:
+        target_clean = target.strip().lower()
+        blocked_names = []
+        for g in self.state.get("groups", []):
+            if group_id and str(g.get("id")) != str(group_id) and g.get("name") != group_id:
+                continue
+            for m in g.get("member_list", []):
+                m_id = str(m.get("id", "")).lower()
+                m_name = str(m.get("name", "")).lower()
+                m_phone = str(m.get("phone", "")).lower()
+                if target_clean in m_id or target_clean in m_name or target_clean in m_phone:
+                    m["allow_reply"] = False
+                    g.setdefault("blocked_members", [])
+                    if m.get("id") not in g["blocked_members"]:
+                        g["blocked_members"].append(m.get("id"))
+                    blocked_names.append(f"{m.get('name')} (Nhóm: {g.get('name')})")
+
+        for p in self.state.get("people", []):
+            p_name = str(p.get("name", "")).lower()
+            p_uid = str(p.get("uid", "")).lower()
+            p_phone = str(p.get("phone", "")).lower()
+            if target_clean in p_name or target_clean in p_uid or target_clean in p_phone:
+                p["allow_reply"] = False
+                if p.get("name") not in blocked_names:
+                    blocked_names.append(p.get("name"))
+
+        # Nếu chưa tìm thấy trong hồ sơ, vẫn đưa trực tiếp ID/SĐT/từ khóa vào blocked_members
+        if not blocked_names:
+            for g in self.state.get("groups", []):
+                if group_id and str(g.get("id")) != str(group_id) and g.get("name") != group_id:
+                    continue
+                g.setdefault("blocked_members", [])
+                if target_clean not in [str(x).lower() for x in g["blocked_members"]]:
+                    g["blocked_members"].append(target.strip())
+            blocked_names.append(target.strip())
+
+        self._save_state()
+        self._sync_all_group_files_from_state()
+        names_str = ", ".join(blocked_names)
+        self.add_audit("owner", "member.block", target, f"Chặn phản hồi: {names_str}", "BLOCKED")
+        return f"Dạ Sếp Cơ La! 🛡️ Bé Heo đã **CHẶN** phản hồi đối với: **{names_str}**.\nEm sẽ giữ im lặng tuyệt đối khi người này gọi ạ!"
+
+    def unblock_target_member(self, target: str, group_id: str = "") -> str:
+        target_clean = target.strip().lower()
+        unblocked_names = []
+        for g in self.state.get("groups", []):
+            if group_id and str(g.get("id")) != str(group_id) and g.get("name") != group_id:
+                continue
+            g_blocked = g.get("blocked_members", [])
+            for m in g.get("member_list", []):
+                m_id = str(m.get("id", "")).lower()
+                m_name = str(m.get("name", "")).lower()
+                m_phone = str(m.get("phone", "")).lower()
+                if target_clean in m_id or target_clean in m_name or target_clean in m_phone:
+                    m["allow_reply"] = True
+                    if m.get("id") in g_blocked:
+                        g_blocked.remove(m.get("id"))
+                    unblocked_names.append(f"{m.get('name')} (Nhóm: {g.get('name')})")
+            # Kiểm tra cả giá trị thô lưu trong g_blocked
+            to_remove = [x for x in g_blocked if str(x).lower() == target_clean or target_clean in str(x).lower()]
+            for x in to_remove:
+                g_blocked.remove(x)
+                if x not in unblocked_names:
+                    unblocked_names.append(f"{x} (Nhóm: {g.get('name')})")
+            g["blocked_members"] = g_blocked
+
+        for p in self.state.get("people", []):
+            p_name = str(p.get("name", "")).lower()
+            p_uid = str(p.get("uid", "")).lower()
+            p_phone = str(p.get("phone", "")).lower()
+            if target_clean in p_name or target_clean in p_uid or target_clean in p_phone:
+                p["allow_reply"] = True
+                if p.get("name") not in unblocked_names:
+                    unblocked_names.append(p.get("name"))
+
+        self._save_state()
+        self._sync_all_group_files_from_state()
+        if unblocked_names:
+            names_str = ", ".join(unblocked_names)
+            self.add_audit("owner", "member.unblock", target, f"Mở chặn phản hồi: {names_str}", "UNBLOCKED")
+            return f"Dạ Sếp Cơ La! ✨ Bé Heo đã **MỞ LẠI** quyền phản hồi cho: **{names_str}** theo lệnh Sếp ạ!"
+        else:
+            return f"Dạ Sếp, em không tìm thấy ai khớp với từ khóa '{target}' để mở chặn ạ."
+
+    def _sync_all_group_files_from_state(self) -> None:
+        """Đồng bộ trạng thái bot_active, reply_non_owners, blocked_members ra data/active_groups.json và whatsapp_active_groups.json."""
+        data_dir = self.data_dir
+        zalo_path = os.path.join(data_dir, "active_groups.json")
+        wa_path = os.path.join(data_dir, "whatsapp_active_groups.json")
+
+        zalo_dict = {}
+        wa_list = []
+        for g in self.state.get("groups", []):
+            c = str(g.get("channel", "zalo")).lower()
+            if c == "zalo":
+                gid = str(g.get("id"))
+                zalo_dict[gid] = {
+                    "groupId": gid,
+                    "groupName": g.get("name"),
+                    "creatorId": g.get("creator_id", ""),
+                    "totalMember": g.get("members", 1),
+                    "status": g.get("status", "active"),
+                    "bot_active": g.get("bot_active", True),
+                    "reply_non_owners": g.get("reply_non_owners", False),
+                    "blocked_members": g.get("blocked_members", []),
+                    "members": g.get("member_list", []),
+                    "lastUpdated": time.strftime("%Y-%m-%d %H:%M:%S")
+                }
+            elif c == "whatsapp":
+                wa_list.append({
+                    "id": g.get("id"),
+                    "name": g.get("name"),
+                    "channel": "whatsapp",
+                    "purpose": g.get("purpose", ""),
+                    "total_members": g.get("members", 1),
+                    "status": g.get("status", "active"),
+                    "bot_active": g.get("bot_active", True),
+                    "reply_non_owners": g.get("reply_non_owners", False),
+                    "blocked_members": g.get("blocked_members", []),
+                    "members": g.get("member_list", []),
+                    "creator_id": g.get("creator_id", ""),
+                    "created_at": g.get("created_at", "")
+                })
+
+        try:
+            if zalo_dict:
+                # Merge into existing file to preserve properties if any
+                old_zalo = {}
+                if os.path.exists(zalo_path):
+                    with open(zalo_path, "r", encoding="utf-8") as f:
+                        old_zalo = json.load(f)
+                for k, v in zalo_dict.items():
+                    if k in old_zalo:
+                        old_zalo[k].update(v)
+                    else:
+                        old_zalo[k] = v
+                with open(zalo_path, "w", encoding="utf-8") as f:
+                    json.dump(old_zalo, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+        try:
+            if wa_list:
+                with open(wa_path, "w", encoding="utf-8") as f:
+                    json.dump(wa_list, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
 
     # ==================== POLICIES ====================
     def get_policies(self) -> list:

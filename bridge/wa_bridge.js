@@ -137,6 +137,12 @@ function updateSystemState(connected, phone = "", name = "") {
   }
 }
 
+function isWhatsAppBoss(senderJid, pushName) {
+  const s = String(senderJid || "").toLowerCase();
+  const n = String(pushName || "").toLowerCase();
+  return s.includes("265408057712772") || n === "cơ la" || n === "cola" || n.includes("anh cơ la") || n.includes("sếp cơ la") || n.includes("boss");
+}
+
 async function handleIncomingMessage(m) {
   try {
     const msgId = m.key.id;
@@ -169,12 +175,13 @@ async function handleIncomingMessage(m) {
     text = (text || "").trim();
     if (!text) return;
 
+    const isBoss = isWhatsAppBoss(senderJid, pushName);
     let groupName = "";
     if (isGroup) {
       groupName = await getWhatsAppGroupName(remoteJid);
       const isMentioned = isBotMentionedOrReplied(m, text);
 
-      if (!isMentioned) {
+      if (!isMentioned && !isBoss) {
         log(`👁️ [QUAN SÁT NHÓM: ${groupName}] ${pushName}: "${text.substring(0, 60)}" (Im lặng theo SSOT)`);
         // Bắn log trực tiếp vào Core Store để Sếp thấy Heo đang quan sát nhóm
         axios.post(`${AGY_ENGINE_URL}/api/logs/add`, {
@@ -195,6 +202,31 @@ async function handleIncomingMessage(m) {
           }
         }).catch(() => {});
         return;
+      }
+
+      // Kiểm tra quyền bot_active và reply_non_owners đối với thành viên thường
+      if (!isBoss) {
+        try {
+          if (fs.existsSync(WA_GROUPS_FILE)) {
+            const allG = JSON.parse(fs.readFileSync(WA_GROUPS_FILE, "utf-8"));
+            const currentG = Array.isArray(allG) ? allG.find(x => x.id === remoteJid) : null;
+            if (currentG) {
+              if (currentG.bot_active === false) {
+                log(`[Group WA ${groupName}] Bé Heo đang TẮT trực chiến trong nhóm này. Giữ im lặng.`);
+                return;
+              }
+              if (currentG.reply_non_owners !== true) {
+                log(`[Group WA ${groupName}] Nhóm đang ở chế độ MẶC ĐỊNH (Chỉ phản hồi Sếp Cơ La). Bỏ qua yêu cầu từ ${pushName}.`);
+                return;
+              }
+              const sPhone = senderJid.split("@")[0].split(":")[0];
+              if (currentG.blocked_members && (currentG.blocked_members.includes(senderJid) || currentG.blocked_members.includes(sPhone))) {
+                log(`[Group WA ${groupName}] ${pushName} (${senderJid}) đã bị Sếp chặn phản hồi. Giữ im lặng.`);
+                return;
+              }
+            }
+          }
+        } catch (_) {}
       }
     }
 
@@ -222,11 +254,13 @@ async function handleIncomingMessage(m) {
         group_id: isGroup ? remoteJid : "*",
         group_name: groupName,
         is_group: isGroup,
+        is_boss: isBoss,
         channel: "whatsapp"
       }, { timeout: 90000 });
 
+      const shouldReply = resp.data?.should_reply !== false;
       const reply = resp.data?.reply || resp.data?.answer || resp.data?.content || resp.data?.message;
-      if (reply && sock) {
+      if (shouldReply && reply && sock) {
         await sock.sendMessage(remoteJid, { text: reply }, { quoted: m });
         log(`🚀 [OUTBOUND REPLIED -> ${isGroup ? groupName : '1-1'}]: "${reply.substring(0, 60)}..."`);
       }
@@ -329,7 +363,9 @@ async function connectToWhatsApp() {
       const participants = update.participants || [];
 
       const isBotTargeted = participants.some(p => {
-        const raw = p.split("@")[0].split(":")[0];
+        const pStr = typeof p === "string" ? p : (p?.id || p?.jid || "");
+        if (!pStr) return false;
+        const raw = pStr.split("@")[0].split(":")[0];
         return (userPhone && raw === userPhone) || (userLid && raw === userLid);
       });
 

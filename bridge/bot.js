@@ -1444,6 +1444,30 @@ async function startBridge() {
 
         const isBoss = Boolean(senderUid && String(senderUid) === BOSS_UID);
 
+        // Kiểm tra quyền bot_active và reply_non_owners đối với thành viên thường
+        if (!isBoss) {
+          try {
+            if (fs.existsSync(GROUPS_FILE)) {
+              const allG = JSON.parse(fs.readFileSync(GROUPS_FILE, "utf-8"));
+              const currentG = allG[threadId];
+              if (currentG) {
+                if (currentG.bot_active === false) {
+                  log(`[Group ${groupDetails.name}] Bé Heo đang TẮT trực chiến trong nhóm này. Giữ im lặng.`);
+                  return;
+                }
+                if (currentG.reply_non_owners !== true) {
+                  log(`[Group ${groupDetails.name}] Nhóm đang ở chế độ MẶC ĐỊNH (Chỉ phản hồi Sếp Cơ La). Bỏ qua yêu cầu từ ${senderName}.`);
+                  return;
+                }
+                if (currentG.blocked_members && currentG.blocked_members.includes(String(senderUid))) {
+                  log(`[Group ${groupDetails.name}] ${senderName} (${senderUid}) đã bị Sếp chặn phản hồi. Giữ im lặng.`);
+                  return;
+                }
+              }
+            }
+          } catch (_) {}
+        }
+
         // Xử lý lệnh /style chuyển đổi phong cách trực tiếp từ nhóm
         if (/^\/(?:style|phongcach|phong_cach|persona)\b/i.test(cleanPrompt)) {
           if (!isBoss) {
@@ -1502,7 +1526,7 @@ async function startBridge() {
           }, { timeout: 300000 });
 
           const data = resp.data;
-          if (data && data.ok) {
+          if (data && data.ok && data.should_reply !== false && (data.reply || data.answer || data.content)) {
             const answer = data.answer || data.reply || data.content || "Dạ em đã hoàn thành.";
             const files = data.files || [];
 

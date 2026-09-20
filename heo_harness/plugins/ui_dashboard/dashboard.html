@@ -438,6 +438,54 @@
       font-size: 11px;
     }
 
+    /* Switch Toggle Component */
+    .switch-toggle {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 18px;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    .switch-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      margin: 0;
+    }
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: all 0.2s ease;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 2px;
+      bottom: 2px;
+      background-color: #94a3b8;
+      transition: all 0.2s ease;
+      border-radius: 50%;
+    }
+    .switch-toggle input:checked + .switch-slider {
+      background-color: #10b981;
+      border-color: #10b981;
+    }
+    .switch-toggle input:checked + .switch-slider:before {
+      transform: translateX(18px);
+      background-color: #ffffff;
+    }
+    .switch-toggle input:disabled + .switch-slider {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
     /* Badges */
     .badge {
       display: inline-flex;
@@ -1179,6 +1227,31 @@ function closeModal() {
   $('#modal-container').classList.remove('open');
   const mBox = $('#modal-box');
   if (mBox) mBox.classList.remove('modal-lg');
+}
+
+function promptPinConfirm(title, message, onConfirmed) {
+  const savedPin = sessionStorage.getItem('admin_pin') || '';
+  openModal(title || '🔒 Xác Thực Mã PIN Bảo Mật', `
+    <div style="margin-bottom:14px;color:var(--text);font-size:13px;line-height:1.5">
+      ${message || 'Thao tác này yêu cầu nhập mã PIN bảo mật quản trị viên để thực hiện.'}
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="font-weight:700">Mã PIN Bảo Mật Quản Trị</label>
+      <input type="password" class="form-input" id="prompt-confirm-pin" placeholder="Nhập mã PIN (4-16 số)..." maxlength="16" autofocus value="${escapeHtml(savedPin)}" onkeydown="if(event.key==='Enter') $('#modal-confirm-btn')?.click()">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Mã PIN mặc định ban đầu: <b>2026</b> (có thể đổi tại tab Tác Quyền & Bảo Mật).</div>
+    </div>
+  `, async () => {
+    const enteredPin = $('#prompt-confirm-pin') ? $('#prompt-confirm-pin').value.trim() : '';
+    if (!enteredPin) {
+      showToast('⚠️ Vui lòng nhập mã PIN bảo mật!');
+      return;
+    }
+    sessionStorage.setItem('admin_pin', enteredPin);
+    closeModal();
+    if (typeof onConfirmed === 'function') {
+      await onConfirmed(enteredPin);
+    }
+  }, false, '🔒 Xác Nhận & Thực Hiện');
 }
 
 function toggleTerminal() {
@@ -2084,20 +2157,32 @@ function openEditGroupModal(gid) {
   });
 }
 
-async function deleteGroup(id) {
-  if (!confirm(`Bạn có chắc chắn muốn xóa nhóm ${id} không?`)) return;
-  const res = await fetch('/api/groups/delete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id })
-  });
-  const d = await res.json();
-  if (d.ok) {
-    showToast(d.message || 'Đã xóa nhóm thành công!');
-    fetchAllData();
-  } else {
-    showToast('Lỗi: ' + (d.error || d.message));
-  }
+function deleteGroup(id) {
+  const g = state.groups.find(x => x.id === id);
+  const groupName = g ? g.name : id;
+  promptPinConfirm(
+    '⚠️ Xác Nhận Xóa Nhóm Bảo Mật',
+    `Sếp có chắc chắn muốn xóa nhóm <b>"${escapeHtml(groupName)}"</b> (ID: <code>${escapeHtml(id)}</code>) khỏi hệ thống không?<br><br><span style="color:var(--danger)">Cảnh báo: Dữ liệu cấu hình nhóm sẽ bị xóa hoàn toàn khỏi cơ sở dữ liệu.</span>`,
+    async (pin) => {
+      showToast('⏳ Đang kiểm tra PIN và xóa nhóm...');
+      try {
+        const res = await fetch('/api/groups/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, pin })
+        });
+        const d = await res.json();
+        if (d.ok) {
+          showToast(d.message || '✅ Đã xóa nhóm thành công!');
+          await fetchAllData();
+        } else {
+          showToast('❌ Lỗi: ' + (d.error || d.message || 'Mã PIN không đúng!'));
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối khi gửi yêu cầu xóa nhóm');
+      }
+    }
+  );
 }
 
 function openNewPersonModal() {
@@ -2768,7 +2853,8 @@ function renderGroup360View() {
                 <th>Tên Nhóm Thực Tế</th>
                 <th>Trạng Thái</th>
                 <th>Thành Viên</th>
-                <th>Bot Trực Chiến</th>
+                <th style="text-align:center">Bot Trực Chiến</th>
+                <th style="text-align:center">Tự Động Reply</th>
                 <th>Phong Thái Thái Độ</th>
                 <th>Ghi Chú Riêng</th>
                 <th style="text-align:center">Thao Tác</th>
@@ -2796,10 +2882,23 @@ function renderGroup360View() {
                         👥 ${memberCount} thành viên ▾
                       </button>
                     </td>
-                    <td>
-                      <button class="btn sm ${g.bot_active !== false && !isLeft ? 'good' : ''}" style="padding:2px 8px;font-size:11px" onclick="toggleGroupBotActive('${g.id}', ${g.bot_active === false})" ${isLeft ? 'disabled' : ''}>
-                        ${g.bot_active !== false && !isLeft ? '✓ ĐANG BẬT' : '✕ ĐÃ TẮT'}
-                      </button>
+                    <td style="text-align:center">
+                      <label class="switch-toggle" title="${g.bot_active !== false && !isLeft ? 'Đang bật trực chiến trong nhóm' : 'Đang tắt trực chiến'}">
+                        <input type="checkbox" ${g.bot_active !== false && !isLeft ? 'checked' : ''} ${isLeft ? 'disabled' : ''} onchange="toggleGroupBotActive('${g.id}', this.checked)">
+                        <span class="switch-slider"></span>
+                      </label>
+                      <div style="font-size:10px;margin-top:2px;color:${g.bot_active !== false && !isLeft ? 'var(--good)' : 'var(--text-muted)'}">
+                        ${g.bot_active !== false && !isLeft ? 'Trực chiến' : 'Tắt'}
+                      </div>
+                    </td>
+                    <td style="text-align:center">
+                      <label class="switch-toggle" title="${g.reply_non_owners && !isLeft ? 'Đang BẬT: Heo tự động trả lời thành viên khi được tag @' : 'Mặc định TẮT: Chỉ phản hồi duy nhất khi Sếp gọi'}">
+                        <input type="checkbox" ${g.reply_non_owners && !isLeft ? 'checked' : ''} ${isLeft ? 'disabled' : ''} onchange="toggleGroupReplyNonOwners('${g.id}', this.checked)">
+                        <span class="switch-slider"></span>
+                      </label>
+                      <div style="font-size:10px;margin-top:2px;color:${g.reply_non_owners && !isLeft ? 'var(--good)' : 'var(--text-muted)'}">
+                        ${g.reply_non_owners && !isLeft ? 'Mọi người' : 'Chỉ Sếp'}
+                      </div>
                     </td>
                     <td>${getPersonaBadge(g.persona_style || 'inherit')}</td>
                     <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
@@ -2808,9 +2907,9 @@ function renderGroup360View() {
                     <td style="text-align:center;white-space:nowrap">
                       <button class="btn sm" style="background:#1e293b;border:1px solid var(--border);color:var(--brand);margin-right:4px" onclick="openEditGroupModal('${g.id}')">⚙️ Sửa</button>
                       ${!isLeft ? `
-                        <button class="btn sm warning" style="margin-right:4px" onclick="leaveGroupAction('${g.id}', '${g.channel}')" title="Rời khỏi nhóm này">🚪 Rời</button>
+                        <button class="btn sm warning" style="margin-right:4px" onclick="leaveGroupAction('${g.id}', '${g.channel}')" title="Rời khỏi nhóm này (Yêu cầu PIN)">🚪 Rời</button>
                       ` : ''}
-                      <button class="btn sm danger" onclick="deleteGroup('${g.id}')">Xóa</button>
+                      <button class="btn sm danger" onclick="deleteGroup('${g.id}')" title="Xóa nhóm (Yêu cầu PIN)">Xóa</button>
                     </td>
                   </tr>
                 `;
@@ -2879,27 +2978,40 @@ function renderPerson360View() {
                 <th>Nhóm Trực Thuộc</th>
                 <th>Thái Độ & Xưng Hô</th>
                 <th>Liên Hệ (UID / SĐT)</th>
+                <th style="text-align:center">Quyền Reply</th>
                 <th style="text-align:center">Thao Tác</th>
               </tr>
             </thead>
             <tbody>
-              ${displayedPeople.map(p => `
+              ${displayedPeople.map(p => {
+                const isOwner = p.role?.includes('Owner') || p.role?.includes('Chủ Nhân') || p.is_boss || p.isBoss;
+                const canReply = isOwner || p.allow_reply === true;
+                return `
                 <tr>
                   <td style="font-weight:700;color:var(--text)">
                     ${escapeHtml(p.name)}
                     ${p.rel ? `<div style="font-size:11px;font-weight:normal;color:var(--text-muted)">${escapeHtml(p.rel)}</div>` : ''}
                   </td>
                   <td>${getChannelBadge(p.channel)}</td>
-                  <td><span class="badge ${p.role?.includes('Owner') || p.role?.includes('Chủ Nhân') ? 'good' : p.role?.includes('Trưởng nhóm') ? 'p3' : 'neutral'}">${escapeHtml(p.role || 'Thành viên')}</span></td>
+                  <td><span class="badge ${isOwner ? 'good' : p.role?.includes('Trưởng nhóm') ? 'p3' : 'neutral'}">${escapeHtml(p.role || 'Thành viên')}</span></td>
                   <td style="font-size:12px;color:var(--brand)">${escapeHtml(p.groups || 'Chưa phân nhóm')}</td>
                   <td>${getPersonToneBadge(p.persona_style || 'inherit')}</td>
                   <td style="font-family:var(--mono);font-size:11px" class="muted">${escapeHtml(p.phone || p.uid || p.email || '')}</td>
+                  <td style="text-align:center">
+                    <label class="switch-toggle" title="${isOwner ? 'Chủ nhân tối cao luôn được phản hồi' : (canReply ? 'Đang BẬT: Bé Heo được phép phản hồi nhân sự này' : 'Mặc định TẮT (Chặn): Bé Heo không trả lời người này')}">
+                      <input type="checkbox" ${canReply ? 'checked' : ''} ${isOwner ? 'disabled' : ''} onchange="togglePersonReply('${p.id}', this.checked)">
+                      <span class="switch-slider"></span>
+                    </label>
+                    <div style="font-size:10px;margin-top:2px;color:${canReply ? 'var(--good)' : 'var(--text-muted)'}">
+                      ${isOwner ? 'Chủ Nhân' : canReply ? 'Cho phép' : 'Chặn'}
+                    </div>
+                  </td>
                   <td style="text-align:center;white-space:nowrap">
                     <button class="btn sm" style="background:#1e293b;border:1px solid var(--border);color:var(--brand);margin-right:6px" onclick="openEditPersonModal('${p.id}')">⚙️ Cấu Hình / Sửa</button>
                     <button class="btn sm danger" onclick="deletePerson('${p.id}')">Xóa</button>
                   </td>
                 </tr>
-              `).join('')}
+              `;}).join('')}
             </tbody>
           </table>
         </div>
@@ -2947,7 +3059,12 @@ function viewGroupMembers(gid) {
   const g = state.groups.find(x => x.id === gid);
   if (!g) return;
   const members = g.member_list || [];
-  const memberRows = members.length > 0 ? members.map((m, idx) => `
+  const blockedList = g.blocked_members || [];
+  const memberRows = members.length > 0 ? members.map((m, idx) => {
+    const isBoss = m.is_boss || m.isBoss || m.role?.includes('Owner') || m.role?.includes('Chủ Nhân');
+    const isBlocked = blockedList.includes(m.id) || m.allow_reply === false;
+    const canReply = isBoss || !isBlocked;
+    return `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="color:var(--text-muted);width:20px">${idx + 1}.</span>
@@ -2956,21 +3073,33 @@ function viewGroupMembers(gid) {
           <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">${escapeHtml(m.id)}</div>
         </div>
       </div>
-      <span class="badge ${m.is_boss || m.isBoss ? 'good' : (m.role?.includes('Trưởng') || m.role?.includes('admin') ? 'p3' : 'neutral')}">
-        ${escapeHtml(m.role || (m.is_boss || m.isBoss ? 'Chủ Nhân (Owner)' : 'Thành viên'))}
-      </span>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;flex-direction:column;align-items:center" title="${isBoss ? 'Chủ nhân tối cao luôn được phản hồi' : (canReply ? 'Đang BẬT: Bé Heo phản hồi thành viên này khi được gọi' : 'Đang TẮT (Chặn): Không phản hồi thành viên này')}">
+          <label class="switch-toggle">
+            <input type="checkbox" ${canReply ? 'checked' : ''} ${isBoss ? 'disabled' : ''} onchange="toggleMemberReply('${g.id}', '${m.id}', this.checked)">
+            <span class="switch-slider"></span>
+          </label>
+          <span style="font-size:9px;color:${canReply ? 'var(--good)' : 'var(--text-muted)'};margin-top:2px">
+            ${isBoss ? 'Owner' : canReply ? 'Reply' : 'Chặn'}
+          </span>
+        </div>
+        <span class="badge ${isBoss ? 'good' : (m.role?.includes('Trưởng') || m.role?.includes('admin') ? 'p3' : 'neutral')}">
+          ${escapeHtml(m.role || (isBoss ? 'Chủ Nhân (Owner)' : 'Thành viên'))}
+        </span>
+      </div>
     </div>
-  `).join('') : '<div style="padding:20px;text-align:center;color:var(--text-muted)">Chưa có danh sách chi tiết thành viên. Nhấn Quét & Đồng Bộ Nhóm để cập nhật.</div>';
+  `;}).join('') : '<div style="padding:20px;text-align:center;color:var(--text-muted)">Chưa có danh sách chi tiết thành viên. Nhấn Quét & Đồng Bộ Nhóm để cập nhật.</div>';
 
   const modalHtml = `
     <div class="modal-backdrop" id="group-members-modal" onclick="if(event.target===this) this.remove()">
-      <div class="modal-box" style="max-width:520px;max-height:80vh;display:flex;flex-direction:column">
+      <div class="modal-box" style="max-width:560px;max-height:80vh;display:flex;flex-direction:column">
         <div class="modal-header">
           <div class="modal-title">👥 Thành Viên Nhóm: ${escapeHtml(g.name)}</div>
           <button class="modal-close" onclick="$('#group-members-modal').remove()">✕</button>
         </div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
-          Kênh: <b>${g.channel?.toUpperCase()}</b> | ID: <span style="font-family:var(--mono)">${escapeHtml(g.id)}</span> | Tổng: <b>${members.length || g.members || 1}</b> thành viên
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>Kênh: <b>${g.channel?.toUpperCase()}</b> | ID: <span style="font-family:var(--mono)">${escapeHtml(g.id)}</span> | Tổng: <b>${members.length || g.members || 1}</b> thành viên</div>
+          <div style="font-size:11px;color:var(--brand)">Công tắc: Bật/Tắt quyền reply từng thành viên</div>
         </div>
         <div style="overflow-y:auto;flex:1;max-height:360px;padding-right:4px">
           ${memberRows}
@@ -2986,39 +3115,106 @@ function viewGroupMembers(gid) {
 
 async function toggleGroupBotActive(gid, active) {
   try {
-    const res = await fetch('/api/groups/update', {
+    const res = await fetch('/api/groups/toggle_bot_active', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: gid, bot_active: active })
     });
     const d = await res.json();
     if (d.ok) {
-      showToast(`Đã ${active ? 'BẬT' : 'TẮT'} trợ lý Bé Heo trong nhóm!`);
+      showToast(`Đã ${active ? 'BẬT' : 'TẮT'} trợ lý Bé Heo trực chiến trong nhóm!`);
       await fetchAllData();
+    } else {
+      showToast('⚠️ Lỗi: ' + (d.error || 'Không thể cập nhật'));
     }
   } catch (e) {
-    showToast('Lỗi cập nhật trạng thái nhóm');
+    showToast('Lỗi cập nhật trạng thái trực chiến nhóm');
   }
 }
 
-async function leaveGroupAction(gid, channel) {
-  if (!confirm(`Sếp có chắc chắn muốn Bé Heo rời khỏi nhóm này không?`)) return;
+async function toggleGroupReplyNonOwners(gid, allow) {
   try {
-    const res = await fetch('/api/groups/leave', {
+    const res = await fetch('/api/groups/toggle_reply_non_owners', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: gid, group_id: gid, channel: channel })
+      body: JSON.stringify({ id: gid, reply_non_owners: allow })
     });
     const d = await res.json();
     if (d.ok) {
-      showToast('Bé Heo đã rời khỏi nhóm thành công và chuyển trạng thái sang Đã Rời Nhóm.');
+      showToast(allow ? '✅ Đã BẬT quyền reply thành viên trong nhóm (Heo sẽ trả lời khi được tag @)' : '🔒 Đã TẮT quyền reply thành viên (Heo chỉ phản hồi duy nhất khi Sếp Cơ La gọi)');
       await fetchAllData();
     } else {
-      showToast('Lỗi khi rời nhóm: ' + (d.error || ''));
+      showToast('⚠️ Lỗi: ' + (d.error || 'Không thể cập nhật'));
     }
   } catch (e) {
-    showToast('Lỗi kết nối khi gửi lệnh rời nhóm');
+    showToast('Lỗi kết nối khi đổi chế độ phản hồi nhóm');
   }
+}
+
+async function toggleMemberReply(gid, mid, allow) {
+  try {
+    const res = await fetch('/api/groups/toggle_member_reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ group_id: gid, member_id: mid, allow_reply: allow })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(allow ? `✅ Đã cho phép Heo phản hồi thành viên ${mid}` : `🚫 Đã chặn Heo phản hồi thành viên ${mid}`);
+      await fetchAllData();
+    } else {
+      showToast('⚠️ Lỗi: ' + (d.error || 'Không thể cập nhật'));
+    }
+  } catch (e) {
+    showToast('Lỗi kết nối khi đổi quyền reply thành viên');
+  }
+}
+
+async function togglePersonReply(pid, allow) {
+  try {
+    const res = await fetch('/api/people/toggle_reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: pid, allow_reply: allow })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(allow ? `✅ Đã BẬT quyền nhận phản hồi cho nhân sự` : `🚫 Đã CHẶN phản hồi nhân sự này`);
+      await fetchAllData();
+    } else {
+      showToast('⚠️ Lỗi: ' + (d.error || 'Không thể cập nhật'));
+    }
+  } catch (e) {
+    showToast('Lỗi kết nối khi đổi quyền reply nhân sự');
+  }
+}
+
+function leaveGroupAction(gid, channel) {
+  const g = state.groups.find(x => x.id === gid);
+  const name = g ? g.name : gid;
+  promptPinConfirm(
+    '🚪 Xác Nhận Rời Nhóm Bảo Mật',
+    `Sếp có chắc chắn muốn Bé Heo rời khỏi nhóm <b>"${escapeHtml(name)}"</b> (${channel?.toUpperCase()}) không?<br><br>Nhóm sẽ được chuyển trạng thái sang <b>Đã Rời Nhóm</b> và bot sẽ ngừng trực chiến.`,
+    async (pin) => {
+      showToast('⏳ Đang gửi lệnh rời nhóm...');
+      try {
+        const res = await fetch('/api/groups/leave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: gid, group_id: gid, channel: channel, pin: pin })
+        });
+        const d = await res.json();
+        if (d.ok) {
+          showToast('✅ Bé Heo đã rời khỏi nhóm thành công và chuyển trạng thái sang Đã Rời Nhóm.');
+          await fetchAllData();
+        } else {
+          showToast('❌ Lỗi khi rời nhóm: ' + (d.error || d.message || 'Mã PIN không đúng!'));
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối khi gửi lệnh rời nhóm');
+      }
+    }
+  );
 }
 
 async function toggleChannel(channel) {
