@@ -1231,16 +1231,18 @@ async function startBridge() {
         try {
           const resp = await axios.post(`${AGY_ENGINE_URL}/api/chat`, {
             session_id: `zalo_user_${threadId}`,
+            message: userPrompt,
             prompt: userPrompt,
-            sender_name: "${BOSS_NAME}",
+            sender_name: BOSS_NAME || "Sếp",
             is_group: false,
             is_boss: true,
-            sender_uid: BOSS_UID
+            sender_uid: BOSS_UID,
+            channel: "zalo"
           }, { timeout: 300000 });
 
           const data = resp.data;
           if (data && data.ok) {
-            const answer = data.answer || "Dạ em đã hoàn thành.";
+            const answer = data.answer || data.reply || data.content || "Dạ em đã hoàn thành.";
             const files = data.files || [];
 
             let sentRes = null;
@@ -1408,20 +1410,23 @@ async function startBridge() {
         }, 4000);
 
         try {
+          const userMsg = cleanPrompt || rawContent;
           const resp = await axios.post(`${AGY_ENGINE_URL}/api/chat`, {
             session_id: `zalo_group_${threadId}`,
-            prompt: cleanPrompt || rawContent,
+            message: userMsg,
+            prompt: userMsg,
             sender_name: senderName,
             sender_uid: String(senderUid),
             group_id: String(threadId),
             group_name: groupDetails.name,
             is_boss: isBoss,
-            is_group: true
+            is_group: true,
+            channel: "zalo"
           }, { timeout: 300000 });
 
           const data = resp.data;
           if (data && data.ok) {
-            const answer = data.answer || "Dạ em đã hoàn thành.";
+            const answer = data.answer || data.reply || data.content || "Dạ em đã hoàn thành.";
             const files = data.files || [];
 
             let sentRes = null;

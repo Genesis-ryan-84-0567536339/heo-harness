@@ -116,20 +116,42 @@ async function handleIncomingMessage(m) {
 
     log(`📩 [INBOUND] ${isGroup ? 'Group' : '1-1'} từ ${pushName} [${senderJid}]: "${text.substring(0, 60)}"`);
 
-    // Gửi sang AGY Engine để suy luận
-    const resp = await axios.post(`${AGY_ENGINE_URL}/api/chat`, {
-      message: text,
-      sender_id: senderJid,
-      sender_name: pushName,
-      group_id: isGroup ? remoteJid : "*",
-      is_group: isGroup,
-      channel: "whatsapp"
-    }, { timeout: 45000 });
+    // Gửi trạng thái đang soạn tin (typing / composing) lên WhatsApp để người dùng biết Heo đang xử lý
+    let typingTimer = null;
+    if (sock) {
+      try {
+        await sock.sendPresenceUpdate('composing', remoteJid);
+        typingTimer = setInterval(async () => {
+          try {
+            if (sock) await sock.sendPresenceUpdate('composing', remoteJid);
+          } catch (e) {}
+        }, 4000);
+      } catch (e) {}
+    }
 
-    const reply = resp.data?.reply || resp.data?.content || resp.data?.message;
-    if (reply && sock) {
-      await sock.sendMessage(remoteJid, { text: reply }, { quoted: m });
-      log(`🚀 [OUTBOUND REPLIED] -> ${remoteJid}: "${reply.substring(0, 60)}..."`);
+    try {
+      // Gửi sang AGY Engine để suy luận
+      const resp = await axios.post(`${AGY_ENGINE_URL}/api/chat`, {
+        message: text,
+        sender_id: senderJid,
+        sender_name: pushName,
+        group_id: isGroup ? remoteJid : "*",
+        is_group: isGroup,
+        channel: "whatsapp"
+      }, { timeout: 90000 });
+
+      const reply = resp.data?.reply || resp.data?.answer || resp.data?.content || resp.data?.message;
+      if (reply && sock) {
+        await sock.sendMessage(remoteJid, { text: reply }, { quoted: m });
+        log(`🚀 [OUTBOUND REPLIED] -> ${remoteJid}: "${reply.substring(0, 60)}..."`);
+      }
+    } finally {
+      if (typingTimer) clearInterval(typingTimer);
+      if (sock) {
+        try {
+          await sock.sendPresenceUpdate('paused', remoteJid);
+        } catch (e) {}
+      }
     }
   } catch (err) {
     log(`⚠️ Lỗi xử lý tin nhắn WhatsApp: ${err.message}`);

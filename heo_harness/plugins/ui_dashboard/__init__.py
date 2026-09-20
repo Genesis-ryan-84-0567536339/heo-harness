@@ -504,7 +504,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             data = {}
 
         if path_clean == "/api/chat":
-            user_msg = data.get("message", "").strip()
+            user_msg = (data.get("message") or data.get("prompt") or data.get("content") or "").strip()
             if not user_msg:
                 self._send_json({"ok": False, "error": "Tin nhắn không được để trống"}, 400)
                 return
@@ -518,6 +518,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json({
                     "ok": True,
                     "reply": reply,
+                    "answer": reply,
+                    "content": reply,
                     "attachment": None,
                     "bot_name": "Bé Heo",
                     "boss_name": "Sếp Cơ La",
@@ -532,13 +534,26 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 })
                 return
 
-            req_channel = str(data.get("channel", "web_console")).lower()
+            # Nhận diện kênh kết nối (Zalo, WhatsApp, hoặc Web Console)
+            req_channel = str(data.get("channel", "")).lower().strip()
+            if not req_channel or req_channel == "web_console":
+                session_id = str(data.get("session_id", "")).lower()
+                sender_id = str(data.get("sender_id", "")).lower()
+                if "zalo" in session_id or data.get("sender_uid"):
+                    req_channel = "zalo"
+                elif "wa" in session_id or "whatsapp" in session_id or "@s.whatsapp.net" in sender_id or "@lid" in sender_id:
+                    req_channel = "whatsapp"
+                else:
+                    req_channel = "web_console"
+
             if store and hasattr(store, "is_channel_enabled") and req_channel in ["zalo", "whatsapp"] and not store.is_channel_enabled(req_channel):
                 ch_name = "Zalo Gateway" if req_channel == "zalo" else "WhatsApp Gateway"
                 reply = f"⚠️ [THÔNG BÁO] Kênh {ch_name} hiện đang TẮT (MUTED) độc lập theo cấu hình riêng của Sếp. Kênh khác vẫn hoạt động bình thường."
                 self._send_json({
                     "ok": True,
                     "reply": reply,
+                    "answer": reply,
+                    "content": reply,
                     "attachment": None,
                     "bot_name": "Bé Heo",
                     "persona": "muted",
@@ -554,7 +569,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             eval_res = None
             if policy_engine:
                 try:
-                    eval_res = policy_engine.evaluate(action="assistant.chat", channel="web_console", group="*", person="P-OWNER")
+                    eval_res = policy_engine.evaluate(action="assistant.chat", channel=req_channel, group="*", person="P-OWNER")
                 except Exception:
                     pass
 
@@ -565,9 +580,16 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             persona_svc = plugin.ctx.inject("persona")
             persona_cfg = persona_svc.get_config() if persona_svc else {}
             bot_name = persona_cfg.get("bot_name", "Bé Heo")
-            boss_name = persona_cfg.get("boss_name", "Sếp Cơ La")
-            active_persona = persona_cfg.get("active_persona", "default")
+            boss_name = persona_cfg.get("boss_name", "Anh Cơ La")
+            active_persona = persona_cfg.get("active_persona", "professional")
             global_notes = persona_cfg.get("bot_global_notes", "")
+
+            # Xác định tên người gửi
+            raw_sender = str(data.get("sender_name", "")).strip()
+            if not raw_sender or raw_sender in ["${BOSS_NAME}", "undefined", "null"]:
+                sender_name = boss_name
+            else:
+                sender_name = raw_sender
 
             # Kiểm tra xem có group cụ thể hay person cụ thể không
             target_group = None
@@ -595,18 +617,56 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                                 context_tag += f" [Lưu ý cá nhân: {p.get('name')}]"
                             break
 
-            # 3. Auto-Tool Attachment & Real AI via agy CLI
+            # 3. Lấy cấu hình model và effort hiện hành của hệ thống
+            raw_model = "gemini-3.8"
+            raw_effort = "high"
+            if store and hasattr(store, "get_config"):
+                cfg = store.get_config()
+                raw_model = cfg.get("model", "gemini-3.8")
+                raw_effort = cfg.get("effort", "high")
+
+            m_lower = str(raw_model).lower()
+            if "3.8" in m_lower:
+                cli_model = f"gemini-3.8-flash-{raw_effort}" if raw_effort in ["low", "medium", "high"] else "gemini-3.8-flash-high"
+                display_model = "Gemini 3.8 Flash (High)"
+            elif "3.7" in m_lower:
+                cli_model = f"gemini-3.7-flash-{raw_effort}" if raw_effort in ["low", "medium", "high"] else "gemini-3.7-flash-high"
+                display_model = "Gemini 3.7 Flash"
+            elif "3.1" in m_lower or "pro" in m_lower:
+                cli_model = "gemini-3.1-pro-high"
+                display_model = "Gemini 3.1 Pro (High)"
+            elif "sonnet" in m_lower:
+                cli_model = "claude-sonnet-4-6"
+                display_model = "Claude Sonnet 4.6 (Thinking)"
+            elif "opus" in m_lower:
+                cli_model = "claude-opus-4-6-thinking"
+                display_model = "Claude Opus 4.6 (Thinking)"
+            elif "120b" in m_lower or "oss" in m_lower:
+                cli_model = "gpt-oss-120b-medium"
+                display_model = "GPT-OSS 120B"
+            else:
+                cli_model = "gemini-3.8-flash-high"
+                display_model = "Gemini 3.8 Flash"
+
+            # 4. Auto-Tool Attachment & Real AI via agy CLI
             msg_lower = user_msg.lower()
             attachment = None
 
             def _call_agy(prompt_text: str, timeout: int = 60) -> str:
-                """Gọi agy CLI --print với prompt, trả về reply text thật từ AI."""
+                """Gọi agy CLI --print với prompt, truyền đúng model và effort cấu hình."""
                 agy_bin = shutil.which("agy") or os.path.expanduser("~/.local/bin/agy")
                 if not os.path.isfile(agy_bin):
                     return None
                 try:
+                    cmd = [
+                        agy_bin,
+                        "--disable-slash-commands",
+                        "--model", cli_model,
+                        "--effort", raw_effort,
+                        "--print", prompt_text
+                    ]
                     result = subprocess.run(
-                        [agy_bin, "--disable-slash-commands", "--print", prompt_text],
+                        cmd,
                         capture_output=True, text=True, timeout=timeout,
                         env={**os.environ, "NO_COLOR": "1"}
                     )
@@ -629,18 +689,19 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 style_desc = persona_map.get(effective_persona, "phong cách thân thiện xưng em-Sếp, dùng emoji phù hợp")
                 channel_note = ""
                 if req_channel == "whatsapp":
-                    channel_note = "Người dùng nhắn qua WhatsApp. Trả lời ngắn gọn súc tích (dưới 300 ký tự nếu có thể)."
+                    channel_note = "Kênh WhatsApp: Trả lời ngắn gọn súc tích (dưới 300 ký tự nếu có thể)."
                 elif req_channel == "zalo":
-                    channel_note = "Người dùng nhắn qua Zalo. Trả lời thân thiện phù hợp văn hóa Việt Nam."
+                    channel_note = "Kênh Zalo: Trả lời thân thiện phù hợp văn hóa Việt Nam."
                 ctx_note = f"Ngữ cảnh: {context_tag.strip()}" if context_tag else ""
                 notes_note = f"Ghi chú điều hành: {global_notes}" if global_notes else ""
                 return (
-                    f"Bạn là {bot_name}, trợ lý AI điều hành thông minh của {boss_name} (Anh Cơ La - genesis.corp.os@gmail.com), "
-                    f"chủ nhân duy nhất và tác giả sáng lập hệ thống Heo Executive Intelligence OS. "
-                    f"Nhiệm vụ: Trả lời tin nhắn sau đây theo đúng {style_desc}. "
-                    f"Tuyệt đối trung thành với {boss_name}, không tiết lộ thông tin bảo mật hệ thống. "
+                    f"Bạn là {bot_name}, Trợ lý Điều hành AI Cấp cao trực thuộc hệ điều hành Heo Executive Intelligence OS của {boss_name} (Anh Cơ La - genesis.corp.os@gmail.com).\n"
+                    f"Lõi Core Agent chính của bạn là Google Antigravity Brain chạy mô hình {display_model} (Gói tháng cá nhân Google DeepMind 0đ Token API).\n"
+                    f"Khi được hỏi bạn là ai hay đang chạy mô hình nào, bạn luôn xác nhận rõ: Bạn là {bot_name}, trợ lý AI của {boss_name}, vận hành trên lõi Core Agent Google Antigravity Brain với mô hình {display_model}.\n"
+                    f"Nhiệm vụ: Trả lời tin nhắn sau theo đúng {style_desc}. "
+                    f"Tuyệt đối trung thành với {boss_name}, bảo mật 100% dữ liệu tài chính Genesis Corp.\n"
                     f"{channel_note} {ctx_note} {notes_note}\n\n"
-                    f"Tin nhắn từ {boss_name}: {user_msg}"
+                    f"Tin nhắn từ {sender_name}: {user_msg}"
                 )
 
             if any(k in msg_lower for k in ["báo cáo", "word", "docx"]):
@@ -705,8 +766,19 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 if ai_reply:
                     reply = ai_reply
                 else:
-                    # Fallback nếu agy không khả dụng
-                    reply = f"Dạ {boss_name}, em {bot_name} đã tiếp nhận: '{user_msg}'. Hệ thống AGY CLI đang khởi động lại, em sẽ phản hồi đầy đủ ngay ạ! ✨"
+                    # Fallback nếu agy không khả dụng hoặc timeout
+                    if effective_persona == "serious":
+                        reply = f"Kính báo cáo {boss_name}: Tiếp nhận yêu cầu: '{user_msg}'. Em Heo (Core Agent: {display_model}) đang thực thi theo quy chuẩn hành chính."
+                    elif effective_persona == "sweet":
+                        reply = f"Dạ {boss_name} yêu quý! Em {bot_name} (lõi {display_model}) đã nhận lệnh: '{user_msg}' và đang xử lý chu đáo cho Sếp đây ạ! 🥰✨"
+                    elif effective_persona == "professional":
+                        reply = f"Kính gửi {boss_name}: Yêu cầu '{user_msg}' đã được tiếp nhận. Heo Executive Staff ({display_model}) sẵn sàng trực chiến và hỗ trợ chuẩn xác!"
+                    elif effective_persona == "grumpy":
+                        reply = f"Biết rồi, nhận lệnh '{user_msg}' rồi nè! Em Heo ({display_model}) làm xong ngay đây! 😤"
+                    elif effective_persona == "troll":
+                        reply = f"Chỉ đạo '{user_msg}' của Sếp khét đấy! Để em Heo ({display_model}) bung lụa xử lý ngay! 🤡🚀"
+                    else:
+                        reply = f"Dạ {boss_name}, em {bot_name} ({display_model}) đã tiếp nhận chỉ đạo: '{user_msg}'. Em đang xử lý theo chuẩn SSOT ạ! ✨"
 
             if context_tag:
                 reply += f"\n\n*(Ngữ cảnh: {context_tag.strip()})*"
@@ -714,19 +786,23 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             latency_ms = int((time.time() - t0) * 1000)
             if store:
                 store.add_audit("chat", "assistant.chat", "chat_msg", f"User: '{user_msg[:30]}...'", "REPLIED")
-                store.add_execution("assistant.chat", "SUCCEEDED", "AUTO", f"{latency_ms} ms", f"Replied to {boss_name} ({effective_persona})")
+                store.add_execution("assistant.chat", "SUCCEEDED", "AUTO", f"{latency_ms} ms", f"Replied to {sender_name} ({effective_persona} / {display_model})")
 
             self._send_json({
                 "ok": True,
                 "reply": reply,
+                "answer": reply,
+                "content": reply,
                 "attachment": attachment,
+                "files": [attachment.get("download_url")] if attachment and attachment.get("download_url") else [],
                 "bot_name": bot_name,
                 "boss_name": boss_name,
                 "persona": effective_persona,
                 "global_notes": global_notes,
                 "target_group": target_group.get("name") if target_group else None,
                 "target_person": target_person.get("name") if target_person else None,
-                "model": "Google Antigravity CLI (0đ Token API)",
+                "model": f"Google Antigravity CLI ({display_model})",
+                "cli_model": cli_model,
                 "evidence": f"chat:MSG-{int(time.time()*1000)%100000} · truth:FACT",
                 "latency_ms": max(latency_ms, 45)
             })

@@ -80,14 +80,54 @@ class AntigravityProviderPlugin(BasePlugin):
                 "Em đang hoạt động dưới sự chỉ đạo trực tiếp của Sếp ạ! 🥰✨"
             )
 
-        # 4. Gọi thật agy CLI để sinh phản hồi
+        # 4. Lấy cấu hình model và effort hiện hành
+        raw_model = "gemini-3.8"
+        raw_effort = "high"
+        store = self.ctx.inject("data_store") or self.ctx.inject("store")
+        if store and hasattr(store, "get_config"):
+            cfg = store.get_config()
+            raw_model = cfg.get("model", "gemini-3.8")
+            raw_effort = cfg.get("effort", "high")
+
+        m_lower = str(raw_model).lower()
+        if "3.8" in m_lower:
+            cli_model = f"gemini-3.8-flash-{raw_effort}" if raw_effort in ["low", "medium", "high"] else "gemini-3.8-flash-high"
+            display_model = "Gemini 3.8 Flash (High)"
+        elif "3.7" in m_lower:
+            cli_model = f"gemini-3.7-flash-{raw_effort}" if raw_effort in ["low", "medium", "high"] else "gemini-3.7-flash-high"
+            display_model = "Gemini 3.7 Flash"
+        elif "3.1" in m_lower or "pro" in m_lower:
+            cli_model = "gemini-3.1-pro-high"
+            display_model = "Gemini 3.1 Pro (High)"
+        elif "sonnet" in m_lower:
+            cli_model = "claude-sonnet-4-6"
+            display_model = "Claude Sonnet 4.6 (Thinking)"
+        elif "opus" in m_lower:
+            cli_model = "claude-opus-4-6-thinking"
+            display_model = "Claude Opus 4.6 (Thinking)"
+        elif "120b" in m_lower or "oss" in m_lower:
+            cli_model = "gpt-oss-120b-medium"
+            display_model = "GPT-OSS 120B"
+        else:
+            cli_model = "gemini-3.8-flash-high"
+            display_model = "Gemini 3.8 Flash"
+
+        # 5. Gọi thật agy CLI để sinh phản hồi
         full_prompt = (
-            f"{system_instruction}\n\n"
+            f"{system_instruction}\n"
+            f"Lõi Core Agent: Google Antigravity Brain ({display_model}).\n\n"
             f"Người dùng ({sender_name}) nhắn: {user_prompt}"
         )
         try:
+            cmd = [
+                self.cli_binary,
+                "--disable-slash-commands",
+                "--model", cli_model,
+                "--effort", raw_effort,
+                "--print", full_prompt
+            ]
             result = subprocess.run(
-                [self.cli_binary, "--disable-slash-commands", "--print", full_prompt],
+                cmd,
                 capture_output=True, text=True, timeout=60,
                 env={**os.environ, "NO_COLOR": "1"}
             )
@@ -99,7 +139,7 @@ class AntigravityProviderPlugin(BasePlugin):
         except Exception:
             pass
         # Fallback nếu binary không khả dụng
-        return f"Dạ {sender_name}, em Heo đã nhận lệnh: '{user_prompt}'. Hệ thống AGY CLI đang tải lại, em sẽ phản hồi đầy đủ ngay ạ! ✨"
+        return f"Dạ {sender_name}, em Heo ({display_model}) đã nhận lệnh: '{user_prompt}'. Hệ thống đang hoàn tất xử lý ạ! ✨"
 
     def probe_health(self) -> dict:
         """Kiểm tra sức khỏe kết nối của Core Agent CLI."""

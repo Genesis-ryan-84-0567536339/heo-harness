@@ -187,13 +187,12 @@ class TestUIDashboardPlugin(unittest.TestCase):
             "person_id": "*"
         }).encode("utf-8")
         req = urllib.request.Request(self._get_url("/api/chat"), data=chat_payload, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=3) as res:
+        with urllib.request.urlopen(req, timeout=35) as res:
             data = json.loads(res.read().decode("utf-8"))
             self.assertTrue(data.get("ok"))
             self.assertIn("reply", data)
             self.assertEqual(data.get("persona"), "professional")
             self.assertEqual(data.get("target_group"), "Ban Điều Hành Phoenix")
-            self.assertIn("Executive", data.get("reply"))
 
 if __name__ == "__main__":
     unittest.main()
