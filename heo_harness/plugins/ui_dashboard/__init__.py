@@ -192,6 +192,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                     "uptime_sec": int(time.time() - plugin.start_time)
                 },
                 "plugins_count": len(manager._plugins) if manager else 0,
+                "bot_enabled": store.is_bot_enabled() if store and hasattr(store, "is_bot_enabled") else True,
+                "accounts": store.get_accounts() if store and hasattr(store, "get_accounts") else {},
                 "persona": persona_svc.get_config() if persona_svc else {},
                 "auth": auth_svc.get_author_info() if auth_svc else {}
             }
@@ -369,23 +371,80 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             has_p = store.has_security_pin() if store else False
             self._send_json({"ok": True, "has_pin": has_p})
 
+        elif path_clean in ["/api/bot/status", "/api/bot_status"]:
+            is_enabled = store.is_bot_enabled() if store and hasattr(store, "is_bot_enabled") else True
+            self._send_json({
+                "ok": True,
+                "bot_enabled": is_enabled,
+                "status_text": "TRỰC CHIẾN" if is_enabled else "TẠM DỪNG",
+                "status_message": store.get_config().get("bot_status_message", "") if store else ""
+            })
+
+        elif path_clean in ["/api/accounts/list", "/api/accounts"]:
+            accs = store.get_accounts() if store and hasattr(store, "get_accounts") else {}
+            self._send_json({"ok": True, "accounts": accs})
+
+        elif path_clean in ["/api/logs/live", "/api/live_logs"]:
+            parsed = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed.query)
+            channel = params.get("channel", ["all"])[0]
+            level = params.get("level", ["ALL"])[0]
+            try:
+                since_id = int(params.get("since_id", [0])[0])
+            except Exception:
+                since_id = 0
+            try:
+                limit = int(params.get("limit", [150])[0])
+            except Exception:
+                limit = 150
+            logs = store.get_live_logs(channel=channel, level=level, since_id=since_id, limit=limit) if store and hasattr(store, "get_live_logs") else []
+            self._send_json({"ok": True, "logs": logs, "count": len(logs)})
+
         elif path_clean in ["/api/zalo/qr.png", "/api/qr.png"]:
             qr_file = Path("/home/ryan/heo-harness/data/zalo_qr.png")
-            if qr_file.exists():
+            if not qr_file.exists() or (time.time() - qr_file.stat().st_mtime) > 100:
+                if store and hasattr(store, "spawn_zalo_bridge"):
+                    store.spawn_zalo_bridge(force_restart=False)
+                # Chờ tối đa 2.5 giây cho bot.js sinh file ảnh QR
+                for _ in range(12):
+                    time.sleep(0.2)
+                    if qr_file.exists() and qr_file.stat().st_size > 100:
+                        break
+
+            if qr_file.exists() and qr_file.stat().st_size > 100:
                 img_data = qr_file.read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type", "image/png")
                 self.send_header("Content-Length", str(len(img_data)))
-                self.send_header("Cache-Control", "no-cache")
+                self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
                 self.end_headers()
                 self.wfile.write(img_data)
                 return
-            self._send_json({"error": "QR file not found"}, 404)
+
+            # Placeholder SVG thân thiện thay vì trả về lỗi 404 làm vỡ ảnh browser
+            svg_data = (
+                '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">'
+                '<rect width="200" height="200" fill="#f8fafc" rx="8" stroke="#cbd5e1" stroke-width="1"/>'
+                '<text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#0284c7" font-size="14" font-weight="bold">Đang kết nối Zalo...</text>'
+                '<text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-size="11">Hệ thống đang sinh mã QR mới</text>'
+                '</svg>'
+            ).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "image/svg+xml")
+            self.send_header("Content-Length", str(len(svg_data)))
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            self.wfile.write(svg_data)
+            return
+
+        elif path_clean in ["/api/zalo/qr_status", "/api/zalo/qr_info", "/api/qr_status"]:
+            info = store.get_zalo_qr_info() if store and hasattr(store, "get_zalo_qr_info") else {}
+            self._send_json(info)
 
         elif path_clean in ["/api/zalo/qr", "/api/qr"]:
             if "image" in self.headers.get("Accept", ""):
                 qr_file = Path("/home/ryan/heo-harness/data/zalo_qr.png")
-                if qr_file.exists():
+                if qr_file.exists() and qr_file.stat().st_size > 100:
                     img_data = qr_file.read_bytes()
                     self.send_response(200)
                     self.send_header("Content-Type", "image/png")
@@ -394,8 +453,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(img_data)
                     return
-            qr_b64 = store.get_zalo_qr_base64() if store else ""
-            self._send_json({"ok": True, "qr_data": qr_b64})
+            info = store.get_zalo_qr_info() if store and hasattr(store, "get_zalo_qr_info") else {}
+            self._send_json(info)
 
         elif path_clean in ["/api/whatsapp/status", "/api/whatsapp/info"]:
             wcfg = store.get_whatsapp_config() if store else {}
@@ -442,6 +501,29 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             user_msg = data.get("message", "").strip()
             if not user_msg:
                 self._send_json({"ok": False, "error": "Tin nhắn không được để trống"}, 400)
+                return
+
+            if store and hasattr(store, "is_bot_enabled") and not store.is_bot_enabled():
+                status_msg = store.get_config().get("bot_status_message", "")
+                reply = "⚠️ [THÔNG BÁO] Bé Heo hiện đang ở chế độ TẠM DỪNG (PAUSED) theo lệnh điều hành của Sếp."
+                if status_msg:
+                    reply += f" Lời nhắn: '{status_msg}'."
+                reply += " Sếp vui lòng bấm nút '🟢 Kích Hoạt Trực Chiến' trên thanh công cụ phía trên để mở lại hoạt động của em nhé!"
+                self._send_json({
+                    "ok": True,
+                    "reply": reply,
+                    "attachment": None,
+                    "bot_name": "Bé Heo",
+                    "boss_name": "Sếp Cơ La",
+                    "persona": "paused",
+                    "paused": True,
+                    "global_notes": "",
+                    "target_group": None,
+                    "target_person": None,
+                    "model": "Google Antigravity CLI (0đ Token API)",
+                    "evidence": "chat:PAUSED · truth:FACT",
+                    "latency_ms": 12
+                })
                 return
 
             t0 = time.time()
@@ -600,6 +682,8 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 "evidence": f"chat:MSG-{int(time.time()*1000)%100000} · truth:FACT",
                 "latency_ms": max(latency_ms, 45)
             })
+            if store and hasattr(store, "add_live_log"):
+                store.add_live_log("core", "SUCCESS", f"Bé Heo phản hồi ({effective_persona}): '{reply[:60]}...'", reply)
 
         elif path_clean == "/api/persona/update":
             persona_svc = plugin.ctx.inject("persona")
@@ -1145,6 +1229,61 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
         elif path_clean in ["/api/zalo/restart_bridge", "/api/restart_zalo_bridge"]:
             if store:
                 res = store.restart_zalo_bridge()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= BOT TOGGLE & QUICK CONFIG =================
+        elif path_clean in ["/api/bot/toggle", "/api/bot_toggle"]:
+            enabled_val = data.get("enabled", None)
+            msg_val = data.get("status_message", "")
+            if store and hasattr(store, "toggle_bot"):
+                res = store.toggle_bot(enabled=enabled_val, status_message=msg_val)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/quick_config", "/api/quick-config"]:
+            pin = str(data.get("pin", "")).strip()
+            if store:
+                ok, msg, cfg = store.update_config(data, pin)
+                self._send_json({"ok": ok, "message": msg, "config": cfg}, 200 if ok else 403)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= MULTI-ACCOUNT MANAGEMENT =================
+        elif path_clean in ["/api/accounts/switch", "/api/accounts_switch"]:
+            acc_type = data.get("type", "boss")
+            acc_id = data.get("id", "")
+            if not acc_id:
+                self._send_json({"ok": False, "error": "Thiếu mã tài khoản (id)"}, 400)
+                return
+            if store and hasattr(store, "switch_account"):
+                ok, msg, accs = store.switch_account(acc_type, acc_id)
+                self._send_json({"ok": ok, "message": msg, "accounts": accs}, 200 if ok else 400)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/accounts/add", "/api/accounts_add"]:
+            acc_type = data.get("type", "boss")
+            if store and hasattr(store, "add_account"):
+                ok, msg, accs = store.add_account(acc_type, data)
+                self._send_json({"ok": ok, "message": msg, "accounts": accs}, 200 if ok else 400)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= LIVE LOGS CLEAR =================
+        elif path_clean in ["/api/logs/clear", "/api/live_logs/clear"]:
+            if store and hasattr(store, "clear_live_logs"):
+                store.clear_live_logs()
+                self._send_json({"ok": True, "message": "Đã dọn sạch màn hình nhật ký thời gian thực!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= ONBOARDING WIZARD =================
+        elif path_clean in ["/api/onboarding/complete", "/api/onboarding_complete"]:
+            if store and hasattr(store, "complete_onboarding"):
+                res = store.complete_onboarding(data)
                 self._send_json(res)
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)

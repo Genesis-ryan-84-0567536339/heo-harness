@@ -37,3 +37,7 @@ artifacts/reports/*
 !artifacts/reports/.gitkeep
 artifacts/media/*
 !artifacts/media/.gitkeep
+
+# Bridge dependencies
+bridge/node_modules
+node_modules/

@@ -540,6 +540,10 @@
       overflow: hidden;
       animation: modalSlide 0.2s ease-out;
     }
+    .modal-box.modal-lg {
+      width: 780px;
+      max-width: 95vw;
+    }
     @keyframes modalSlide {
       from { transform: translateY(12px) scale(0.98); opacity: 0; }
       to { transform: translateY(0) scale(1); opacity: 1; }
@@ -565,7 +569,7 @@
     }
     .modal-body {
       padding: 20px;
-      max-height: 70vh;
+      max-height: 72vh;
       overflow-y: auto;
     }
     .modal-footer {
@@ -575,6 +579,145 @@
       justify-content: flex-end;
       gap: 10px;
       background: #090e1a;
+    }
+
+    /* Live Log Stream Styles */
+    .live-log-container {
+      background: #050811;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      max-height: 540px;
+      min-height: 360px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .log-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      line-height: 1.45;
+      transition: background 0.1s ease;
+    }
+    .log-row:hover {
+      background: rgba(255,255,255,0.04);
+    }
+    .log-time {
+      color: #64748b;
+      white-space: nowrap;
+      font-size: 10px;
+    }
+    .log-chan-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .log-chan-core { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+    .log-chan-zalo { background: rgba(0,104,255,0.15); color: #38bdf8; border: 1px solid rgba(0,104,255,0.3); }
+    .log-chan-whatsapp { background: rgba(37,211,102,0.15); color: #25D366; border: 1px solid rgba(37,211,102,0.3); }
+    .log-chan-policy { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .log-chan-rbac { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .log-chan-dsh { background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+
+    .log-lvl-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .log-lvl-INFO { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .log-lvl-WARN { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .log-lvl-ERROR { background: rgba(239,68,68,0.2); color: #f87171; font-weight: 800; }
+    .log-lvl-SUCCESS { background: rgba(16,185,129,0.2); color: #34d399; }
+
+    .log-content-col {
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .log-msg-text {
+      color: #e2e8f0;
+    }
+    .log-details-text {
+      color: #94a3b8;
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    /* Onboarding Wizard Stepper */
+    .wizard-stepper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .wizard-stepper::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: var(--border);
+      z-index: 1;
+    }
+    .wizard-step-node {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    .wizard-step-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+    .wizard-step-node.active .wizard-step-circle {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #052e16;
+      box-shadow: 0 0 12px rgba(16,185,129,0.5);
+    }
+    .wizard-step-node.completed .wizard-step-circle {
+      background: rgba(16,185,129,0.2);
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+    .wizard-step-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .wizard-step-node.active .wizard-step-label {
+      color: var(--text);
+      font-weight: 700;
     }
 
     /* Toast Notification */
@@ -815,11 +958,11 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="user-info">
+      <div class="user-info" onclick="openAccountSwitcherModal()" style="cursor:pointer" title="Bấm để Chuyển đổi Tài Khoản / Profile">
         <div class="user-avatar" id="sidebar-user-avatar">CL</div>
         <div>
           <div class="user-name" id="sidebar-user-name">Sếp Cơ La (Ryan)</div>
-          <div class="user-role" id="sidebar-user-role">Tác Quyền Duy Nhất SSOT</div>
+          <div class="user-role" id="sidebar-user-role">Tác Quyền Duy Nhất SSOT ⇄</div>
         </div>
       </div>
       <button class="btn sm" onclick="toggleTheme()" title="Chuyển Theme">🌓</button>
@@ -835,6 +978,15 @@
         <span class="topbar-subtitle" id="top-subtitle">Trung Tâm Chỉ Huy Chiến Lược & Tổng Quan Trực Chiến</span>
       </div>
       <div class="topbar-right">
+        <button id="btn-master-bot" class="btn sm success" onclick="toggleMasterBot()" style="font-weight:700;display:flex;align-items:center;gap:6px" title="Bấm để Tạm dừng hoặc Bật lại Bé Heo toàn hệ thống">
+          🟢 BÉ HEO ĐANG CHẠY
+        </button>
+        <button class="btn sm" onclick="openQuickConfigModal()" title="Cấu hình nhanh 5 giây">
+          ⚡ Cấu Hình Nhanh
+        </button>
+        <button class="btn sm" onclick="openOnboardingWizard(1)" title="Khởi tạo nhanh cho người mới (Step-by-step)">
+          🚀 Bắt Đầu Nhanh
+        </button>
         <span class="badge good" id="topbar-core-badge" style="cursor:pointer" onclick="switchHub('assistant', 'quota')">
           ⚡ Core AGY (0đ API)
         </span>
@@ -870,7 +1022,7 @@ Gõ 'help' để xem danh sách lệnh có sẵn.
 
 <!-- GENERIC MODAL -->
 <div class="modal-overlay" id="modal-container">
-  <div class="modal-box">
+  <div class="modal-box" id="modal-box">
     <div class="modal-header">
       <div class="modal-title" id="modal-title">Tiêu Đề Modal</div>
       <button class="modal-close" onclick="closeModal()">✕</button>
@@ -903,8 +1055,18 @@ let state = {
     intelligence: 'insights',
     assistant: 'chat',       // Default to Live Chat
     governance: 'pin',       // Default to Admin PIN & Security
-    modules: 'plugins'       // Default to Active Plugins
+    modules: 'plugins',      // Default to Active Plugins
+    zalo: 'gateway',         // Default to Gateway QR & Settings
+    whatsapp: 'gateway'      // Default to Gateway QR & Messages
   },
+  bot_enabled: true,
+  accounts: { boss_profiles: [], channels: [] },
+  live_logs: [],
+  logs_paused: false,
+  logs_autoscroll: true,
+  logs_filter_channel: 'all',
+  logs_filter_level: 'ALL',
+  last_log_id: 0,
   config: {},
   google: {},
   quota: {},
@@ -940,9 +1102,13 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-function openModal(title, htmlContent, onConfirm = null) {
+function openModal(title, htmlContent, onConfirm = null, isLarge = false) {
   $('#modal-title').textContent = title;
   $('#modal-body').innerHTML = htmlContent;
+  const mBox = $('#modal-box');
+  if (mBox) {
+    mBox.classList.toggle('modal-lg', !!isLarge);
+  }
   const cBtn = $('#modal-confirm-btn');
   if (onConfirm) {
     cBtn.style.display = 'inline-flex';
@@ -955,6 +1121,8 @@ function openModal(title, htmlContent, onConfirm = null) {
 
 function closeModal() {
   $('#modal-container').classList.remove('open');
+  const mBox = $('#modal-box');
+  if (mBox) mBox.classList.remove('modal-lg');
 }
 
 function toggleTerminal() {
@@ -978,7 +1146,7 @@ async function fetchAllData() {
     const [
       cfgRes, gRes, qRes, pinRes, wRes, cRes, aRes, grpRes, pplRes,
       polRes, exRes, attRes, insRes, outRes, lrnRes, artRes, mtrRes, bkRes, audRes, zRes, waRes, waMsgRes,
-      plgRes, catRes, sklRes
+      plgRes, catRes, sklRes, botRes, accRes
     ] = await Promise.all([
       fetch('/api/config').then(r => r.json()).catch(() => ({})),
       fetch('/api/google/info').then(r => r.json()).catch(() => ({})),
@@ -1004,7 +1172,9 @@ async function fetchAllData() {
       fetch('/api/whatsapp/messages').then(r => r.json()).catch(() => ({ messages: [] })),
       fetch('/api/plugins/list').then(r => r.json()).catch(() => ({ plugins: [] })),
       fetch('/api/plugins/catalog').then(r => r.json()).catch(() => ({ catalog: [] })),
-      fetch('/api/skills/list').then(r => r.json()).catch(() => ({ skills: [] }))
+      fetch('/api/skills/list').then(r => r.json()).catch(() => ({ skills: [] })),
+      fetch('/api/bot/status').then(r => r.json()).catch(() => ({ enabled: true })),
+      fetch('/api/accounts/list').then(r => r.json()).catch(() => ({ boss_profiles: [], channels: [] }))
     ]);
 
     state.config = cfgRes.config || {};
@@ -1032,6 +1202,8 @@ async function fetchAllData() {
     state.plugins = plgRes.plugins || [];
     state.catalog = catRes.catalog || [];
     state.skills = sklRes.skills || [];
+    state.bot_enabled = (botRes && typeof botRes.enabled === 'boolean') ? botRes.enabled : true;
+    state.accounts = accRes || { boss_profiles: [], channels: [] };
 
     updateBadges();
     renderActiveHub();
@@ -1082,12 +1254,59 @@ function updateBadges() {
     waBadge.textContent = isWaConn ? 'ONLINE' : 'QR';
   }
 
+  // Cập nhật nút Master Bot
+  updateMasterBotButton();
+
   // Cập nhật tên Sếp và Trợ lý từ config
   if (state.config.boss_name) {
     $('#sidebar-user-name').textContent = `${state.config.boss_name} (Ryan)`;
   }
   if (state.google.email) {
     $('#topbar-core-badge').innerHTML = `⚡ ${state.config.model || 'Gemini 3.8'} · ${state.google.email}`;
+  }
+}
+
+function updateMasterBotButton() {
+  const btn = $('#btn-master-bot');
+  if (!btn) return;
+  if (state.bot_enabled === false) {
+    btn.className = 'btn sm danger';
+    btn.style.background = '#dc2626';
+    btn.style.borderColor = '#ef4444';
+    btn.style.color = '#ffffff';
+    btn.innerHTML = '⏸ TẠM DỪNG (PAUSED)';
+    btn.title = 'Bé Heo đang tạm dừng toàn bộ phản hồi tự động. Bấm để Bật lại.';
+  } else {
+    btn.className = 'btn sm success';
+    btn.style.background = 'rgba(16, 185, 129, 0.2)';
+    btn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+    btn.style.color = '#10b981';
+    btn.innerHTML = '🟢 BÉ HEO ĐANG CHẠY';
+    btn.title = 'Bé Heo đang trực chiến. Bấm để Tạm dừng khẩn cấp.';
+  }
+}
+
+async function toggleMasterBot() {
+  const current = state.bot_enabled;
+  const target = !current;
+  const msg = target ? "Bé Heo đã trở lại trực chiến bình thường!" : "Bé Heo đang tạm nghỉ theo lệnh của Sếp.";
+  
+  try {
+    const res = await fetch('/api/bot/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: target, status_message: msg })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      state.bot_enabled = d.enabled;
+      updateMasterBotButton();
+      showToast(target ? "🟢 Đã BẬT Bé Heo trực chiến toàn hệ thống!" : "⏸ Đã TẠM DỪNG Bé Heo thành công!");
+    } else {
+      showToast(d.error || "Lỗi thao tác bật/tắt");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối máy chủ");
   }
 }
 
@@ -1103,6 +1322,9 @@ function switchHub(hubKey, subtabKey = null) {
     el.classList.toggle('active', el.getAttribute('data-hub') === hubKey);
   });
   renderActiveHub();
+  if (hubKey === 'zalo') {
+    startZaloQrPolling();
+  }
 }
 
 function switchSubtab(hubKey, subtabKey) {
@@ -1248,6 +1470,22 @@ function renderCommandCenterHub() {
           <div class="card-title">⚡ Quick Action Dispatcher</div>
         </div>
         <div class="card-pad" style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button class="btn" style="justify-content:center;padding:9px;background:rgba(245,158,11,0.12);color:#f59e0b;border-color:rgba(245,158,11,0.3)" onclick="openQuickConfigModal()">
+              ⚡ Cấu Hình Nhanh (5s)
+            </button>
+            <button class="btn" style="justify-content:center;padding:9px;background:rgba(59,130,246,0.12);color:#60a5fa;border-color:rgba(59,130,246,0.3)" onclick="openOnboardingWizard(1)">
+              🚀 Khởi Tạo Nhanh
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button class="btn" style="justify-content:center;padding:9px;background:rgba(168,85,247,0.12);color:#c084fc;border-color:rgba(168,85,247,0.3)" onclick="openAccountSwitcherModal()">
+              👤 Đổi Tài Khoản / Profile
+            </button>
+            <button class="btn" style="justify-content:center;padding:9px;background:rgba(239,68,68,0.12);color:#f87171;border-color:rgba(239,68,68,0.3)" onclick="switchHub('governance', 'logs')">
+              🔴 Nhật Ký Live Stream
+            </button>
+          </div>
           <button class="btn primary" style="justify-content:center;padding:10px" onclick="switchHub('assistant', 'chat')">
             💬 Trò Chuyện Trực Tiếp Bé Heo
           </button>
@@ -1932,6 +2170,7 @@ async function deletePerson(id) {
 // ==========================================
 
 function renderZaloHub() {
+  const currentSub = state.subtabs.zalo || 'gateway';
   return `
     <div class="hub-header">
       <div class="hub-header-top">
@@ -1943,12 +2182,21 @@ function renderZaloHub() {
           <button class="btn primary sm" onclick="syncZaloGroups()">Đồng Bộ Nhóm (Sync)</button>
         </div>
       </div>
+      <div class="hub-subnav" style="margin-top:12px">
+        <button class="hub-subnav-btn ${currentSub === 'gateway' ? 'active' : ''}" onclick="switchSubtab('zalo', 'gateway')">
+          💬 Cổng Kết Nối & QR Gateway
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'bridge_logs' ? 'active' : ''}" onclick="switchSubtab('zalo', 'bridge_logs')">
+          🔴 Nhật Ký Bridge Zalo Live
+        </button>
+      </div>
     </div>
-    ${renderZaloGatewayView()}
+    ${currentSub === 'bridge_logs' ? renderRealTimeLogsView('zalo') : renderZaloGatewayView()}
   `;
 }
 
 function renderWhatsAppHub() {
+  const currentSub = state.subtabs.whatsapp || 'gateway';
   return `
     <div class="hub-header">
       <div class="hub-header-top">
@@ -1960,8 +2208,16 @@ function renderWhatsAppHub() {
           <button class="btn primary sm" style="background:#25D366;border-color:#25D366;color:#052e16;font-weight:700" onclick="refreshWhatsAppQR()">🔄 Làm Mới QR WhatsApp</button>
         </div>
       </div>
+      <div class="hub-subnav" style="margin-top:12px">
+        <button class="hub-subnav-btn ${currentSub === 'gateway' ? 'active' : ''}" onclick="switchSubtab('whatsapp', 'gateway')">
+          📱 Cổng Kết Nối & QR Gateway
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'bridge_logs' ? 'active' : ''}" onclick="switchSubtab('whatsapp', 'bridge_logs')">
+          🔴 Nhật Ký Bridge WhatsApp Live
+        </button>
+      </div>
     </div>
-    ${renderWhatsAppGatewayView()}
+    ${currentSub === 'bridge_logs' ? renderRealTimeLogsView('whatsapp') : renderWhatsAppGatewayView()}
   `;
 }
 
@@ -2127,11 +2383,16 @@ function renderZaloGatewayView() {
           </span>
         </div>
 
+        <!-- Scanned Alert Banner -->
+        <div id="zalo-qr-scanned-alert" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:8px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:var(--good);font-weight:600;font-size:12px">
+        </div>
+
         <div style="display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start">
           <!-- Real QR Image Box -->
           <div style="text-align:center;background:#fff;padding:10px;border-radius:12px;border:1px solid var(--border)">
-            <img id="zalo-qr-image" src="/api/zalo/qr.png" style="width:160px;height:160px;display:block;margin:0 auto;object-fit:contain" alt="Zalo QR Code" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 fill=%22%23f1f5f9%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2364748b%22 font-size=%2214%22>Đang tạo mã QR...</text></svg>';" />
-            <div style="font-size:10px;color:#0f172a;margin-top:6px;font-weight:600">Quét bằng App Zalo Điện Thoại</div>
+            <img id="zalo-qr-image" src="/api/zalo/qr.png?t=${Date.now()}" style="width:160px;height:160px;display:block;margin:0 auto;object-fit:contain;border-radius:6px" alt="Zalo QR Code" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 fill=%22%23f1f5f9%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%230284c7%22 font-size=%2214%22 font-weight=%22bold%22>Đang tạo mã QR...</text></svg>';" />
+            <div id="zalo-qr-status-msg" style="font-size:11px;color:#0f172a;margin-top:6px;font-weight:600">Quét bằng App Zalo Điện Thoại</div>
+            <div id="zalo-qr-timer" style="font-size:10px;color:#64748b;margin-top:2px">Đang kết nối Zalo...</div>
           </div>
 
           <!-- Connection Details & Actions -->
@@ -2404,16 +2665,109 @@ async function sendWhatsAppTestMessage() {
   }
 }
 
+let zaloQrPollInterval = null;
+let currentLoadedQrMtime = 0;
+
+function startZaloQrPolling() {
+  if (zaloQrPollInterval) clearInterval(zaloQrPollInterval);
+  zaloQrPollInterval = setInterval(async () => {
+    if (state.activeHub !== 'zalo' || (state.zalo && state.zalo.connected)) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/zalo/qr_status');
+      const data = await res.json();
+      handleZaloQrResponse(data);
+    } catch (_) {}
+  }, 1500);
+}
+
+function handleZaloQrResponse(data) {
+  const img = $('#zalo-qr-image');
+  const timerText = $('#zalo-qr-timer');
+  const statusMsg = $('#zalo-qr-status-msg');
+  const alertBox = $('#zalo-qr-scanned-alert');
+
+  if (!img) return;
+
+  if (data.logged_in) {
+    if (alertBox) {
+      alertBox.style.display = 'block';
+      alertBox.textContent = '🎉 Đã đăng nhập Zalo thành công!';
+    }
+    if (timerText) timerText.textContent = 'Đã kết nối!';
+    if (zaloQrPollInterval) {
+      clearInterval(zaloQrPollInterval);
+      zaloQrPollInterval = null;
+    }
+    fetchAllData();
+    return;
+  }
+
+  if (data.scanned) {
+    if (alertBox) {
+      alertBox.style.display = 'block';
+      alertBox.textContent = `👁️ Sếp${data.user_name ? ' (' + data.user_name + ')' : ''} đã quét mã! Vui lòng bấm 'ĐĂNG NHẬP' trên điện thoại để hoàn tất...`;
+    }
+    if (statusMsg) statusMsg.textContent = 'Đang chờ xác nhận trên điện thoại...';
+    if (timerText) timerText.textContent = 'Sếp vui lòng bấm ĐĂNG NHẬP';
+    return;
+  } else {
+    if (alertBox) alertBox.style.display = 'none';
+  }
+
+  if (data.has_qr) {
+    if (data.qr_base64 && img.src !== data.qr_base64) {
+      img.src = data.qr_base64;
+    } else if (data.qr_mtime && data.qr_mtime !== currentLoadedQrMtime) {
+      currentLoadedQrMtime = data.qr_mtime;
+      img.src = `/api/zalo/qr.png?t=${data.qr_mtime}`;
+    }
+    if (statusMsg) statusMsg.textContent = 'Quét bằng App Zalo Điện Thoại';
+    if (timerText) {
+      const remaining = Math.max(0, 100 - (data.qr_age_seconds || 0));
+      timerText.textContent = `Hết hạn sau: ${remaining}s`;
+    }
+  } else if (data.qr_expired) {
+    if (statusMsg) statusMsg.textContent = 'Mã QR đã hết hạn';
+    if (timerText) timerText.textContent = 'Bấm "Làm Mới QR" để tạo mã mới';
+  } else {
+    if (statusMsg) statusMsg.textContent = 'Đang kết nối Zalo...';
+    if (timerText) timerText.textContent = 'Hệ thống đang sinh mã QR mới...';
+  }
+}
+
 async function refreshZaloQR() {
-  showToast('Đang làm mới mã QR Zalo...');
-  const res = await fetch('/api/zalo/refresh_qr', { method: 'POST' });
-  const d = await res.json();
-  if (d.ok) {
-    showToast(d.message);
-    setTimeout(() => {
-      const img = $('#zalo-qr-image');
-      if (img) img.src = `/api/zalo/qr?t=${Date.now()}`;
-    }, 1500);
+  const statusMsg = $('#zalo-qr-status-msg');
+  const timerText = $('#zalo-qr-timer');
+  const alertBox = $('#zalo-qr-scanned-alert');
+  if (alertBox) alertBox.style.display = 'none';
+  if (statusMsg) statusMsg.textContent = 'Đang làm mới mã QR...';
+  if (timerText) timerText.textContent = 'Đang kết nối Zalo server...';
+
+  showToast('Đang gửi yêu cầu làm mới mã QR Zalo...');
+  try {
+    const res = await fetch('/api/zalo/refresh_qr', { method: 'POST' });
+    const d = await res.json();
+    showToast(d.message || 'Đang tạo mã QR mới...');
+
+    let attempts = 0;
+    const pollNew = setInterval(async () => {
+      attempts++;
+      try {
+        const r = await fetch('/api/zalo/qr_status');
+        const data = await r.json();
+        if (data.has_qr && data.qr_age_seconds < 15) {
+          clearInterval(pollNew);
+          handleZaloQrResponse(data);
+        } else if (attempts > 15) {
+          clearInterval(pollNew);
+          handleZaloQrResponse(data);
+        }
+      } catch (_) {}
+    }, 1000);
+  } catch (e) {
+    showToast('Lỗi kết nối máy chủ khi làm mới QR', true);
   }
 }
 
@@ -3331,13 +3685,16 @@ function renderGovernanceHub() {
         <button class="hub-subnav-btn ${currentSub === 'audits' ? 'active' : ''}" onclick="switchSubtab('governance', 'audits')">
           📃 Sổ Cái Kiểm Toán (SHA-256)
         </button>
+        <button class="hub-subnav-btn ${currentSub === 'logs' ? 'active' : ''}" onclick="switchSubtab('governance', 'logs')">
+          🔴 Nhật Ký Live Stream
+        </button>
         <button class="hub-subnav-btn ${currentSub === 'infra' ? 'active' : ''}" onclick="switchSubtab('governance', 'infra')">
           ⬡ Hạ Tầng & DSH Plugins (11)
         </button>
       </div>
     </div>
 
-    ${currentSub === 'pin' ? renderAdminPinView() : currentSub === 'approvals' ? renderApprovalsView() : currentSub === 'audits' ? renderAuditsView() : renderInfraView()}
+    ${currentSub === 'pin' ? renderAdminPinView() : currentSub === 'approvals' ? renderApprovalsView() : currentSub === 'audits' ? renderAuditsView() : currentSub === 'logs' ? renderRealTimeLogsView('all') : renderInfraView()}
   `;
 }
 
@@ -3979,11 +4336,783 @@ async function installCatalogPlugin(id) {
 }
 
 // ==========================================
-// INITIAL LOAD
+// QUICK CONFIG MODAL (5-SECOND SETUP)
+// ==========================================
+function openQuickConfigModal() {
+  const cfg = state.config || {};
+  const currentPersona = cfg.default_persona || 'dedicated';
+  const currentModel = cfg.model || 'gemini-2.5-flash';
+  const currentReasoning = cfg.reasoning_effort || 'low';
+  const requireMention = cfg.require_mention_in_groups !== false;
+  const directives = cfg.global_directives || '';
+
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);padding:12px;border-radius:8px;font-size:12px;color:var(--text-muted)">
+        ⚡ <b>Cấu Hình Nhanh 5 Giây:</b> Điều chỉnh các thông số trọng yếu của Bé Heo và Sếp trong tích tắc mà không cần duyệt qua từng trang cài đặt sâu.
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">👑 Danh Xưng Sếp</label>
+          <input type="text" class="form-input" id="qc-boss-name" value="${escapeHtml(cfg.boss_name || 'Anh Cơ La')}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">🐷 Danh Xưng Trợ Lý</label>
+          <input type="text" class="form-input" id="qc-bot-name" value="${escapeHtml(cfg.bot_name || 'Bé Heo')}">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">🧠 Mô Hình AI Hoạt Động (0đ API)</label>
+          <select class="form-select" id="qc-model">
+            <option value="gemini-2.5-flash" ${currentModel === 'gemini-2.5-flash' ? 'selected' : ''}>⚡ Gemini 2.5 Flash (Siêu Tốc)</option>
+            <option value="gemini-2.5-pro" ${currentModel === 'gemini-2.5-pro' ? 'selected' : ''}>🎯 Gemini 2.5 Pro (Suy Luận Sâu)</option>
+            <option value="gemini-3.8" ${currentModel === 'gemini-3.8' ? 'selected' : ''}>🔮 Gemini 3.8 Antigravity Core</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">🧩 Mức Độ Suy Luận (Reasoning)</label>
+          <select class="form-select" id="qc-reasoning">
+            <option value="off" ${currentReasoning === 'off' ? 'selected' : ''}>Tắt (Nhanh nhất)</option>
+            <option value="low" ${currentReasoning === 'low' ? 'selected' : ''}>Thấp (Low - Cân bằng)</option>
+            <option value="medium" ${currentReasoning === 'medium' ? 'selected' : ''}>Trung Bình (Medium)</option>
+            <option value="high" ${currentReasoning === 'high' ? 'selected' : ''}>Chuyên Sâu (High)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🎭 Phong Thái & Thái Độ Phục Vụ Của Bé Heo</label>
+        <select class="form-select" id="qc-persona">
+          <option value="dedicated" ${currentPersona === 'dedicated' ? 'selected' : ''}>💖 Tận tụy & Ngoan ngoãn (Dạ vâng, chu đáo, hết lòng vì Sếp)</option>
+          <option value="humorous" ${currentPersona === 'humorous' ? 'selected' : ''}>😄 Hài hước & Dí dỏm (Vui tươi, hóm hỉnh, giảm căng thẳng)</option>
+          <option value="serious" ${currentPersona === 'serious' ? 'selected' : ''}>👔 Nghiêm túc & Chuẩn chỉ (Tác phong quân đội, kỷ luật cao)</option>
+          <option value="analytical" ${currentPersona === 'analytical' ? 'selected' : ''}>🔍 Phân tích & Sắc bén (Dựa trên số liệu thực chứng, logic chặt chẽ)</option>
+          <option value="encouraging" ${currentPersona === 'encouraging' ? 'selected' : ''}>🌟 Động viên & Tích cực (Khích lệ tinh thần, năng lượng cao)</option>
+          <option value="bold" ${currentPersona === 'bold' ? 'selected' : ''}>🚀 Táo bạo & Sáng tạo (Đột phá, ý tưởng mới mẻ, thử thách giới hạn)</option>
+          <option value="minimalist" ${currentPersona === 'minimalist' ? 'selected' : ''}>⚡ Tối giản & Súc tích (Ngắn gọn, đi thẳng vào trọng tâm)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;background:var(--bg-body);padding:10px 14px;border-radius:6px;border:1px solid var(--border)">
+        <input type="checkbox" id="qc-require-mention" style="width:18px;height:18px;accent-color:var(--brand)" ${requireMention ? 'checked' : ''}>
+        <label for="qc-require-mention" style="cursor:pointer;font-size:12px;color:var(--text);font-weight:600">
+          Chỉ phản hồi khi được gắn thẻ (@tag) trong các nhóm Zalo & WhatsApp (Tránh spam nhóm)
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📜 Chỉ Đạo & Ghi Chú Chung Toàn Cục Của Sếp</label>
+        <textarea class="form-textarea" id="qc-directives" placeholder="Ví dụ: Ưu tiên trả lời ngắn gọn, luôn kiểm tra an toàn trước khi hành động, xưng Em gọi Sếp...">${escapeHtml(directives)}</textarea>
+      </div>
+
+      ${state.has_pin ? `
+        <div class="form-group" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);padding:10px 14px;border-radius:6px">
+          <label class="form-label" style="color:var(--p1)">🔐 Xác Thực Mã PIN Quản Trị (6 số)</label>
+          <input type="password" maxlength="16" class="form-input" id="qc-pin" value="123456" placeholder="Nhập mã PIN quản trị (Mặc định: 123456)">
+          <div class="text-sm muted" style="margin-top:4px">Hệ thống yêu cầu mã PIN để bảo vệ cấu hình điều hành tối cao của Sếp.</div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  openModal('⚡ Cấu Hình Nhanh Hệ Thống (Quick Config)', html, saveQuickConfigAction);
+}
+
+async function saveQuickConfigAction() {
+  const boss_name = $('#qc-boss-name') ? $('#qc-boss-name').value.trim() : '';
+  const bot_name = $('#qc-bot-name') ? $('#qc-bot-name').value.trim() : '';
+  const model = $('#qc-model') ? $('#qc-model').value : '';
+  const reasoning_effort = $('#qc-reasoning') ? $('#qc-reasoning').value : '';
+  const default_persona = $('#qc-persona') ? $('#qc-persona').value : '';
+  const require_mention_in_groups = $('#qc-require-mention') ? $('#qc-require-mention').checked : true;
+  const global_directives = $('#qc-directives') ? $('#qc-directives').value.trim() : '';
+  const pin = $('#qc-pin') ? $('#qc-pin').value.trim() : '';
+
+  try {
+    const res = await fetch('/api/quick_config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pin,
+        boss_name,
+        bot_name,
+        model,
+        reasoning_effort,
+        default_persona,
+        require_mention_in_groups,
+        global_directives
+      })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast('💾 Đã lưu cấu hình nhanh thành công!');
+      closeModal();
+      fetchAllData();
+    } else {
+      showToast('Lỗi: ' + (d.error || d.message || 'Không thể lưu cấu hình'));
+    }
+  } catch (e) {
+    showToast('Lỗi kết nối máy chủ');
+  }
+}
+
+// ==========================================
+// ACCOUNT SWITCHER MODAL
+// ==========================================
+function openAccountSwitcherModal(activeTab = 'boss') {
+  const bossList = (state.accounts && state.accounts.boss_profiles) || [];
+  const channelList = (state.accounts && state.accounts.channels) || [];
+
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <!-- Tabs Switcher -->
+      <div style="display:flex;gap:8px;border-bottom:1px solid var(--border);padding-bottom:10px">
+        <button class="btn sm ${activeTab === 'boss' ? 'primary' : ''}" onclick="openAccountSwitcherModal('boss')">
+          👑 Hồ Sơ Điều Hành (Boss Profiles)
+        </button>
+        <button class="btn sm ${activeTab === 'channels' ? 'primary' : ''}" onclick="openAccountSwitcherModal('channels')">
+          📱 Tài Khoản Kênh Liên Lạc (${channelList.length})
+        </button>
+      </div>
+
+      ${activeTab === 'boss' ? `
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:12px;color:var(--text-muted)">
+            Chọn Profile điều hành để Bé Heo nhận diện đúng quyền hạn và danh xưng tương ứng:
+          </div>
+          <div style="display:grid;grid-template-columns:1fr;gap:10px">
+            ${bossList.map(p => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg-body);border:1px solid ${p.active ? 'var(--brand)' : 'var(--border)'};border-radius:8px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="font-size:24px;width:40px;height:40px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;border:1px solid rgba(16,185,129,0.3)">
+                    ${p.avatar || '👑'}
+                  </div>
+                  <div>
+                    <div style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px">
+                      ${p.name}
+                      ${p.active ? '<span class="badge good">ĐANG HOẠT ĐỘNG</span>' : ''}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted)">
+                      ${p.role} · <span style="font-family:var(--mono)">${p.email}</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  ${p.active ? `
+                    <button class="btn sm" disabled style="opacity:0.6">✓ Đang Chọn</button>
+                  ` : `
+                    <button class="btn sm primary" onclick="switchAccountAction('boss', '${p.id}')">Chuyển Profile ➔</button>
+                  `}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : `
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:12px;color:var(--text-muted)">Các tài khoản Zalo cá nhân & số WhatsApp được kết nối vào hệ thống:</span>
+            <button class="btn sm primary" onclick="openAddAccountModal()">+ Thêm Tài Khoản Mới</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr;gap:10px">
+            ${channelList.map(c => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg-body);border:1px solid ${c.active ? 'var(--brand)' : 'var(--border)'};border-radius:8px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="font-size:24px;width:40px;height:40px;border-radius:50%;background:${c.channel === 'zalo' ? 'rgba(0,104,255,0.15)' : 'rgba(37,211,102,0.15)'};display:flex;align-items:center;justify-content:center;border:1px solid ${c.channel === 'zalo' ? 'rgba(0,104,255,0.3)' : 'rgba(37,211,102,0.3)'}">
+                    ${c.channel === 'zalo' ? '💬' : '📱'}
+                  </div>
+                  <div>
+                    <div style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px">
+                      ${c.name}
+                      <span class="badge ${c.channel === 'zalo' ? 'p3' : 'good'}">${c.channel.toUpperCase()}</span>
+                      ${c.active ? '<span class="badge good">ACTIVE</span>' : ''}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted)">
+                      Số: <span style="font-family:var(--mono)">${c.phone || c.id}</span> · Trạng thái: <b>${c.status}</b>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  ${c.active ? `
+                    <button class="btn sm" disabled style="opacity:0.6">✓ Kênh Chính</button>
+                  ` : `
+                    <button class="btn sm" onclick="switchAccountAction('channel', '${c.id}')">Kích Hoạt ➔</button>
+                  `}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `}
+    </div>
+  `;
+
+  openModal('👤 Chuyển Đổi Tài Khoản & Hồ Sơ (Account Switcher)', html, null, true);
+}
+
+async function switchAccountAction(type, id) {
+  try {
+    const res = await fetch('/api/accounts/switch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, id })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(`Đã chuyển sang ${type === 'boss' ? 'Profile' : 'Tài khoản'}: ${d.active_name || id}`);
+      closeModal();
+      fetchAllData();
+    } else {
+      showToast('Lỗi: ' + (d.error || 'Không thể chuyển đổi tài khoản'));
+    }
+  } catch (e) {
+    showToast('Lỗi kết nối máy chủ');
+  }
+}
+
+function openAddAccountModal() {
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Kênh Kết Nối</label>
+        <select class="form-select" id="new-acc-channel">
+          <option value="zalo">Zalo Cá Nhân Gateway</option>
+          <option value="whatsapp">WhatsApp Multi-Device Gateway</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tên Định Danh Tài Khoản</label>
+        <input type="text" class="form-input" id="new-acc-name" placeholder="Ví dụ: Zalo Trực Ban, WhatsApp CSKH...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Số Điện Thoại Hoặc Mã ID</label>
+        <input type="text" class="form-input" id="new-acc-phone" placeholder="Ví dụ: +84912345678...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vai Trò Tài Khoản</label>
+        <input type="text" class="form-input" id="new-acc-role" value="Kênh tác chiến dự phòng">
+      </div>
+    </div>
+  `;
+
+  openModal('➕ Thêm Tài Khoản Kênh Mới', html, async () => {
+    const channel = $('#new-acc-channel').value;
+    const name = $('#new-acc-name').value.trim();
+    const phone = $('#new-acc-phone').value.trim();
+    const role = $('#new-acc-role').value.trim();
+
+    if (!name) {
+      showToast('Vui lòng nhập tên tài khoản');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/accounts/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'channel',
+          data: { channel, name, phone, role, status: 'ONLINE', active: false }
+        })
+      });
+      const d = await res.json();
+      if (d.ok) {
+        showToast('Đã thêm tài khoản thành công!');
+        openAccountSwitcherModal('channels');
+        fetchAllData();
+      } else {
+        showToast('Lỗi: ' + (d.error || 'Không thể thêm tài khoản'));
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối máy chủ');
+    }
+  });
+}
+
+// ==========================================
+// REAL-TIME LIVE LOG VIEWER & CHANNEL BRIDGE
+// ==========================================
+function renderRealTimeLogsView(fixedChannel = 'all') {
+  const ch = fixedChannel !== 'all' ? fixedChannel : (state.logs_filter_channel || 'all');
+  const lvl = state.logs_filter_level || 'ALL';
+
+  // Trigger poll immediately
+  setTimeout(() => pollLiveLogs(true, fixedChannel), 50);
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <!-- Toolbar Controls -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button class="btn sm ${state.logs_paused ? 'primary' : ''}" onclick="togglePauseLiveLogs()" style="font-weight:700">
+            ${state.logs_paused ? '▶ Tiếp Tục Stream' : '⏸ Tạm Dừng Stream'}
+          </button>
+          <button class="btn sm ${state.logs_autoscroll ? 'good' : ''}" onclick="toggleAutoScrollLogs()">
+            ${state.logs_autoscroll ? '⬇ Auto-Scroll: BẬT' : '⏸ Auto-Scroll: TẮT'}
+          </button>
+          <button class="btn sm danger" onclick="clearLiveLogsAction('${fixedChannel}')">
+            🗑 Xóa Màn Hình
+          </button>
+          <button class="btn sm" onclick="downloadLiveLogs('${fixedChannel}')">
+            💾 Tải File Log (.txt)
+          </button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${fixedChannel === 'all' ? `
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="text-sm muted">Kênh:</span>
+              <select class="form-select" style="width:auto;padding:4px 8px;font-size:11px" onchange="setLogChannelFilter(this.value)">
+                <option value="all" ${ch === 'all' ? 'selected' : ''}>Tất Cả Kênh</option>
+                <option value="zalo" ${ch === 'zalo' ? 'selected' : ''}>💬 Zalo Gateway</option>
+                <option value="whatsapp" ${ch === 'whatsapp' ? 'selected' : ''}>📱 WhatsApp Gateway</option>
+                <option value="core" ${ch === 'core' ? 'selected' : ''}>⚡ Antigravity Brain</option>
+                <option value="policy" ${ch === 'policy' ? 'selected' : ''}>🛡 Tường Lửa Policy</option>
+                <option value="rbac" ${ch === 'rbac' ? 'selected' : ''}>🔐 RBAC Security</option>
+                <option value="dsh" ${ch === 'dsh' ? 'selected' : ''}>⬡ DSH Framework</option>
+              </select>
+            </div>
+          ` : `
+            <span class="badge ${fixedChannel === 'zalo' ? 'p3' : 'good'}" style="font-size:11px;padding:4px 10px">
+              Bridge Kênh: ${fixedChannel.toUpperCase()}
+            </span>
+          `}
+
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="text-sm muted">Cấp Độ:</span>
+            <select class="form-select" style="width:auto;padding:4px 8px;font-size:11px" onchange="setLogLevelFilter(this.value, '${fixedChannel}')">
+              <option value="ALL" ${lvl === 'ALL' ? 'selected' : ''}>ALL Levels</option>
+              <option value="INFO" ${lvl === 'INFO' ? 'selected' : ''}>INFO</option>
+              <option value="SUCCESS" ${lvl === 'SUCCESS' ? 'selected' : ''}>SUCCESS</option>
+              <option value="WARN" ${lvl === 'WARN' ? 'selected' : ''}>WARN</option>
+              <option value="ERROR" ${lvl === 'ERROR' ? 'selected' : ''}>ERROR</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Terminal Stream Box -->
+      <div class="live-log-container" id="live-log-container">
+        ${renderLogRows(fixedChannel)}
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-muted);padding:0 4px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${state.logs_paused ? '#f59e0b' : '#10b981'}"></span>
+          <span>${state.logs_paused ? 'Stream đang tạm dừng (Nhấn Tiếp Tục để stream lại)' : 'Stream trực tiếp đang hoạt động (Chu kỳ 1.5s)'}</span>
+        </div>
+        <div>
+          Tổng số sự kiện hiển thị: <b style="color:var(--text)" id="log-count-badge">${(state.live_logs || []).length}</b> dòng
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLogRows(fixedChannel = 'all') {
+  let logs = state.live_logs || [];
+  const targetCh = fixedChannel !== 'all' ? fixedChannel : state.logs_filter_channel;
+
+  if (targetCh && targetCh !== 'all') {
+    logs = logs.filter(l => (l.channel || '').toLowerCase() === targetCh.toLowerCase());
+  }
+
+  if (state.logs_filter_level && state.logs_filter_level !== 'ALL') {
+    logs = logs.filter(l => (l.level || '').toUpperCase() === state.logs_filter_level.toUpperCase());
+  }
+
+  if (logs.length === 0) {
+    return `<div style="padding:24px;text-align:center;color:#64748b">Chưa có nhật ký nào phù hợp với bộ lọc hiện tại. Đang lắng nghe luồng sự kiện...</div>`;
+  }
+
+  return logs.map(l => {
+    const chanClass = `log-chan-${(l.channel || 'core').toLowerCase()}`;
+    const lvlClass = `log-lvl-${(l.level || 'INFO').toUpperCase()}`;
+    const timeStr = l.time || (typeof l.timestamp === 'string' ? l.timestamp.substring(11, 19) : (l.timestamp ? new Date(l.timestamp * 1000).toLocaleTimeString('vi-VN') : '00:00:00'));
+    return `
+      <div class="log-row">
+        <span class="log-time">[${timeStr}]</span>
+        <span class="log-chan-badge ${chanClass}">${l.channel || 'core'}</span>
+        <span class="log-lvl-badge ${lvlClass}">${l.level || 'INFO'}</span>
+        <div class="log-content-col">
+          <div class="log-msg-text">${escapeHtml(l.message || '')}</div>
+          ${l.details ? `<div class="log-details-text">${escapeHtml(l.details)}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function pollLiveLogs(force = false, fixedChannel = 'all') {
+  if (state.logs_paused && !force) return;
+
+  const targetCh = fixedChannel !== 'all' ? fixedChannel : (state.logs_filter_channel || 'all');
+  const lvl = state.logs_filter_level || 'ALL';
+
+  try {
+    const url = `/api/logs/live?channel=${targetCh}&level=${lvl}&limit=60`;
+    const res = await fetch(url);
+    const d = await res.json();
+    if (d.ok && Array.isArray(d.logs)) {
+      state.live_logs = d.logs;
+
+      const container = $('#live-log-container');
+      if (container) {
+        container.innerHTML = renderLogRows(fixedChannel);
+        const countBadge = $('#log-count-badge');
+        if (countBadge) countBadge.textContent = state.live_logs.length;
+
+        if (state.logs_autoscroll) {
+          container.scrollTop = container.scrollHeight;
+        }
+      }
+    }
+  } catch (err) {
+    // Silent fail in live polling
+  }
+}
+
+function togglePauseLiveLogs() {
+  state.logs_paused = !state.logs_paused;
+  showToast(state.logs_paused ? '⏸ Đã tạm dừng nhận log stream' : '▶ Đang tiếp tục nhận log stream');
+  const hub = state.activeHub;
+  if (hub === 'governance' || hub === 'zalo' || hub === 'whatsapp') renderActiveHub();
+}
+
+function toggleAutoScrollLogs() {
+  state.logs_autoscroll = !state.logs_autoscroll;
+  showToast(state.logs_autoscroll ? '⬇ Bật chế độ tự động cuộn' : '⏸ Tắt tự động cuộn');
+  const hub = state.activeHub;
+  if (hub === 'governance' || hub === 'zalo' || hub === 'whatsapp') renderActiveHub();
+}
+
+async function clearLiveLogsAction(fixedChannel = 'all') {
+  try {
+    const res = await fetch('/api/logs/clear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel: fixedChannel })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      state.live_logs = [];
+      const container = $('#live-log-container');
+      if (container) container.innerHTML = `<div style="padding:24px;text-align:center;color:#64748b">Đã xóa sạch màn hình nhật ký.</div>`;
+      showToast('Đã xóa sạch màn hình log!');
+    }
+  } catch (e) {
+    showToast('Lỗi xóa nhật ký');
+  }
+}
+
+function downloadLiveLogs(fixedChannel = 'all') {
+  const logs = state.live_logs || [];
+  if (logs.length === 0) {
+    showToast('Chưa có nhật ký để tải về!');
+    return;
+  }
+  const content = logs.map(l => {
+    const timeStr = l.time || (typeof l.timestamp === 'string' ? l.timestamp : (l.timestamp ? new Date(l.timestamp * 1000).toLocaleString('vi-VN') : ''));
+    return `[${timeStr}] [${(l.channel||'core').toUpperCase()}] [${l.level}] ${l.message} ${l.details ? ':: ' + l.details : ''}`;
+  }).join('\n');
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `heo-logs-${fixedChannel}-${Date.now()}.txt`;
+  a.click();
+  showToast('Đang tải tệp nhật ký về máy...');
+}
+
+function setLogChannelFilter(ch) {
+  state.logs_filter_channel = ch;
+  pollLiveLogs(true, 'all');
+}
+
+function setLogLevelFilter(lvl, fixedChannel = 'all') {
+  state.logs_filter_level = lvl;
+  pollLiveLogs(true, fixedChannel);
+}
+
+// ==========================================
+// BEGINNER ONBOARDING WIZARD (STEP-BY-STEP)
+// ==========================================
+let wizardData = {
+  step: 1,
+  boss_name: 'Anh Cơ La',
+  boss_email: 'genesis.corp.os@gmail.com',
+  pin: '123456',
+  model: 'gemini-2.5-flash',
+  reasoning_effort: 'low',
+  require_mention: true,
+  default_persona: 'dedicated',
+  directives: 'Luôn kiểm tra an toàn SSOT, phục vụ Sếp tận tâm và chu đáo.'
+};
+
+function openOnboardingWizard(step = 1) {
+  wizardData.step = step;
+  if (!wizardData.boss_name && state.config.boss_name) wizardData.boss_name = state.config.boss_name;
+
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- Stepper Header -->
+      <div class="wizard-stepper">
+        <div class="wizard-step-node ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}" onclick="openOnboardingWizard(1)">
+          <div class="wizard-step-circle">1</div>
+          <div class="wizard-step-label">Khởi Tạo</div>
+        </div>
+        <div class="wizard-step-node ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}" onclick="openOnboardingWizard(2)">
+          <div class="wizard-step-circle">2</div>
+          <div class="wizard-step-label">Định Danh Sếp</div>
+        </div>
+        <div class="wizard-step-node ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}" onclick="openOnboardingWizard(3)">
+          <div class="wizard-step-circle">3</div>
+          <div class="wizard-step-label">Trí Tuệ AI</div>
+        </div>
+        <div class="wizard-step-node ${step === 4 ? 'active' : step > 4 ? 'completed' : ''}" onclick="openOnboardingWizard(4)">
+          <div class="wizard-step-circle">4</div>
+          <div class="wizard-step-label">Kênh Liên Lạc</div>
+        </div>
+        <div class="wizard-step-node ${step === 5 ? 'active' : step > 5 ? 'completed' : ''}" onclick="openOnboardingWizard(5)">
+          <div class="wizard-step-circle">5</div>
+          <div class="wizard-step-label">Phong Cách</div>
+        </div>
+      </div>
+
+      <!-- Step Content -->
+      ${renderWizardStepContent(step)}
+
+      <!-- Stepper Navigation -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border);margin-top:8px">
+        <div>
+          ${step > 1 ? `
+            <button class="btn sm" onclick="saveCurrentStepData(${step}); openOnboardingWizard(${step - 1})">
+              ⬅ Quay Lại (Bước ${step - 1})
+            </button>
+          ` : `
+            <span class="text-sm muted">Heo OS Setup Wizard v6.0</span>
+          `}
+        </div>
+        <div style="display:flex;gap:10px">
+          ${step < 5 ? `
+            <button class="btn sm primary" onclick="saveCurrentStepData(${step}); openOnboardingWizard(${step + 1})">
+              Tiếp Tục (Bước ${step + 1}) ➔
+            </button>
+          ` : `
+            <button class="btn sm success" style="background:#10b981;border-color:#10b981;color:#052e16;font-weight:700" onclick="saveCurrentStepData(5); completeOnboardingAction()">
+              🚀 Hoàn Tất & Khởi Động Heo OS!
+            </button>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+
+  openModal(`🚀 Khởi Tạo Nhanh Cho Người Mới (Bước ${step}/5)`, html, null, true);
+}
+
+function renderWizardStepContent(step) {
+  switch (step) {
+    case 1:
+      return `
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);padding:14px;border-radius:8px">
+            <h3 style="color:var(--brand);margin-bottom:6px;font-size:15px">🎉 Chào Mừng Sếp Đến Với Heo-Harness V6!</h3>
+            <p style="font-size:12px;color:var(--text-muted);line-height:1.6">
+              Heo OS là Hệ Điều Hành Trợ Lý Điều Hành Cấp Cao (Executive Intelligence) được xây dựng trên khung sườn <b>DeepSeek Harness (DSH)</b> chuẩn mực: <i>"Everything is a Plugin"</i>, bảo vệ đa tầng bằng Circuit Breaker và hoàn toàn <b>0đ chi phí token API</b> nhờ tận dụng gói Google Antigravity CLI cá nhân.
+            </p>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="card card-pad" style="background:var(--bg-body)">
+              <b>👑 1 Sếp - 1 Trợ Lý SSOT</b>
+              <div class="text-sm muted" style="margin-top:4px">Một điểm thực chứng duy nhất, phục vụ tận tâm, tuân thủ tuyệt đối tác quyền của Sếp Cơ La.</div>
+            </div>
+            <div class="card card-pad" style="background:var(--bg-body)">
+              <b>⚡ 0đ Phí Token API</b>
+              <div class="text-sm muted" style="margin-top:4px">Tự động kết nối Antigravity cá nhân, không lo hết hạn thẻ tín dụng hay hóa đơn API đắt đỏ.</div>
+            </div>
+          </div>
+          <div class="text-sm muted">
+            Bấm <b>'Tiếp Tục ➔'</b> để tiến hành thiết lập định danh và quyền hạn quản trị trong 1 phút.
+          </div>
+        </div>
+      `;
+
+    case 2:
+      return `
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:12px;color:var(--text-muted)">
+            Xác lập danh xưng và mã PIN bảo mật quản trị viên cấp cao nhất (RBAC SSOT):
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label class="form-label">👑 Tên Gọi Của Sếp</label>
+              <input type="text" class="form-input" id="wiz-boss-name" value="${escapeHtml(wizardData.boss_name)}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">📧 Email Tác Quyền SSOT</label>
+              <input type="text" class="form-input" id="wiz-boss-email" value="${escapeHtml(wizardData.boss_email)}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">🔐 Thiết Lập Mã PIN Quản Trị (6 số)</label>
+            <input type="password" maxlength="6" class="form-input" id="wiz-pin" value="${wizardData.pin}" placeholder="Ví dụ: 123456">
+            <div class="text-sm muted" style="margin-top:4px">Mã PIN này được mã hóa băm SHA-256 dùng để phê duyệt các hành động nhạy cảm của hệ thống.</div>
+          </div>
+        </div>
+      `;
+
+    case 3:
+      return `
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);padding:12px;border-radius:8px;font-size:12px;color:var(--text-muted)">
+            🧠 <b>Trí Tuệ Cốt Lõi:</b> Heo OS tự động nhận diện phiên Google Antigravity CLI đang mở trên máy tính của Sếp.
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mô Hình AI Chủ Lực</label>
+            <select class="form-select" id="wiz-model">
+              <option value="gemini-2.5-flash" ${wizardData.model === 'gemini-2.5-flash' ? 'selected' : ''}>⚡ Gemini 2.5 Flash (Phản hồi siêu tốc, tiết kiệm hạn ngạch)</option>
+              <option value="gemini-2.5-pro" ${wizardData.model === 'gemini-2.5-pro' ? 'selected' : ''}>🎯 Gemini 2.5 Pro (Suy luận sâu, báo cáo chuyên nghiệp)</option>
+              <option value="gemini-3.8" ${wizardData.model === 'gemini-3.8' ? 'selected' : ''}>🔮 Gemini 3.8 Antigravity Core</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mức Độ Suy Luận (Reasoning Effort)</label>
+            <select class="form-select" id="wiz-reasoning">
+              <option value="off" ${wizardData.reasoning_effort === 'off' ? 'selected' : ''}>Tắt (Nhanh nhất)</option>
+              <option value="low" ${wizardData.reasoning_effort === 'low' ? 'selected' : ''}>Thấp (Low - Khuyến nghị)</option>
+              <option value="medium" ${wizardData.reasoning_effort === 'medium' ? 'selected' : ''}>Trung Bình (Medium)</option>
+              <option value="high" ${wizardData.reasoning_effort === 'high' ? 'selected' : ''}>Chuyên Sâu (High)</option>
+            </select>
+          </div>
+        </div>
+      `;
+
+    case 4:
+      return `
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:12px;color:var(--text-muted)">
+            Bé Heo có thể kết nối 2 chiều vào Zalo và WhatsApp để trực tiếp nhận lệnh từ Sếp và hỗ trợ trong nhóm:
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="card card-pad" style="background:var(--bg-body)">
+              <div style="display:flex;align-items:center;gap:8px;font-weight:700;color:#38bdf8;margin-bottom:6px">
+                💬 Zalo Gateway
+              </div>
+              <div class="text-sm muted">Quét mã QR trực tiếp từ app Zalo trên điện thoại. Không cần đăng ký Zalo OA tốn phí.</div>
+            </div>
+            <div class="card card-pad" style="background:var(--bg-body)">
+              <div style="display:flex;align-items:center;gap:8px;font-weight:700;color:#25D366;margin-bottom:6px">
+                📱 WhatsApp Multi-Device
+              </div>
+              <div class="text-sm muted">Kết nối chuẩn thiết bị liên kết WhatsApp. Trao đổi với đối tác quốc tế 24/7.</div>
+            </div>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;background:var(--bg-body);padding:10px 14px;border-radius:6px;border:1px solid var(--border)">
+            <input type="checkbox" id="wiz-require-mention" style="width:18px;height:18px;accent-color:var(--brand)" ${wizardData.require_mention ? 'checked' : ''}>
+            <label for="wiz-require-mention" style="cursor:pointer;font-size:12px;color:var(--text);font-weight:600">
+              Chỉ phản hồi khi có người gắn thẻ (@tag) trong nhóm (Khuyến nghị bật để giữ trật tự nhóm)
+            </label>
+          </div>
+        </div>
+      `;
+
+    case 5:
+      return `
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:12px;color:var(--text-muted)">
+            Lựa chọn tính cách và chỉ đạo tác chiến đầu tiên của Sếp dành cho Bé Heo:
+          </div>
+          <div class="form-group">
+            <label class="form-label">🎭 Phong Thái & Thái Độ Phục Vụ</label>
+            <select class="form-select" id="wiz-persona">
+              <option value="dedicated" ${wizardData.default_persona === 'dedicated' ? 'selected' : ''}>💖 Tận tụy & Ngoan ngoãn (Dạ vâng, chu đáo, hết lòng vì Sếp)</option>
+              <option value="humorous" ${wizardData.default_persona === 'humorous' ? 'selected' : ''}>😄 Hài hước & Dí dỏm (Vui tươi, hóm hỉnh, năng lượng tích cực)</option>
+              <option value="serious" ${wizardData.default_persona === 'serious' ? 'selected' : ''}>👔 Nghiêm túc & Chuẩn chỉ (Tác phong quân đội, kỷ luật cao)</option>
+              <option value="analytical" ${wizardData.default_persona === 'analytical' ? 'selected' : ''}>🔍 Phân tích & Sắc bén (Dựa trên số liệu thực chứng, logic chặt chẽ)</option>
+              <option value="encouraging" ${wizardData.default_persona === 'encouraging' ? 'selected' : ''}>🌟 Động viên & Tích cực (Khích lệ tinh thần, hỗ trợ hết mình)</option>
+              <option value="bold" ${wizardData.default_persona === 'bold' ? 'selected' : ''}>🚀 Táo bạo & Sáng tạo (Đột phá, ý tưởng mới mẻ)</option>
+              <option value="minimalist" ${wizardData.default_persona === 'minimalist' ? 'selected' : ''}>⚡ Tối giản & Súc tích (Ngắn gọn, đi thẳng vào trọng tâm)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">📜 Lời Chỉ Đạo / Lưu Ý Đầu Tiên Của Sếp Dành Cho Bé Heo</label>
+            <textarea class="form-textarea" id="wiz-directives" placeholder="Nhập chỉ đạo hoặc ghi chú của Sếp...">${escapeHtml(wizardData.directives)}</textarea>
+          </div>
+        </div>
+      `;
+  }
+}
+
+function saveCurrentStepData(step) {
+  if (step === 2) {
+    if ($('#wiz-boss-name')) wizardData.boss_name = $('#wiz-boss-name').value.trim();
+    if ($('#wiz-boss-email')) wizardData.boss_email = $('#wiz-boss-email').value.trim();
+    if ($('#wiz-pin')) wizardData.pin = $('#wiz-pin').value.trim();
+  } else if (step === 3) {
+    if ($('#wiz-model')) wizardData.model = $('#wiz-model').value;
+    if ($('#wiz-reasoning')) wizardData.reasoning_effort = $('#wiz-reasoning').value;
+  } else if (step === 4) {
+    if ($('#wiz-require-mention')) wizardData.require_mention = $('#wiz-require-mention').checked;
+  } else if (step === 5) {
+    if ($('#wiz-persona')) wizardData.default_persona = $('#wiz-persona').value;
+    if ($('#wiz-directives')) wizardData.directives = $('#wiz-directives').value.trim();
+  }
+}
+
+async function completeOnboardingAction() {
+  saveCurrentStepData(5);
+
+  try {
+    const res = await fetch('/api/onboarding/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        boss_name: wizardData.boss_name,
+        bot_name: 'Bé Heo',
+        model: wizardData.model,
+        reasoning_effort: wizardData.reasoning_effort,
+        default_persona: wizardData.default_persona,
+        require_mention_in_groups: wizardData.require_mention,
+        global_directives: wizardData.directives,
+        pin: wizardData.pin
+      })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast('🎉 Chúc mừng Sếp! Heo OS đã khởi tạo thành công và sẵn sàng trực chiến!');
+      closeModal();
+      switchHub('command');
+      fetchAllData();
+    } else {
+      showToast('Lỗi khởi tạo: ' + (d.error || 'Có lỗi xảy ra'));
+    }
+  } catch (err) {
+    showToast('Lỗi kết nối máy chủ');
+  }
+}
+
+// ==========================================
+// INITIAL LOAD & BACKGROUND LOG STREAMING
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
   fetchAllData();
+  startZaloQrPolling();
   setInterval(fetchAllData, 10000);
+
+  // Poll live logs periodically if viewing logs
+  setInterval(() => {
+    if (
+      (state.activeHub === 'governance' && state.subtabs.governance === 'logs') ||
+      (state.activeHub === 'zalo' && state.subtabs.zalo === 'bridge_logs') ||
+      (state.activeHub === 'whatsapp' && state.subtabs.whatsapp === 'bridge_logs')
+    ) {
+      const fixedChannel = (state.activeHub === 'zalo' && state.subtabs.zalo === 'bridge_logs') ? 'zalo' : (state.activeHub === 'whatsapp' && state.subtabs.whatsapp === 'bridge_logs') ? 'whatsapp' : 'all';
+      pollLiveLogs(false, fixedChannel);
+    }
+  }, 1500);
 });
 </script>
 </body>

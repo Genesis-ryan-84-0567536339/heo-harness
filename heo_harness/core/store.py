@@ -82,24 +82,32 @@ class HeoDataStore:
         os.makedirs(self.data_dir, exist_ok=True)
         self.state_file = os.path.join(self.data_dir, "heo_state.json")
         self.config_file = os.path.join(self.data_dir, "config.json")
+        self._log_counter = 0
+        self.live_logs = []
         self.state = self._load_initial_state()
+        self._seed_initial_logs()
 
     def _load_initial_state(self) -> dict:
         if os.path.exists(self.state_file):
             try:
                 with open(self.state_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    # Dọn sạch triệt để mọi dữ liệu mẫu cũ (Clean Slate 100%)
-                    old_group_names = ["Dì Út & Heo", "Thanh niên nghiêm túc", "Nhóm Gia Đình", "Công nghệ AI", "test"]
-                    has_mock_groups = any(g.get("name") in old_group_names for g in data.get("groups", []))
-                    has_mock_works = any(w.get("id") in ["W-341", "W-398", "W-403"] for w in data.get("works", []))
+                    # Dọn sạch triệt để mọi dữ liệu mẫu cũ và dữ liệu nháp/test (Clean Slate 100%)
+                    old_group_names = ["Dì Út & Heo", "Thanh niên nghiêm túc", "Nhóm Gia Đình", "Công nghệ AI", "test", "Hội Đồng Sáng Lập"]
+                    has_mock_groups = any(g.get("name") in old_group_names or "test" in g.get("name", "").lower() for g in data.get("groups", []))
+                    has_mock_works = any(w.get("id") in ["W-341", "W-398", "W-403"] or "test" in w.get("title", "").lower() for w in data.get("works", []))
                     has_mock_people = any(p.get("uid") == "5639130299270793223" and p.get("id") == "P-OWNER" for p in data.get("people", []))
+                    has_mock_cal = any("test" in c.get("title", "").lower() for c in data.get("calendar", []))
+                    has_mock_outcomes = any("test" in o.get("title", "").lower() for o in data.get("outcomes", []))
 
-                    if has_mock_groups or has_mock_works or has_mock_people:
-                        print("[HeoDataStore] Phát hiện dữ liệu mẫu cũ trong state. Đang khởi tạo Pure Clean Slate 100%.")
-                        data = self._get_default_schema()
+                    if has_mock_groups or has_mock_works or has_mock_people or has_mock_cal or has_mock_outcomes:
+                        print("[HeoDataStore] Phát hiện dữ liệu mẫu/nháp trong state. Đang làm sạch Pure Clean Slate 100%.")
+                        data["groups"] = [g for g in data.get("groups", []) if g.get("name") not in old_group_names and "test" not in g.get("name", "").lower()]
+                        data["works"] = [w for w in data.get("works", []) if w.get("id") not in ["W-341", "W-398", "W-403"] and "test" not in w.get("title", "").lower()]
+                        data["calendar"] = [c for c in data.get("calendar", []) if "test" not in c.get("title", "").lower()]
+                        data["outcomes"] = [o for o in data.get("outcomes", []) if "test" not in o.get("title", "").lower()]
+                        data["people"] = [p for p in data.get("people", []) if not (p.get("uid") == "5639130299270793223" and p.get("id") == "P-OWNER")]
                         self._save_state(data)
-                        return data
 
                     # Bổ sung các key thiếu
                     defaults = self._get_default_schema()
@@ -108,6 +116,9 @@ class HeoDataStore:
                         if k not in data:
                             data[k] = v
                             migrated = True
+                    if "accounts" not in data or not data["accounts"]:
+                        data["accounts"] = self._get_default_accounts()
+                        migrated = True
                     if migrated:
                         self._save_state(data)
                     return data
@@ -137,6 +148,8 @@ class HeoDataStore:
             "insights": [],  # Clean slate: 100% rỗng
             "outcomes": [],  # Clean slate: 100% rỗng
             "learnings": [],  # Clean slate: 100% rỗng
+            "accounts": self._get_default_accounts(app_cfg),
+            "recent_live_logs": [],
             "zalo": {
                 "connected": False,
                 "account_name": "Chưa kết nối",
@@ -192,6 +205,10 @@ class HeoDataStore:
             "boss_caller_name": "Sếp",
             "boss_email": "",
             "bot_name": "Bé Heo",
+            "bot_enabled": True,
+            "bot_status_message": "",
+            "onboarding_completed": False,
+            "active_account_id": "acc-boss-1",
             "model": "Gemini 3.8 Flash (High)",
             "effort": "high",
             "bridge_port": 5051,
@@ -226,7 +243,8 @@ class HeoDataStore:
         allowed_keys = [
             "boss_name", "boss_caller_name", "boss_uid", "boss_email", "bot_name",
             "model", "effort", "auto_claim_boss", "disclaimer_accepted",
-            "bot_about", "bot_persona", "bot_custom_persona", "bot_global_notes"
+            "bot_about", "bot_persona", "bot_custom_persona", "bot_global_notes",
+            "bot_enabled", "bot_status_message", "onboarding_completed", "active_account_id"
         ]
         for k in allowed_keys:
             if k in new_data:
@@ -294,6 +312,258 @@ class HeoDataStore:
 
         self.add_audit("owner", "boss.unpair", old_boss, "Hủy ghép nối Chủ nhân Zalo", "UNPAIRED")
         return True, "Đã hủy ghép nối Chủ nhân thành công! Người nhắn tin đầu tiên kèm đúng mã PIN sẽ được kết nối làm Sếp."
+
+    # ==================== MASTER BOT TOGGLE / KILL SWITCH ====================
+    def is_bot_enabled(self) -> bool:
+        cfg = self.get_config()
+        return bool(cfg.get("bot_enabled", True))
+
+    def toggle_bot(self, enabled: bool = None, status_message: str = "") -> dict:
+        cfg = self._load_config_file()
+        current = bool(cfg.get("bot_enabled", True))
+        new_val = (not current) if enabled is None else bool(enabled)
+        cfg["bot_enabled"] = new_val
+        if status_message:
+            cfg["bot_status_message"] = status_message
+        with open(self.config_file, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=2)
+
+        status_text = "TRỰC CHIẾN (ACTIVE)" if new_val else "TẠM DỪNG (PAUSED)"
+        self.add_audit("owner", "bot.toggle", "HEO_CORE", f"Chuyển trạng thái Bé Heo: {status_text}", "SUCCESS")
+        self.add_live_log("system", "SUCCESS" if new_val else "WARN", f"Bé Heo đã được {status_text} bởi Sếp.")
+        return {
+            "ok": True,
+            "bot_enabled": new_val,
+            "status_text": status_text,
+            "message": f"Bé Heo hiện đang ở chế độ: {status_text}"
+        }
+
+    # ==================== REAL-TIME LIVE LOG STREAM ====================
+    def _seed_initial_logs(self):
+        saved_logs = self.state.get("recent_live_logs", [])
+        if saved_logs and isinstance(saved_logs, list):
+            for l in saved_logs:
+                lid = l.get("id", 0)
+                if isinstance(lid, int) and lid > self._log_counter:
+                    self._log_counter = lid
+                self.live_logs.append(l)
+        else:
+            t = time.strftime("%H:%M:%S")
+            seeds = [
+                ("system", "SUCCESS", "Khởi động hệ điều hành Heo OS V6 Executive Intelligence thành công."),
+                ("core", "INFO", "Core Agent: Google Antigravity CLI gói tháng cá nhân (0đ Token API) đã kết nối."),
+                ("policy", "INFO", "Tường lửa 5 tầng Policy Gate SSOT đã sẵn sàng kiểm soát cấp phép (Execution Permit)."),
+                ("zalo", "INFO", "Zalo Channel Gateway đã kích hoạt. Sẵn sàng kết nối WebSocket Bridge và lọc @tag."),
+                ("whatsapp", "INFO", "WhatsApp Channel Gateway đã kích hoạt. Trạng thái: Multi-Device Bridge sẵn sàng.")
+            ]
+            for ch, lvl, msg in seeds:
+                self._log_counter += 1
+                self.live_logs.append({
+                    "id": self._log_counter,
+                    "time": t,
+                    "timestamp": int(time.time()),
+                    "channel": ch,
+                    "level": lvl,
+                    "message": msg,
+                    "details": ""
+                })
+
+    def add_live_log(self, channel: str, level: str, message: str, details: str = "", metadata: dict = None) -> dict:
+        self._log_counter += 1
+        entry = {
+            "id": self._log_counter,
+            "time": time.strftime("%H:%M:%S"),
+            "timestamp": int(time.time()),
+            "channel": str(channel).lower(),
+            "level": str(level).upper(),
+            "message": str(message),
+            "details": str(details) if details else "",
+            "metadata": metadata or {}
+        }
+        self.live_logs.append(entry)
+        if len(self.live_logs) > 1000:
+            self.live_logs = self.live_logs[-1000:]
+        self.state["recent_live_logs"] = self.live_logs[-35:]
+        return entry
+
+    def get_live_logs(self, channel: str = "all", level: str = "ALL", since_id: int = 0, limit: int = 200) -> list[dict]:
+        res = []
+        c_filter = channel.lower().strip() if channel else "all"
+        l_filter = level.upper().strip() if level else "ALL"
+
+        for entry in self.live_logs:
+            if entry.get("id", 0) <= since_id:
+                continue
+            if c_filter != "all" and entry.get("channel") != c_filter:
+                continue
+            if l_filter != "ALL" and entry.get("level") != l_filter:
+                continue
+            res.append(entry)
+        return res[-limit:]
+
+    def clear_live_logs(self) -> bool:
+        self.live_logs = []
+        self.state["recent_live_logs"] = []
+        self._save_state()
+        return True
+
+    # ==================== MULTI-ACCOUNT & PROFILE MANAGEMENT ====================
+    def _get_default_accounts(self, app_cfg: dict = None) -> dict:
+        cfg = app_cfg or self._load_config_file()
+        boss_name = cfg.get("boss_name", "Anh Cơ La (Ryan)")
+        return {
+            "active_boss_id": "acc-boss-1",
+            "active_zalo_id": "acc-zalo-1",
+            "active_wa_id": "acc-wa-1",
+            "boss_profiles": [
+                {
+                    "id": "acc-boss-1",
+                    "name": boss_name if ("Cơ La" in boss_name or "Ryan" in boss_name) else f"{boss_name} (Chính)",
+                    "role": "Chủ Nhân Tối Cao (Owner)",
+                    "email": "genesis.corp.os@gmail.com",
+                    "badge": "Tác Quyền Duy Nhất",
+                    "permissions": "FULL_ROOT_RBAC",
+                    "active": True
+                },
+                {
+                    "id": "acc-boss-2",
+                    "name": "Ban Cố Vấn & Trực Chiến",
+                    "role": "Phó Ban Điều Hành (Co-Executive)",
+                    "email": "deputy@genesis.corp",
+                    "badge": "Quản Trị Viên",
+                    "permissions": "READ_WRITE_APPROVAL",
+                    "active": False
+                },
+                {
+                    "id": "acc-boss-3",
+                    "name": "Tài Khoản Khách (Guest Demo)",
+                    "role": "Khách Tham Quan Hệ Thống",
+                    "email": "guest@genesis.corp",
+                    "badge": "Chỉ Đọc (Read-Only)",
+                    "permissions": "READ_ONLY",
+                    "active": False
+                }
+            ],
+            "zalo_profiles": [
+                {
+                    "id": "acc-zalo-1",
+                    "name": "Zalo Chính (La Hồng Cơ)",
+                    "phone": "0567536339",
+                    "status": "Đã ghép nối",
+                    "is_boss": True,
+                    "active": True
+                },
+                {
+                    "id": "acc-zalo-2",
+                    "name": "Zalo Phụ (Bé Heo Bot)",
+                    "phone": "Chưa liên kết",
+                    "status": "Chờ quét QR",
+                    "is_boss": False,
+                    "active": False
+                }
+            ],
+            "whatsapp_profiles": [
+                {
+                    "id": "acc-wa-1",
+                    "name": "WhatsApp Multi-Device 1",
+                    "phone": "+84-567536339",
+                    "status": "Sẵn sàng",
+                    "active": True
+                },
+                {
+                    "id": "acc-wa-2",
+                    "name": "WhatsApp Multi-Device 2",
+                    "phone": "Chưa liên kết",
+                    "status": "Chờ quét QR",
+                    "active": False
+                }
+            ]
+        }
+
+    def get_accounts(self) -> dict:
+        accs = self.state.get("accounts")
+        if not accs or not isinstance(accs, dict) or "boss_profiles" not in accs:
+            accs = self._get_default_accounts()
+            self.state["accounts"] = accs
+            self._save_state()
+        return accs
+
+    def switch_account(self, acc_type: str, acc_id: str) -> tuple[bool, str, dict]:
+        accounts = self.get_accounts()
+        type_clean = acc_type.lower().strip()
+        acc_type_key = f"{type_clean}_profiles"
+        active_key = f"active_{type_clean}_id"
+        if acc_type_key not in accounts:
+            return False, f"Loại tài khoản không hợp lệ: {acc_type}", accounts
+
+        found = False
+        target_name = ""
+        for acc in accounts[acc_type_key]:
+            if acc["id"] == acc_id:
+                acc["active"] = True
+                target_name = acc.get("name", acc_id)
+                found = True
+            else:
+                acc["active"] = False
+
+        if not found:
+            return False, f"Không tìm thấy tài khoản {acc_id}", accounts
+
+        accounts[active_key] = acc_id
+        self.state["accounts"] = accounts
+        self._save_state()
+
+        self.add_audit("owner", "account.switch", acc_id, f"Chuyển sang tài khoản {type_clean}: {target_name}", "SUCCESS")
+        self.add_live_log("system", "INFO", f"Đã chuyển đổi tài khoản {type_clean.upper()} sang: {target_name}")
+        return True, f"Đã chuyển sang tài khoản {target_name} thành công!", accounts
+
+    def add_account(self, acc_type: str, data: dict) -> tuple[bool, str, dict]:
+        accounts = self.get_accounts()
+        type_clean = acc_type.lower().strip()
+        acc_type_key = f"{type_clean}_profiles"
+        if acc_type_key not in accounts:
+            return False, f"Loại tài khoản không hợp lệ: {acc_type}", accounts
+
+        new_id = f"acc-{type_clean}-{uuid.uuid4().hex[:6]}"
+        new_entry = {
+            "id": new_id,
+            "name": data.get("name", f"Tài khoản {type_clean} mới"),
+            "role": data.get("role", "Thành viên"),
+            "email": data.get("email", ""),
+            "phone": data.get("phone", ""),
+            "status": data.get("status", "Mới tạo"),
+            "badge": data.get("badge", "Tùy biến"),
+            "active": False
+        }
+        accounts[acc_type_key].append(new_entry)
+        self.state["accounts"] = accounts
+        self._save_state()
+
+        self.add_audit("owner", "account.add", new_id, f"Thêm tài khoản {type_clean}: {new_entry['name']}", "SUCCESS")
+        self.add_live_log("system", "SUCCESS", f"Đã thêm tài khoản mới vào hệ thống: {new_entry['name']}")
+        return True, f"Đã thêm tài khoản {new_entry['name']} thành công!", accounts
+
+    # ==================== BEGINNER ONBOARDING WIZARD ====================
+    def complete_onboarding(self, data: dict) -> dict:
+        cfg = self._load_config_file()
+        for k in ["boss_name", "boss_caller_name", "bot_name", "bot_persona", "bot_global_notes", "model", "effort"]:
+            if k in data and data[k]:
+                cfg[k] = data[k]
+        cfg["onboarding_completed"] = True
+        with open(self.config_file, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=2)
+
+        pin = str(data.get("pin", "")).strip()
+        if pin and len(pin) >= 4:
+            self.set_security_pin(pin)
+
+        self.add_audit("owner", "onboarding.complete", "WIZARD", "Hoàn tất hướng dẫn khởi tạo Step-by-Step", "SUCCESS")
+        self.add_live_log("system", "SUCCESS", "🎉 Hoàn tất quy trình thiết lập nhanh Step-by-Step cho người mới!")
+        return {
+            "ok": True,
+            "message": "Chúc mừng Sếp! Hệ thống Heo OS đã được thiết lập hoàn tất và sẵn sàng trực chiến!",
+            "config": self.get_config()
+        }
 
     # ==================== GOOGLE ANTIGRAVITY & QUOTA ====================
     def get_google_auth_info(self) -> dict:
@@ -479,8 +749,59 @@ class HeoDataStore:
 
     # ==================== ZALO GATEWAY & REAL DATA ====================
 
+    def spawn_zalo_bridge(self, force_restart: bool = False) -> bool:
+        """Tự động kiểm tra và khởi động tiến trình Node.js Zalo Bridge kết nối zca-js."""
+        try:
+            if force_restart:
+                subprocess.run(["pkill", "-9", "-f", "node.*bot.js"], timeout=5)
+                time.sleep(0.5)
+            else:
+                proc = subprocess.run(["pgrep", "-f", "node.*bot.js"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if proc.returncode == 0:
+                    return True  # Bridge đã đang chạy
+
+            base_dir = os.path.dirname(self.data_dir)
+            bridge_dir = os.path.join(base_dir, "bridge")
+            bot_js = os.path.join(bridge_dir, "bot.js")
+            if not os.path.exists(bot_js):
+                # Fallback to /home/ryan/heo-agent/bridge/bot.js
+                bot_js = "/home/ryan/heo-agent/bridge/bot.js"
+                bridge_dir = "/home/ryan/heo-agent/bridge"
+
+            log_dir = os.path.join(base_dir, "logs")
+            os.makedirs(log_dir, exist_ok=True)
+            log_file = os.path.join(log_dir, "zalo.log")
+            log_f = open(log_file, "a", encoding="utf-8")
+
+            env = os.environ.copy()
+            env["BASE_DIR"] = base_dir
+            env["DATA_DIR"] = self.data_dir
+            env["WORKSPACE_DIR"] = self.data_dir
+            env["LOG_DIR"] = log_dir
+            env["CONFIG_FILE"] = self.config_file
+            env["AGY_ENGINE_URL"] = "http://127.0.0.1:5088"
+            env["BRIDGE_PORT"] = "5051"
+            env["NODE_PATH"] = "/home/ryan/zalo-agy/bridge/node_modules:/home/ryan/heo-harness/bridge/node_modules"
+
+            subprocess.Popen(
+                ["node", bot_js],
+                cwd=bridge_dir,
+                env=env,
+                stdout=log_f,
+                stderr=subprocess.STDOUT,
+                close_fds=True
+            )
+            self.add_live_log("zalo", "INFO", "Đã khởi động tiến trình Zalo Bridge (node bot.js) thành công.", f"File: {bot_js}")
+            return True
+        except Exception as e:
+            self.add_live_log("zalo", "ERROR", f"Không thể khởi động Zalo Bridge: {e}")
+            return False
+
     def get_zalo_qr_base64(self) -> str:
         qr_file = os.path.join(self.data_dir, "zalo_qr.png")
+        if not os.path.exists(qr_file) or (time.time() - os.path.getmtime(qr_file)) > 100:
+            self.spawn_zalo_bridge(force_restart=False)
+
         if os.path.exists(qr_file):
             try:
                 with open(qr_file, "rb") as f:
@@ -490,6 +811,60 @@ class HeoDataStore:
                 pass
         return ""
 
+    def get_zalo_qr_info(self) -> dict:
+        """Lấy thông tin trạng thái mã QR Zalo, tiến độ quét và người quét."""
+        qr_file = os.path.join(self.data_dir, "zalo_qr.png")
+        info_file = os.path.join(self.data_dir, "zalo_qr_info.json")
+        session_file = os.path.join(self.data_dir, "zalo_session.json")
+
+        logged_in = os.path.exists(session_file) and os.path.getsize(session_file) > 20
+        has_qr = os.path.exists(qr_file) and os.path.getsize(qr_file) > 100
+        qr_mtime = int(os.path.getmtime(qr_file)) if has_qr else 0
+        qr_age = int(time.time() - qr_mtime) if has_qr else 999
+        qr_expired = qr_age > 100
+
+        # Nếu chưa đăng nhập và bot.js chưa chạy thì tự động khởi động
+        if not logged_in:
+            proc = subprocess.run(["pgrep", "-f", "node.*bot.js"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if proc.returncode != 0:
+                self.spawn_zalo_bridge(force_restart=False)
+
+        info = {
+            "ok": True,
+            "has_qr": has_qr and not qr_expired,
+            "qr_mtime": qr_mtime,
+            "qr_age_seconds": qr_age,
+            "qr_expired": qr_expired,
+            "scanned": False,
+            "declined": False,
+            "user_name": "",
+            "avatar": "",
+            "logged_in": logged_in
+        }
+
+        if os.path.exists(info_file):
+            try:
+                with open(info_file, "r", encoding="utf-8") as f:
+                    jdata = json.load(f)
+                    info["scanned"] = bool(jdata.get("scanned", False))
+                    info["declined"] = bool(jdata.get("declined", False))
+                    info["user_name"] = str(jdata.get("user_name", "") or "")
+                    info["avatar"] = str(jdata.get("avatar", "") or "")
+            except Exception:
+                pass
+
+        if has_qr:
+            try:
+                with open(qr_file, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode("utf-8")
+                    info["qr_base64"] = f"data:image/png;base64,{b64}"
+            except Exception:
+                info["qr_base64"] = ""
+        else:
+            info["qr_base64"] = ""
+
+        return info
+
     def refresh_zalo_qr(self) -> dict:
         for fname in ["zalo_qr.png", "zalo_qr_info.json"]:
             p = os.path.join(self.data_dir, fname)
@@ -498,8 +873,11 @@ class HeoDataStore:
                     os.remove(p)
                 except Exception:
                     pass
+        # Khởi động lại tiến trình Zalo Bridge ngay lập tức để yêu cầu mã QR mới từ Zalo server
+        self.spawn_zalo_bridge(force_restart=True)
         self.add_audit("owner", "zalo.qr_refresh", "ZALO_QR", "Yêu cầu làm mới mã QR Zalo", "REQUESTED")
-        return {"ok": True, "message": "Đang làm mới mã QR kết nối Zalo..."}
+        self.add_live_log("zalo", "INFO", "Đang gửi yêu cầu tạo mã QR đăng nhập Zalo mới tới máy chủ...")
+        return {"ok": True, "message": "Đang kết nối Zalo để tạo mã QR mới..."}
 
     def logout_zalo(self, pin: str = "") -> tuple[bool, str]:
         if self.has_security_pin():
@@ -519,9 +897,10 @@ class HeoDataStore:
         return True, "Đã đăng xuất Zalo an toàn và giải phóng phiên kết nối."
 
     def restart_zalo_bridge(self) -> dict:
-        subprocess.run(["pkill", "-9", "-f", "node.*bot.js"], timeout=5)
+        self.spawn_zalo_bridge(force_restart=True)
         self.add_audit("owner", "zalo.restart", "ZALO_BRIDGE", "Khởi động lại Zalo Bridge", "RESTARTED")
-        return {"ok": True, "message": "Đã gửi lệnh khởi động lại Zalo Bridge thành công!"}
+        self.add_live_log("zalo", "INFO", "Khởi động lại Zalo Bridge theo lệnh của Sếp.")
+        return {"ok": True, "message": "Đã khởi động lại Zalo Bridge thành công!"}
 
     # ==================== WHATSAPP OPERATIONS ====================
     def get_whatsapp_config(self) -> dict:
@@ -950,6 +1329,43 @@ class HeoDataStore:
     # ==================== ZALO GATEWAY STATE ====================
     def get_zalo_state(self) -> dict:
         zalo = self.state.setdefault("zalo", {})
+        session_file = os.path.join(self.data_dir, "zalo_session.json")
+        profile_file = os.path.join(self.data_dir, "zalo_profile.json")
+
+        has_session = os.path.exists(session_file) and os.path.getsize(session_file) > 20
+        proc = subprocess.run(["pgrep", "-f", "node.*bot.js"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        is_running = (proc.returncode == 0)
+
+        account_name = "Chưa liên kết"
+        account_id = ""
+        phone = ""
+
+        if has_session:
+            if os.path.exists(profile_file):
+                try:
+                    with open(profile_file, "r", encoding="utf-8") as pf:
+                        pdata = json.load(pf)
+                        account_name = pdata.get("ownName") or "Bé Heo (Assistant)"
+                        account_id = str(pdata.get("ownId") or "")
+                except Exception:
+                    pass
+            if not account_id:
+                try:
+                    with open(session_file, "r", encoding="utf-8") as sf:
+                        sdata = json.load(sf)
+                        account_id = str(sdata.get("userId") or sdata.get("uid") or "")
+                        if not account_name or account_name == "Chưa liên kết":
+                            account_name = "Bé Heo (Zalo Bot)"
+                except Exception:
+                    pass
+
+        zalo["connected"] = has_session and is_running
+        zalo["logged_in"] = has_session
+        zalo["bridge_alive"] = is_running
+        zalo["account_name"] = account_name if has_session else "Chưa liên kết"
+        zalo["account_id"] = account_id
+        zalo["phone"] = phone
+        zalo["tag_filter"] = zalo.get("tag_filter", True)
         zalo["groups"] = self.state.get("groups", [])
         zalo["synced_groups"] = [g.get("name", "") for g in self.state.get("groups", [])]
         zalo.setdefault("recent_messages", [])

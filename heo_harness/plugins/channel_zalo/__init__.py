@@ -10,6 +10,9 @@ from heo_harness.core.policy import PolicyDecisionType
 import os
 import time
 import uuid
+import json
+import threading
+import urllib.request
 
 class ZaloChannelPlugin(BasePlugin):
     metadata = PluginMetadata(
@@ -44,6 +47,21 @@ class ZaloChannelPlugin(BasePlugin):
         # Lắng nghe yêu cầu gửi tin ra ngoài
         self.bus.on("channel:message:outbound", self.handle_outbound_request, plugin_id=self.metadata.id)
 
+        # Watchdog kiểm tra và duy trì tiến trình Zalo Bridge (node bot.js)
+        t = threading.Thread(target=self._bridge_watchdog, daemon=True)
+        t.start()
+
+    def _bridge_watchdog(self) -> None:
+        time.sleep(3)
+        while True:
+            try:
+                store = self.ctx.inject("data_store") or self.ctx.inject("store")
+                if store and hasattr(store, "spawn_zalo_bridge"):
+                    store.spawn_zalo_bridge(force_restart=False)
+            except Exception:
+                pass
+            time.sleep(15)
+
     def handle_incoming_message(self, msg_data: dict) -> dict:
         """Xử lý tin nhắn đến với bộ lọc @tag thông minh và đánh dấu Evidence Nguồn."""
         return self.safe_execute(self._filter_and_dispatch, msg_data)
@@ -76,7 +94,19 @@ class ZaloChannelPlugin(BasePlugin):
                     "evidence_ref": raw_evidence_ref
                 }
 
+        store = self.ctx.inject("data_store") or self.ctx.inject("store")
+        if store and hasattr(store, "is_bot_enabled") and not store.is_bot_enabled():
+            if store and hasattr(store, "add_live_log"):
+                store.add_live_log("zalo", "WARN", f"Bé Heo đang TẠM DỪNG, bỏ qua xử lý tin nhắn từ {sender_name}", content)
+            return {
+                "handled": False,
+                "reason": "Bot is paused (Emergency Pause active)",
+                "evidence_ref": raw_evidence_ref
+            }
+
         self.log(f"📩 Tin nhắn hợp lệ từ {sender_name} (Nhóm: {is_group}) [Evidence: {raw_evidence_ref}]: '{content}'")
+        if store and hasattr(store, "add_live_log"):
+            store.add_live_log("zalo", "INFO", f"Nhận tin nhắn Zalo từ {sender_name} (Nhóm: {is_group})", content)
 
         # Phát sóng Typed Event chuẩn: channel:message:inbound
         self.bus.emit("channel:message:inbound", {
@@ -177,6 +207,23 @@ class ZaloChannelPlugin(BasePlugin):
         # 2. Trường hợp AUTO hoặc đã có explicit_permit: Cho phép gửi qua Bridge
         self.outbound_count += 1
         self.log(f"🚀 [ZALO SENT] Đã phát tin nhắn tới {target_id} (Nhóm: {group_id}): '{content[:60]}...'")
+
+        # Chuyển tiếp tới Zalo Outbound HTTP Server (port 5051) nếu Bridge đang kết nối
+        try:
+            req_data = json.dumps({
+                "threadId": group_id if group_id else target_id,
+                "isGroup": bool(group_id),
+                "message": content
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                "http://127.0.0.1:5051/api/send",
+                data=req_data,
+                headers={"Content-Type": "application/json"}
+            )
+            urllib.request.urlopen(req, timeout=3.0)
+        except Exception:
+            pass
+
         return {
             "sent": True,
             "status": "SUCCEEDED",
