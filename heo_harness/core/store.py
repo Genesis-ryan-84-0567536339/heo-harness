@@ -1588,8 +1588,8 @@ class HeoDataStore:
     def get_works(self) -> list:
         return self.state.get("works", [])
 
-    def add_work(self, title: str, owner: str = "Anh Cơ La", priority: str = "P2", deadline: str = "Hôm nay", group: str = "Chung", note: str = "") -> dict:
-        new_id = f"W-{int(time.time()) % 1000}"
+    def add_work(self, title: str, owner: str = "Anh Cơ La", priority: str = "P2", deadline: str = "Hôm nay", group: str = "Chung", note: str = "", group_id: str = None, person_id: str = None, channel: str = "all", source_msg_id: str = None) -> dict:
+        new_id = f"W-{int(time.time()*1000) % 10000}"
         item = {
             "id": new_id,
             "title": title,
@@ -1597,15 +1597,20 @@ class HeoDataStore:
             "owner": owner,
             "deadline": deadline,
             "group": group,
+            "group_id": group_id,
+            "person_id": person_id,
+            "channel": channel,
             "priority": priority,
             "note": note,
-            "created_at": time.time()
+            "source_msg_id": source_msg_id,
+            "created_at": time.time(),
+            "created_str": time.strftime("%Y-%m-%d %H:%M:%S")
         }
         if "works" not in self.state:
             self.state["works"] = []
         self.state["works"].insert(0, item)
         self._save_state()
-        self.add_audit("owner", "work.create", new_id, f"Tạo công việc mới: {title}", "SUCCESS")
+        self.add_audit("owner", "work.create", new_id, f"Tạo công việc mới: {title} (Nhóm: {group}, Người nhận: {owner})", "SUCCESS")
         self.add_execution("work.create", "SUCCEEDED", "AUTO", "12 ms", f"Created {new_id}")
         return item
 
@@ -1625,8 +1630,8 @@ class HeoDataStore:
     def get_calendar(self) -> list:
         return self.state.get("calendar", [])
 
-    def add_calendar_event(self, title: str, ev_type: str = "Reminder", when: str = "Hôm nay 15:00", tz: str = "Asia/Ho_Chi_Minh", delivery: str = "Internal owner") -> dict:
-        new_id = f"EV-{int(time.time()) % 1000}"
+    def add_calendar_event(self, title: str, ev_type: str = "Reminder", when: str = "Hôm nay 15:00", tz: str = "Asia/Ho_Chi_Minh", delivery: str = "Internal owner", group_id: str = None, group_name: str = "Chung", person_id: str = None, person_name: str = None, channel: str = "all", source_msg_id: str = None) -> dict:
+        new_id = f"EV-{int(time.time()*1000) % 10000}"
         item = {
             "id": new_id,
             "title": title,
@@ -1634,14 +1639,21 @@ class HeoDataStore:
             "timezone": tz,
             "when": when,
             "delivery": delivery,
+            "group_id": group_id,
+            "group_name": group_name,
+            "person_id": person_id,
+            "person_name": person_name,
+            "channel": channel,
+            "source_msg_id": source_msg_id,
             "status": "SCHEDULED",
-            "created_at": time.time()
+            "created_at": time.time(),
+            "created_str": time.strftime("%Y-%m-%d %H:%M:%S")
         }
         if "calendar" not in self.state:
             self.state["calendar"] = []
         self.state["calendar"].insert(0, item)
         self._save_state()
-        self.add_audit("owner", "calendar.create", new_id, f"Lên lịch sự kiện: {title} lúc {when}", "SUCCESS")
+        self.add_audit("owner", "calendar.create", new_id, f"Lên lịch sự kiện: {title} lúc {when} (Nhóm: {group_name})", "SUCCESS")
         self.add_execution("scheduler.create", "SUCCEEDED", "AUTO", "15 ms", f"Created {new_id}")
         return item
 
@@ -1665,8 +1677,295 @@ class HeoDataStore:
                     self.add_audit("owner", "approval.deny", approval_id, f"Sếp Cơ La từ chối lệnh: {a.get('summary')}", "DENIED")
                     self.add_execution(a.get("action", "action.execute"), "DENIED", "DENY", "12 ms", f"Denied {approval_id}")
                 self._save_state()
-                return {"ok": True, "approval": a, "action": action}
-        return {"ok": False, "error": "Approval not found"}
+    # ==================== CHAT BIG DATA INTELLIGENCE ====================
+    def get_chat_intelligence(self, filter_channel: str = None, filter_group: str = None, filter_person: str = None, filter_category: str = None, filter_priority: str = None, search_query: str = None) -> dict:
+        """Khai thác và phân loại toàn diện Big Data nội dung chat đa kênh (Zalo & WhatsApp)."""
+        zalo_msgs = self.get_zalo_messages(200)
+        wa_msgs = self.get_whatsapp_messages(200)
+
+        all_msgs = []
+        for m in zalo_msgs:
+            m_copy = dict(m)
+            m_copy["channel"] = "zalo"
+            all_msgs.append(m_copy)
+        for m in wa_msgs:
+            m_copy = dict(m)
+            m_copy["channel"] = "whatsapp"
+            all_msgs.append(m_copy)
+
+        def _classify(m):
+            text = (m.get("content") or "").lower()
+            s_name = (m.get("sender_name") or "").lower()
+            is_boss = any(k in s_name for k in ["cơ la", "cola", "ryan", "sếp"])
+
+            if any(k in text for k in ["mã pin", "lỗi", "không chính xác", "status code", "thất bại", "warning", "báo động", "gián đoạn", "chặn"]):
+                cat = "ALERT"
+                prio = "P1"
+                sent = "negative"
+                cat_label = "🚨 Báo Động / Sự Cố"
+            elif is_boss and any(k in text for k in ["/auto", "/pause", "/start", "bật", "tắt", "lệnh", "chỉ đạo", "yêu cầu", "triển khai", "quản trị", "báo cáo"]):
+                cat = "DIRECTIVE"
+                prio = "P1"
+                sent = "attention"
+                cat_label = "👑 Chỉ Đạo Của Sếp"
+            elif any(k in text for k in ["tiến độ", "cần làm", "giao cho", "deadline", "xong chưa", "hoàn thành", "triển khai", "soạn thảo", "viết báo cáo", "tạo file", "task"]):
+                cat = "TASK"
+                prio = "P2"
+                sent = "attention"
+                cat_label = "📋 Yêu Cầu / Giao Việc"
+            elif any(k in text for k in ["lịch", "họp", "gặp", "ngày mai", "hôm nay", "thứ hai", "tuần tới", "giờ", "15:00", "cuộc hẹn", "schedule"]):
+                cat = "EVENT"
+                prio = "P2"
+                sent = "positive"
+                cat_label = "📅 Lịch Trình / Sự Kiện"
+            elif any(k in text for k in [".docx", ".xlsx", ".pdf", ".mp3", ".wav", ".jpg", ".png", "voice-aac", "hình ảnh", "tài liệu", "file"]):
+                cat = "MEDIA"
+                prio = "P3"
+                sent = "positive"
+                cat_label = "📎 Tài Liệu & Media"
+            elif any(k in text for k in ["sao", "thế nào", "là gì", "nào", "ở đâu", "ai", "mấy", "model", "?", "alo", "aloo"]):
+                cat = "INQUIRY"
+                prio = "P2"
+                sent = "neutral"
+                cat_label = "💡 Tư Vấn & Hỏi Đáp"
+            else:
+                cat = "GENERAL"
+                prio = "P3"
+                sent = "positive"
+                cat_label = "💬 Thảo Luận Chung"
+
+            has_task = (cat in ["DIRECTIVE", "TASK"])
+            has_event = (cat == "EVENT" or any(k in text for k in ["họp", "hẹn", "ngày mai", "hôm nay", "thứ hai", "tuần tới", "lịch"]))
+
+            return cat, cat_label, prio, sent, has_task, has_event
+
+        classified_items = []
+        stats = {
+            "total": len(all_msgs),
+            "directives": 0,
+            "tasks": 0,
+            "events": 0,
+            "inquiries": 0,
+            "alerts": 0,
+            "media": 0,
+            "general": 0,
+            "channels": {"zalo": 0, "whatsapp": 0},
+            "groups": {},
+            "senders": {}
+        }
+
+        for m in all_msgs:
+            cat, cat_label, prio, sent, has_task, has_event = _classify(m)
+            stats["channels"][m.get("channel", "zalo")] = stats["channels"].get(m.get("channel", "zalo"), 0) + 1
+            grp = m.get("target_id") if m.get("group_id") else ("1-1" if not m.get("group_id") else "Nhóm")
+            stats["groups"][grp] = stats["groups"].get(grp, 0) + 1
+            s_name = m.get("sender_name") or "Khách"
+            stats["senders"][s_name] = stats["senders"].get(s_name, 0) + 1
+
+            if cat == "DIRECTIVE": stats["directives"] += 1
+            elif cat == "TASK": stats["tasks"] += 1
+            elif cat == "EVENT": stats["events"] += 1
+            elif cat == "INQUIRY": stats["inquiries"] += 1
+            elif cat == "ALERT": stats["alerts"] += 1
+            elif cat == "MEDIA": stats["media"] += 1
+            else: stats["general"] += 1
+
+            item = dict(m)
+            item["category"] = cat
+            item["category_label"] = cat_label
+            item["priority"] = prio
+            item["sentiment"] = sent
+            item["has_task_potential"] = has_task
+            item["has_event_potential"] = has_event
+            classified_items.append(item)
+
+        filtered = classified_items
+        if filter_channel and filter_channel != "all":
+            filtered = [x for x in filtered if x.get("channel") == filter_channel]
+        if filter_group and filter_group != "all":
+            filtered = [x for x in filtered if (str(x.get("group_id")) == filter_group or str(x.get("target_id")) == filter_group or str(x.get("group")) == filter_group)]
+        if filter_person and filter_person != "all":
+            filtered = [x for x in filtered if (filter_person.lower() in (x.get("sender_name") or "").lower() or filter_person in str(x.get("sender_id")))]
+        if filter_category and filter_category != "all":
+            filtered = [x for x in filtered if x.get("category") == filter_category]
+        if filter_priority and filter_priority != "all":
+            filtered = [x for x in filtered if x.get("priority") == filter_priority]
+        if search_query:
+            sq = search_query.strip().lower()
+            filtered = [x for x in filtered if sq in (x.get("content") or "").lower() or sq in (x.get("sender_name") or "").lower()]
+
+        filtered.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+
+        return {
+            "ok": True,
+            "stats": stats,
+            "total_count": len(classified_items),
+            "filtered_count": len(filtered),
+            "messages": filtered
+        }
+
+    # ==================== MEDIA & DOCUMENT VAULT ====================
+    def get_media_vault(self, filter_kind: str = None, filter_group: str = None, filter_person: str = None, filter_channel: str = None, search_query: str = None) -> dict:
+        """Quét và quản lý toàn diện kho tài liệu văn phòng, âm thanh và hình ảnh theo nhóm & cá nhân."""
+        base_dir = os.path.dirname(self.data_dir)
+        art_dir = os.path.join(base_dir, "artifacts")
+        meta_file = os.path.join(self.data_dir, "media_vault_metadata.json")
+
+        meta = {}
+        if os.path.exists(meta_file):
+            try:
+                with open(meta_file, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+            except Exception:
+                pass
+
+        items = []
+        if os.path.exists(art_dir):
+            for root, dirs, files in os.walk(art_dir):
+                for fname in files:
+                    if fname.startswith(".") or fname.endswith(".gitkeep"):
+                        continue
+                    fpath = os.path.join(root, fname)
+                    rel = os.path.relpath(fpath, art_dir)
+                    ext = os.path.splitext(fname)[1].lower()
+                    sz_kb = round(os.path.getsize(fpath) / 1024, 1)
+                    mtime = os.path.getmtime(fpath)
+                    time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
+
+                    if ext in [".docx", ".xlsx", ".pdf", ".pptx", ".csv", ".txt"]:
+                        kind = "DOCUMENT"
+                        kind_label = "📄 Văn Bản / Báo Cáo"
+                        icon = "📄"
+                    elif ext in [".wav", ".mp3", ".m4a", ".aac", ".ogg"]:
+                        kind = "AUDIO"
+                        kind_label = "🎵 Âm Thanh / Giọng Nói"
+                        icon = "🎵"
+                    elif ext in [".svg", ".png", ".jpg", ".jpeg", ".webp"]:
+                        kind = "IMAGE"
+                        kind_label = "🖼️ Tranh Vẽ / Hình Ảnh"
+                        icon = "🖼️"
+                    else:
+                        kind = "DATA"
+                        kind_label = "💾 Dữ Liệu Khác"
+                        icon = "💾"
+
+                    file_meta = meta.get(rel, meta.get(fname, {}))
+                    group_name = file_meta.get("group_name", "Ban Lãnh Đạo Genesis" if ("Báo_Cáo" in fname or "Tài_Chính" in fname) else "Chung")
+                    group_id = file_meta.get("group_id", None)
+                    person_name = file_meta.get("person_name", "Sếp Cơ La (Cola)" if ("Heo" in fname or "Báo_Cáo" in fname) else "Bé Heo")
+                    channel = file_meta.get("channel", "system")
+                    notes = file_meta.get("notes", "")
+
+                    download_url = f"/download/{rel}"
+                    preview_url = download_url if kind in ["AUDIO", "IMAGE"] else None
+
+                    items.append({
+                        "id": f"MEDIA-{abs(hash(rel)) % 100000}",
+                        "name": fname,
+                        "rel_path": rel,
+                        "full_path": fpath,
+                        "ext": ext,
+                        "size_kb": sz_kb,
+                        "size_str": f"{sz_kb} KB" if sz_kb < 1024 else f"{round(sz_kb/1024, 2)} MB",
+                        "mtime": mtime,
+                        "time_str": time_str,
+                        "kind": kind,
+                        "kind_label": kind_label,
+                        "icon": icon,
+                        "group_name": group_name,
+                        "group_id": group_id,
+                        "person_name": person_name,
+                        "channel": channel,
+                        "notes": notes,
+                        "download_url": download_url,
+                        "preview_url": preview_url
+                    })
+
+        for qr_name, qr_title, qr_ch in [("zalo_qr.png", "Mã QR Đăng Nhập Zalo", "zalo"), ("whatsapp_qr.png", "Mã QR Đăng Nhập WhatsApp", "whatsapp")]:
+            qp = os.path.join(self.data_dir, qr_name)
+            if os.path.exists(qp):
+                sz_kb = round(os.path.getsize(qp) / 1024, 1)
+                items.append({
+                    "id": f"MEDIA-QR-{qr_ch}",
+                    "name": qr_name,
+                    "rel_path": f"data/{qr_name}",
+                    "full_path": qp,
+                    "ext": ".png",
+                    "size_kb": sz_kb,
+                    "size_str": f"{sz_kb} KB",
+                    "mtime": os.path.getmtime(qp),
+                    "time_str": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(os.path.getmtime(qp))),
+                    "kind": "IMAGE",
+                    "kind_label": "🖼️ Mã QR Đăng Nhập",
+                    "icon": "📱",
+                    "group_name": "Toàn Cục",
+                    "group_id": None,
+                    "person_name": "Sếp Cơ La",
+                    "channel": qr_ch,
+                    "notes": qr_title,
+                    "download_url": f"/api/{qr_ch}/qr.png",
+                    "preview_url": f"/api/{qr_ch}/qr.png"
+                })
+
+        stats = {
+            "total": len(items),
+            "documents": len([x for x in items if x["kind"] == "DOCUMENT"]),
+            "audio": len([x for x in items if x["kind"] == "AUDIO"]),
+            "images": len([x for x in items if x["kind"] == "IMAGE"]),
+            "data": len([x for x in items if x["kind"] == "DATA"]),
+            "groups": {}
+        }
+        for it in items:
+            g = it.get("group_name") or "Chung"
+            stats["groups"][g] = stats["groups"].get(g, 0) + 1
+
+        filtered = items
+        if filter_kind and filter_kind != "all":
+            filtered = [x for x in filtered if x["kind"] == filter_kind]
+        if filter_group and filter_group != "all":
+            filtered = [x for x in filtered if filter_group.lower() in (x.get("group_name") or "").lower()]
+        if filter_person and filter_person != "all":
+            filtered = [x for x in filtered if filter_person.lower() in (x.get("person_name") or "").lower()]
+        if filter_channel and filter_channel != "all":
+            filtered = [x for x in filtered if x.get("channel") == filter_channel]
+        if search_query:
+            sq = search_query.strip().lower()
+            filtered = [x for x in filtered if sq in x["name"].lower() or sq in (x.get("group_name") or "").lower() or sq in (x.get("person_name") or "").lower()]
+
+        filtered.sort(key=lambda x: x["mtime"], reverse=True)
+
+        return {
+            "ok": True,
+            "stats": stats,
+            "total_count": len(items),
+            "filtered_count": len(filtered),
+            "files": filtered
+        }
+
+    def assign_media_metadata(self, file_rel_path: str, group_name: str = None, group_id: str = None, person_name: str = None, notes: str = None) -> dict:
+        meta_file = os.path.join(self.data_dir, "media_vault_metadata.json")
+        meta = {}
+        if os.path.exists(meta_file):
+            try:
+                with open(meta_file, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+            except Exception:
+                pass
+
+        entry = meta.setdefault(file_rel_path, {})
+        if group_name is not None: entry["group_name"] = group_name
+        if group_id is not None: entry["group_id"] = group_id
+        if person_name is not None: entry["person_name"] = person_name
+        if notes is not None: entry["notes"] = notes
+
+        try:
+            with open(meta_file, "w", encoding="utf-8") as f:
+                json.dump(meta, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+        self.add_audit("owner", "media.assign", file_rel_path, f"Gán tài liệu {file_rel_path} cho nhóm {group_name or 'Chung'}", "SUCCESS")
+        return {"ok": True, "metadata": entry}
 
     # ==================== GROUPS & PEOPLE ====================
     def get_groups(self) -> list:

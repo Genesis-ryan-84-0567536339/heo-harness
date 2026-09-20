@@ -1023,6 +1023,20 @@
         </div>
         <span class="nav-badge neutral" id="badge-groups">0</span>
       </button>
+      <button class="nav-hub-item" data-hub="chat_intelligence" onclick="switchHub('chat_intelligence')">
+        <div class="nav-hub-left">
+          <span class="nav-hub-icon">💬</span>
+          <span>Khai Thác Chat Big Data</span>
+        </div>
+        <span class="nav-badge good" id="badge-chat-intel">0</span>
+      </button>
+      <button class="nav-hub-item" data-hub="media_vault" onclick="switchHub('media_vault')">
+        <div class="nav-hub-left">
+          <span class="nav-hub-icon">📁</span>
+          <span>Kho Media & Tài Liệu 360</span>
+        </div>
+        <span class="nav-badge neutral" id="badge-media-vault">0</span>
+      </button>
 
       <div class="nav-section-label" style="padding-left:10px;margin-top:10px">Trí Tuệ & Trợ Lý</div>
       <button class="nav-hub-item" data-hub="assistant" onclick="switchHub('assistant')">
@@ -1196,6 +1210,11 @@ let state = {
   zalo_messages: [],
   whatsapp: {},
   whatsapp_messages: [],
+  chat_intelligence: { stats: {}, messages: [] },
+  chat_intel_filter: { channel: 'all', group: 'all', person: 'all', category: 'all', priority: 'all', q: '' },
+  media_vault: { stats: {}, files: [] },
+  media_vault_filter: { kind: 'all', group: 'all', person: 'all', channel: 'all', q: '' },
+  work_filter: { channel: 'all', group: 'all', person: 'all', q: '' },
   theme: 'dark'
 };
 
@@ -1276,7 +1295,7 @@ async function fetchAllData() {
     const [
       cfgRes, gRes, qRes, pinRes, wRes, cRes, aRes, grpRes, pplRes,
       polRes, exRes, attRes, insRes, outRes, lrnRes, artRes, mtrRes, bkRes, audRes, zRes, zaloMsgRes, waRes, waMsgRes,
-      plgRes, catRes, sklRes, botRes, accRes
+      plgRes, catRes, sklRes, botRes, accRes, ciRes, mvRes
     ] = await Promise.all([
       fetch('/api/config').then(r => r.json()).catch(() => ({})),
       fetch('/api/google/info').then(r => r.json()).catch(() => ({})),
@@ -1305,7 +1324,9 @@ async function fetchAllData() {
       fetch('/api/plugins/catalog').then(r => r.json()).catch(() => ({ catalog: [] })),
       fetch('/api/skills/list').then(r => r.json()).catch(() => ({ skills: [] })),
       fetch('/api/bot/status').then(r => r.json()).catch(() => ({ enabled: true })),
-      fetch('/api/accounts/list').then(r => r.json()).catch(() => ({ boss_profiles: [], channels: [] }))
+      fetch('/api/accounts/list').then(r => r.json()).catch(() => ({ boss_profiles: [], channels: [] })),
+      fetch('/api/chat/intelligence').then(r => r.json()).catch(() => ({ stats: {}, messages: [] })),
+      fetch('/api/media/vault').then(r => r.json()).catch(() => ({ stats: {}, files: [] }))
     ]);
 
     state.config = cfgRes.config || {};
@@ -1336,6 +1357,8 @@ async function fetchAllData() {
     state.skills = sklRes.skills || [];
     state.bot_enabled = (botRes && typeof botRes.enabled === 'boolean') ? botRes.enabled : true;
     state.accounts = accRes || { boss_profiles: [], channels: [] };
+    state.chat_intelligence = ciRes || { stats: {}, messages: [] };
+    state.media_vault = mvRes || { stats: {}, files: [] };
 
     updateBadges();
     renderActiveHub();
@@ -1364,6 +1387,18 @@ function updateBadges() {
   const groupBadge = $('#badge-groups');
   if (groupBadge) {
     groupBadge.textContent = state.groups.length > 0 ? `${state.groups.length} Nhóm` : '0';
+  }
+
+  // Cập nhật Big Data Chat & Media Vault
+  const ciBadge = $('#badge-chat-intel');
+  if (ciBadge) {
+    const ciTotal = state.chat_intelligence?.stats?.total || 0;
+    ciBadge.textContent = `${ciTotal}`;
+  }
+  const mvBadge = $('#badge-media-vault');
+  if (mvBadge) {
+    const mvTotal = state.media_vault?.stats?.total || 0;
+    mvBadge.textContent = `${mvTotal}`;
   }
 
   // Cập nhật trạng thái Zalo
@@ -1514,6 +1549,18 @@ function renderActiveHub() {
       titleEl.textContent = 'Danh Bạ & Nhóm Thực Tế (Directory 360)';
       subEl.textContent = `Quản lý ${state.groups.length} nhóm trực chiến và ${state.people.length} nhân sự, đối tác liên hệ (Clean Slate)`;
       container.innerHTML = renderDirectoryHub();
+      break;
+
+    case 'chat_intelligence':
+      titleEl.textContent = 'Khai Thác Chat Big Data';
+      subEl.textContent = 'Bóc tách thông minh chỉ đạo Sếp, nhiệm vụ, lịch họp, sự cố và tri thức từ hội thoại Zalo & WhatsApp';
+      container.innerHTML = renderChatIntelligenceHub();
+      break;
+
+    case 'media_vault':
+      titleEl.textContent = 'Kho Media & Tài Liệu 360';
+      subEl.textContent = 'Quản lý tập trung toàn bộ file văn bản, âm thanh MP3/WAV và hình ảnh AI phân loại theo nhóm & nhân sự';
+      container.innerHTML = renderMediaVaultHub();
       break;
 
     case 'assistant':
@@ -1744,14 +1791,14 @@ function renderWorkScheduleHub() {
       <div class="hub-header-top">
         <div>
           <h1 class="hub-title">Điều Hành Công Việc & Lịch Trình (Work & Schedule)</h1>
-          <p class="hub-desc">Quản lý quy trình giao việc 5 cột Kanban và lịch họp/deadline canonical. 100% dữ liệu thật từ Clean Slate.</p>
+          <p class="hub-desc">Quản lý quy trình giao việc 5 cột Kanban, lịch họp/deadline canonical và ma trận phân bổ công việc theo nhóm. 100% dữ liệu thật.</p>
         </div>
         <div>
           ${currentSub === 'kanban' ? `
             <button class="btn primary" onclick="openNewWorkModal()">+ Thêm Công Việc Mới</button>
-          ` : `
+          ` : currentSub === 'calendar' ? `
             <button class="btn primary" onclick="openNewCalendarModal()">+ Lên Lịch Sự Kiện Mới</button>
-          `}
+          ` : ''}
         </div>
       </div>
 
@@ -1763,10 +1810,13 @@ function renderWorkScheduleHub() {
         <button class="hub-subnav-btn ${currentSub === 'calendar' ? 'active' : ''}" onclick="switchSubtab('work', 'calendar')">
           ◷ Lịch Trình & Nhắc Việc (${state.calendar.length})
         </button>
+        <button class="hub-subnav-btn ${currentSub === 'matrix' ? 'active' : ''}" onclick="switchSubtab('work', 'matrix')">
+          📊 Ma Trận Phân Bổ Nhóm & Nhân Sự (${state.groups.length} Nhóm)
+        </button>
       </div>
     </div>
 
-    ${currentSub === 'kanban' ? renderKanbanView() : renderCalendarView()}
+    ${currentSub === 'kanban' ? renderKanbanView() : currentSub === 'calendar' ? renderCalendarView() : renderWorkloadMatrixView()}
   `;
 }
 
@@ -1779,8 +1829,65 @@ function renderKanbanView() {
     { key: 'BLOCKED', title: 'Bị Chặn / Vướng', badge: 'p1' }
   ];
 
+  const wf = state.work_filter || { channel: 'all', group: 'all', person: 'all', q: '' };
+  const allGroups = state.groups || [];
+  const allOwners = Array.from(new Set(state.works.map(w => w.owner).filter(Boolean)));
+
+  let filteredWorks = state.works.filter(w => {
+    if (wf.channel !== 'all' && (w.channel || 'system') !== wf.channel) return false;
+    if (wf.group !== 'all') {
+      if (w.group_id !== wf.group && w.group !== wf.group && w.group_name !== wf.group) return false;
+    }
+    if (wf.person !== 'all' && w.owner !== wf.person) return false;
+    if (wf.q && wf.q.trim()) {
+      const q = wf.q.trim().toLowerCase();
+      const matchTitle = (w.title || '').toLowerCase().includes(q);
+      const matchNote = (w.note || '').toLowerCase().includes(q);
+      if (!matchTitle && !matchNote) return false;
+    }
+    return true;
+  });
+
+  const filterBarHtml = `
+    <div class="card" style="margin-bottom:16px;padding:10px 16px;background:var(--bg-body)">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1.5fr auto;gap:10px;align-items:end">
+        <div>
+          <label class="form-label" style="margin-bottom:2px;font-size:10px">PHÂN THEO NHÓM</label>
+          <select class="form-select" onchange="state.work_filter.group = this.value; renderActiveHub()">
+            <option value="all" ${wf.group === 'all' ? 'selected' : ''}>Tất Cả Nhóm</option>
+            ${allGroups.map(g => `<option value="${g.id}" ${wf.group === g.id ? 'selected' : ''}>🏢 ${escapeHtml(g.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="margin-bottom:2px;font-size:10px">NGƯỜI PHỤ TRÁCH</label>
+          <select class="form-select" onchange="state.work_filter.person = this.value; renderActiveHub()">
+            <option value="all" ${wf.person === 'all' ? 'selected' : ''}>Tất Cả Phụ Trách</option>
+            ${allOwners.map(o => `<option value="${o}" ${wf.person === o ? 'selected' : ''}>👤 ${escapeHtml(o)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="margin-bottom:2px;font-size:10px">KÊNH NGUỒN</label>
+          <select class="form-select" onchange="state.work_filter.channel = this.value; renderActiveHub()">
+            <option value="all" ${wf.channel === 'all' ? 'selected' : ''}>Tất Cả Kênh</option>
+            <option value="zalo" ${wf.channel === 'zalo' ? 'selected' : ''}>💬 Kênh Zalo</option>
+            <option value="whatsapp" ${wf.channel === 'whatsapp' ? 'selected' : ''}>📱 Kênh WhatsApp</option>
+            <option value="system" ${wf.channel === 'system' ? 'selected' : ''}>⚙️ Hệ Thống</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="margin-bottom:2px;font-size:10px">TÌM KIẾM CÔNG VIỆC</label>
+          <input class="form-input" placeholder="Tìm kiếm tiêu đề, ghi chú..." value="${escapeHtml(wf.q || '')}" oninput="state.work_filter.q = this.value; renderActiveHub()" />
+        </div>
+        <div>
+          <button class="btn sm" onclick="state.work_filter = { channel: 'all', group: 'all', person: 'all', q: '' }; renderActiveHub()">🧹 Xóa Lọc</button>
+        </div>
+      </div>
+    </div>
+  `;
+
   if (state.works.length === 0) {
     return `
+      ${filterBarHtml}
       <div class="empty-state">
         <div class="empty-icon">📋</div>
         <div class="empty-title">Bảng Kanban Sạch (Zero Mock Data)</div>
@@ -1793,9 +1900,10 @@ function renderKanbanView() {
   }
 
   return `
+    ${filterBarHtml}
     <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:14px;align-items:start">
       ${cols.map(col => {
-        const items = state.works.filter(w => w.status === col.key);
+        const items = filteredWorks.filter(w => w.status === col.key);
         return `
           <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;max-height:calc(100vh - 220px)">
             <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
@@ -1809,12 +1917,16 @@ function renderKanbanView() {
                     <span class="badge ${w.priority.toLowerCase()}">${w.priority}</span>
                     <span style="font-family:var(--mono);font-size:10px;color:var(--text-faint)">${w.id}</span>
                   </div>
-                  <div style="font-weight:600;font-size:12px;margin-bottom:8px;color:var(--text)">${w.title}</div>
-                  <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">
-                    👤 ${w.owner} · 🏢 ${w.group || 'Chung'}
+                  <div style="font-weight:600;font-size:12px;margin-bottom:8px;color:var(--text)">${escapeHtml(w.title)}</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span>👤 ${escapeHtml(w.owner)}</span>
+                    <span>·</span>
+                    <span>🏢 ${escapeHtml(w.group_name || w.group || 'Chung')}</span>
+                    ${w.channel && w.channel !== 'all' ? `<span>·</span> ${getChannelBadge(w.channel)}` : ''}
                   </div>
+                  ${w.source_msg_id ? `<div style="font-size:10px;color:var(--brand);margin-bottom:6px">💬 Nguồn: ${escapeHtml(w.source_msg_id)}</div>` : ''}
                   <div style="font-size:11px;color:var(--text-faint);display:flex;align-items:center;justify-content:space-between">
-                    <span>⌛ ${w.deadline}</span>
+                    <span>⌛ ${escapeHtml(w.deadline || '')}</span>
                     <select class="form-select" style="padding:2px 6px;font-size:10px;width:auto" onchange="moveWorkStatus('${w.id}', this.value)">
                       <option value="">Chuyển cột...</option>
                       ${cols.map(c => `<option value="${c.key}" ${c.key === col.key ? 'disabled' : ''}>➔ ${c.title}</option>`).join('')}
@@ -1857,9 +1969,9 @@ function renderCalendarView() {
               <th>Mã Sự Kiện</th>
               <th>Tiêu Đề Lịch Trình</th>
               <th>Loại Hình</th>
+              <th>Phân Nhóm / Người</th>
               <th>Thời Gian (When)</th>
-              <th>Múi Giờ</th>
-              <th>Kênh Phát</th>
+              <th>Kênh Nhắc</th>
               <th>Trạng Thái</th>
             </tr>
           </thead>
@@ -1867,16 +1979,170 @@ function renderCalendarView() {
             ${state.calendar.map(ev => `
               <tr>
                 <td style="font-family:var(--mono)">${ev.id}</td>
-                <td style="font-weight:600">${ev.title}</td>
+                <td style="font-weight:600">
+                  ${escapeHtml(ev.title)}
+                  ${ev.source_msg_id ? `<div style="font-size:10px;color:var(--brand)">💬 Từ chat: ${escapeHtml(ev.source_msg_id)}</div>` : ''}
+                </td>
                 <td><span class="badge ${ev.type === 'Deadline' ? 'p1' : ev.type === 'Meeting' ? 'p3' : 'good'}">${ev.type}</span></td>
-                <td style="font-weight:600">${ev.when}</td>
-                <td class="muted">${ev.timezone}</td>
-                <td class="muted">${ev.delivery}</td>
+                <td style="font-size:11px">
+                  ${ev.group_name ? `<div>🏢 ${escapeHtml(ev.group_name)}</div>` : ''}
+                  ${ev.person_name ? `<div style="color:var(--text-sec)">👤 ${escapeHtml(ev.person_name)}</div>` : ''}
+                </td>
+                <td style="font-weight:600">${escapeHtml(ev.when)}</td>
+                <td class="muted">${getChannelBadge(ev.channel || 'zalo')} ${escapeHtml(ev.delivery || '')}</td>
                 <td><span class="badge ${ev.status === 'CONFIRMED' ? 'good' : ev.status === 'WARNING' ? 'p1' : 'neutral'}">${ev.status}</span></td>
               </tr>
             `).join('')}
           </tbody>
         </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderWorkloadMatrixView() {
+  const allGroups = state.groups || [];
+  const allWorks = state.works || [];
+  const allCalendar = state.calendar || [];
+
+  const groupStats = {};
+  allGroups.forEach(g => {
+    groupStats[g.id] = {
+      id: g.id,
+      name: g.name,
+      channel: g.channel || 'zalo',
+      totalWorks: 0,
+      todo: 0,
+      doing: 0,
+      blocked: 0,
+      p1: 0,
+      events: 0,
+      assignees: new Set()
+    };
+  });
+
+  if (!groupStats['Chung']) {
+    groupStats['Chung'] = {
+      id: 'Chung',
+      name: 'Toàn Cục / Chung',
+      channel: 'system',
+      totalWorks: 0,
+      todo: 0,
+      doing: 0,
+      blocked: 0,
+      p1: 0,
+      events: 0,
+      assignees: new Set()
+    };
+  }
+
+  allWorks.forEach(w => {
+    const gid = w.group_id || w.group || 'Chung';
+    if (!groupStats[gid]) {
+      groupStats[gid] = {
+        id: gid,
+        name: w.group_name || w.group || gid,
+        channel: w.channel || 'system',
+        totalWorks: 0,
+        todo: 0,
+        doing: 0,
+        blocked: 0,
+        p1: 0,
+        events: 0,
+        assignees: new Set()
+      };
+    }
+    const gs = groupStats[gid];
+    gs.totalWorks += 1;
+    if (w.status === 'TODO') gs.todo += 1;
+    else if (w.status === 'DOING') gs.doing += 1;
+    else if (w.status === 'BLOCKED') gs.blocked += 1;
+    if (w.priority === 'P1') gs.p1 += 1;
+    if (w.owner) gs.assignees.add(w.owner);
+  });
+
+  allCalendar.forEach(ev => {
+    const gid = ev.group_id || ev.group || 'Chung';
+    if (groupStats[gid]) {
+      groupStats[gid].events += 1;
+    }
+  });
+
+  const matrixList = Object.values(groupStats);
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <!-- High-level Workload KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:14px">
+        <div class="card card-pad" style="border-left:3px solid var(--brand)">
+          <div class="text-sm muted">TỔNG CÔNG VIỆC PHÂN BỔ</div>
+          <div style="font-size:24px;font-weight:800;color:var(--text);margin:4px 0">${allWorks.length}</div>
+          <div style="font-size:11px;color:var(--text-sec)">Trên ${matrixList.length} nhóm & phân hệ</div>
+        </div>
+        <div class="card card-pad" style="border-left:3px solid #ef4444">
+          <div class="text-sm muted">NHIỆM VỤ KHẨN CẤP (P1)</div>
+          <div style="font-size:24px;font-weight:800;color:#ef4444;margin:4px 0">${allWorks.filter(w => w.priority === 'P1').length}</div>
+          <div style="font-size:11px;color:var(--text-sec)">Cần xử lý tức thì</div>
+        </div>
+        <div class="card card-pad" style="border-left:3px solid #06b6d4">
+          <div class="text-sm muted">ĐANG TRIỂN KHAI (DOING)</div>
+          <div style="font-size:24px;font-weight:800;color:#06b6d4;margin:4px 0">${allWorks.filter(w => w.status === 'DOING').length}</div>
+          <div style="font-size:11px;color:var(--text-sec)">Tiến độ đang chạy</div>
+        </div>
+        <div class="card card-pad" style="border-left:3px solid #c084fc">
+          <div class="text-sm muted">SỰ KIỆN & LỊCH HẸN NHÓM</div>
+          <div style="font-size:24px;font-weight:800;color:#c084fc;margin:4px 0">${allCalendar.length}</div>
+          <div style="font-size:11px;color:var(--text-sec)">Lịch họp canonical</div>
+        </div>
+      </div>
+
+      <!-- Workload Matrix Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📊 Ma Trận Khối Lượng Công Việc & Phân Bổ Nguồn Lực Theo Nhóm</div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Phân Nhóm / Ban</th>
+                <th>Kênh</th>
+                <th style="text-align:center">Tổng Việc</th>
+                <th style="text-align:center">Chưa Làm</th>
+                <th style="text-align:center">Đang Làm</th>
+                <th style="text-align:center">Vướng / Blocked</th>
+                <th style="text-align:center">Khẩn Cấp (P1)</th>
+                <th style="text-align:center">Lịch Hẹn</th>
+                <th>Nhân Sự Tham Gia</th>
+                <th style="text-align:center">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${matrixList.map(item => `
+                <tr>
+                  <td style="font-weight:700;color:var(--text)">
+                    🏢 ${escapeHtml(item.name)}
+                    ${item.id !== 'Chung' ? `<div style="font-family:var(--mono);font-size:10px;font-weight:normal;color:var(--text-faint)">${escapeHtml(item.id)}</div>` : ''}
+                  </td>
+                  <td>${getChannelBadge(item.channel)}</td>
+                  <td style="text-align:center;font-weight:700">${item.totalWorks}</td>
+                  <td style="text-align:center"><span class="badge neutral">${item.todo}</span></td>
+                  <td style="text-align:center"><span class="badge p3">${item.doing}</span></td>
+                  <td style="text-align:center"><span class="badge ${item.blocked > 0 ? 'p1' : 'neutral'}">${item.blocked}</span></td>
+                  <td style="text-align:center"><span class="badge ${item.p1 > 0 ? 'p1' : 'neutral'}">${item.p1}</span></td>
+                  <td style="text-align:center"><span class="badge good">${item.events}</span></td>
+                  <td style="font-size:11px;color:var(--brand)">
+                    ${Array.from(item.assignees).length > 0 ? Array.from(item.assignees).join(', ') : '<span class="muted">Chưa gán</span>'}
+                  </td>
+                  <td style="text-align:center">
+                    <button class="btn sm" onclick="filterChatByGroup('${item.id}', '${escapeHtml(item.name)}')">💬 Chat</button>
+                    <button class="btn sm" onclick="filterMediaByGroup('${item.id}', '${escapeHtml(item.name)}')">📁 File</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   `;
@@ -2933,6 +3199,8 @@ function renderGroup360View() {
                       ${g.notes ? `<span title="${escapeHtml(g.notes)}" style="color:var(--brand)">📝 ${escapeHtml(g.notes)}</span>` : '<span class="muted">-</span>'}
                     </td>
                     <td style="text-align:center;white-space:nowrap">
+                      <button class="btn sm" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);margin-right:4px" onclick="filterChatByGroup('${g.id}', '${escapeHtml(g.name)}')" title="Xem Big Data Chat của nhóm này">💬 Chat</button>
+                      <button class="btn sm" style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);margin-right:4px" onclick="filterMediaByGroup('${g.id}', '${escapeHtml(g.name)}')" title="Xem Kho Media & Tài liệu của nhóm này">📁 File</button>
                       <button class="btn sm" style="background:#1e293b;border:1px solid var(--border);color:var(--brand);margin-right:4px" onclick="openEditGroupModal('${g.id}')">⚙️ Sửa</button>
                       ${!isLeft ? `
                         <button class="btn sm warning" style="margin-right:4px" onclick="leaveGroupAction('${g.id}', '${g.channel}')" title="Rời khỏi nhóm này (Yêu cầu PIN)">🚪 Rời</button>
@@ -3035,6 +3303,8 @@ function renderPerson360View() {
                     </div>
                   </td>
                   <td style="text-align:center;white-space:nowrap">
+                    <button class="btn sm" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);margin-right:4px" onclick="filterChatByPerson('${p.id}', '${escapeHtml(p.name)}')" title="Xem tin nhắn của nhân sự này">💬 Chat</button>
+                    <button class="btn sm" style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);margin-right:4px" onclick="filterMediaByPerson('${p.id}', '${escapeHtml(p.name)}')" title="Xem file của nhân sự này">📁 File</button>
                     <button class="btn sm" style="background:#1e293b;border:1px solid var(--border);color:var(--brand);margin-right:6px" onclick="openEditPersonModal('${p.id}')">⚙️ Cấu Hình / Sửa</button>
                     <button class="btn sm danger" onclick="deletePerson('${p.id}')">Xóa</button>
                   </td>
@@ -3620,6 +3890,1009 @@ async function sendZaloTestMessage() {
     fetchAllData();
   }
 }
+
+
+// ==========================================
+// 3.1. CHAT BIG DATA INTELLIGENCE HUB
+// ==========================================
+function renderChatIntelligenceHub() {
+  const ci = state.chat_intelligence || { stats: {}, messages: [] };
+  const stats = ci.stats || {};
+  const f = state.chat_intel_filter || { channel: 'all', group: 'all', person: 'all', category: 'all', priority: 'all', q: '' };
+
+  const filteredMsgs = (ci.messages || []).filter(m => {
+    if (f.channel !== 'all' && (m.channel || 'zalo') !== f.channel) return false;
+    if (f.category !== 'all' && m.category !== f.category) return false;
+    if (f.priority !== 'all' && m.priority !== f.priority) return false;
+    if (f.group !== 'all') {
+      if (f.group === '1-1') {
+        if (m.group_id) return false;
+      } else {
+        if (m.group_id !== f.group && m.group_name !== f.group) return false;
+      }
+    }
+    if (f.person !== 'all') {
+      if (m.sender_name !== f.person && m.sender_id !== f.person) return false;
+    }
+    if (f.q && f.q.trim()) {
+      const q = f.q.trim().toLowerCase();
+      const matchContent = (m.content || '').toLowerCase().includes(q);
+      const matchSender = (m.sender_name || '').toLowerCase().includes(q);
+      const matchGroup = (m.group_name || '').toLowerCase().includes(q);
+      if (!matchContent && !matchSender && !matchGroup) return false;
+    }
+    return true;
+  });
+
+  const allGroups = state.groups || [];
+  const allSenders = Object.keys(stats.senders || {});
+
+  return `
+    <div class="hub-header">
+      <div class="hub-header-top">
+        <div>
+          <h1 class="hub-title">Khai Thác Chat Big Data & Bóc Tách Tri Thức (Chat Intelligence)</h1>
+          <p class="hub-desc">
+            Bóc tách tự động hội thoại thực tế từ Zalo & WhatsApp. Phân loại Mệnh lệnh Sếp, Giao việc, Lịch họp, Tư vấn, Sự cố và chuyển đổi 1-click sang Task & Calendar.
+          </p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn sm" onclick="resetChatIntelFilters()">🧹 Xóa Bộ Lọc</button>
+          <button class="btn primary sm" onclick="fetchAllData()">🔄 Làm Mới Dữ Liệu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Summary Row -->
+    <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:14px;margin-bottom:20px">
+      <div class="card card-pad" style="border-left:3px solid var(--brand);cursor:pointer" onclick="setChatIntelCategory('all')">
+        <div class="text-sm muted" style="font-size:11px">TỔNG TIN BÓC TÁCH</div>
+        <div style="font-size:24px;font-weight:800;color:var(--text);margin:4px 0">${stats.total || 0}</div>
+        <div style="font-size:11px;color:var(--text-sec)">💬 Zalo: ${stats.channels?.zalo || 0} · 📱 WA: ${stats.channels?.whatsapp || 0}</div>
+      </div>
+
+      <div class="card card-pad" style="border-left:3px solid #eab308;cursor:pointer" onclick="setChatIntelCategory('DIRECTIVE')">
+        <div class="text-sm muted" style="font-size:11px">👑 CHỈ ĐẠO CỦA SẾP</div>
+        <div style="font-size:24px;font-weight:800;color:#eab308;margin:4px 0">${stats.directives || 0}</div>
+        <div style="font-size:11px;color:var(--text-sec)">Chỉ thị tối cao</div>
+      </div>
+
+      <div class="card card-pad" style="border-left:3px solid #06b6d4;cursor:pointer" onclick="setChatIntelCategory('TASK')">
+        <div class="text-sm muted" style="font-size:11px">📋 YÊU CẦU / GIAO VIỆC</div>
+        <div style="font-size:24px;font-weight:800;color:#06b6d4;margin:4px 0">${stats.tasks || 0}</div>
+        <div style="font-size:11px;color:var(--text-sec)">Tiềm năng tạo Task</div>
+      </div>
+
+      <div class="card card-pad" style="border-left:3px solid #c084fc;cursor:pointer" onclick="setChatIntelCategory('EVENT')">
+        <div class="text-sm muted" style="font-size:11px">📅 LỊCH HẸN / HỌP</div>
+        <div style="font-size:24px;font-weight:800;color:#c084fc;margin:4px 0">${stats.events || 0}</div>
+        <div style="font-size:11px;color:var(--text-sec)">Tiềm năng lên Calendar</div>
+      </div>
+
+      <div class="card card-pad" style="border-left:3px solid #fb923c;cursor:pointer" onclick="setChatIntelCategory('INQUIRY')">
+        <div class="text-sm muted" style="font-size:11px">💡 HỎI ĐÁP / TƯ VẤN</div>
+        <div style="font-size:24px;font-weight:800;color:#fb923c;margin:4px 0">${stats.inquiries || 0}</div>
+        <div style="font-size:11px;color:var(--text-sec)">Câu hỏi từ nhóm/đối tác</div>
+      </div>
+
+      <div class="card card-pad" style="border-left:3px solid #ef4444;cursor:pointer" onclick="setChatIntelCategory('ALERT')">
+        <div class="text-sm muted" style="font-size:11px">🚨 CẢNH BÁO / SỰ CỐ</div>
+        <div style="font-size:24px;font-weight:800;color:#ef4444;margin:4px 0">${stats.alerts || 0}</div>
+        <div style="font-size:11px;color:var(--text-sec)">Cần xử lý khẩn cấp</div>
+      </div>
+    </div>
+
+    <!-- Multi-faceted Filter Bar -->
+    <div class="card" style="margin-bottom:20px;padding:14px 18px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)) 240px;gap:12px;align-items:end">
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">KÊNH HỘI THOẠI</label>
+          <select class="form-select" onchange="setChatIntelChannel(this.value)">
+            <option value="all" ${f.channel === 'all' ? 'selected' : ''}>Tất Cả Kênh (Zalo + WA)</option>
+            <option value="zalo" ${f.channel === 'zalo' ? 'selected' : ''}>💬 Kênh Zalo (${stats.channels?.zalo || 0})</option>
+            <option value="whatsapp" ${f.channel === 'whatsapp' ? 'selected' : ''}>📱 Kênh WhatsApp (${stats.channels?.whatsapp || 0})</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN LOẠI TRÍ TUỆ (NLP)</label>
+          <select class="form-select" onchange="setChatIntelCategory(this.value)">
+            <option value="all" ${f.category === 'all' ? 'selected' : ''}>Tất Cả Phân Loại (${ci.messages?.length || 0})</option>
+            <option value="DIRECTIVE" ${f.category === 'DIRECTIVE' ? 'selected' : ''}>👑 Chỉ Đạo Sếp (${stats.directives || 0})</option>
+            <option value="TASK" ${f.category === 'TASK' ? 'selected' : ''}>📋 Yêu Cầu / Giao Việc (${stats.tasks || 0})</option>
+            <option value="EVENT" ${f.category === 'EVENT' ? 'selected' : ''}>📅 Lịch Hẹn / Họp (${stats.events || 0})</option>
+            <option value="INQUIRY" ${f.category === 'INQUIRY' ? 'selected' : ''}>💡 Hỏi Đáp / Tư Vấn (${stats.inquiries || 0})</option>
+            <option value="ALERT" ${f.category === 'ALERT' ? 'selected' : ''}>🚨 Cảnh Báo / Sự CỐ (${stats.alerts || 0})</option>
+            <option value="GENERAL" ${f.category === 'GENERAL' ? 'selected' : ''}>💬 Hội Thoại Xã Giao (${stats.general || 0})</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">MỨC ĐỘ ƯU TIÊN</label>
+          <select class="form-select" onchange="setChatIntelPriority(this.value)">
+            <option value="all" ${f.priority === 'all' ? 'selected' : ''}>Tất Cả Mức Độ</option>
+            <option value="P1" ${f.priority === 'P1' ? 'selected' : ''}>🔴 P1 - Khẩn cấp / Trọng yếu</option>
+            <option value="P2" ${f.priority === 'P2' ? 'selected' : ''}>🟡 P2 - Tiêu chuẩn / Quan trọng</option>
+            <option value="P3" ${f.priority === 'P3' ? 'selected' : ''}>🔵 P3 - Thông thường / Tham khảo</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN THEO NHÓM</label>
+          <select class="form-select" onchange="setChatIntelGroup(this.value)">
+            <option value="all" ${f.group === 'all' ? 'selected' : ''}>Tất Cả Nhóm & 1-1</option>
+            <option value="1-1" ${f.group === '1-1' ? 'selected' : ''}>👤 Hội thoại 1-1 Cá nhân</option>
+            ${allGroups.map(g => `<option value="${g.id}" ${f.group === g.id ? 'selected' : ''}>🏢 ${escapeHtml(g.name)} (${(g.channel || 'zalo').toUpperCase()})</option>`).join('')}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">NGƯỜI GỬI / TÁC GIẢ</label>
+          <select class="form-select" onchange="setChatIntelPerson(this.value)">
+            <option value="all" ${f.person === 'all' ? 'selected' : ''}>Tất Cả Người Gửi</option>
+            ${allSenders.map(s => `<option value="${s}" ${f.person === s ? 'selected' : ''}>👤 ${escapeHtml(s)} (${stats.senders[s]})</option>`).join('')}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">TÌM KIẾM NỘI DUNG</label>
+          <input class="form-input" placeholder="Nhập từ khóa cần tìm..." value="${escapeHtml(f.q || '')}" oninput="setChatIntelSearch(this.value)" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Classified Message Feed -->
+    <div class="card">
+      <div class="card-header" style="justify-content:space-between">
+        <div class="card-title">
+          Danh Sách Hội Thoại Đã Bóc Tách (${filteredMsgs.length} / ${ci.messages?.length || 0} tin nhắn)
+        </div>
+        <div style="font-size:12px;color:var(--text-muted)">
+          Tự động phân loại bằng NLP Rules & 0đ Token API
+        </div>
+      </div>
+
+      ${filteredMsgs.length === 0 ? `
+        <div style="text-align:center;padding:48px 20px;color:var(--text-muted)">
+          <div style="font-size:36px;margin-bottom:10px">🔍</div>
+          <div style="font-weight:700;font-size:14px;color:var(--text)">Không tìm thấy tin nhắn nào phù hợp với bộ lọc</div>
+          <div style="font-size:12px;margin-top:4px">Thử bấm "🧹 Xóa Bộ Lọc" để xem toàn bộ tin nhắn đã thu thập.</div>
+          <button class="btn sm" style="margin-top:14px" onclick="resetChatIntelFilters()">🧹 Xóa Bộ Lọc</button>
+        </div>
+      ` : `
+        <div style="display:flex;flex-direction:column;gap:12px;padding:16px">
+          ${filteredMsgs.map((m, idx) => renderChatIntelligenceCard(m, idx)).join('')}
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function renderChatIntelligenceCard(m, idx) {
+  const isDirect = m.category === 'DIRECTIVE';
+  const isTask = m.category === 'TASK' || m.has_task_potential;
+  const isEvent = m.category === 'EVENT' || m.has_event_potential;
+  const isAlert = m.category === 'ALERT';
+  const isOutgoing = m.is_outgoing;
+
+  let catBadge = `<span class="badge neutral">💬 Hội Thoại</span>`;
+  if (m.category === 'DIRECTIVE') catBadge = `<span class="badge" style="background:rgba(234,179,8,0.15);color:#eab308;border:1px solid rgba(234,179,8,0.3);font-weight:700">👑 Chỉ Đạo Sếp</span>`;
+  else if (m.category === 'TASK') catBadge = `<span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);font-weight:700">📋 Yêu Cầu / Giao Việc</span>`;
+  else if (m.category === 'EVENT') catBadge = `<span class="badge" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-weight:700">📅 Lịch Hẹn / Họp</span>`;
+  else if (m.category === 'INQUIRY') catBadge = `<span class="badge" style="background:rgba(249,115,22,0.15);color:#fb923c;border:1px solid rgba(249,115,22,0.3);font-weight:700">💡 Câu Hỏi / Tư Vấn</span>`;
+  else if (m.category === 'ALERT') catBadge = `<span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);font-weight:700">🚨 Sự Cố / Cảnh Báo</span>`;
+
+  const priBadge = `<span class="badge ${m.priority ? m.priority.toLowerCase() : 'p3'}">${m.priority || 'P3'}</span>`;
+  const chBadge = getChannelBadge(m.channel);
+  const grpText = m.group_name ? `🏢 ${escapeHtml(m.group_name)}` : (m.group_id ? `🏢 GID: ${escapeHtml(m.group_id)}` : `👤 Trò chuyện 1-1`);
+
+  let borderColor = 'var(--border)';
+  if (isDirect) borderColor = 'rgba(234,179,8,0.4)';
+  else if (isAlert) borderColor = 'rgba(239,68,68,0.4)';
+  else if (isTask) borderColor = 'rgba(6,182,212,0.4)';
+  else if (isEvent) borderColor = 'rgba(168,85,247,0.4)';
+
+  return `
+    <div style="background:var(--bg-body);border:1px solid ${borderColor};border-radius:8px;padding:14px 16px;position:relative">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${chBadge}
+          ${catBadge}
+          ${priBadge}
+          <span style="font-size:11px;color:var(--brand);font-weight:600;background:rgba(16,185,129,0.08);padding:2px 8px;border-radius:4px;border:1px solid rgba(16,185,129,0.2)">
+            ${grpText}
+          </span>
+          <span style="font-size:12px;font-weight:700;color:var(--text)">
+            ${isOutgoing ? '📤' : '📥'} ${escapeHtml(m.sender_name || 'Khách')}
+          </span>
+        </div>
+        <div style="font-size:11px;color:var(--text-faint);font-family:var(--mono)">
+          ⏰ ${escapeHtml(m.time_str || '')}
+        </div>
+      </div>
+
+      <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap;background:var(--bg-card);padding:10px 12px;border-radius:6px;border:1px solid var(--border-subtle);margin-bottom:12px;max-height:220px;overflow-y:auto">
+        ${escapeHtml(m.content || '')}
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:6px;border-top:1px dashed var(--border-subtle)">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="text-sm muted" style="font-size:11px">Hành động 1-Click:</span>
+          <button class="btn sm" style="background:rgba(6,182,212,0.12);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);font-weight:600" onclick="convertChatToWorkModal('${escapeHtml(m.id || '')}', ${idx})">
+            📋 ➔ Tạo Việc (Task)
+          </button>
+          <button class="btn sm" style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-weight:600" onclick="convertChatToCalendarModal('${escapeHtml(m.id || '')}', ${idx})">
+            📅 ➔ Lên Lịch (Calendar)
+          </button>
+          <button class="btn sm" style="background:rgba(234,179,8,0.12);color:#eab308;border:1px solid rgba(234,179,8,0.3);font-weight:600" onclick="analyzeChatAI(${idx})">
+            🤖 Phân Tích AI
+          </button>
+        </div>
+        <div style="font-size:10px;color:var(--text-faint);font-family:var(--mono)">
+          ID: ${escapeHtml(m.id || '')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setChatIntelCategory(cat) {
+  state.chat_intel_filter.category = cat;
+  renderActiveHub();
+}
+
+function setChatIntelChannel(ch) {
+  state.chat_intel_filter.channel = ch;
+  renderActiveHub();
+}
+
+function setChatIntelPriority(pri) {
+  state.chat_intel_filter.priority = pri;
+  renderActiveHub();
+}
+
+function setChatIntelGroup(grp) {
+  state.chat_intel_filter.group = grp;
+  renderActiveHub();
+}
+
+function setChatIntelPerson(p) {
+  state.chat_intel_filter.person = p;
+  renderActiveHub();
+}
+
+function setChatIntelSearch(q) {
+  state.chat_intel_filter.q = q;
+  renderActiveHub();
+}
+
+function resetChatIntelFilters() {
+  state.chat_intel_filter = { channel: 'all', group: 'all', person: 'all', category: 'all', priority: 'all', q: '' };
+  renderActiveHub();
+}
+
+function convertChatToWorkModal(msgId, idx) {
+  const msgs = state.chat_intelligence?.messages || [];
+  const m = msgs[idx] || msgs.find(item => item.id === msgId) || {};
+  const defTitle = (m.content || '').slice(0, 50).split('\n').join(' ');
+  const allGroups = state.groups || [];
+
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Tiêu Đề Công Việc (Task Title)</label>
+        <input class="form-input" id="conv-task-title" value="${escapeHtml(defTitle ? `Yêu cầu từ ${m.sender_name || 'Khách'}: ${defTitle}` : 'Công việc mới')}" />
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Người Phụ Trách (Owner)</label>
+          <select class="form-select" id="conv-task-owner">
+            <option value="Anh Cơ La" selected>👑 Anh Cơ La (Chủ nhân)</option>
+            <option value="Bé Heo">🤖 Bé Heo (Executive AI)</option>
+            ${(state.people || []).map(p => `<option value="${escapeHtml(p.name)}">👤 ${escapeHtml(p.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mức Độ Ưu Tiên</label>
+          <select class="form-select" id="conv-task-priority">
+            <option value="P1" ${m.priority === 'P1' ? 'selected' : ''}>🔴 P1 (Khẩn cấp / Trọng yếu)</option>
+            <option value="P2" ${m.priority === 'P2' || !m.priority ? 'selected' : ''}>🟡 P2 (Tiêu chuẩn / Quan trọng)</option>
+            <option value="P3" ${m.priority === 'P3' ? 'selected' : ''}>🔵 P3 (Bình thường / Tham khảo)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Phân Theo Nhóm</label>
+          <select class="form-select" id="conv-task-group">
+            <option value="Chung">🏢 Chung (Toàn hệ thống)</option>
+            ${allGroups.map(g => `<option value="${escapeHtml(g.name)}" ${m.group_name === g.name || m.group_id === g.id ? 'selected' : ''}>🏢 ${escapeHtml(g.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Thời Hạn Hoàn Thành (Deadline)</label>
+          <input class="form-input" id="conv-task-deadline" value="Trong ngày" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nội Dung Chi Tiết / Trích Xuất Gốc</label>
+        <textarea class="form-textarea" id="conv-task-content" style="height:100px">${escapeHtml(m.content || '')}</textarea>
+      </div>
+    </div>
+  `;
+
+  openModal('📋 Chuyển Đổi Tin Nhắn Sang Công Việc Kanban', html, async () => {
+    const title = $('#conv-task-title').value.trim();
+    const owner = $('#conv-task-owner').value;
+    const priority = $('#conv-task-priority').value;
+    const group = $('#conv-task-group').value;
+    const deadline = $('#conv-task-deadline').value.trim();
+    const content = $('#conv-task-content').value.trim();
+
+    if (!title) {
+      showToast('Vui lòng nhập tiêu đề công việc!');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/chat/convert_to_task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          msg_id: m.id,
+          content: content || m.content,
+          sender_name: m.sender_name,
+          group_name: group,
+          group_id: m.group_id,
+          channel: m.channel || 'zalo',
+          title,
+          owner,
+          priority,
+          deadline
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(`🎉 ${data.message || 'Đã tạo công việc thành công!'}`);
+        closeModal();
+        fetchAllData();
+      } else {
+        showToast('Lỗi: ' + (data.error || 'Không thể tạo task'));
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối máy chủ');
+    }
+  }, false, 'Tạo Thẻ Task');
+}
+
+function convertChatToCalendarModal(msgId, idx) {
+  const msgs = state.chat_intelligence?.messages || [];
+  const m = msgs[idx] || msgs.find(item => item.id === msgId) || {};
+  const allGroups = state.groups || [];
+
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Tiêu Đề Lịch Trình (Event Title)</label>
+        <input class="form-input" id="conv-cal-title" value="${escapeHtml(`Lịch hẹn với ${m.sender_name || 'Đối tác'} (${m.group_name || 'Hội thoại 1-1'})`)}" />
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Loại Hình Sự Kiện</label>
+          <select class="form-select" id="conv-cal-type">
+            <option value="Meeting" selected>🤝 Meeting (Cuộc họp)</option>
+            <option value="Deadline">⌛ Deadline (Thời hạn chót)</option>
+            <option value="Reminder">⏰ Reminder (Nhắc việc)</option>
+            <option value="Review">🔍 Review (Soát xét)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Thời Gian (When)</label>
+          <input class="form-input" id="conv-cal-when" value="Hôm nay 15:00" />
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Thuộc Nhóm</label>
+          <select class="form-select" id="conv-cal-group">
+            <option value="Chung">🏢 Chung</option>
+            ${allGroups.map(g => `<option value="${escapeHtml(g.name)}" ${m.group_name === g.name ? 'selected' : ''}>🏢 ${escapeHtml(g.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kênh Thông Báo / Nhắc</label>
+          <input class="form-input" id="conv-cal-delivery" value="Nhắc qua ${(m.channel || 'zalo').toUpperCase()}" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nội Dung Trích Xuất</label>
+        <textarea class="form-textarea" id="conv-cal-content" style="height:80px">${escapeHtml(m.content || '')}</textarea>
+      </div>
+    </div>
+  `;
+
+  openModal('📅 Chuyển Đổi Tin Nhắn Sang Lịch Trình Canonical', html, async () => {
+    const title = $('#conv-cal-title').value.trim();
+    const type = $('#conv-cal-type').value;
+    const when = $('#conv-cal-when').value.trim();
+    const group = $('#conv-cal-group').value;
+    const delivery = $('#conv-cal-delivery').value.trim();
+    const content = $('#conv-cal-content').value.trim();
+
+    if (!title) {
+      showToast('Vui lòng nhập tiêu đề sự kiện!');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/chat/convert_to_calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          msg_id: m.id,
+          content: content || m.content,
+          sender_name: m.sender_name,
+          group_name: group,
+          group_id: m.group_id,
+          channel: m.channel || 'zalo',
+          title,
+          when,
+          type,
+          delivery
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(`🎉 ${data.message || 'Đã lên lịch sự kiện thành công!'}`);
+        closeModal();
+        fetchAllData();
+      } else {
+        showToast('Lỗi: ' + (data.error || 'Không thể tạo sự kiện'));
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối máy chủ');
+    }
+  }, false, 'Lên Lịch Sự Kiện');
+}
+
+function analyzeChatAI(idx) {
+  const msgs = state.chat_intelligence?.messages || [];
+  const m = msgs[idx] || {};
+
+  let suggestion = 'Hội thoại trao đổi thông tin.';
+  let riskLevel = 'Thấp (Thông thường)';
+  if (m.category === 'DIRECTIVE') {
+    suggestion = '👑 Mệnh lệnh tối cao từ Sếp Cơ La! Đề xuất chuyển thành Công Việc P1 ngay để thực hiện không chậm trễ.';
+    riskLevel = 'Quan trọng (Ảnh hưởng trực tiếp đến chỉ đạo của Sếp)';
+  } else if (m.category === 'TASK') {
+    suggestion = '📋 Yêu cầu công việc cụ thể. Đề xuất bấm nút "+ Tạo Việc" để đưa vào bảng Kanban và giám sát tiến độ.';
+    riskLevel = 'Trung bình (Cần theo dõi deadline)';
+  } else if (m.category === 'EVENT') {
+    suggestion = '📅 Có yếu tố cuộc hẹn / deadline. Đề xuất bấm nút "+ Lên Lịch" để Heo OS tự động gửi thông báo đúng giờ.';
+    riskLevel = 'Trung bình (Tránh bỏ lỡ lịch hẹn đối tác)';
+  } else if (m.category === 'ALERT') {
+    suggestion = '🚨 Cảnh báo sự cố / vấn đề khẩn cấp! Đề xuất rà soát hệ thống và phản hồi đối tác giải pháp ngay.';
+    riskLevel = 'Cao (Cần khắc phục ngay)';
+  } else if (m.category === 'INQUIRY') {
+    suggestion = '💡 Câu hỏi thắc mắc từ đối tác/nhóm. Bé Heo có thể hỗ trợ tổng hợp thông tin để trả lời nhanh.';
+    riskLevel = 'Thấp (Hỗ trợ tư vấn)';
+  }
+
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:10px;align-items:center;padding:12px;background:var(--bg-body);border-radius:8px;border:1px solid var(--border)">
+        ${getChannelBadge(m.channel)}
+        <span class="badge ${m.priority ? m.priority.toLowerCase() : 'p3'}">${m.priority || 'P3'}</span>
+        <span style="font-weight:700;color:var(--text)">${escapeHtml(m.sender_name || 'Khách')}</span>
+        <span class="muted" style="font-size:11px">(${escapeHtml(m.group_name || 'Trò chuyện 1-1')})</span>
+      </div>
+
+      <div class="card card-pad" style="border-left:3px solid var(--brand)">
+        <div style="font-weight:700;font-size:12px;color:var(--brand);margin-bottom:4px">📌 PHÂN TÍCH CỐT LÕI (NLP ENGINE)</div>
+        <div style="font-size:13px;line-height:1.6;color:var(--text)">
+          <b>Phân loại:</b> ${escapeHtml(m.category_label || m.category)}<br>
+          <b>Mức độ ưu tiên:</b> ${escapeHtml(m.priority || 'P3')}<br>
+          <b>Mức độ rủi ro:</b> ${riskLevel}
+        </div>
+      </div>
+
+      <div class="card card-pad" style="border-left:3px solid #06b6d4">
+        <div style="font-weight:700;font-size:12px;color:#06b6d4;margin-bottom:4px">🎯 ĐỀ XUẤT HÀNH ĐỘNG TIẾP THEO</div>
+        <div style="font-size:13px;line-height:1.6;color:var(--text)">
+          ${suggestion}
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
+        <button class="btn sm" onclick="navigator.clipboard.writeText('${escapeHtml(m.content || '').replace(/'/g, "\\'")}'); showToast('Đã sao chép nội dung tin nhắn!')">
+          📋 Sao Chép Nội Dung
+        </button>
+        <button class="btn sm primary" onclick="closeModal(); convertChatToWorkModal('${m.id}', ${idx})">
+          📋 ➔ Tạo Việc (Task)
+        </button>
+        <button class="btn sm" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)" onclick="closeModal(); convertChatToCalendarModal('${m.id}', ${idx})">
+          📅 ➔ Lên Lịch (Calendar)
+        </button>
+      </div>
+    </div>
+  `;
+
+  openModal('🤖 Phân Tích Thông Minh Hội Thoại (AI Chat Intelligence)', html, null, false);
+}
+
+// ==========================================
+// 3.2. MEDIA & DOCUMENT VAULT 360 HUB
+// ==========================================
+function renderMediaVaultHub() {
+  const mv = state.media_vault || { stats: {}, files: [] };
+  const stats = mv.stats || {};
+  const currentSub = state.subtabs.media_vault || 'docs';
+  const f = state.media_vault_filter || { kind: 'all', group: 'all', person: 'all', channel: 'all', q: '' };
+
+  const filteredFiles = (mv.files || []).filter(file => {
+    if (currentSub === 'docs' && file.kind !== 'DOCUMENT') return false;
+    if (currentSub === 'audio' && file.kind !== 'AUDIO') return false;
+    if (currentSub === 'images' && file.kind !== 'IMAGE') return false;
+
+    if (f.group !== 'all') {
+      if (file.group_id !== f.group && file.group_name !== f.group) return false;
+    }
+    if (f.person !== 'all') {
+      if (file.person_name !== f.person) return false;
+    }
+    if (f.q && f.q.trim()) {
+      const q = f.q.trim().toLowerCase();
+      const matchName = (file.name || '').toLowerCase().includes(q);
+      const matchGroup = (file.group_name || '').toLowerCase().includes(q);
+      const matchPerson = (file.person_name || '').toLowerCase().includes(q);
+      const matchNotes = (file.notes || '').toLowerCase().includes(q);
+      if (!matchName && !matchGroup && !matchPerson && !matchNotes) return false;
+    }
+    return true;
+  });
+
+  const allGroups = state.groups || [];
+  const allPeople = state.people || [];
+
+  return `
+    <div class="hub-header">
+      <div class="hub-header-top">
+        <div>
+          <h1 class="hub-title">Kho Media & Tài Liệu 360 (Media & Document Vault)</h1>
+          <p class="hub-desc">
+            Quản lý tập trung toàn bộ file văn bản (Word, Excel, PDF), âm thanh (MP3, WAV) và tranh vẽ hình ảnh AI. Phân loại chuẩn xác theo Nhóm và Nhân Sự.
+          </p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn sm" onclick="resetMediaVaultFilters()">🧹 Xóa Lọc</button>
+          <button class="btn primary sm" onclick="fetchAllData()">🔄 Làm Mới File</button>
+        </div>
+      </div>
+
+      <!-- Subnav Tabs -->
+      <div class="hub-subnav">
+        <button class="hub-subnav-btn ${currentSub === 'docs' ? 'active' : ''}" onclick="switchSubtab('media_vault', 'docs')">
+          📄 Văn Bản & Báo Cáo (${stats.documents || 0})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'audio' ? 'active' : ''}" onclick="switchSubtab('media_vault', 'audio')">
+          🎵 Âm Thanh & Giọng Nói (${stats.audio || 0})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'images' ? 'active' : ''}" onclick="switchSubtab('media_vault', 'images')">
+          🖼️ Tranh Vẽ & Ảnh QR (${stats.images || 0})
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'all' ? 'active' : ''}" onclick="switchSubtab('media_vault', 'all')">
+          💾 Tất Cả File (${stats.total || 0})
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar for Media -->
+    <div class="card" style="margin-bottom:20px;padding:12px 18px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:14px;align-items:end">
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN THEO NHÓM SỞ HỮU</label>
+          <select class="form-select" onchange="setMediaVaultGroup(this.value)">
+            <option value="all" ${f.group === 'all' ? 'selected' : ''}>Tất Cả Nhóm</option>
+            <option value="Chung" ${f.group === 'Chung' ? 'selected' : ''}>🏢 Chung (Toàn Hệ Thống)</option>
+            <option value="Ban Lãnh Đạo Genesis" ${f.group === 'Ban Lãnh Đạo Genesis' ? 'selected' : ''}>🏢 Ban Lãnh Đạo Genesis</option>
+            ${allGroups.map(g => `<option value="${g.id}" ${f.group === g.id ? 'selected' : ''}>🏢 ${escapeHtml(g.name)}</option>`).join('')}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN THEO NHÂN SỰ / TÁC GIẢ</label>
+          <select class="form-select" onchange="setMediaVaultPerson(this.value)">
+            <option value="all" ${f.person === 'all' ? 'selected' : ''}>Tất Cả Nhân Sự</option>
+            <option value="Sếp Cơ La (Cola)" ${f.person === 'Sếp Cơ La (Cola)' ? 'selected' : ''}>👑 Sếp Cơ La (Cola)</option>
+            <option value="Bé Heo" ${f.person === 'Bé Heo' ? 'selected' : ''}>🤖 Bé Heo</option>
+            ${allPeople.map(p => `<option value="${p.name}" ${f.person === p.name ? 'selected' : ''}>👤 ${escapeHtml(p.name)}</option>`).join('')}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">TÌM KIẾM THEO TÊN FILE / GHI CHÚ</label>
+          <input class="form-input" placeholder="Nhập tên tài liệu, bài nhạc, tranh vẽ..." value="${escapeHtml(f.q || '')}" oninput="setMediaVaultSearch(this.value)" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Media Content Display -->
+    ${currentSub === 'audio' ? renderMediaAudioGrid(filteredFiles) : currentSub === 'images' ? renderMediaImageGallery(filteredFiles) : renderMediaDocumentTable(filteredFiles, currentSub === 'all')}
+  `;
+}
+
+function renderMediaDocumentTable(files, showAll = false) {
+  if (files.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <div class="empty-title">Chưa Có Tài Liệu Nào Phù Hợp</div>
+        <div class="empty-desc">Không tìm thấy tài liệu phù hợp với bộ lọc hiện tại.</div>
+        <button class="btn sm" onclick="resetMediaVaultFilters()">🧹 Xóa Bộ Lọc</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📄 Danh Sách Tài Liệu & Báo Cáo (${files.length} Tệp)</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Định Dạng</th>
+              <th>Tên Tệp Tin</th>
+              <th>Dung Lượng</th>
+              <th>Phân Nhóm</th>
+              <th>Nhân Sự Phụ Trách</th>
+              <th>Ngày Tạo / Sửa</th>
+              <th style="text-align:center">Thao Tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${files.map(file => {
+              const isWord = file.ext === '.docx';
+              const isExcel = file.ext === '.xlsx';
+              const isPdf = file.ext === '.pdf';
+              const iconBadge = isWord
+                ? '<span class="badge" style="background:rgba(37,99,235,0.15);color:#3b82f6;border:1px solid rgba(37,99,235,0.3)">📘 WORD</span>'
+                : isExcel
+                ? '<span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)">📗 EXCEL</span>'
+                : isPdf
+                ? '<span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)">📕 PDF</span>'
+                : `<span class="badge neutral">${file.ext.toUpperCase()}</span>`;
+
+              return `
+                <tr>
+                  <td>${iconBadge}</td>
+                  <td style="font-weight:700;color:var(--text);max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                    ${escapeHtml(file.name)}
+                    ${file.notes ? `<div style="font-size:11px;font-weight:normal;color:var(--text-muted)">📝 ${escapeHtml(file.notes)}</div>` : ''}
+                  </td>
+                  <td style="font-family:var(--mono);font-size:11px">${escapeHtml(file.size_str || '')}</td>
+                  <td>
+                    <span style="font-size:11px;color:var(--brand);font-weight:600">
+                      🏢 ${escapeHtml(file.group_name || 'Chung')}
+                    </span>
+                  </td>
+                  <td>
+                    <span style="font-size:11px;color:var(--text)">
+                      👤 ${escapeHtml(file.person_name || 'Bé Heo')}
+                    </span>
+                  </td>
+                  <td style="font-family:var(--mono);font-size:11px;color:var(--text-faint)">
+                    ${escapeHtml(file.time_str || '')}
+                  </td>
+                  <td style="text-align:center;white-space:nowrap">
+                    <a href="${file.download_url}" download class="btn sm" style="text-decoration:none;margin-right:4px">
+                      ⬇ Tải Về
+                    </a>
+                    <button class="btn sm" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);margin-right:4px" onclick="openAssignMediaModal('${escapeHtml(file.rel_path)}', '${escapeHtml(file.group_name || '')}', '${escapeHtml(file.person_name || '')}', '${escapeHtml(file.notes || '')}')">
+                      🏷️ Gán
+                    </button>
+                    <button class="btn sm primary" onclick="convertMediaToWorkModal('${escapeHtml(file.name)}', '${escapeHtml(file.group_name || '')}', '${escapeHtml(file.person_name || '')}')">
+                      📋 ➔ Task
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderMediaAudioGrid(files) {
+  if (files.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">🎵</div>
+        <div class="empty-title">Chưa Có Bản Tin Hay Âm Thanh Nào</div>
+        <div class="empty-desc">Không tìm thấy file audio WAV / MP3 nào phù hợp với bộ lọc hiện tại.</div>
+        <button class="btn sm" onclick="resetMediaVaultFilters()">🧹 Xóa Bộ Lọc</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:16px">
+      ${files.map(file => `
+        <div class="card card-pad" style="display:flex;flex-direction:column;justify-content:space-between">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span class="badge" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)">🎵 AUDIO / SPEECH</span>
+              <span style="font-family:var(--mono);font-size:11px;color:var(--text-faint)">${escapeHtml(file.size_str || '')}</span>
+            </div>
+            <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:6px;word-break:break-all">
+              ${escapeHtml(file.name)}
+            </div>
+            <div style="display:flex;gap:6px;font-size:11px;color:var(--text-muted);margin-bottom:12px;flex-wrap:wrap">
+              <span>🏢 ${escapeHtml(file.group_name || 'Chung')}</span>
+              <span>·</span>
+              <span>👤 ${escapeHtml(file.person_name || 'Bé Heo')}</span>
+            </div>
+
+            <!-- Integrated HTML5 Audio Player -->
+            <audio controls preload="none" style="width:100%;height:36px;margin-bottom:12px">
+              <source src="${file.download_url}" type="audio/wav">
+              <source src="${file.download_url}" type="audio/mpeg">
+              Trình duyệt không hỗ trợ phát audio trực tiếp.
+            </audio>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border-subtle);padding-top:10px">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text-faint)">${escapeHtml(file.time_str || '')}</span>
+            <div style="display:flex;gap:6px">
+              <a href="${file.download_url}" download class="btn sm" style="text-decoration:none">
+                ⬇ Tải Về
+              </a>
+              <button class="btn sm" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)" onclick="openAssignMediaModal('${escapeHtml(file.rel_path)}', '${escapeHtml(file.group_name || '')}', '${escapeHtml(file.person_name || '')}', '${escapeHtml(file.notes || '')}')">
+                🏷️ Gán
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderMediaImageGallery(files) {
+  if (files.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">🖼️</div>
+        <div class="empty-title">Chưa Có Tranh Vẽ Hoặc Ảnh Nào</div>
+        <div class="empty-desc">Không tìm thấy ảnh SVG / PNG / QR nào phù hợp với bộ lọc hiện tại.</div>
+        <button class="btn sm" onclick="resetMediaVaultFilters()">🧹 Xóa Bộ Lọc</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:16px">
+      ${files.map(file => `
+        <div class="card" style="overflow:hidden;display:flex;flex-direction:column;justify-content:space-between">
+          <div style="background:#050914;text-align:center;padding:12px;border-bottom:1px solid var(--border)">
+            <img src="${file.download_url}" alt="${escapeHtml(file.name)}" style="max-width:100%;height:180px;object-fit:contain;cursor:pointer" onclick="window.open('${file.download_url}', '_blank')" title="Bấm để xem ảnh phóng to" />
+          </div>
+          <div style="padding:12px">
+            <div style="font-weight:700;font-size:12px;color:var(--text);margin-bottom:4px;word-break:break-all">
+              ${escapeHtml(file.name)}
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:10px">
+              <span>🏢 ${escapeHtml(file.group_name || 'Chung')}</span>
+              <span style="font-family:var(--mono)">${escapeHtml(file.size_str || '')}</span>
+            </div>
+            <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid var(--border-subtle);padding-top:8px">
+              <a href="${file.download_url}" target="_blank" class="btn sm" style="text-decoration:none">
+                🔍 Xem Lớn
+              </a>
+              <a href="${file.download_url}" download class="btn sm" style="text-decoration:none">
+                ⬇ Tải Về
+              </a>
+              <button class="btn sm" style="background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)" onclick="openAssignMediaModal('${escapeHtml(file.rel_path)}', '${escapeHtml(file.group_name || '')}', '${escapeHtml(file.person_name || '')}', '${escapeHtml(file.notes || '')}')">
+                🏷️ Gán
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function setMediaVaultGroup(grp) {
+  state.media_vault_filter.group = grp;
+  renderActiveHub();
+}
+
+function setMediaVaultPerson(p) {
+  state.media_vault_filter.person = p;
+  renderActiveHub();
+}
+
+function setMediaVaultSearch(q) {
+  state.media_vault_filter.q = q;
+  renderActiveHub();
+}
+
+function resetMediaVaultFilters() {
+  state.media_vault_filter = { kind: 'all', group: 'all', person: 'all', channel: 'all', q: '' };
+  renderActiveHub();
+}
+
+function openAssignMediaModal(relPath, curGroup, curPerson, curNotes) {
+  const allGroups = state.groups || [];
+  const allPeople = state.people || [];
+
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div class="text-sm muted" style="margin-bottom:4px">TỆP TIN ĐANG XỬ LÝ:</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--brand);background:var(--bg-body);padding:8px 12px;border-radius:6px;border:1px solid var(--border)">
+          ${escapeHtml(relPath)}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Phân Gán Cho Nhóm (Group Assignment)</label>
+        <select class="form-select" id="assign-media-group">
+          <option value="Chung" ${curGroup === 'Chung' ? 'selected' : ''}>🏢 Chung (Toàn Hệ Thống)</option>
+          <option value="Ban Lãnh Đạo Genesis" ${curGroup === 'Ban Lãnh Đạo Genesis' ? 'selected' : ''}>🏢 Ban Lãnh Đạo Genesis</option>
+          ${allGroups.map(g => `<option value="${escapeHtml(g.name)}" ${curGroup === g.name ? 'selected' : ''}>🏢 ${escapeHtml(g.name)}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nhân Sự Phụ Trách / Sở Hữu (Person Assignment)</label>
+        <select class="form-select" id="assign-media-person">
+          <option value="Sếp Cơ La (Cola)" ${curPerson === 'Sếp Cơ La (Cola)' ? 'selected' : ''}>👑 Sếp Cơ La (Cola)</option>
+          <option value="Bé Heo" ${curPerson === 'Bé Heo' ? 'selected' : ''}>🤖 Bé Heo</option>
+          ${allPeople.map(p => `<option value="${escapeHtml(p.name)}" ${curPerson === p.name ? 'selected' : ''}>👤 ${escapeHtml(p.name)}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ghi Chú / Phân Loại Bổ Sung</label>
+        <input class="form-input" id="assign-media-notes" value="${escapeHtml(curNotes || '')}" placeholder="Ghi chú về nội dung tài liệu, bối cảnh đính kèm..." />
+      </div>
+    </div>
+  `;
+
+  openModal('🏷️ Phân Gán Tài Liệu / Media Cho Nhóm & Nhân Sự', html, async () => {
+    const selGroup = $('#assign-media-group').value;
+    const selPerson = $('#assign-media-person').value;
+    const selNotes = $('#assign-media-notes').value.trim();
+
+    try {
+      const res = await fetch('/api/media/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_rel_path: relPath,
+          group_name: selGroup,
+          person_name: selPerson,
+          notes: selNotes
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast('🎉 Đã cập nhật thông tin phân gán tệp tin thành công!');
+        closeModal();
+        fetchAllData();
+      } else {
+        showToast('Lỗi: ' + (data.error || 'Không thể gán metadata'));
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối máy chủ');
+    }
+  }, false, 'Lưu Phân Gán');
+}
+
+function convertMediaToWorkModal(fileName, groupName, personName) {
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Tiêu Đề Công Việc</label>
+        <input class="form-input" id="conv-media-title" value="${escapeHtml(`Xử lý tài liệu: ${fileName}`)}" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Người Phụ Trách</label>
+          <input class="form-input" id="conv-media-owner" value="${escapeHtml(personName || 'Anh Cơ La')}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mức Độ Ưu Tiên</label>
+          <select class="form-select" id="conv-media-priority">
+            <option value="P1">🔴 P1 (Khẩn cấp)</option>
+            <option value="P2" selected>🟡 P2 (Quan trọng)</option>
+            <option value="P3">🔵 P3 (Bình thường)</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Nhóm Trực Thuộc</label>
+          <input class="form-input" id="conv-media-group" value="${escapeHtml(groupName || 'Chung')}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Thời Hạn</label>
+          <input class="form-input" id="conv-media-deadline" value="Trong tuần" />
+        </div>
+      </div>
+    </div>
+  `;
+
+  openModal('📋 Tạo Công Việc Từ Tài Liệu Media', html, async () => {
+    const title = $('#conv-media-title').value.trim();
+    const owner = $('#conv-media-owner').value.trim();
+    const priority = $('#conv-media-priority').value;
+    const group = $('#conv-media-group').value.trim();
+    const deadline = $('#conv-media-deadline').value.trim();
+
+    try {
+      const res = await fetch('/api/work/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          owner,
+          priority,
+          deadline,
+          group,
+          note: `Đính kèm tài liệu: artifacts/${fileName}`
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast('🎉 Đã tạo công việc từ tài liệu thành công!');
+        closeModal();
+        fetchAllData();
+      } else {
+        showToast('Lỗi: ' + (data.error || 'Không thể tạo task'));
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối máy chủ');
+    }
+  }, false, 'Tạo Thẻ Việc');
+}
+
+// Fast navigation cross-hub helpers
+function filterChatByGroup(groupId, groupName) {
+  state.chat_intel_filter.group = groupId;
+  state.chat_intel_filter.person = 'all';
+  switchHub('chat_intelligence');
+}
+
+function filterMediaByGroup(groupId, groupName) {
+  state.media_vault_filter.group = groupName || groupId;
+  state.media_vault_filter.person = 'all';
+  switchHub('media_vault');
+}
+
+function filterChatByPerson(personId, personName) {
+  state.chat_intel_filter.person = personName;
+  state.chat_intel_filter.group = 'all';
+  switchHub('chat_intelligence');
+}
+
+function filterMediaByPerson(personId, personName) {
+  state.media_vault_filter.person = personName;
+  state.media_vault_filter.group = 'all';
+  switchHub('media_vault');
+}
+
 
 // ==========================================
 // 4. ASSISTANT & STUDIO HUB (HEO SETTINGS & REAL QUOTA)

@@ -136,13 +136,22 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                     content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 elif file_path.endswith(".xlsx"):
                     content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                elif file_path.endswith(".pdf"):
+                    content_type = "application/pdf"
                 elif file_path.endswith(".wav"):
                     content_type = "audio/wav"
+                    disposition_type = "inline"
+                elif file_path.endswith(".mp3"):
+                    content_type = "audio/mpeg"
+                    disposition_type = "inline"
                 elif file_path.endswith(".svg"):
                     content_type = "image/svg+xml"
                     disposition_type = "inline"
                 elif file_path.endswith(".png"):
                     content_type = "image/png"
+                    disposition_type = "inline"
+                elif file_path.endswith(".jpg") or file_path.endswith(".jpeg"):
+                    content_type = "image/jpeg"
                     disposition_type = "inline"
 
                 try:
@@ -321,6 +330,28 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             # Sắp xếp mới nhất lên đầu
             art_list.sort(key=lambda x: x["mtime"], reverse=True)
             self._send_json({"ok": True, "artifacts": art_list})
+
+        # ================= CHAT INTELLIGENCE & MEDIA VAULT =================
+        elif path_clean in ["/api/chat/intelligence", "/api/chat_intelligence"]:
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            ch = query_params.get("channel", [None])[0]
+            grp = query_params.get("group", [None])[0]
+            person = query_params.get("person", [None])[0]
+            cat = query_params.get("category", [None])[0]
+            prio = query_params.get("priority", [None])[0]
+            sq = query_params.get("q", [None])[0]
+            res = store.get_chat_intelligence(filter_channel=ch, filter_group=grp, filter_person=person, filter_category=cat, filter_priority=prio, search_query=sq) if store else {"ok": False}
+            self._send_json(res)
+
+        elif path_clean in ["/api/media/vault", "/api/media_vault"]:
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            kind = query_params.get("kind", [None])[0]
+            grp = query_params.get("group", [None])[0]
+            person = query_params.get("person", [None])[0]
+            ch = query_params.get("channel", [None])[0]
+            sq = query_params.get("q", [None])[0]
+            res = store.get_media_vault(filter_kind=kind, filter_group=grp, filter_person=person, filter_channel=ch, search_query=sq) if store else {"ok": False}
+            self._send_json(res)
 
         # ================= SYSTEM METRICS =================
         elif path_clean == "/api/system/metrics":
@@ -1002,11 +1033,15 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             owner = data.get("owner", "Anh Cơ La")
             priority = data.get("priority", "P2")
             deadline = data.get("deadline", "Hôm nay 18:00")
-            group = data.get("group", "Strategic Partners")
+            group = data.get("group", "Chung")
             note = data.get("note", "")
+            group_id = data.get("group_id")
+            person_id = data.get("person_id")
+            channel = data.get("channel", "all")
+            source_msg_id = data.get("source_msg_id")
 
             if store:
-                new_w = store.add_work(title, owner, priority, deadline, group, note)
+                new_w = store.add_work(title, owner, priority, deadline, group, note, group_id=group_id, person_id=person_id, channel=channel, source_msg_id=source_msg_id)
                 self._send_json({"ok": True, "work": new_w, "message": f"Đã tạo WorkItem {new_w['id']} thành công!"})
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
@@ -1027,12 +1062,72 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             when = data.get("when", "Hôm nay 15:00")
             tz = data.get("timezone", "Asia/Ho_Chi_Minh")
             delivery = data.get("delivery", "Internal owner")
+            group_id = data.get("group_id")
+            group_name = data.get("group_name", "Chung")
+            person_id = data.get("person_id")
+            person_name = data.get("person_name")
+            channel = data.get("channel", "all")
+            source_msg_id = data.get("source_msg_id")
 
             if store:
-                new_ev = store.add_calendar_event(title, ev_type, when, tz, delivery)
+                new_ev = store.add_calendar_event(title, ev_type, when, tz, delivery, group_id=group_id, group_name=group_name, person_id=person_id, person_name=person_name, channel=channel, source_msg_id=source_msg_id)
                 self._send_json({"ok": True, "event": new_ev, "message": f"Đã lên lịch sự kiện {new_ev['id']}!"})
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= CHAT INTELLIGENCE CONVERSIONS =================
+        elif path_clean == "/api/chat/convert_to_task":
+            msg_content = data.get("content", "").strip()
+            sender_name = data.get("sender_name", "Khách")
+            group_name = data.get("group_name", "Chung")
+            group_id = data.get("group_id")
+            channel = data.get("channel", "zalo")
+            msg_id = data.get("msg_id")
+
+            title = data.get("title") or (f"Yêu cầu từ {sender_name}: {msg_content[:45]}..." if len(msg_content) > 45 else f"Yêu cầu từ {sender_name}: {msg_content}")
+            owner = data.get("owner", "Anh Cơ La")
+            priority = data.get("priority", "P2")
+            deadline = data.get("deadline", "Trong ngày")
+            note = f"Trích xuất từ chat {channel.upper()} [{group_name} - {sender_name}]: \"{msg_content}\""
+
+            if store:
+                new_w = store.add_work(title, owner, priority, deadline, group_name, note, group_id=group_id, channel=channel, source_msg_id=msg_id)
+                self._send_json({"ok": True, "work": new_w, "message": f"Đã chuyển đổi tin nhắn thành Công Việc {new_w['id']}!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/chat/convert_to_calendar":
+            msg_content = data.get("content", "").strip()
+            sender_name = data.get("sender_name", "Khách")
+            group_name = data.get("group_name", "Chung")
+            group_id = data.get("group_id")
+            channel = data.get("channel", "zalo")
+            msg_id = data.get("msg_id")
+
+            title = data.get("title") or f"Lịch hẹn với {sender_name} ({group_name})"
+            when = data.get("when", "Hôm nay 15:00")
+            ev_type = data.get("type", "Meeting")
+            delivery = f"Nhắc qua {channel.upper()}"
+
+            if store:
+                new_ev = store.add_calendar_event(title, ev_type, when, delivery=delivery, group_id=group_id, group_name=group_name, person_name=sender_name, channel=channel, source_msg_id=msg_id)
+                self._send_json({"ok": True, "event": new_ev, "message": f"Đã chuyển đổi tin nhắn thành Lịch Hẹn {new_ev['id']}!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= MEDIA VAULT ASSIGNMENT =================
+        elif path_clean == "/api/media/assign":
+            file_rel = data.get("file_rel_path") or data.get("rel_path")
+            group_name = data.get("group_name")
+            group_id = data.get("group_id")
+            person_name = data.get("person_name")
+            notes = data.get("notes")
+
+            if store and file_rel:
+                res = store.assign_media_metadata(file_rel, group_name=group_name, group_id=group_id, person_name=person_name, notes=notes)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "Missing file_rel_path parameter"}, 400)
 
         # ================= APPROVALS ACTION =================
         elif path_clean == "/api/approvals/action":
