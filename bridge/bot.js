@@ -233,7 +233,7 @@ async function syncAllActiveGroups(api) {
           memberProfiles = memberIds.map(mid => {
             const p = profs[mid];
             let name = p?.zaloName || p?.displayName || mid;
-            if (String(mid) === BOSS_UID) name = "${BOSS_NAME}";
+            if (String(mid) === BOSS_UID) name = BOSS_NAME;
             return {
               id: String(mid),
               name,
@@ -243,7 +243,7 @@ async function syncAllActiveGroups(api) {
         } catch (memErr) {
           memberProfiles = memberIds.map(mid => ({
             id: String(mid),
-            name: String(mid) === BOSS_UID ? "${BOSS_NAME}" : `Thành viên (${mid})`,
+            name: String(mid) === BOSS_UID ? BOSS_NAME : `Thành viên (${mid})`,
             isBoss: String(mid) === BOSS_UID
           }));
         }
@@ -266,6 +266,33 @@ async function syncAllActiveGroups(api) {
 
     fs.writeFileSync(GROUPS_FILE, JSON.stringify(groupsData, null, 2), "utf-8");
     log(`📋 Đã đồng bộ ${Object.keys(groupsData).length} nhóm Zalo vào ${GROUPS_FILE}`);
+
+    // Đẩy danh sách nhóm thực tế sang Heo OS Backend để hiển thị trên Nhóm 360
+    try {
+      const groupList = Object.values(groupsData).map(g => ({
+        id: String(g.groupId),
+        name: g.groupName,
+        channel: "zalo",
+        purpose: "Nhóm làm việc Zalo",
+        total_members: g.totalMember,
+        creator_id: g.creatorId,
+        status: "active",
+        members: g.members.map(m => ({
+          id: String(m.id),
+          name: m.name,
+          is_boss: m.isBoss,
+          role: m.isBoss ? "Chủ Nhân Tối Cao (Owner)" : (String(m.id) === String(g.creatorId) ? "Trưởng nhóm" : "Thành viên")
+        }))
+      }));
+
+      await axios.post(`${AGY_ENGINE_URL}/api/groups/sync`, {
+        channel: "zalo",
+        groups: groupList
+      }, { timeout: 10000 });
+    } catch (pushErr) {
+      // Backend có thể chưa khởi động
+    }
+
     return groupsData;
   } catch (err) {
     log(`⚠️ Lỗi syncAllActiveGroups: ${err.message}`);
@@ -760,6 +787,39 @@ async function startBridge() {
           res.writeHead(500, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: e.message }));
         }
+        return;
+      }
+
+      if (req.method === "POST" && req.url === "/api/groups/sync") {
+        try {
+          const groups = await syncAllActiveGroups(api);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true, count: Object.keys(groups).length, groups: Object.values(groups) }));
+        } catch (e) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: false, error: e.message }));
+        }
+        return;
+      }
+
+      if (req.method === "POST" && req.url === "/api/group/leave") {
+        let body = "";
+        req.on("data", chunk => body += chunk);
+        req.on("end", async () => {
+          try {
+            const payload = JSON.parse(body);
+            const gid = String(payload.groupId || payload.group_id || "");
+            if (gid) {
+              await api.leaveGroup(gid);
+              log(`👋 [AGY-Zalo] Đã thực hiện lệnh rời nhóm: ${gid}`);
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: true, left: gid }));
+          } catch (e) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: false, error: e.message }));
+          }
+        });
         return;
       }
 
@@ -1520,6 +1580,67 @@ async function startBridge() {
       appendGroupHistory(targetChannel, record);
     } catch (rErr) {
       log(`⚠️ Lỗi xử lý reaction: ${rErr.message}`);
+    }
+  });
+
+  // Lắng nghe sự kiện nhóm thời gian thực (Được thêm vào nhóm, rời nhóm, cập nhật thành viên)
+  api.listener.on("group_event", async (evt) => {
+    try {
+      const type = evt.type;
+      const gid = String(evt.threadId || evt.data?.groupId || evt.data?.grid || "");
+      if (!gid) return;
+
+      const ownId = String(api.getOwnId() || "");
+      const affectedUids = (evt.data?.memberIds || evt.data?.uids || [evt.data?.uid || ""]).map(String);
+      const isBotAffected = affectedUids.includes(ownId);
+
+      log(`👥 [Zalo Group Event] '${type}' trên nhóm ${gid} (Bot bị tác động: ${isBotAffected})`);
+
+      if (type === "join" || type === "add_member" || type === "join_request") {
+        if (isBotAffected) {
+          const info = await api.getGroupInfo(gid).catch(() => null);
+          const gName = info?.gridInfoMap?.[gid]?.name || groupCache.get(gid)?.name || "Nhóm Zalo Mới";
+          log(`🎉 [AGY-Zalo] Bé Heo vừa được thêm vào nhóm: "${gName}" (${gid})!`);
+
+          await axios.post(`${AGY_ENGINE_URL}/api/logs/add`, {
+            channel: "zalo",
+            level: "SUCCESS",
+            chat_type: "group",
+            message: `🎉 [ZALO] Bé Heo vừa được thêm vào nhóm: "${gName}"! Tự động quét 50 tin nhắn gần nhất & kích hoạt quan sát.`,
+            details: `Group ID: ${gid}`,
+            metadata: { event: "group_join", chat_type: "group", channel: "zalo", group_id: gid, group_name: gName }
+          }).catch(() => {});
+
+          // Tự động kéo lịch sử 50 tin nhắn cũ của nhóm về lưu trữ
+          await backfillGroupChatHistory(api, gid);
+        }
+        await syncAllActiveGroups(api);
+      } else if (type === "leave" || type === "remove_member") {
+        if (isBotAffected) {
+          const gName = groupCache.get(gid)?.name || gid;
+          log(`⚠️ [AGY-Zalo] Bé Heo đã rời hoặc bị mời ra khỏi nhóm: "${gName}" (${gid})`);
+
+          await axios.post(`${AGY_ENGINE_URL}/api/logs/add`, {
+            channel: "zalo",
+            level: "WARN",
+            chat_type: "group",
+            message: `⚠️ [ZALO] Bé Heo đã rời khỏi nhóm: "${gName}". Trạng thái chuyển sang "Đã rời nhóm".`,
+            details: `Group ID: ${gid}`,
+            metadata: { event: "group_leave", chat_type: "group", channel: "zalo", group_id: gid, group_name: gName, status: "left" }
+          }).catch(() => {});
+
+          await axios.post(`${AGY_ENGINE_URL}/api/groups/sync`, {
+            channel: "zalo",
+            groups: [{ id: gid, status: "left", name: gName }]
+          }).catch(() => {});
+        } else {
+          syncAllActiveGroups(api).catch(() => {});
+        }
+      } else if (type === "update" || type === "update_setting") {
+        await syncAllActiveGroups(api);
+      }
+    } catch (gEvtErr) {
+      log(`⚠️ Lỗi xử lý group_event Zalo: ${gEvtErr.message}`);
     }
   });
 

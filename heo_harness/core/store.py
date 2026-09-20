@@ -86,7 +86,9 @@ class HeoDataStore:
         self._log_counter = 0
         self.live_logs = []
         self.state = self._load_initial_state()
+        self.sync_local_group_files()
         self._seed_initial_logs()
+        self.sync_bridge_files_to_live_logs()
 
     def _load_initial_state(self) -> dict:
         if os.path.exists(self.state_file):
@@ -94,7 +96,7 @@ class HeoDataStore:
                 with open(self.state_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     # Dọn sạch triệt để mọi dữ liệu mẫu cũ và dữ liệu nháp/test (Clean Slate 100%)
-                    old_group_names = ["Dì Út & Heo", "Thanh niên nghiêm túc", "Nhóm Gia Đình", "Công nghệ AI", "test", "Hội Đồng Sáng Lập"]
+                    old_group_names = ["Dì Út & Heo", "Công nghệ AI", "Hội Đồng Sáng Lập", "Ban Đối Ngoại Quốc Tế", "Ban Lãnh Đạo Genesis"]
                     has_mock_groups = any(g.get("name") in old_group_names or "test" in g.get("name", "").lower() for g in data.get("groups", []))
                     has_mock_works = any(w.get("id") in ["W-341", "W-398", "W-403"] or "test" in w.get("title", "").lower() for w in data.get("works", []))
                     has_mock_people = any(p.get("uid") == "5639130299270793223" and p.get("id") == "P-OWNER" for p in data.get("people", []))
@@ -1520,6 +1522,203 @@ class HeoDataStore:
             self.add_audit("owner", "person.delete", person_id, f"Đã xóa nhân sự: {person_id}", "DELETED")
             return True
         return False
+
+    def sync_local_group_files(self) -> None:
+        """Đồng bộ các nhóm và thành viên từ các file cache bridge cục bộ."""
+        # 1. Zalo active_groups.json
+        zalo_file = os.path.join(self.data_dir, "active_groups.json")
+        if os.path.exists(zalo_file):
+            try:
+                with open(zalo_file, "r", encoding="utf-8") as f:
+                    z_data = json.load(f)
+                z_list = []
+                for gid, g in z_data.items():
+                    m_list = g.get("members", [])
+                    z_list.append({
+                        "id": str(gid),
+                        "name": g.get("groupName") or "Nhóm Zalo",
+                        "channel": "zalo",
+                        "purpose": "Nhóm làm việc Zalo",
+                        "status": "active",
+                        "total_members": g.get("totalMember", len(m_list)),
+                        "members": m_list,
+                        "creator_id": g.get("creatorId", "")
+                    })
+                if z_list:
+                    self.sync_real_groups("zalo", z_list, persist=False)
+            except Exception as e:
+                print(f"[HeoDataStore] Lỗi đọc active_groups.json: {e}")
+
+        # 2. WhatsApp whatsapp_active_groups.json
+        wa_file = os.path.join(self.data_dir, "whatsapp_active_groups.json")
+        if os.path.exists(wa_file):
+            try:
+                with open(wa_file, "r", encoding="utf-8") as f:
+                    wa_list = json.load(f)
+                if isinstance(wa_list, list) and wa_list:
+                    self.sync_real_groups("whatsapp", wa_list, persist=False)
+            except Exception as e:
+                print(f"[HeoDataStore] Lỗi đọc whatsapp_active_groups.json: {e}")
+        self._save_state()
+
+    def sync_real_groups(self, channel: str, groups_data: list, persist: bool = True) -> dict:
+        """Đồng bộ danh sách nhóm thực tế và tự động phân tách danh bạ nhân sự."""
+        existing_groups = {str(g.get("id")): g for g in self.state.get("groups", [])}
+        existing_people = {str(p.get("lookup_key", f"{p.get('channel', 'zalo')}_{p.get('uid', p.get('id'))}")): p for p in self.state.get("people", [])}
+
+        c_lower = str(channel).lower().strip()
+        boss_name = self.get_config().get("boss_name", "Anh Cơ La (Ryan)")
+
+        for g in groups_data:
+            gid = str(g.get("id") or g.get("groupId") or "").strip()
+            if not gid:
+                continue
+            name = g.get("name") or g.get("groupName") or f"Nhóm {channel.title()}"
+            status = g.get("status", "active")
+            members = g.get("members", [])
+            total_members = g.get("total_members") or len(members)
+
+            if gid in existing_groups:
+                item = existing_groups[gid]
+                item["name"] = name
+                item["status"] = status
+                item["members"] = total_members
+                item["member_list"] = members
+                item["channel"] = c_lower
+                item["last_synced_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                item = {
+                    "id": gid,
+                    "name": name,
+                    "channel": c_lower,
+                    "purpose": g.get("purpose") or f"Nhóm trực chiến {c_lower.upper()}",
+                    "policy": "POL-G-CUSTOM v1",
+                    "instruction": "INS-G-CUSTOM v1",
+                    "health": "Healthy",
+                    "status": status,
+                    "members": total_members,
+                    "member_list": members,
+                    "bot_active": True,
+                    "persona_style": "inherit",
+                    "custom_persona": "",
+                    "notes": "",
+                    "created_at": g.get("created_at") or time.strftime("%Y-%m-%d"),
+                    "last_synced_at": time.strftime("%Y-%m-%d %H:%M:%S")
+                }
+                self.state.setdefault("groups", []).append(item)
+                existing_groups[gid] = item
+
+            # Đồng bộ các thành viên của nhóm vào danh bạ People
+            for m in members:
+                m_id = str(m.get("id", "")).strip()
+                if not m_id:
+                    continue
+                m_name = m.get("name", "")
+                is_boss = bool("${BOSS_NAME}" in m_name or m.get("isBoss") or m.get("is_boss"))
+                if is_boss:
+                    m_name = boss_name
+                    role = "Chủ Nhân Tối Cao (Owner)"
+                else:
+                    role = m.get("role") or "Thành viên nhóm"
+
+                p_key = f"{c_lower}_{m_id}"
+                if p_key in existing_people:
+                    p = existing_people[p_key]
+                    if m_name and ("${" not in m_name):
+                        p["name"] = m_name
+                    current_grps = [x.strip() for x in p.get("groups", "").split(",") if x.strip()]
+                    if name not in current_grps:
+                        current_grps.append(name)
+                        p["groups"] = ", ".join(current_grps)
+                    p["status"] = status
+                else:
+                    new_p = {
+                        "id": f"P-{uuid.uuid4().hex[:6].upper()}",
+                        "channel": c_lower,
+                        "uid": m_id,
+                        "lookup_key": p_key,
+                        "name": m_name or f"Thành viên ({m_id})",
+                        "role": role,
+                        "groups": name,
+                        "email": f"{m_id.split('@')[0]}@{c_lower}.corp",
+                        "phone": m.get("phone", m_id.split("@")[0] if c_lower == "whatsapp" else "Chưa có"),
+                        "rel": f"Thành viên {name}",
+                        "persona_style": "inherit",
+                        "status": "active",
+                        "created_at": time.strftime("%Y-%m-%d")
+                    }
+                    self.state.setdefault("people", []).append(new_p)
+                    existing_people[p_key] = new_p
+
+        if persist:
+            self._save_state()
+            self.add_live_log(c_lower, "INFO", f"📋 Đã đồng bộ {len(groups_data)} nhóm thực tế ({c_lower.upper()}) vào Heo OS.")
+        return {"ok": True, "groups": len(self.state.get("groups", [])), "people": len(self.state.get("people", []))}
+
+    def sync_all_bridges_groups(self) -> dict:
+        """Gửi yêu cầu tới cả Zalo Bridge và WhatsApp Bridge để quét lại toàn bộ nhóm."""
+        results = {"zalo": False, "whatsapp": False}
+        import urllib.request
+        import json
+        # 1. Zalo Bridge (port 5051)
+        try:
+            req = urllib.request.Request("http://127.0.0.1:5051/api/groups/sync", data=b"{}", headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=5) as res:
+                if res.status == 200:
+                    results["zalo"] = True
+                    try:
+                        resp_data = json.loads(res.read().decode("utf-8"))
+                        if isinstance(resp_data.get("groups"), list):
+                            self.sync_real_groups("zalo", resp_data["groups"])
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+        # 2. WhatsApp Bridge (port 5052)
+        try:
+            req = urllib.request.Request("http://127.0.0.1:5052/api/groups/sync", data=b"{}", headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=5) as res:
+                if res.status == 200:
+                    results["whatsapp"] = True
+                    try:
+                        resp_data = json.loads(res.read().decode("utf-8"))
+                        if isinstance(resp_data.get("groups"), list):
+                            self.sync_real_groups("whatsapp", resp_data["groups"])
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+        self.sync_local_group_files()
+        return {"ok": True, "bridges": results, "groups_count": len(self.state.get("groups", []))}
+
+    def leave_group(self, group_id: str, channel: str = "") -> dict:
+        c_lower = str(channel).lower()
+        if not c_lower:
+            c_lower = "whatsapp" if "@g.us" in str(group_id) else "zalo"
+
+        # Đánh dấu trong Store là đã rời nhóm
+        for g in self.state.get("groups", []):
+            if str(g.get("id")) == str(group_id):
+                g["status"] = "left"
+                g["bot_active"] = False
+                break
+
+        # Gửi lệnh rời nhóm tới Bridge
+        import urllib.request
+        import json
+        payload = json.dumps({"groupId": group_id, "group_id": group_id}).encode("utf-8")
+        port = 5052 if c_lower == "whatsapp" else 5051
+        try:
+            req = urllib.request.Request(f"http://127.0.0.1:{port}/api/group/leave", data=payload, headers={"Content-Type": "application/json"}, method="POST")
+            urllib.request.urlopen(req, timeout=5)
+        except Exception:
+            pass
+
+        self._save_state()
+        self.add_audit("owner", "group.leave", group_id, f"Heo rời khỏi nhóm ({c_lower.upper()}): {group_id}", "SUCCESS")
+        return {"ok": True, "group_id": group_id, "status": "left"}
 
     # ==================== POLICIES ====================
     def get_policies(self) -> list:

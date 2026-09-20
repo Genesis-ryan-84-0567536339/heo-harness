@@ -311,6 +311,7 @@ async function connectToWhatsApp() {
         }
 
         updateSystemState(true, userPhone, userName);
+        setTimeout(syncAllWhatsAppGroups, 1000);
       }
     });
 
@@ -322,9 +323,155 @@ async function connectToWhatsApp() {
       }
     });
 
+    sock.ev.on("group-participants.update", async (update) => {
+      const gid = update.id;
+      const action = update.action;
+      const participants = update.participants || [];
+
+      const isBotTargeted = participants.some(p => {
+        const raw = p.split("@")[0].split(":")[0];
+        return (userPhone && raw === userPhone) || (userLid && raw === userLid);
+      });
+
+      if (action === "add") {
+        if (isBotTargeted) {
+          try {
+            let meta = null;
+            try { meta = await sock.groupMetadata(gid); } catch (e) {}
+            const name = meta?.subject || groupNameCache.get(gid) || "Nhóm WhatsApp Mới";
+            groupNameCache.set(gid, name);
+
+            log(`🎉 [AGY-WhatsApp] Bé Heo vừa được thêm vào nhóm: "${name}" (${gid})!`);
+
+            await axios.post(`${AGY_ENGINE_URL}/api/logs/add`, {
+              channel: "whatsapp",
+              level: "SUCCESS",
+              chat_type: "group",
+              message: `🎉 [WHATSAPP] Bé Heo vừa được thêm vào nhóm: "${name}"! Tự động kích hoạt quan sát & nhận diện nhóm.`,
+              details: `Group ID: ${gid} · Thành viên: ${meta?.participants?.length || 'N/A'}`,
+              metadata: { event: "group_join", chat_type: "group", channel: "whatsapp", group_id: gid, group_name: name }
+            }).catch(() => {});
+
+            debouncedSyncWhatsAppGroups(500);
+          } catch (e) {
+            log(`⚠️ Lỗi xử lý khi được add vào nhóm: ${e.message}`);
+          }
+        } else {
+          debouncedSyncWhatsAppGroups(3000);
+        }
+      } else if (action === "remove") {
+        if (isBotTargeted) {
+          const name = groupNameCache.get(gid) || gid;
+          log(`⚠️ [AGY-WhatsApp] Bé Heo đã rời hoặc bị mời ra khỏi nhóm: "${name}" (${gid})`);
+
+          await axios.post(`${AGY_ENGINE_URL}/api/logs/add`, {
+            channel: "whatsapp",
+            level: "WARN",
+            chat_type: "group",
+            message: `⚠️ [WHATSAPP] Bé Heo đã rời khỏi nhóm: "${name}". Đã chuyển trạng thái sang "Đã rời nhóm".`,
+            details: `Group ID: ${gid}`,
+            metadata: { event: "group_leave", chat_type: "group", channel: "whatsapp", group_id: gid, group_name: name, status: "left" }
+          }).catch(() => {});
+
+          await axios.post(`${AGY_ENGINE_URL}/api/groups/sync`, {
+            channel: "whatsapp",
+            groups: [{ id: gid, status: "left", name: name }]
+          }).catch(() => {});
+        } else {
+          debouncedSyncWhatsAppGroups(3000);
+        }
+      }
+    });
+
+    sock.ev.on("groups.upsert", async (groups) => {
+      for (const g of groups) {
+        if (g.id && g.subject) {
+          groupNameCache.set(g.id, g.subject);
+        }
+      }
+      debouncedSyncWhatsAppGroups(3000);
+    });
+
+    sock.ev.on("groups.update", async (updates) => {
+      for (const u of updates) {
+        if (u.id && u.subject) {
+          groupNameCache.set(u.id, u.subject);
+        }
+      }
+      debouncedSyncWhatsAppGroups(3000);
+    });
+
   } catch (initErr) {
     log(`❌ Lỗi khởi tạo Baileys Socket: ${initErr.message}`);
     setTimeout(connectToWhatsApp, 5000);
+  }
+}
+
+let syncDebounceTimer = null;
+function debouncedSyncWhatsAppGroups(delay = 2000) {
+  if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(() => {
+    syncAllWhatsAppGroups().catch(() => {});
+  }, delay);
+}
+
+let lastWhatsAppSyncTime = 0;
+let lastCachedWhatsAppGroups = [];
+
+async function syncAllWhatsAppGroups(force = false) {
+  if (!sock || !isConnected) return lastCachedWhatsAppGroups;
+  const now = Date.now();
+  if (!force && (now - lastWhatsAppSyncTime) < 15000 && lastCachedWhatsAppGroups.length > 0) {
+    return lastCachedWhatsAppGroups;
+  }
+  lastWhatsAppSyncTime = now;
+  try {
+    const groups = await sock.groupFetchAllParticipating();
+    const groupList = [];
+    for (const [gid, g] of Object.entries(groups)) {
+      const name = g.subject || "Nhóm WhatsApp";
+      groupNameCache.set(gid, name);
+      const members = (g.participants || []).map(p => {
+        const rawId = p.id || "";
+        const phone = rawId.split("@")[0].split(":")[0];
+        const isBot = (userPhone && phone === userPhone) || (userLid && rawId.includes(userLid));
+        return {
+          id: rawId,
+          name: isBot ? "Bé Heo (Bot)" : (phone.length > 8 ? `+${phone}` : phone),
+          phone: phone,
+          role: p.admin ? (p.admin === "superadmin" ? "Trưởng nhóm" : "Phó nhóm") : "Thành viên",
+          is_boss: false
+        };
+      });
+      groupList.push({
+        id: gid,
+        name: name,
+        channel: "whatsapp",
+        purpose: "Nhóm làm việc WhatsApp Multi-Device",
+        total_members: members.length,
+        members: members,
+        creator_id: g.owner || "",
+        status: "active",
+        created_at: g.creation ? new Date(g.creation * 1000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
+      });
+    }
+
+    lastCachedWhatsAppGroups = groupList;
+
+    try {
+      fs.writeFileSync(path.join(DATA_DIR, "whatsapp_active_groups.json"), JSON.stringify(groupList, null, 2), "utf-8");
+    } catch (_) {}
+
+    await axios.post(`${AGY_ENGINE_URL}/api/groups/sync`, {
+      channel: "whatsapp",
+      groups: groupList
+    }, { timeout: 10000 }).catch(() => {});
+
+    log(`📋 [AGY-WhatsApp] Đã đồng bộ ${groupList.length} nhóm WhatsApp thực tế sang Heo OS!`);
+    return groupList;
+  } catch (err) {
+    log(`⚠️ [AGY-WhatsApp] Lỗi đồng bộ nhóm WhatsApp: ${err.message}`);
+    return lastCachedWhatsAppGroups;
   }
 }
 
@@ -349,6 +496,51 @@ function startOutboundServer() {
         name: userName,
         qr_available: fs.existsSync(QR_PATH)
       }));
+      return;
+    }
+
+    if (req.method === "GET" && req.url === "/api/groups") {
+      try {
+        const groups = await syncAllWhatsAppGroups();
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, count: groups.length, groups }));
+      } catch (e) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: e.message }));
+      }
+      return;
+    }
+
+    if (req.method === "POST" && req.url === "/api/groups/sync") {
+      try {
+        const groups = await syncAllWhatsAppGroups();
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, count: groups.length, groups }));
+      } catch (e) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: e.message }));
+      }
+      return;
+    }
+
+    if (req.method === "POST" && req.url === "/api/group/leave") {
+      let body = "";
+      req.on("data", chunk => body += chunk);
+      req.on("end", async () => {
+        try {
+          const payload = JSON.parse(body);
+          const gid = payload.groupId || payload.group_id || "";
+          if (gid && sock) {
+            await sock.groupLeave(gid);
+            log(`👋 [AGY-WhatsApp] Đã thực hiện lệnh rời nhóm: ${gid}`);
+          }
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true, left: gid }));
+        } catch (e) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: false, error: e.message }));
+        }
+      });
       return;
     }
 

@@ -2689,24 +2689,41 @@ function renderZaloGatewayView() {
 
 function renderGroup360View() {
   const groupFilter = state.groupChannelFilter || 'all';
-  const displayedGroups = state.groups.filter(g => groupFilter === 'all' || (g.channel || 'zalo') === groupFilter);
+  const statusFilter = state.groupStatusFilter || 'all'; // 'all' | 'active' | 'left'
+  
+  let displayedGroups = state.groups.filter(g => {
+    const chMatch = groupFilter === 'all' || (g.channel || 'zalo') === groupFilter;
+    const isLeft = g.status === 'left';
+    const stMatch = statusFilter === 'all' || 
+                    (statusFilter === 'active' && !isLeft) || 
+                    (statusFilter === 'left' && isLeft);
+    return chMatch && stMatch;
+  });
+
   const zaloGroupCount = state.groups.filter(g => (g.channel || 'zalo') === 'zalo').length;
   const waGroupCount = state.groups.filter(g => (g.channel || 'zalo') === 'whatsapp').length;
+  const activeCount = state.groups.filter(g => g.status !== 'left').length;
+  const leftCount = state.groups.filter(g => g.status === 'left').length;
 
   return `
     <div class="card">
-      <div class="card-header">
-        <div class="card-title">◉ Danh Sách Nhóm Trực Tuyến & Phối Hợp Đa Kênh</div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <span class="badge ${state.groups.length > 0 ? 'good' : 'neutral'}">${state.groups.length} Nhóm Tổng</span>
-          <button class="btn primary sm" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới</button>
+      <div class="card-header" style="flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="card-title">◉ Danh Sách Nhóm Thực Tế & Quản Lý Trực Tuyến Đa Kênh</div>
+          <div class="text-sm muted" style="margin-top:2px">Tự động nhận diện khi được thêm vào nhóm Zalo / WhatsApp, kéo thành viên & quản lý trạng thái tham gia/đã rời</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn primary sm" onclick="triggerSyncRealGroups()" id="btn-sync-groups" style="font-weight:700">
+            🔄 Quét & Đồng Bộ Zalo & WhatsApp
+          </button>
+          <button class="btn sm" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới</button>
         </div>
       </div>
       
-      <!-- Channel Filter Bar -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg-body);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
-        <div style="display:flex;gap:8px;align-items:center">
-          <span class="text-sm muted" style="font-weight:600">LỌC KÊNH LIÊN LẠC:</span>
+      <!-- Filter Bar: Channels & Participation Status -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg-body);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="text-sm muted" style="font-weight:600">LỌC KÊNH:</span>
           <button class="btn sm ${groupFilter === 'all' ? 'primary' : ''}" onclick="setGroupChannelFilter('all')">
             Tất Cả (${state.groups.length})
           </button>
@@ -2717,16 +2734,29 @@ function renderGroup360View() {
             📱 Kênh WhatsApp (${waGroupCount})
           </button>
         </div>
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="text-sm muted" style="font-weight:600">TRẠNG THÁI:</span>
+          <button class="btn sm ${statusFilter === 'all' ? 'primary' : ''}" onclick="setGroupStatusFilter('all')">
+            Tất Cả (${state.groups.length})
+          </button>
+          <button class="btn sm ${statusFilter === 'active' ? 'good' : ''}" onclick="setGroupStatusFilter('active')">
+            🟢 Đang Tham Gia (${activeCount})
+          </button>
+          <button class="btn sm ${statusFilter === 'left' ? 'danger' : ''}" onclick="setGroupStatusFilter('left')">
+            ⚪ Đã Rời Nhóm (${leftCount})
+          </button>
+        </div>
       </div>
 
       ${displayedGroups.length === 0 ? `
         <div style="text-align:center;padding:48px 24px;background:var(--bg-body);border:1px dashed var(--border);border-radius:12px;margin:16px">
           <div style="font-size:40px;margin-bottom:12px">👥</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Không Có Nhóm Nào Thuộc Bộ Lọc Đang Chọn</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Chưa Có Nhóm Nào Thuộc Bộ Lọc Đang Chọn</div>
           <div style="font-size:13px;color:var(--text-muted);max-width:540px;margin:0 auto 20px auto;line-height:1.5">
-            ${groupFilter === 'all' ? 'Hệ thống Heo OS đang ở trạng thái Pure Clean Slate sẵn sàng. Bạn có thể chủ động khởi tạo nhóm làm việc mới hoặc kết nối Zalo / WhatsApp để tự động đồng bộ danh sách nhóm thực tế.' : `Chưa có nhóm nào được gán cho ${groupFilter === 'zalo' ? 'Kênh Zalo' : 'Kênh WhatsApp'}.`}
+            Bạn có thể nhấn nút <b>"Quét & Đồng Bộ Zalo & WhatsApp"</b> để tự động nhận diện tất cả nhóm thực tế đang tham gia.
           </div>
-          <button class="btn primary" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới Ngay</button>
+          <button class="btn primary" onclick="triggerSyncRealGroups()">🔄 Quét & Đồng Bộ Nhóm Ngay</button>
         </div>
       ` : `
         <div class="table-wrap">
@@ -2735,32 +2765,56 @@ function renderGroup360View() {
               <tr>
                 <th>Mã Nhóm (GID)</th>
                 <th>Kênh</th>
-                <th>Tên Nhóm</th>
-                <th>Mục Tiêu Nhóm</th>
-                <th>Phong Thái Thái Độ</th>
-                <th>Ghi Chú & Lưu Ý Riêng</th>
+                <th>Tên Nhóm Thực Tế</th>
+                <th>Trạng Thái</th>
                 <th>Thành Viên</th>
+                <th>Bot Trực Chiến</th>
+                <th>Phong Thái Thái Độ</th>
+                <th>Ghi Chú Riêng</th>
                 <th style="text-align:center">Thao Tác</th>
               </tr>
             </thead>
             <tbody>
-              ${displayedGroups.map(g => `
-                <tr>
-                  <td style="font-family:var(--mono)">${g.id}</td>
-                  <td>${getChannelBadge(g.channel)}</td>
-                  <td style="font-weight:700;color:var(--text)">${escapeHtml(g.name)}</td>
-                  <td class="muted">${escapeHtml(g.purpose || 'Nhóm trực chiến')}</td>
-                  <td>${getPersonaBadge(g.persona_style || 'inherit')}</td>
-                  <td style="font-size:12px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                    ${g.notes ? `<span title="${escapeHtml(g.notes)}" style="color:var(--brand)">📝 ${escapeHtml(g.notes)}</span>` : '<span class="muted">Chưa có ghi chú</span>'}
-                  </td>
-                  <td><span class="badge good">${g.members || 1} thành viên</span></td>
-                  <td style="text-align:center;white-space:nowrap">
-                    <button class="btn sm" style="background:#1e293b;border:1px solid var(--border);color:var(--brand);margin-right:6px" onclick="openEditGroupModal('${g.id}')">⚙️ Cấu Hình / Sửa</button>
-                    <button class="btn sm danger" onclick="deleteGroup('${g.id}')">Xóa</button>
-                  </td>
-                </tr>
-              `).join('')}
+              ${displayedGroups.map(g => {
+                const isLeft = g.status === 'left';
+                const memberCount = g.members || (g.member_list ? g.member_list.length : 1);
+                return `
+                  <tr style="${isLeft ? 'opacity:0.65' : ''}">
+                    <td style="font-family:var(--mono);font-size:11px">${escapeHtml(g.id)}</td>
+                    <td>${getChannelBadge(g.channel)}</td>
+                    <td style="font-weight:700;color:var(--text)">
+                      ${escapeHtml(g.name)}
+                      ${g.purpose && g.purpose !== 'Nhóm trực chiến' ? `<div style="font-size:11px;font-weight:normal;color:var(--text-muted)">${escapeHtml(g.purpose)}</div>` : ''}
+                    </td>
+                    <td>
+                      <span class="badge ${isLeft ? 'neutral' : 'good'}" style="font-size:10px">
+                        ${isLeft ? '⚪ Đã rời nhóm' : '🟢 Đang tham gia'}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn sm" style="padding:2px 8px;font-size:11px;background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)" onclick="viewGroupMembers('${g.id}')">
+                        👥 ${memberCount} thành viên ▾
+                      </button>
+                    </td>
+                    <td>
+                      <button class="btn sm ${g.bot_active !== false && !isLeft ? 'good' : ''}" style="padding:2px 8px;font-size:11px" onclick="toggleGroupBotActive('${g.id}', ${g.bot_active === false})" ${isLeft ? 'disabled' : ''}>
+                        ${g.bot_active !== false && !isLeft ? '✓ ĐANG BẬT' : '✕ ĐÃ TẮT'}
+                      </button>
+                    </td>
+                    <td>${getPersonaBadge(g.persona_style || 'inherit')}</td>
+                    <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                      ${g.notes ? `<span title="${escapeHtml(g.notes)}" style="color:var(--brand)">📝 ${escapeHtml(g.notes)}</span>` : '<span class="muted">-</span>'}
+                    </td>
+                    <td style="text-align:center;white-space:nowrap">
+                      <button class="btn sm" style="background:#1e293b;border:1px solid var(--border);color:var(--brand);margin-right:4px" onclick="openEditGroupModal('${g.id}')">⚙️ Sửa</button>
+                      ${!isLeft ? `
+                        <button class="btn sm warning" style="margin-right:4px" onclick="leaveGroupAction('${g.id}', '${g.channel}')" title="Rời khỏi nhóm này">🚪 Rời</button>
+                      ` : ''}
+                      <button class="btn sm danger" onclick="deleteGroup('${g.id}')">Xóa</button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
             </tbody>
           </table>
         </div>
@@ -2778,10 +2832,14 @@ function renderPerson360View() {
   return `
     <div class="card">
       <div class="card-header">
-        <div class="card-title">◎ Danh Bạ Nhân Sự & Đối Tác Thực Tế</div>
+        <div>
+          <div class="card-title">◎ Danh Bạ Nhân Sự & Thành Viên Các Nhóm Thực Tế</div>
+          <div class="text-sm muted" style="margin-top:2px">Tự động nhận diện và cập nhật thành viên từ các nhóm Zalo & WhatsApp</div>
+        </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <span class="badge ${state.people.length > 0 ? 'good' : 'neutral'}">${state.people.length} Nhân Sự Tổng</span>
-          <button class="btn primary sm" onclick="openNewPersonModal()">+ Thêm Nhân Sự Mới</button>
+          <span class="badge ${state.people.length > 0 ? 'good' : 'neutral'}">${state.people.length} Nhân Sự</span>
+          <button class="btn primary sm" onclick="triggerSyncRealGroups()">🔄 Đồng Bộ Từ Nhóm</button>
+          <button class="btn sm" onclick="openNewPersonModal()">+ Thêm Nhân Sự Mới</button>
         </div>
       </div>
 
@@ -2806,9 +2864,9 @@ function renderPerson360View() {
           <div style="font-size:40px;margin-bottom:12px">👤</div>
           <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Không Có Nhân Sự Nào Thuộc Bộ Lọc Đang Chọn</div>
           <div style="font-size:13px;color:var(--text-muted);max-width:540px;margin:0 auto 20px auto;line-height:1.5">
-            ${personFilter === 'all' ? 'Chưa có nhân sự hoặc đối tác nào trong danh bạ liên hệ. Bấm nút bên dưới để thêm thành viên hoặc hệ thống sẽ tự động cập nhật khi có tin nhắn từ kênh Zalo / WhatsApp.' : `Chưa có liên hệ nào thuộc ${personFilter === 'zalo' ? 'Kênh Zalo' : 'Kênh WhatsApp'}.`}
+            Bấm nút <b>"Đồng Bộ Từ Nhóm"</b> để tự động trích xuất toàn bộ thành viên từ các nhóm Zalo & WhatsApp về danh bạ.
           </div>
-          <button class="btn primary" onclick="openNewPersonModal()">+ Thêm Nhân Sự / Đối Tác Mới</button>
+          <button class="btn primary" onclick="triggerSyncRealGroups()">🔄 Quét & Đồng Bộ Danh Bạ Ngay</button>
         </div>
       ` : `
         <div class="table-wrap">
@@ -2820,23 +2878,22 @@ function renderPerson360View() {
                 <th>Vai Trò</th>
                 <th>Nhóm Trực Thuộc</th>
                 <th>Thái Độ & Xưng Hô</th>
-                <th>Ghi Chú Hồ Sơ Riêng</th>
-                <th>Liên Hệ</th>
+                <th>Liên Hệ (UID / SĐT)</th>
                 <th style="text-align:center">Thao Tác</th>
               </tr>
             </thead>
             <tbody>
               ${displayedPeople.map(p => `
                 <tr>
-                  <td style="font-weight:700;color:var(--text)">${escapeHtml(p.name)}</td>
-                  <td>${getChannelBadge(p.channel)}</td>
-                  <td><span class="badge ${p.id === 'P-OWNER' ? 'good' : 'neutral'}">${escapeHtml(p.role)}</span></td>
-                  <td>${escapeHtml(p.groups)}</td>
-                  <td>${getPersonToneBadge(p.persona_style || 'inherit')}</td>
-                  <td style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                    ${p.notes ? `<span title="${escapeHtml(p.notes)}" style="color:var(--brand)">📝 ${escapeHtml(p.notes)}</span>` : '<span class="muted">Chưa có ghi chú</span>'}
+                  <td style="font-weight:700;color:var(--text)">
+                    ${escapeHtml(p.name)}
+                    ${p.rel ? `<div style="font-size:11px;font-weight:normal;color:var(--text-muted)">${escapeHtml(p.rel)}</div>` : ''}
                   </td>
-                  <td style="font-family:var(--mono);font-size:11px" class="muted">${escapeHtml(p.phone || p.email)}</td>
+                  <td>${getChannelBadge(p.channel)}</td>
+                  <td><span class="badge ${p.role?.includes('Owner') || p.role?.includes('Chủ Nhân') ? 'good' : p.role?.includes('Trưởng nhóm') ? 'p3' : 'neutral'}">${escapeHtml(p.role || 'Thành viên')}</span></td>
+                  <td style="font-size:12px;color:var(--brand)">${escapeHtml(p.groups || 'Chưa phân nhóm')}</td>
+                  <td>${getPersonToneBadge(p.persona_style || 'inherit')}</td>
+                  <td style="font-family:var(--mono);font-size:11px" class="muted">${escapeHtml(p.phone || p.uid || p.email || '')}</td>
                   <td style="text-align:center;white-space:nowrap">
                     <button class="btn sm" style="background:#1e293b;border:1px solid var(--border);color:var(--brand);margin-right:6px" onclick="openEditPersonModal('${p.id}')">⚙️ Cấu Hình / Sửa</button>
                     <button class="btn sm danger" onclick="deletePerson('${p.id}')">Xóa</button>
@@ -2856,9 +2913,112 @@ function setGroupChannelFilter(ch) {
   renderActiveHub();
 }
 
+function setGroupStatusFilter(st) {
+  state.groupStatusFilter = st;
+  renderActiveHub();
+}
+
 function setPersonChannelFilter(ch) {
   state.personChannelFilter = ch;
   renderActiveHub();
+}
+
+async function triggerSyncRealGroups() {
+  const btn = $('#btn-sync-groups');
+  if (btn) btn.textContent = '⏳ Đang quét...';
+  showToast('🔄 Đang gửi yêu cầu quét và đồng bộ nhóm từ Zalo & WhatsApp...');
+  try {
+    const res = await fetch('/api/groups/sync_trigger', { method: 'POST' });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(`✅ Đã đồng bộ thành công các nhóm thực tế! (${d.groups_count || 0} nhóm)`);
+      await fetchAllData();
+    } else {
+      showToast('⚠️ Không thể đồng bộ nhóm từ Bridge');
+    }
+  } catch (e) {
+    showToast('Lỗi kết nối khi đồng bộ nhóm');
+  } finally {
+    if (btn) btn.textContent = '🔄 Quét & Đồng Bộ Zalo & WhatsApp';
+  }
+}
+
+function viewGroupMembers(gid) {
+  const g = state.groups.find(x => x.id === gid);
+  if (!g) return;
+  const members = g.member_list || [];
+  const memberRows = members.length > 0 ? members.map((m, idx) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="color:var(--text-muted);width:20px">${idx + 1}.</span>
+        <div>
+          <div style="font-weight:700;color:var(--text)">${escapeHtml(m.name || m.id)}</div>
+          <div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">${escapeHtml(m.id)}</div>
+        </div>
+      </div>
+      <span class="badge ${m.is_boss || m.isBoss ? 'good' : (m.role?.includes('Trưởng') || m.role?.includes('admin') ? 'p3' : 'neutral')}">
+        ${escapeHtml(m.role || (m.is_boss || m.isBoss ? 'Chủ Nhân (Owner)' : 'Thành viên'))}
+      </span>
+    </div>
+  `).join('') : '<div style="padding:20px;text-align:center;color:var(--text-muted)">Chưa có danh sách chi tiết thành viên. Nhấn Quét & Đồng Bộ Nhóm để cập nhật.</div>';
+
+  const modalHtml = `
+    <div class="modal-backdrop" id="group-members-modal" onclick="if(event.target===this) this.remove()">
+      <div class="modal-box" style="max-width:520px;max-height:80vh;display:flex;flex-direction:column">
+        <div class="modal-header">
+          <div class="modal-title">👥 Thành Viên Nhóm: ${escapeHtml(g.name)}</div>
+          <button class="modal-close" onclick="$('#group-members-modal').remove()">✕</button>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
+          Kênh: <b>${g.channel?.toUpperCase()}</b> | ID: <span style="font-family:var(--mono)">${escapeHtml(g.id)}</span> | Tổng: <b>${members.length || g.members || 1}</b> thành viên
+        </div>
+        <div style="overflow-y:auto;flex:1;max-height:360px;padding-right:4px">
+          ${memberRows}
+        </div>
+        <div class="modal-actions" style="margin-top:16px">
+          <button class="btn primary" onclick="$('#group-members-modal').remove()">Đóng</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+async function toggleGroupBotActive(gid, active) {
+  try {
+    const res = await fetch('/api/groups/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: gid, bot_active: active })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(`Đã ${active ? 'BẬT' : 'TẮT'} trợ lý Bé Heo trong nhóm!`);
+      await fetchAllData();
+    }
+  } catch (e) {
+    showToast('Lỗi cập nhật trạng thái nhóm');
+  }
+}
+
+async function leaveGroupAction(gid, channel) {
+  if (!confirm(`Sếp có chắc chắn muốn Bé Heo rời khỏi nhóm này không?`)) return;
+  try {
+    const res = await fetch('/api/groups/leave', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: gid, group_id: gid, channel: channel })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast('Bé Heo đã rời khỏi nhóm thành công và chuyển trạng thái sang Đã Rời Nhóm.');
+      await fetchAllData();
+    } else {
+      showToast('Lỗi khi rời nhóm: ' + (d.error || ''));
+    }
+  } catch (e) {
+    showToast('Lỗi kết nối khi gửi lệnh rời nhóm');
+  }
 }
 
 async function toggleChannel(channel) {

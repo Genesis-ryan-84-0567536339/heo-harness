@@ -6,7 +6,7 @@ Tác giả & Chủ nhân duy nhất: Anh Cơ La (genesis.corp.os@gmail.com)
 """
 
 from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory, PluginHealthStatus
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import threading
 import json
 import time
@@ -232,12 +232,16 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"ok": True, "approvals": appr})
 
         # ================= GROUPS 360 =================
-        elif path_clean == "/api/groups/list":
+        elif path_clean in ["/api/groups/list", "/api/groups"]:
             groups = store.get_groups() if store else []
             self._send_json({"ok": True, "groups": groups})
 
+        elif path_clean in ["/api/groups/sync_trigger", "/api/sync_groups"]:
+            res = store.sync_all_bridges_groups() if store and hasattr(store, "sync_all_bridges_groups") else {"ok": False}
+            self._send_json(res)
+
         # ================= PEOPLE 360 =================
-        elif path_clean == "/api/people/list":
+        elif path_clean in ["/api/people/list", "/api/people"]:
             people = store.get_people() if store else []
             self._send_json({"ok": True, "people": people})
 
@@ -949,6 +953,34 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
+        elif path_clean in ["/api/groups/sync", "/api/group/sync"]:
+            channel = data.get("channel", "zalo")
+            groups_payload = data.get("groups", [])
+            if store and hasattr(store, "sync_real_groups"):
+                res = store.sync_real_groups(channel, groups_payload)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/groups/sync_trigger", "/api/sync_groups"]:
+            if store and hasattr(store, "sync_all_bridges_groups"):
+                res = store.sync_all_bridges_groups()
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/groups/leave", "/api/group/leave"]:
+            gid = data.get("id") or data.get("group_id") or ""
+            channel = data.get("channel", "")
+            if not gid:
+                self._send_json({"ok": False, "error": "Thiếu id nhóm"}, 400)
+                return
+            if store and hasattr(store, "leave_group"):
+                res = store.leave_group(gid, channel)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
         # ================= PEOPLE MUTATION =================
         elif path_clean == "/api/people/create":
             name = data.get("name", "Nhân sự mới").strip()
@@ -1525,7 +1557,7 @@ class DashboardUIPlugin(BasePlugin):
 
     def on_load(self) -> None:
         self.ctx.provide("ui_dashboard", self)
-        self.server: HTTPServer = None
+        self.server: ThreadingHTTPServer = None
         self.thread: threading.Thread = None
         self.start_time = time.time()
         self.port = int(os.environ.get("HARNESS_PORT", "5088"))
@@ -1535,7 +1567,7 @@ class DashboardUIPlugin(BasePlugin):
         handler_cls.plugin_ref = self
 
         try:
-            self.server = HTTPServer(("0.0.0.0", self.port), handler_cls)
+            self.server = ThreadingHTTPServer(("0.0.0.0", self.port), handler_cls)
             self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
             self.thread.start()
             self.log(f"🌐 V6 Executive UI & Add-in Hub đang phục vụ tại http://127.0.0.1:{self.port}")
