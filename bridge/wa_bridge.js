@@ -42,6 +42,24 @@ let userLid = null;
 let userName = null;
 const processedMsgIds = new Set();
 const groupNameCache = new Map();
+const WA_MSGS_FILE = path.join(DATA_DIR, "whatsapp_messages.jsonl");
+
+function appendWhatsAppMessage(item) {
+  try {
+    const record = {
+      id: `WA-MSG-${Date.now() % 100000}`,
+      sender_id: String(item.sender_id || ""),
+      sender_name: String(item.sender_name || ""),
+      target_id: String(item.target_id || ""),
+      group_id: item.group_id || null,
+      content: String(item.content || ""),
+      timestamp: Date.now() / 1000,
+      time_str: new Date().toLocaleTimeString("vi-VN", { hour12: false }),
+      is_outgoing: !!item.is_outgoing
+    };
+    fs.appendFileSync(WA_MSGS_FILE, JSON.stringify(record) + "\n", "utf-8");
+  } catch (e) {}
+}
 
 async function getWhatsAppGroupName(gid) {
   if (!gid || !gid.endsWith("@g.us")) return "";
@@ -231,6 +249,14 @@ async function handleIncomingMessage(m) {
     }
 
     log(`📩 [INBOUND ${isGroup ? `NHÓM: ${groupName}` : '1-1'}] từ ${pushName} [${senderJid}]: "${text.substring(0, 60)}"`);
+    appendWhatsAppMessage({
+      sender_id: senderJid,
+      sender_name: pushName,
+      target_id: isGroup ? (groupName || remoteJid) : "Bé Heo",
+      group_id: isGroup ? remoteJid : null,
+      content: text,
+      is_outgoing: false
+    });
 
     // Gửi trạng thái đang soạn tin (typing / composing) lên WhatsApp để người dùng biết Heo đang xử lý
     let typingTimer = null;
@@ -263,6 +289,14 @@ async function handleIncomingMessage(m) {
       if (shouldReply && reply && sock) {
         await sock.sendMessage(remoteJid, { text: reply }, { quoted: m });
         log(`🚀 [OUTBOUND REPLIED -> ${isGroup ? groupName : '1-1'}]: "${reply.substring(0, 60)}..."`);
+        appendWhatsAppMessage({
+          sender_id: userPhone || "bot",
+          sender_name: userName || "Bé Heo",
+          target_id: isGroup ? (groupName || remoteJid) : pushName,
+          group_id: isGroup ? remoteJid : null,
+          content: reply,
+          is_outgoing: true
+        });
       }
     } finally {
       if (typingTimer) clearInterval(typingTimer);
@@ -610,6 +644,13 @@ function startOutboundServer() {
 
           await sock.sendMessage(jid, { text: content });
           log(`✔ [Outbound Sent] Đã gửi tới ${jid}: "${content.substring(0, 50)}..."`);
+          appendWhatsAppMessage({
+            sender_id: userPhone || "bot",
+            sender_name: userName || "Bé Heo",
+            target_id: jid,
+            content: content,
+            is_outgoing: true
+          });
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ ok: true, target: jid }));
         } catch (sendErr) {

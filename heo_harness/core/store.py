@@ -1301,8 +1301,88 @@ class HeoDataStore:
         self.add_audit("owner", "whatsapp.restart", "WHATSAPP_BRIDGE", "Khởi động lại WhatsApp Bridge", "RESTARTED")
         return {"ok": True, "message": "Đã gửi lệnh khởi động lại WhatsApp Multi-Device Bridge thành công!"}
 
-    def get_whatsapp_messages(self, limit: int = 20) -> list:
+    def sync_historical_whatsapp_messages(self) -> int:
+        """Trích xuất tin nhắn WhatsApp từ logs/whatsapp.log vào whatsapp_messages.jsonl nếu chưa có."""
+        log_file = os.path.join(os.path.dirname(self.data_dir), "logs", "whatsapp.log")
         wa_file = os.path.join(self.data_dir, "whatsapp_messages.jsonl")
+        if not os.path.exists(log_file):
+            return 0
+
+        existing_sigs = set()
+        if os.path.exists(wa_file):
+            try:
+                with open(wa_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            obj = json.loads(line)
+                            sig = (obj.get("time_str", ""), obj.get("content", "").strip()[:50])
+                            existing_sigs.add(sig)
+            except Exception:
+                pass
+
+        new_records = []
+        try:
+            with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+
+            inbound_pat = re.compile(
+                r'\[(\d{4}-\d{2}-\d{2}\s+(\d{2}:\d{2}:\d{2}))\]\s+\[AGY-WhatsApp\]\s+📩\s+\[INBOUND[^\]]*\](?:\s+1-1)?\s+từ\s+([^\[]+)\s+\[([^\]]+)\]:\s+\"(.*?)\"',
+                re.DOTALL
+            )
+            for m in inbound_pat.finditer(content):
+                full_time, time_str, sender_name, sender_id, msg_text = m.groups()
+                sig = (time_str, msg_text.strip()[:50])
+                if sig not in existing_sigs:
+                    existing_sigs.add(sig)
+                    new_records.append({
+                        "id": f"WA-MSG-{int(time.time()*1000)%100000}-{len(new_records)}",
+                        "sender_id": sender_id.strip(),
+                        "sender_name": sender_name.strip(),
+                        "target_id": "Bé Heo",
+                        "group_id": None,
+                        "content": msg_text.strip(),
+                        "timestamp": time.time(),
+                        "time_str": time_str,
+                        "is_outgoing": False
+                    })
+
+            outbound_pat = re.compile(
+                r'\[(\d{4}-\d{2}-\d{2}\s+(\d{2}:\d{2}:\d{2}))\]\s+\[AGY-WhatsApp\]\s+🚀\s+\[OUTBOUND\s+REPLIED[^\]]*\](?:\s*->\s*([^:]+))?:\s+\"(.*?)\"',
+                re.DOTALL
+            )
+            for m in outbound_pat.finditer(content):
+                full_time, time_str, target, msg_text = m.groups()
+                sig = (time_str, msg_text.strip()[:50])
+                if sig not in existing_sigs:
+                    existing_sigs.add(sig)
+                    new_records.append({
+                        "id": f"WA-MSG-{int(time.time()*1000)%100000}-{len(new_records)}",
+                        "sender_id": "bot",
+                        "sender_name": "Bé Heo (WhatsApp)",
+                        "target_id": (target or "Sếp Cơ La").strip(),
+                        "group_id": target.strip() if target and target != "1-1" else None,
+                        "content": msg_text.strip(),
+                        "timestamp": time.time(),
+                        "time_str": time_str,
+                        "is_outgoing": True
+                    })
+
+            if new_records:
+                new_records.sort(key=lambda x: x.get("time_str", ""))
+                with open(wa_file, "a", encoding="utf-8") as f:
+                    for item in new_records:
+                        f.write(json.dumps(item, ensure_ascii=False) + "\n")
+        except Exception as e:
+            print(f"[HeoDataStore] Lỗi trích xuất log WhatsApp: {e}")
+
+        return len(new_records)
+
+    def get_whatsapp_messages(self, limit: int = 50) -> list:
+        wa_file = os.path.join(self.data_dir, "whatsapp_messages.jsonl")
+        if not os.path.exists(wa_file) or os.path.getsize(wa_file) == 0:
+            self.sync_historical_whatsapp_messages()
+
         msgs = []
         if os.path.exists(wa_file):
             try:
@@ -1329,6 +1409,17 @@ class HeoDataStore:
             "is_outgoing": is_outgoing
         }
         try:
+            if os.path.exists(wa_file):
+                with open(wa_file, "r", encoding="utf-8") as f:
+                    lines = f.readlines()[-5:]
+                    for l in lines:
+                        try:
+                            prev = json.loads(l.strip())
+                            if prev.get("content") == content and prev.get("is_outgoing") == is_outgoing and abs(time.time() - prev.get("timestamp", 0)) < 4:
+                                return prev
+                        except Exception:
+                            pass
+
             with open(wa_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(item, ensure_ascii=False) + "\n")
         except Exception:

@@ -649,6 +649,16 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                     }
                 )
 
+            if req_channel == "whatsapp" and store and hasattr(store, "record_whatsapp_message"):
+                store.record_whatsapp_message(
+                    sender_id=str(data.get("sender_id") or data.get("sender_uid") or ""),
+                    sender_name=sender_name,
+                    target_id=grp_name if is_grp else "Bé Heo",
+                    group_id=group_id if is_grp else None,
+                    content=user_msg,
+                    is_outgoing=False
+                )
+
             # Xác định tác quyền Boss / Owner
             is_boss = bool(data.get("is_boss", False))
             sender_uid = str(data.get("sender_uid") or data.get("sender_id") or "").strip()
@@ -671,6 +681,15 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                     sender_id=sender_uid
                 )
                 if handled:
+                    if req_channel == "whatsapp" and store and hasattr(store, "record_whatsapp_message"):
+                        store.record_whatsapp_message(
+                            sender_id="bot",
+                            sender_name=bot_name,
+                            target_id=grp_name if is_grp else sender_name,
+                            group_id=group_id if is_grp else None,
+                            content=cmd_reply,
+                            is_outgoing=True
+                        )
                     self._send_json({
                         "ok": True,
                         "reply": cmd_reply,
@@ -888,6 +907,16 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             if store:
                 store.add_audit("chat", "assistant.chat", "chat_msg", f"User: '{user_msg[:30]}...'", "REPLIED")
                 store.add_execution("assistant.chat", "SUCCEEDED", "AUTO", f"{latency_ms} ms", f"Replied to {sender_name} ({effective_persona} / {display_model})")
+
+            if req_channel == "whatsapp" and store and hasattr(store, "record_whatsapp_message"):
+                store.record_whatsapp_message(
+                    sender_id="bot",
+                    sender_name=bot_name,
+                    target_id=grp_name if is_grp else sender_name,
+                    group_id=group_id if is_grp else None,
+                    content=reply,
+                    is_outgoing=True
+                )
 
             self._send_json({
                 "ok": True,
