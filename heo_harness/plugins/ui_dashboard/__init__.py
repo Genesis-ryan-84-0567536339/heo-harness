@@ -493,6 +493,10 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             msgs = store.get_whatsapp_messages() if store else []
             self._send_json({"ok": True, "messages": msgs, "count": len(msgs)})
 
+        elif path_clean in ["/api/zalo/messages", "/api/zalo/logs"]:
+            msgs = store.get_zalo_messages() if store else []
+            self._send_json({"ok": True, "messages": msgs, "count": len(msgs)})
+
         else:
             self._send_json({"error": "Endpoint not found"}, 404)
 
@@ -658,6 +662,15 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                     content=user_msg,
                     is_outgoing=False
                 )
+            elif req_channel == "zalo" and store and hasattr(store, "record_zalo_message"):
+                store.record_zalo_message(
+                    sender_id=str(data.get("sender_id") or data.get("sender_uid") or ""),
+                    sender_name=sender_name,
+                    target_id=grp_name if is_grp else "Bé Heo",
+                    group_id=group_id if is_grp else None,
+                    content=user_msg,
+                    is_outgoing=False
+                )
 
             # Xác định tác quyền Boss / Owner
             is_boss = bool(data.get("is_boss", False))
@@ -683,6 +696,15 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 if handled:
                     if req_channel == "whatsapp" and store and hasattr(store, "record_whatsapp_message"):
                         store.record_whatsapp_message(
+                            sender_id="bot",
+                            sender_name=bot_name,
+                            target_id=grp_name if is_grp else sender_name,
+                            group_id=group_id if is_grp else None,
+                            content=cmd_reply,
+                            is_outgoing=True
+                        )
+                    elif req_channel == "zalo" and store and hasattr(store, "record_zalo_message"):
+                        store.record_zalo_message(
                             sender_id="bot",
                             sender_name=bot_name,
                             target_id=grp_name if is_grp else sender_name,
@@ -910,6 +932,15 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
 
             if req_channel == "whatsapp" and store and hasattr(store, "record_whatsapp_message"):
                 store.record_whatsapp_message(
+                    sender_id="bot",
+                    sender_name=bot_name,
+                    target_id=grp_name if is_grp else sender_name,
+                    group_id=group_id if is_grp else None,
+                    content=reply,
+                    is_outgoing=True
+                )
+            elif req_channel == "zalo" and store and hasattr(store, "record_zalo_message"):
+                store.record_zalo_message(
                     sender_id="bot",
                     sender_name=bot_name,
                     target_id=grp_name if is_grp else sender_name,

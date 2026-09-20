@@ -147,6 +147,32 @@ async function getGroupDetails(api, groupId) {
 }
 
 const GROUPS_FILE = path.join(DATA_DIR, "active_groups.json");
+const ZALO_MSGS_FILE = path.join(DATA_DIR, "zalo_messages.jsonl");
+
+const recentLoggedSigs = new Set();
+function appendZaloMessage(item) {
+  try {
+    const textSig = `${item.is_outgoing ? 'OUT' : 'IN'}_${String(item.content || '').substring(0, 40)}`;
+    if (recentLoggedSigs.has(textSig)) return;
+    recentLoggedSigs.add(textSig);
+    setTimeout(() => recentLoggedSigs.delete(textSig), 4000);
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("vi-VN", { hour12: false });
+    const record = {
+      id: item.id || `ZALO-MSG-${Date.now() % 100000}-${Math.floor(Math.random() * 1000)}`,
+      sender_id: String(item.sender_id || ""),
+      sender_name: String(item.sender_name || (item.is_outgoing ? (BOT_NAME || "Bé Heo (Zalo)") : "Khách")),
+      target_id: String(item.target_id || (item.is_outgoing ? (BOSS_NAME || "Sếp Cơ La") : (BOT_NAME || "Bé Heo"))),
+      group_id: item.group_id ? String(item.group_id) : null,
+      content: String(item.content || ""),
+      timestamp: item.timestamp || (now.getTime() / 1000),
+      time_str: item.time_str || timeStr,
+      is_outgoing: Boolean(item.is_outgoing)
+    };
+    fs.appendFileSync(ZALO_MSGS_FILE, JSON.stringify(record) + "\n", "utf-8");
+  } catch (e) {}
+}
 
 function appendGroupHistory(groupId, item) {
   try {
@@ -673,6 +699,17 @@ function trackSentMessage(res, threadId, threadType, msgText) {
       });
       if (recentSentMessages.length > 60) recentSentMessages.shift();
     }
+    const isGrp = (threadType === ThreadType.Group);
+    const targetName = isGrp ? (groupCache.get(threadId)?.name || `Nhóm ${threadId}`) : (BOSS_NAME || "Sếp Cơ La");
+    appendZaloMessage({
+      id: mId ? `ZALO-MSG-${mId}` : undefined,
+      sender_id: "bot",
+      sender_name: BOT_NAME || "Bé Heo (Zalo)",
+      target_id: targetName,
+      group_id: isGrp ? String(threadId) : null,
+      content: String(msgText || ""),
+      is_outgoing: true
+    });
   } catch (e) {}
 }
 
@@ -982,6 +1019,20 @@ async function startBridge() {
 
       // 2. CHẶN VÒNG LẶP TỰ TRẢ LỜI CHÍNH MÌNH (SELF-REPLY LOOP PREVENTION)
       const isSelfMessage = Boolean(msg.isSelf || (ownId && String(senderUid) === String(ownId)));
+      if (!isSelfMessage && rawContent) {
+        const isGrp = (msgType === ThreadType.Group);
+        const sName = isGrp ? (userCache.get(senderUid) || `Thành viên (${senderUid})`) : (BOSS_NAME || "Sếp Cơ La");
+        const tName = isGrp ? (groupCache.get(threadId)?.name || `Nhóm ${threadId}`) : (BOT_NAME || "Bé Heo");
+        appendZaloMessage({
+          id: msgId ? `ZALO-MSG-${msgId}` : undefined,
+          sender_id: String(senderUid || ""),
+          sender_name: sName,
+          target_id: tName,
+          group_id: isGrp ? String(threadId) : null,
+          content: rawContent,
+          is_outgoing: false
+        });
+      }
       if (isSelfMessage) {
         try {
           const mId = msg.data?.msgId || msg.data?.id || "";

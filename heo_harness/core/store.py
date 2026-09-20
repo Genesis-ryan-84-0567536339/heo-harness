@@ -1144,6 +1144,164 @@ class HeoDataStore:
         self.add_live_log("zalo", "INFO", "Khởi động lại Zalo Bridge theo lệnh của Sếp.")
         return {"ok": True, "message": "Đã khởi động lại Zalo Bridge thành công!"}
 
+    def sync_historical_zalo_messages(self) -> int:
+        """Trích xuất tin nhắn Zalo từ logs/zalo.log và group_boss_1on1.jsonl vào zalo_messages.jsonl nếu chưa có."""
+        log_file = os.path.join(os.path.dirname(self.data_dir), "logs", "zalo.log")
+        group_file = os.path.join(self.data_dir, "group_boss_1on1.jsonl")
+        zalo_file = os.path.join(self.data_dir, "zalo_messages.jsonl")
+
+        existing_sigs = set()
+        if os.path.exists(zalo_file):
+            try:
+                with open(zalo_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            obj = json.loads(line)
+                            sig = (obj.get("time_str", ""), obj.get("content", "").strip()[:50])
+                            existing_sigs.add(sig)
+            except Exception:
+                pass
+
+        new_records = []
+
+        # 1. Quét group_boss_1on1.jsonl
+        if os.path.exists(group_file):
+            try:
+                with open(group_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            d = json.loads(line)
+                            is_out = (d.get("senderName") == "Em Heo" or str(d.get("senderUid")) == "642589448288134831")
+                            txt = d.get("text", "").strip()
+                            t_str = d.get("time", "")
+                            t_part = t_str.split("T")[1][:8] if "T" in t_str else t_str[:8]
+                            sig = (t_part, txt[:50])
+                            if sig not in existing_sigs:
+                                existing_sigs.add(sig)
+                                new_records.append({
+                                    "id": f"ZALO-MSG-{int(time.time()*1000)%100000}-{len(new_records)}",
+                                    "sender_id": str(d.get("senderUid") or ("bot" if is_out else "5639130299270793223")),
+                                    "sender_name": "Bé Heo (Zalo)" if is_out else "Sếp Cơ La (Cola)",
+                                    "target_id": "Sếp Cơ La" if is_out else "Bé Heo",
+                                    "group_id": None,
+                                    "content": txt,
+                                    "timestamp": time.time(),
+                                    "time_str": t_part,
+                                    "is_outgoing": is_out
+                                })
+            except Exception:
+                pass
+
+        # 2. Quét logs/zalo.log
+        if os.path.exists(log_file):
+            try:
+                with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+
+                matches = re.findall(
+                    r"\[(\d{4}-\d{2}-\d{2}\s+(\d{2}:\d{2}:\d{2}))\]\s+\[AGY-Zalo\]\s+📩\s+Tin nhắn:\s+type=([^,]+),\s+sender=([^,]+),\s+isSelf=([^,]+),\s+thread=([^,]+),\s+text=\"(.*?)\"(?=\n\[\d{4}|\Z)",
+                    content,
+                    re.DOTALL
+                )
+                for m in matches:
+                    full_dt, tm, ttype, sender, is_self, thread, text = m
+                    txt = text.strip()
+                    is_out = (is_self.strip().lower() == "true" or sender.strip() == "642589448288134831")
+                    is_grp = ("group" in ttype.lower())
+                    sig = (tm, txt[:50])
+                    if sig not in existing_sigs:
+                        existing_sigs.add(sig)
+                        new_records.append({
+                            "id": f"ZALO-MSG-{int(time.time()*1000)%100000}-{len(new_records)}",
+                            "sender_id": sender.strip() if not is_out else "bot",
+                            "sender_name": "Bé Heo (Zalo)" if is_out else "Sếp Cơ La (Cola)",
+                            "target_id": "Sếp Cơ La" if is_out else "Bé Heo",
+                            "group_id": thread.strip() if is_grp else None,
+                            "content": txt,
+                            "timestamp": time.time(),
+                            "time_str": tm,
+                            "is_outgoing": is_out
+                        })
+            except Exception as e:
+                print(f"[HeoDataStore] Lỗi trích xuất log Zalo: {e}")
+
+        if new_records:
+            new_records.sort(key=lambda x: x.get("time_str", ""))
+            try:
+                with open(zalo_file, "a", encoding="utf-8") as f:
+                    for item in new_records:
+                        f.write(json.dumps(item, ensure_ascii=False) + "\n")
+            except Exception:
+                pass
+
+        return len(new_records)
+
+    def get_zalo_messages(self, limit: int = 50) -> list:
+        zalo_file = os.path.join(self.data_dir, "zalo_messages.jsonl")
+        if not os.path.exists(zalo_file) or os.path.getsize(zalo_file) == 0:
+            self.sync_historical_zalo_messages()
+
+        msgs = []
+        if os.path.exists(zalo_file):
+            try:
+                with open(zalo_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            msgs.append(json.loads(line))
+            except Exception:
+                pass
+        return msgs[-limit:]
+
+    def record_zalo_message(self, sender_id: str, sender_name: str, target_id: str, group_id: str = None, content: str = "", is_outgoing: bool = True) -> dict:
+        zalo_file = os.path.join(self.data_dir, "zalo_messages.jsonl")
+        item = {
+            "id": f"ZALO-MSG-{int(time.time()*1000)%100000}",
+            "sender_id": sender_id,
+            "sender_name": sender_name,
+            "target_id": target_id,
+            "group_id": group_id,
+            "content": content,
+            "timestamp": time.time(),
+            "time_str": time.strftime("%H:%M:%S"),
+            "is_outgoing": is_outgoing
+        }
+        try:
+            if os.path.exists(zalo_file):
+                with open(zalo_file, "r", encoding="utf-8") as f:
+                    lines = f.readlines()[-5:]
+                    for l in lines:
+                        try:
+                            prev = json.loads(l.strip())
+                            if prev.get("content") == content and prev.get("is_outgoing") == is_outgoing and abs(time.time() - prev.get("timestamp", 0)) < 4:
+                                return prev
+                        except Exception:
+                            pass
+
+            with open(zalo_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
+
+        try:
+            z_state = self.state.setdefault("zalo", {})
+            z_state.setdefault("recent_messages", [])
+            z_state["recent_messages"].insert(0, {
+                "time": item["time_str"],
+                "sender": sender_name,
+                "group": target_id if group_id else "1-1",
+                "text": content,
+                "reply": ""
+            })
+            if len(z_state["recent_messages"]) > 50:
+                z_state["recent_messages"] = z_state["recent_messages"][:50]
+        except Exception:
+            pass
+
+        return item
+
     # ==================== WHATSAPP OPERATIONS ====================
     def spawn_whatsapp_bridge(self, force_restart: bool = False) -> bool:
         """Tự động kiểm tra và khởi động tiến trình Node.js WhatsApp Bridge kết nối @whiskeysockets/baileys."""
@@ -2335,8 +2493,18 @@ class HeoDataStore:
         zalo["phone"] = phone
         zalo["tag_filter"] = zalo_cfg.get("tag_filter", zalo.get("tag_filter", True))
         zalo["groups"] = [g for g in self.get_groups() if g.get("channel", "zalo") == "zalo"]
-        zalo["synced_groups"] = [g.get("name", "") for g in zalo["groups"]]
-        zalo.setdefault("recent_messages", [])
+        zalo_msgs = self.get_zalo_messages(50)
+        zalo["recent_messages"] = [
+            {
+                "time": m.get("time_str", ""),
+                "sender": m.get("sender_name", ""),
+                "group": m.get("target_id") if m.get("group_id") else ("Nhóm" if m.get("group_id") else "1-1"),
+                "text": m.get("content", ""),
+                "reply": "",
+                "is_outgoing": m.get("is_outgoing", False)
+            }
+            for m in zalo_msgs
+        ] if zalo_msgs else zalo.get("recent_messages", [])
         return zalo
 
     def send_zalo_test(self, group: str, message: str) -> dict:
@@ -2349,6 +2517,22 @@ class HeoDataStore:
             "text": message,
             "reply": f"Dạ Sếp Cơ La! Bé Heo đã nhận lệnh qua Zalo Gateway và đang điều phối công việc cho nhóm {group} rồi ạ! 🐷✨"
         }
+        self.record_zalo_message(
+            sender_id="owner_test",
+            sender_name="Sếp Cơ La (Ryan)",
+            target_id=group,
+            group_id=group,
+            content=message,
+            is_outgoing=False
+        )
+        self.record_zalo_message(
+            sender_id="bot",
+            sender_name="Bé Heo (Zalo)",
+            target_id=group,
+            group_id=group,
+            content=msg_record["reply"],
+            is_outgoing=True
+        )
         zalo["recent_messages"].insert(0, msg_record)
         if len(zalo["recent_messages"]) > 30:
             zalo["recent_messages"] = zalo["recent_messages"][:30]
