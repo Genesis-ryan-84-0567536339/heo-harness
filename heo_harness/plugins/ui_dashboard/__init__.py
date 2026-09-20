@@ -531,6 +531,22 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 })
                 return
 
+            req_channel = str(data.get("channel", "web_console")).lower()
+            if store and hasattr(store, "is_channel_enabled") and req_channel in ["zalo", "whatsapp"] and not store.is_channel_enabled(req_channel):
+                ch_name = "Zalo Gateway" if req_channel == "zalo" else "WhatsApp Gateway"
+                reply = f"⚠️ [THÔNG BÁO] Kênh {ch_name} hiện đang TẮT (MUTED) độc lập theo cấu hình riêng của Sếp. Kênh khác vẫn hoạt động bình thường."
+                self._send_json({
+                    "ok": True,
+                    "reply": reply,
+                    "attachment": None,
+                    "bot_name": "Bé Heo",
+                    "persona": "muted",
+                    "paused": True,
+                    "model": "Google Antigravity CLI",
+                    "latency_ms": 5
+                })
+                return
+
             t0 = time.time()
             # 1. Thẩm định qua Policy Gate
             policy_engine = plugin.ctx.inject("policy_engine")
@@ -757,8 +773,9 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             persona_style = data.get("persona_style", "inherit")
             custom_persona = data.get("custom_persona", "")
             notes = data.get("notes", "")
+            channel = data.get("channel", "zalo")
             if store:
-                g = store.add_group(name, purpose, policy, instruction, persona_style, custom_persona, notes)
+                g = store.add_group(name, purpose, policy, instruction, persona_style, custom_persona, notes, channel=channel)
                 self._send_json({"ok": True, "group": g, "message": f"Đã tạo nhóm {g['id']} thành công!"})
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
@@ -795,8 +812,9 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             persona_style = data.get("persona_style", "inherit")
             custom_persona = data.get("custom_persona", "")
             notes = data.get("notes", "")
+            channel = data.get("channel", "zalo")
             if store:
-                p = store.add_person(name, role, groups, email, phone, persona_style, custom_persona, notes)
+                p = store.add_person(name, role, groups, email, phone, persona_style, custom_persona, notes, channel=channel)
                 self._send_json({"ok": True, "person": p, "message": f"Đã thêm nhân sự {p['id']} thành công!"})
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
@@ -929,6 +947,26 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
+        # ================= ZALO OPERATIONS =================
+        elif path_clean in ["/api/zalo/toggle", "/api/channel/zalo/toggle"]:
+            enabled = data.get("enabled", None)
+            if store:
+                res = store.toggle_channel("zalo", enabled)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean == "/api/zalo/config":
+            if store:
+                cfg = store.get_config()
+                if "zalo" not in cfg:
+                    cfg["zalo"] = {}
+                cfg["zalo"].update(data)
+                store.update_config(cfg)
+                self._send_json({"ok": True, "zalo": cfg["zalo"], "message": "Đã lưu cấu hình riêng cho Kênh Zalo!"})
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
         # ================= ZALO SEND TEST =================
         elif path_clean == "/api/zalo/send_test":
             group = data.get("group", "Strategic Partners")
@@ -940,10 +978,18 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 
         # ================= WHATSAPP OPERATIONS =================
+        elif path_clean in ["/api/whatsapp/toggle", "/api/channel/whatsapp/toggle"]:
+            enabled = data.get("enabled", None)
+            if store:
+                res = store.toggle_channel("whatsapp", enabled)
+                self._send_json(res)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
         elif path_clean == "/api/whatsapp/config":
             if store:
                 res = store.update_whatsapp_config(data)
-                self._send_json({"ok": True, "whatsapp": res, "message": "Đã lưu cấu hình WhatsApp thành công!"})
+                self._send_json({"ok": True, "whatsapp": res, "message": "Đã lưu cấu hình riêng cho Kênh WhatsApp!"})
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
 

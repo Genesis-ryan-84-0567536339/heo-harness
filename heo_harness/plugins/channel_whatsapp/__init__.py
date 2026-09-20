@@ -74,10 +74,19 @@ class WhatsAppChannelPlugin(BasePlugin):
         store = self.ctx.inject("data_store") or self.ctx.inject("store")
         if store and hasattr(store, "is_bot_enabled") and not store.is_bot_enabled():
             if store and hasattr(store, "add_live_log"):
-                store.add_live_log("whatsapp", "WARN", f"Bé Heo đang TẠM DỪNG, bỏ qua xử lý tin nhắn từ {sender_name}", content)
+                store.add_live_log("whatsapp", "WARN", f"Bé Heo đang TẠM DỪNG (Toàn Cục), bỏ qua xử lý tin nhắn từ {sender_name}", content)
             return {
                 "handled": False,
                 "reason": "Bot is paused (Emergency Pause active)",
+                "evidence_ref": raw_evidence_ref
+            }
+
+        if store and hasattr(store, "is_channel_enabled") and not store.is_channel_enabled("whatsapp"):
+            if store and hasattr(store, "add_live_log"):
+                store.add_live_log("whatsapp", "WARN", f"Kênh WhatsApp Gateway đang TẮT độc lập, bỏ qua xử lý tin nhắn từ {sender_name}", content)
+            return {
+                "handled": False,
+                "reason": "WhatsApp Gateway is disabled independently",
                 "evidence_ref": raw_evidence_ref
             }
 

@@ -1238,20 +1238,36 @@ function updateBadges() {
   const zaloBadge = $('#badge-zalo-status');
   if (zaloBadge) {
     const isZaloConn = state.zalo && state.zalo.connected === true;
-    zaloBadge.className = `nav-badge ${isZaloConn ? 'live' : ''}`;
-    zaloBadge.style.background = isZaloConn ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)';
-    zaloBadge.style.color = isZaloConn ? '#10b981' : '#f59e0b';
-    zaloBadge.textContent = isZaloConn ? 'ONLINE' : 'QR';
+    const isZaloEnabled = state.zalo && state.zalo.enabled !== false;
+    if (!isZaloEnabled) {
+      zaloBadge.className = 'nav-badge danger';
+      zaloBadge.style.background = 'rgba(239,68,68,0.15)';
+      zaloBadge.style.color = '#ef4444';
+      zaloBadge.textContent = 'MUTED';
+    } else {
+      zaloBadge.className = `nav-badge ${isZaloConn ? 'live' : ''}`;
+      zaloBadge.style.background = isZaloConn ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)';
+      zaloBadge.style.color = isZaloConn ? '#10b981' : '#f59e0b';
+      zaloBadge.textContent = isZaloConn ? 'ONLINE' : 'QR';
+    }
   }
 
   // Cập nhật trạng thái WhatsApp
   const waBadge = $('#badge-whatsapp-status');
   if (waBadge) {
     const isWaConn = state.whatsapp && state.whatsapp.connected === true;
-    waBadge.className = `nav-badge ${isWaConn ? 'live' : ''}`;
-    waBadge.style.background = isWaConn ? 'rgba(37,211,102,0.15)' : 'rgba(245,158,11,0.15)';
-    waBadge.style.color = isWaConn ? '#25D366' : '#f59e0b';
-    waBadge.textContent = isWaConn ? 'ONLINE' : 'QR';
+    const isWaEnabled = state.whatsapp && state.whatsapp.enabled !== false;
+    if (!isWaEnabled) {
+      waBadge.className = 'nav-badge danger';
+      waBadge.style.background = 'rgba(239,68,68,0.15)';
+      waBadge.style.color = '#ef4444';
+      waBadge.textContent = 'MUTED';
+    } else {
+      waBadge.className = `nav-badge ${isWaConn ? 'live' : ''}`;
+      waBadge.style.background = isWaConn ? 'rgba(37,211,102,0.15)' : 'rgba(245,158,11,0.15)';
+      waBadge.style.color = isWaConn ? '#25D366' : '#f59e0b';
+      waBadge.textContent = isWaConn ? 'ONLINE' : 'QR';
+    }
   }
 
   // Cập nhật nút Master Bot
@@ -1872,11 +1888,26 @@ function getPersonToneBadge(style) {
   return map[style] || map.inherit;
 }
 
+function getChannelBadge(channel) {
+  const ch = (channel || 'zalo').toLowerCase();
+  if (ch === 'whatsapp') {
+    return '<span class="badge" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.3);font-weight:700">📱 WhatsApp</span>';
+  }
+  return '<span class="badge" style="background:rgba(2,132,199,0.15);color:#38bdf8;border:1px solid rgba(2,132,199,0.3);font-weight:700">💬 Zalo</span>';
+}
+
 function openNewGroupModal() {
   openModal('Khởi Tạo Nhóm Làm Việc Mới', `
     <div class="form-group">
       <label class="form-label">Tên Nhóm Làm Việc</label>
       <input type="text" class="form-input" id="new-group-name" placeholder="Ví dụ: Ban Điều Hành Genesis, Đội Dự Án AI...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kênh Hoạt Động (Channel)</label>
+      <select class="form-select" id="new-group-channel">
+        <option value="zalo">💬 Kênh Zalo</option>
+        <option value="whatsapp">📱 Kênh WhatsApp</option>
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Mục Tiêu & Chức Năng Của Nhóm</label>
@@ -1906,6 +1937,7 @@ function openNewGroupModal() {
   `, async () => {
     const name = $('#new-group-name').value.trim();
     if (!name) { showToast('Tên nhóm không được để trống!'); return; }
+    const channel = $('#new-group-channel').value;
     const purpose = $('#new-group-purpose').value.trim();
     const persona_style = $('#new-group-persona').value;
     const custom_persona = $('#new-group-custom-persona') ? $('#new-group-custom-persona').value.trim() : '';
@@ -1914,7 +1946,7 @@ function openNewGroupModal() {
     const res = await fetch('/api/groups/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, purpose, persona_style, custom_persona, notes })
+      body: JSON.stringify({ name, channel, purpose, persona_style, custom_persona, notes })
     });
     const d = await res.json();
     if (d.ok) {
@@ -1936,6 +1968,13 @@ function openEditGroupModal(gid) {
     <div class="form-group">
       <label class="form-label">Tên Nhóm Làm Việc</label>
       <input type="text" class="form-input" id="edit-group-name" value="${escapeHtml(g.name)}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kênh Hoạt Động (Channel)</label>
+      <select class="form-select" id="edit-group-channel">
+        <option value="zalo" ${(g.channel || 'zalo') === 'zalo' ? 'selected' : ''}>💬 Kênh Zalo</option>
+        <option value="whatsapp" ${(g.channel || 'zalo') === 'whatsapp' ? 'selected' : ''}>📱 Kênh WhatsApp</option>
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Mục Tiêu & Chức Năng Của Nhóm</label>
@@ -1966,6 +2005,7 @@ function openEditGroupModal(gid) {
   `, async () => {
     const name = $('#edit-group-name').value.trim();
     if (!name) { showToast('Tên nhóm không được để trống!'); return; }
+    const channel = $('#edit-group-channel').value;
     const purpose = $('#edit-group-purpose').value.trim();
     const persona_style = $('#edit-group-persona').value;
     const custom_persona = $('#edit-group-custom-persona') ? $('#edit-group-custom-persona').value.trim() : '';
@@ -1975,7 +2015,7 @@ function openEditGroupModal(gid) {
     const res = await fetch('/api/groups/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: gid, name, purpose, persona_style, custom_persona, notes })
+      body: JSON.stringify({ id: gid, name, channel, purpose, persona_style, custom_persona, notes })
     });
     const d = await res.json();
     if (d.ok) {
@@ -2009,6 +2049,13 @@ function openNewPersonModal() {
     <div class="form-group">
       <label class="form-label">Họ Và Tên</label>
       <input type="text" class="form-input" id="new-person-name" placeholder="Ví dụ: Nguyễn Văn A, Đối tác Alpha...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kênh Liên Lạc Chính (Channel)</label>
+      <select class="form-select" id="new-person-channel">
+        <option value="zalo">💬 Kênh Zalo</option>
+        <option value="whatsapp">📱 Kênh WhatsApp</option>
+      </select>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group">
@@ -2052,6 +2099,7 @@ function openNewPersonModal() {
   `, async () => {
     const name = $('#new-person-name').value.trim();
     if (!name) { showToast('Họ tên không được để trống!'); return; }
+    const channel = $('#new-person-channel').value;
     const role = $('#new-person-role').value.trim();
     const groups = $('#new-person-group').value.trim();
     const email = $('#new-person-email').value.trim();
@@ -2063,7 +2111,7 @@ function openNewPersonModal() {
     const res = await fetch('/api/people/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, role, groups, email, phone, persona_style, custom_persona, notes })
+      body: JSON.stringify({ name, channel, role, groups, email, phone, persona_style, custom_persona, notes })
     });
     const d = await res.json();
     if (d.ok) {
@@ -2088,19 +2136,26 @@ function openEditPersonModal(pid) {
         <input type="text" class="form-input" id="edit-person-name" value="${escapeHtml(p.name)}">
       </div>
       <div class="form-group">
-        <label class="form-label">Chức Vụ / Vai Trò</label>
-        <input type="text" class="form-input" id="edit-person-role" value="${escapeHtml(p.role || '')}">
+        <label class="form-label">Kênh Liên Lạc Chính (Channel)</label>
+        <select class="form-select" id="edit-person-channel">
+          <option value="zalo" ${(p.channel || 'zalo') === 'zalo' ? 'selected' : ''}>💬 Kênh Zalo</option>
+          <option value="whatsapp" ${(p.channel || 'zalo') === 'whatsapp' ? 'selected' : ''}>📱 Kênh WhatsApp</option>
+        </select>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group">
+        <label class="form-label">Chức Vụ / Vai Trò</label>
+        <input type="text" class="form-input" id="edit-person-role" value="${escapeHtml(p.role || '')}">
+      </div>
+      <div class="form-group">
         <label class="form-label">Nhóm Trực Thuộc</label>
         <input type="text" class="form-input" id="edit-person-group" value="${escapeHtml(p.groups || '')}">
       </div>
-      <div class="form-group">
-        <label class="form-label">Số Điện Thoại / Email</label>
-        <input type="text" class="form-input" id="edit-person-phone" value="${escapeHtml(p.phone || p.email || '')}">
-      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Số Điện Thoại / Email</label>
+      <input type="text" class="form-input" id="edit-person-phone" value="${escapeHtml(p.phone || p.email || '')}">
     </div>
     <div class="form-group">
       <label class="form-label">🎭 Phong Thái & Xưng Hô Riêng Với Người Này</label>
@@ -2125,6 +2180,7 @@ function openEditPersonModal(pid) {
   `, async () => {
     const name = $('#edit-person-name').value.trim();
     if (!name) { showToast('Tên nhân sự không được để trống!'); return; }
+    const channel = $('#edit-person-channel').value;
     const role = $('#edit-person-role').value.trim();
     const groups = $('#edit-person-group').value.trim();
     const phone = $('#edit-person-phone').value.trim();
@@ -2136,7 +2192,7 @@ function openEditPersonModal(pid) {
     const res = await fetch('/api/people/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: pid, name, role, groups, phone, persona_style, custom_persona, notes })
+      body: JSON.stringify({ id: pid, name, channel, role, groups, phone, persona_style, custom_persona, notes })
     });
     const d = await res.json();
     if (d.ok) {
@@ -2171,14 +2227,18 @@ async function deletePerson(id) {
 
 function renderZaloHub() {
   const currentSub = state.subtabs.zalo || 'gateway';
+  const isEnabled = state.zalo && state.zalo.enabled !== false;
   return `
     <div class="hub-header">
       <div class="hub-header-top">
         <div>
           <h1 class="hub-title">Kênh Kết Nối Zalo Gateway</h1>
-          <p class="hub-desc">Cổng kết nối Zalo cá nhân 2 chiều, bảo mật bằng mã QR quét trực tiếp từ app Zalo điện thoại.</p>
+          <p class="hub-desc">Cổng kết nối Zalo cá nhân 2 chiều độc lập, bảo mật bằng mã QR quét trực tiếp từ app Zalo điện thoại.</p>
         </div>
-        <div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn sm" style="${isEnabled ? 'background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:var(--good);font-weight:700' : 'background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:var(--p1);font-weight:700'}" onclick="toggleChannel('zalo')">
+            ${isEnabled ? '🟢 Kênh Zalo: ĐANG BẬT' : '🔴 Kênh Zalo: ĐÃ TẮT (MUTED)'}
+          </button>
           <button class="btn primary sm" onclick="syncZaloGroups()">Đồng Bộ Nhóm (Sync)</button>
         </div>
       </div>
@@ -2197,14 +2257,18 @@ function renderZaloHub() {
 
 function renderWhatsAppHub() {
   const currentSub = state.subtabs.whatsapp || 'gateway';
+  const isEnabled = state.whatsapp && state.whatsapp.enabled !== false;
   return `
     <div class="hub-header">
       <div class="hub-header-top">
         <div>
           <h1 class="hub-title">Kênh Kết Nối WhatsApp Gateway (Multi-Device)</h1>
-          <p class="hub-desc">Cổng kết nối WhatsApp Multi-Device 2 chiều, mã QR quét trực tiếp từ WhatsApp trên điện thoại.</p>
+          <p class="hub-desc">Cổng kết nối WhatsApp Multi-Device 2 chiều độc lập, mã QR quét trực tiếp từ WhatsApp trên điện thoại.</p>
         </div>
-        <div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn sm" style="${isEnabled ? 'background:rgba(37,211,102,0.15);border:1px solid rgba(37,211,102,0.4);color:#25D366;font-weight:700' : 'background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:var(--p1);font-weight:700'}" onclick="toggleChannel('whatsapp')">
+            ${isEnabled ? '🟢 Kênh WhatsApp: ĐANG BẬT' : '🔴 Kênh WhatsApp: ĐÃ TẮT (MUTED)'}
+          </button>
           <button class="btn primary sm" style="background:#25D366;border-color:#25D366;color:#052e16;font-weight:700" onclick="refreshWhatsAppQR()">🔄 Làm Mới QR WhatsApp</button>
         </div>
       </div>
@@ -2343,6 +2407,41 @@ function renderWhatsAppGatewayView() {
       </div>
     </div>
 
+    <!-- WhatsApp Specific Channel Config (Decoupled) -->
+    <div class="card card-pad" style="margin-bottom:20px;border:1px solid rgba(37,211,102,0.3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
+          <span>⚙️ Cấu Hình Riêng Biệt Kênh WhatsApp Gateway (Độc Lập 100%)</span>
+        </div>
+        <span class="badge" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.3);font-weight:700">Tách Biệt Tuyệt Đối</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+        <div>
+          <label class="text-sm muted" style="display:block;margin-bottom:4px">TÊN BÉ HEO TRÊN WHATSAPP:</label>
+          <input id="wa-cfg-bot-name" class="form-input" style="width:100%" value="${escapeHtml(wa.bot_name || 'Bé Heo (WhatsApp Gateway)')}" placeholder="Ví dụ: Bé Heo WhatsApp, Genesis Global Assistant...">
+        </div>
+        <div>
+          <label class="text-sm muted" style="display:block;margin-bottom:4px">PHONG CÁCH THÁI ĐỘ MẶC ĐỊNH TRÊN WHATSAPP:</label>
+          <select id="wa-cfg-persona" class="form-select" style="width:100%">
+            <option value="inherit" ${(wa.persona_style || 'inherit') === 'inherit' ? 'selected' : ''}>🔄 Kế thừa phong cách chung của Bé Heo</option>
+            <option value="default" ${wa.persona_style === 'default' ? 'selected' : ''}>🌸 Mặc định (Duyên dáng, tôn trọng)</option>
+            <option value="serious" ${wa.persona_style === 'serious' ? 'selected' : ''}>🏛️ Nghiêm túc hành chính (BLUF, chuẩn xác con số)</option>
+            <option value="sweet" ${wa.persona_style === 'sweet' ? 'selected' : ''}>🥰 Ngọt ngào & Dẻo miệng (Chu đáo, khéo léo)</option>
+            <option value="professional" ${wa.persona_style === 'professional' ? 'selected' : ''}>💼 Chuyên nghiệp cấp cao (Executive Staff)</option>
+            <option value="grumpy" ${wa.persona_style === 'grumpy' ? 'selected' : ''}>😤 Cọc cằn Tsundere (Gắt nhẹ nhưng việc siêu chuẩn)</option>
+            <option value="troll" ${wa.persona_style === 'troll' ? 'selected' : ''}>🤡 Hài hước & Chọc ngoáy (Tếu táo, meme)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="text-sm muted" style="display:block;margin-bottom:4px">GHI CHÚ & LƯU Ý HÀNH XỬ RIÊNG CHO KÊNH WHATSAPP (CHANNEL DIRECTIVES):</label>
+        <textarea id="wa-cfg-notes" class="form-input" style="width:100%;height:68px;resize:none" placeholder="Lưu ý riêng cho Bé Heo khi trả lời trên WhatsApp (ví dụ: Kênh phục vụ đối tác quốc tế, trả lời song ngữ Anh-Việt, hỗ trợ khách hàng nước ngoài)...">${escapeHtml(wa.channel_notes || '')}</textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn primary sm" style="background:#25D366;border-color:#25D366;color:#052e16;font-weight:700" onclick="saveWhatsAppChannelConfig()">💾 Lưu Cấu Hình Kênh WhatsApp</button>
+      </div>
+    </div>
+
     <!-- WhatsApp Conversation / Session Log -->
     <div class="card card-pad">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -2376,6 +2475,7 @@ function renderWhatsAppGatewayView() {
 
 function renderZaloGatewayView() {
   const isConn = state.zalo && state.zalo.connected === true;
+  const zaloGroups = state.groups.filter(g => (g.channel || 'zalo') === 'zalo');
 
   return `
     <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;margin-bottom:20px">
@@ -2451,20 +2551,55 @@ function renderZaloGatewayView() {
       <div class="card card-pad">
         <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:14px">Gửi Tin Nhắn Trực Tiếp Qua Gateway</div>
         <div class="form-group">
-          <label class="form-label">Chọn Nhóm Đích</label>
+          <label class="form-label">Chọn Nhóm Đích (Kênh Zalo)</label>
           <select class="form-select" id="zalo-test-group">
-            ${state.groups.length === 0 ? `
-              <option value="">(Chưa có nhóm nào - vui lòng tạo nhóm trước)</option>
-            ` : state.groups.map(g => `<option value="${g.name}">${g.name} (${g.members || 1} thành viên)</option>`).join('')}
+            ${zaloGroups.length === 0 ? `
+              <option value="">(Chưa có nhóm Zalo nào - vui lòng tạo nhóm trước)</option>
+            ` : zaloGroups.map(g => `<option value="${g.name}">${g.name} (${g.members || 1} thành viên)</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">Nội Dung Chỉ Đạo</label>
           <input type="text" class="form-input" id="zalo-test-msg" value="@Bé Heo báo cáo tiến độ công việc hôm nay!">
         </div>
-        <button class="btn primary" style="width:100%;justify-content:center" onclick="sendZaloTestMessage()" ${state.groups.length === 0 ? 'disabled' : ''}>
+        <button class="btn primary" style="width:100%;justify-content:center" onclick="sendZaloTestMessage()" ${zaloGroups.length === 0 ? 'disabled' : ''}>
           Gửi Tin Nhắn Kiểm Thử ➔
         </button>
+      </div>
+    </div>
+
+    <!-- Zalo Specific Channel Config (Decoupled) -->
+    <div class="card card-pad" style="margin-bottom:20px;border:1px solid rgba(2,132,199,0.3)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
+          <span>⚙️ Cấu Hình Riêng Biệt Kênh Zalo Gateway (Độc Lập 100%)</span>
+        </div>
+        <span class="badge" style="background:rgba(2,132,199,0.15);color:#38bdf8;border:1px solid rgba(2,132,199,0.3);font-weight:700">Tách Biệt Tuyệt Đối</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+        <div>
+          <label class="text-sm muted" style="display:block;margin-bottom:4px">TÊN BÉ HEO TRÊN ZALO:</label>
+          <input id="zalo-cfg-bot-name" class="form-input" style="width:100%" value="${escapeHtml(state.zalo.bot_name || 'Bé Heo (Zalo)')}" placeholder="Ví dụ: Bé Heo Zalo, Trợ Lý Heo...">
+        </div>
+        <div>
+          <label class="text-sm muted" style="display:block;margin-bottom:4px">PHONG CÁCH THÁI ĐỘ MẶC ĐỊNH TRÊN ZALO:</label>
+          <select id="zalo-cfg-persona" class="form-select" style="width:100%">
+            <option value="inherit" ${(state.zalo.persona_style || 'inherit') === 'inherit' ? 'selected' : ''}>🔄 Kế thừa phong cách chung của Bé Heo</option>
+            <option value="default" ${state.zalo.persona_style === 'default' ? 'selected' : ''}>🌸 Mặc định (Duyên dáng, tôn trọng)</option>
+            <option value="serious" ${state.zalo.persona_style === 'serious' ? 'selected' : ''}>🏛️ Nghiêm túc hành chính (BLUF, chuẩn xác con số)</option>
+            <option value="sweet" ${state.zalo.persona_style === 'sweet' ? 'selected' : ''}>🥰 Ngọt ngào & Dẻo miệng (Chu đáo, khéo léo)</option>
+            <option value="professional" ${state.zalo.persona_style === 'professional' ? 'selected' : ''}>💼 Chuyên nghiệp cấp cao (Executive Staff)</option>
+            <option value="grumpy" ${state.zalo.persona_style === 'grumpy' ? 'selected' : ''}>😤 Cọc cằn Tsundere (Gắt nhẹ nhưng việc siêu chuẩn)</option>
+            <option value="troll" ${state.zalo.persona_style === 'troll' ? 'selected' : ''}>🤡 Hài hước & Chọc ngoáy (Tếu táo, meme)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="text-sm muted" style="display:block;margin-bottom:4px">GHI CHÚ & LƯU Ý HÀNH XỬ RIÊNG CHO KÊNH ZALO (CHANNEL DIRECTIVES):</label>
+        <textarea id="zalo-cfg-notes" class="form-input" style="width:100%;height:68px;resize:none" placeholder="Lưu ý riêng cho Bé Heo khi trả lời trên Zalo (ví dụ: Kênh kết nối cá nhân & đối tác Việt Nam, xưng em gọi Sếp, bảo mật danh bạ)...">${escapeHtml(state.zalo.channel_notes || '')}</textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn primary sm" onclick="saveZaloChannelConfig()">💾 Lưu Cấu Hình Kênh Zalo</button>
       </div>
     </div>
 
@@ -2497,21 +2632,43 @@ function renderZaloGatewayView() {
 }
 
 function renderGroup360View() {
+  const groupFilter = state.groupChannelFilter || 'all';
+  const displayedGroups = state.groups.filter(g => groupFilter === 'all' || (g.channel || 'zalo') === groupFilter);
+  const zaloGroupCount = state.groups.filter(g => (g.channel || 'zalo') === 'zalo').length;
+  const waGroupCount = state.groups.filter(g => (g.channel || 'zalo') === 'whatsapp').length;
+
   return `
     <div class="card">
       <div class="card-header">
         <div class="card-title">◉ Danh Sách Nhóm Trực Tuyến & Phối Hợp Đa Kênh</div>
         <div style="display:flex;gap:10px;align-items:center">
-          <span class="badge ${state.groups.length > 0 ? 'good' : 'neutral'}">${state.groups.length} Nhóm</span>
+          <span class="badge ${state.groups.length > 0 ? 'good' : 'neutral'}">${state.groups.length} Nhóm Tổng</span>
           <button class="btn primary sm" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới</button>
         </div>
       </div>
-      ${state.groups.length === 0 ? `
+      
+      <!-- Channel Filter Bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg-body);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="text-sm muted" style="font-weight:600">LỌC KÊNH LIÊN LẠC:</span>
+          <button class="btn sm ${groupFilter === 'all' ? 'primary' : ''}" onclick="setGroupChannelFilter('all')">
+            Tất Cả (${state.groups.length})
+          </button>
+          <button class="btn sm ${groupFilter === 'zalo' ? 'primary' : ''}" style="${groupFilter === 'zalo' ? '' : 'color:#38bdf8'}" onclick="setGroupChannelFilter('zalo')">
+            💬 Kênh Zalo (${zaloGroupCount})
+          </button>
+          <button class="btn sm ${groupFilter === 'whatsapp' ? 'primary' : ''}" style="${groupFilter === 'whatsapp' ? 'background:#25D366;border-color:#25D366;color:#052e16' : 'color:#25D366'}" onclick="setGroupChannelFilter('whatsapp')">
+            📱 Kênh WhatsApp (${waGroupCount})
+          </button>
+        </div>
+      </div>
+
+      ${displayedGroups.length === 0 ? `
         <div style="text-align:center;padding:48px 24px;background:var(--bg-body);border:1px dashed var(--border);border-radius:12px;margin:16px">
           <div style="font-size:40px;margin-bottom:12px">👥</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Chưa Có Nhóm Trực Chiến Nào Trong Hệ Thống</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Không Có Nhóm Nào Thuộc Bộ Lọc Đang Chọn</div>
           <div style="font-size:13px;color:var(--text-muted);max-width:540px;margin:0 auto 20px auto;line-height:1.5">
-            Hệ thống Heo OS đang ở trạng thái Pure Clean Slate sẵn sàng. Bạn có thể chủ động khởi tạo nhóm làm việc mới hoặc kết nối Zalo / WhatsApp để tự động đồng bộ danh sách nhóm thực tế.
+            ${groupFilter === 'all' ? 'Hệ thống Heo OS đang ở trạng thái Pure Clean Slate sẵn sàng. Bạn có thể chủ động khởi tạo nhóm làm việc mới hoặc kết nối Zalo / WhatsApp để tự động đồng bộ danh sách nhóm thực tế.' : `Chưa có nhóm nào được gán cho ${groupFilter === 'zalo' ? 'Kênh Zalo' : 'Kênh WhatsApp'}.`}
           </div>
           <button class="btn primary" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới Ngay</button>
         </div>
@@ -2521,6 +2678,7 @@ function renderGroup360View() {
             <thead>
               <tr>
                 <th>Mã Nhóm (GID)</th>
+                <th>Kênh</th>
                 <th>Tên Nhóm</th>
                 <th>Mục Tiêu Nhóm</th>
                 <th>Phong Thái Thái Độ</th>
@@ -2530,9 +2688,10 @@ function renderGroup360View() {
               </tr>
             </thead>
             <tbody>
-              ${state.groups.map(g => `
+              ${displayedGroups.map(g => `
                 <tr>
                   <td style="font-family:var(--mono)">${g.id}</td>
+                  <td>${getChannelBadge(g.channel)}</td>
                   <td style="font-weight:700;color:var(--text)">${escapeHtml(g.name)}</td>
                   <td class="muted">${escapeHtml(g.purpose || 'Nhóm trực chiến')}</td>
                   <td>${getPersonaBadge(g.persona_style || 'inherit')}</td>
@@ -2555,21 +2714,43 @@ function renderGroup360View() {
 }
 
 function renderPerson360View() {
+  const personFilter = state.personChannelFilter || 'all';
+  const displayedPeople = state.people.filter(p => personFilter === 'all' || (p.channel || 'zalo') === personFilter);
+  const zaloPersonCount = state.people.filter(p => (p.channel || 'zalo') === 'zalo').length;
+  const waPersonCount = state.people.filter(p => (p.channel || 'zalo') === 'whatsapp').length;
+
   return `
     <div class="card">
       <div class="card-header">
         <div class="card-title">◎ Danh Bạ Nhân Sự & Đối Tác Thực Tế</div>
         <div style="display:flex;gap:10px;align-items:center">
-          <span class="badge ${state.people.length > 0 ? 'good' : 'neutral'}">${state.people.length} Nhân Sự</span>
+          <span class="badge ${state.people.length > 0 ? 'good' : 'neutral'}">${state.people.length} Nhân Sự Tổng</span>
           <button class="btn primary sm" onclick="openNewPersonModal()">+ Thêm Nhân Sự Mới</button>
         </div>
       </div>
-      ${state.people.length === 0 ? `
+
+      <!-- Channel Filter Bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg-body);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="text-sm muted" style="font-weight:600">LỌC KÊNH LIÊN LẠC:</span>
+          <button class="btn sm ${personFilter === 'all' ? 'primary' : ''}" onclick="setPersonChannelFilter('all')">
+            Tất Cả (${state.people.length})
+          </button>
+          <button class="btn sm ${personFilter === 'zalo' ? 'primary' : ''}" style="${personFilter === 'zalo' ? '' : 'color:#38bdf8'}" onclick="setPersonChannelFilter('zalo')">
+            💬 Kênh Zalo (${zaloPersonCount})
+          </button>
+          <button class="btn sm ${personFilter === 'whatsapp' ? 'primary' : ''}" style="${personFilter === 'whatsapp' ? 'background:#25D366;border-color:#25D366;color:#052e16' : 'color:#25D366'}" onclick="setPersonChannelFilter('whatsapp')">
+            📱 Kênh WhatsApp (${waPersonCount})
+          </button>
+        </div>
+      </div>
+
+      ${displayedPeople.length === 0 ? `
         <div style="text-align:center;padding:48px 24px;background:var(--bg-body);border:1px dashed var(--border);border-radius:12px;margin:16px">
           <div style="font-size:40px;margin-bottom:12px">👤</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Danh Bạ Hiện Đang Trống (Pure Clean Slate)</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Không Có Nhân Sự Nào Thuộc Bộ Lọc Đang Chọn</div>
           <div style="font-size:13px;color:var(--text-muted);max-width:540px;margin:0 auto 20px auto;line-height:1.5">
-            Chưa có nhân sự hoặc đối tác nào trong danh bạ liên hệ. Bấm nút bên dưới để thêm thành viên hoặc hệ thống sẽ tự động cập nhật khi có tin nhắn từ kênh Zalo / WhatsApp.
+            ${personFilter === 'all' ? 'Chưa có nhân sự hoặc đối tác nào trong danh bạ liên hệ. Bấm nút bên dưới để thêm thành viên hoặc hệ thống sẽ tự động cập nhật khi có tin nhắn từ kênh Zalo / WhatsApp.' : `Chưa có liên hệ nào thuộc ${personFilter === 'zalo' ? 'Kênh Zalo' : 'Kênh WhatsApp'}.`}
           </div>
           <button class="btn primary" onclick="openNewPersonModal()">+ Thêm Nhân Sự / Đối Tác Mới</button>
         </div>
@@ -2579,6 +2760,7 @@ function renderPerson360View() {
             <thead>
               <tr>
                 <th>Họ Và Tên</th>
+                <th>Kênh</th>
                 <th>Vai Trò</th>
                 <th>Nhóm Trực Thuộc</th>
                 <th>Thái Độ & Xưng Hô</th>
@@ -2588,9 +2770,10 @@ function renderPerson360View() {
               </tr>
             </thead>
             <tbody>
-              ${state.people.map(p => `
+              ${displayedPeople.map(p => `
                 <tr>
                   <td style="font-weight:700;color:var(--text)">${escapeHtml(p.name)}</td>
+                  <td>${getChannelBadge(p.channel)}</td>
                   <td><span class="badge ${p.id === 'P-OWNER' ? 'good' : 'neutral'}">${escapeHtml(p.role)}</span></td>
                   <td>${escapeHtml(p.groups)}</td>
                   <td>${getPersonToneBadge(p.persona_style || 'inherit')}</td>
@@ -2612,6 +2795,83 @@ function renderPerson360View() {
   `;
 }
 
+function setGroupChannelFilter(ch) {
+  state.groupChannelFilter = ch;
+  renderActiveHub();
+}
+
+function setPersonChannelFilter(ch) {
+  state.personChannelFilter = ch;
+  renderActiveHub();
+}
+
+async function toggleChannel(channel) {
+  const ch = channel.toLowerCase();
+  showToast(`Đang chuyển trạng thái Kênh ${ch.toUpperCase()}...`);
+  try {
+    const res = await fetch(`/api/${ch}/toggle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(d.message || `Đã cập nhật kênh ${ch.toUpperCase()}`);
+      await fetchAllData();
+      renderActiveHub();
+    } else {
+      showToast('Lỗi: ' + (d.error || d.message), true);
+    }
+  } catch (err) {
+    showToast('Lỗi kết nối khi đổi trạng thái kênh!', true);
+  }
+}
+
+async function saveZaloChannelConfig() {
+  const bot_name = ($('#zalo-cfg-bot-name') ? $('#zalo-cfg-bot-name').value : '').trim();
+  const persona_style = $('#zalo-cfg-persona') ? $('#zalo-cfg-persona').value : 'inherit';
+  const channel_notes = ($('#zalo-cfg-notes') ? $('#zalo-cfg-notes').value : '').trim();
+  showToast('Đang lưu cấu hình riêng Kênh Zalo...');
+  try {
+    const res = await fetch('/api/zalo/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bot_name, persona_style, channel_notes })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(d.message || 'Đã lưu cấu hình Kênh Zalo!');
+      await fetchAllData();
+    } else {
+      showToast('Lỗi: ' + (d.error || d.message), true);
+    }
+  } catch (err) {
+    showToast('Lỗi khi lưu cấu hình Zalo', true);
+  }
+}
+
+async function saveWhatsAppChannelConfig() {
+  const bot_name = ($('#wa-cfg-bot-name') ? $('#wa-cfg-bot-name').value : '').trim();
+  const persona_style = $('#wa-cfg-persona') ? $('#wa-cfg-persona').value : 'inherit';
+  const channel_notes = ($('#wa-cfg-notes') ? $('#wa-cfg-notes').value : '').trim();
+  showToast('Đang lưu cấu hình riêng Kênh WhatsApp...');
+  try {
+    const res = await fetch('/api/whatsapp/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bot_name, persona_style, channel_notes })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(d.message || 'Đã lưu cấu hình Kênh WhatsApp!');
+      await fetchAllData();
+    } else {
+      showToast('Lỗi: ' + (d.error || d.message), true);
+    }
+  } catch (err) {
+    showToast('Lỗi khi lưu cấu hình WhatsApp', true);
+  }
+}
 
 async function refreshWhatsAppQR() {
   showToast('Đang làm mới mã QR WhatsApp Multi-Device...');

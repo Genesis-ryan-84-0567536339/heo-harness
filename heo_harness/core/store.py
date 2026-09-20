@@ -244,7 +244,8 @@ class HeoDataStore:
             "boss_name", "boss_caller_name", "boss_uid", "boss_email", "bot_name",
             "model", "effort", "auto_claim_boss", "disclaimer_accepted",
             "bot_about", "bot_persona", "bot_custom_persona", "bot_global_notes",
-            "bot_enabled", "bot_status_message", "onboarding_completed", "active_account_id"
+            "bot_enabled", "bot_status_message", "onboarding_completed", "active_account_id",
+            "zalo", "whatsapp"
         ]
         for k in allowed_keys:
             if k in new_data:
@@ -336,6 +337,38 @@ class HeoDataStore:
             "bot_enabled": new_val,
             "status_text": status_text,
             "message": f"Bé Heo hiện đang ở chế độ: {status_text}"
+        }
+
+    # ==================== INDEPENDENT CHANNEL TOGGLES ====================
+    def is_channel_enabled(self, channel: str) -> bool:
+        if not self.is_bot_enabled():
+            return False
+        cfg = self.get_config()
+        ch = channel.lower().strip()
+        ch_cfg = cfg.get(ch, {})
+        return bool(ch_cfg.get("enabled", True))
+
+    def toggle_channel(self, channel: str, enabled: bool = None) -> dict:
+        cfg = self._load_config_file()
+        ch = channel.lower().strip()
+        if ch not in cfg:
+            cfg[ch] = {}
+        current = bool(cfg[ch].get("enabled", True))
+        new_val = (not current) if enabled is None else bool(enabled)
+        cfg[ch]["enabled"] = new_val
+        with open(self.config_file, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=2)
+
+        status_text = "BẬT (ACTIVE)" if new_val else "TẮT (MUTED)"
+        ch_name = "Zalo Gateway" if ch == "zalo" else "WhatsApp Gateway" if ch == "whatsapp" else ch.upper()
+        self.add_audit("owner", f"{ch}.toggle", f"{ch.upper()}_GATEWAY", f"Chuyển trạng thái kênh {ch_name}: {status_text}", "SUCCESS")
+        self.add_live_log(ch, "INFO" if new_val else "WARN", f"Kênh {ch_name} đã được {status_text} độc lập bởi Sếp.")
+        return {
+            "ok": True,
+            "channel": ch,
+            "enabled": new_val,
+            "status_text": status_text,
+            "message": f"Kênh {ch_name} hiện đang ở trạng thái: {status_text}"
         }
 
     # ==================== REAL-TIME LIVE LOG STREAM ====================
@@ -1039,9 +1072,11 @@ class HeoDataStore:
 
         phone = wa_cfg.get("phone_number", "Chưa liên kết") if has_real_session else "Chờ quét mã QR"
         return {
-            "enabled": wa_cfg.get("enabled", True),
+            "enabled": self.is_channel_enabled("whatsapp"),
             "phone_number": phone,
             "bot_name": wa_cfg.get("bot_name", "Bé Heo (WhatsApp Gateway)"),
+            "persona_style": wa_cfg.get("persona_style", "inherit"),
+            "channel_notes": wa_cfg.get("channel_notes", ""),
             "connected": has_real_session,
             "session_id": "wa_active_session" if has_real_session else "",
             "filter_tag": wa_cfg.get("filter_tag", True),
@@ -1050,11 +1085,12 @@ class HeoDataStore:
         }
 
     def update_whatsapp_config(self, updates: dict) -> dict:
-        cfg = self.get_config()
+        cfg = self._load_config_file()
         if "whatsapp" not in cfg:
             cfg["whatsapp"] = {}
         cfg["whatsapp"].update(updates)
-        self.update_config(cfg)
+        with open(self.config_file, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=2)
         self.add_audit("owner", "whatsapp.config_update", "WHATSAPP_CFG", "Cập nhật cấu hình WhatsApp", "SUCCESS")
         return self.get_whatsapp_config()
 
@@ -1235,16 +1271,25 @@ class HeoDataStore:
 
     # ==================== GROUPS & PEOPLE ====================
     def get_groups(self) -> list:
-        return self.state.get("groups", [])
+        groups = self.state.get("groups", [])
+        for g in groups:
+            if "channel" not in g:
+                g["channel"] = "whatsapp" if (isinstance(g.get("id"), str) and "@g.us" in g.get("id")) else "zalo"
+        return groups
 
     def get_people(self) -> list:
-        return self.state.get("people", [])
+        people = self.state.get("people", [])
+        for p in people:
+            if "channel" not in p:
+                p["channel"] = "whatsapp" if (isinstance(p.get("phone"), str) and p.get("phone").startswith("+")) else "zalo"
+        return people
 
-    def add_group(self, name: str, purpose: str = "", policy: str = "", instruction: str = "", persona_style: str = "inherit", custom_persona: str = "", notes: str = "") -> dict:
+    def add_group(self, name: str, purpose: str = "", policy: str = "", instruction: str = "", persona_style: str = "inherit", custom_persona: str = "", notes: str = "", channel: str = "zalo") -> dict:
         gid = f"G-{uuid.uuid4().hex[:6].upper()}"
         item = {
             "id": gid,
             "name": name,
+            "channel": channel.lower().strip() if channel else "zalo",
             "purpose": purpose or "Nhóm trực chiến doanh nghiệp",
             "policy": policy or "POL-G-CUSTOM v1",
             "instruction": instruction or "INS-G-CUSTOM v1",
@@ -1258,14 +1303,14 @@ class HeoDataStore:
         }
         self.state.setdefault("groups", []).append(item)
         self._save_state()
-        self.add_audit("owner", "group.create", gid, f"Khởi tạo nhóm: {name}", "SUCCESS")
+        self.add_audit("owner", "group.create", gid, f"Khởi tạo nhóm ({item['channel'].upper()}): {name}", "SUCCESS")
         return item
 
     def update_group(self, group_id: str, data: dict) -> dict:
-        groups = self.state.get("groups", [])
+        groups = self.get_groups()
         for g in groups:
             if g.get("id") == group_id:
-                for k in ["name", "purpose", "policy", "instruction", "persona_style", "custom_persona", "notes", "bot_active"]:
+                for k in ["name", "purpose", "policy", "instruction", "persona_style", "custom_persona", "notes", "bot_active", "channel"]:
                     if k in data:
                         g[k] = data[k]
                 self._save_state()
@@ -1283,10 +1328,11 @@ class HeoDataStore:
             return True
         return False
 
-    def add_person(self, name: str, role: str = "Chuyên viên", groups: str = "", email: str = "", phone: str = "", persona_style: str = "inherit", custom_persona: str = "", notes: str = "") -> dict:
+    def add_person(self, name: str, role: str = "Chuyên viên", groups: str = "", email: str = "", phone: str = "", persona_style: str = "inherit", custom_persona: str = "", notes: str = "", channel: str = "zalo") -> dict:
         pid = f"P-{uuid.uuid4().hex[:6].upper()}"
         item = {
             "id": pid,
+            "channel": channel.lower().strip() if channel else "zalo",
             "uid": str(int(time.time() * 1000) % 100000000),
             "name": name,
             "role": role,
@@ -1309,7 +1355,7 @@ class HeoDataStore:
         people = self.state.get("people", [])
         for p in people:
             if p.get("id") == person_id:
-                for k in ["name", "role", "groups", "email", "phone", "rel", "persona_style", "custom_persona", "notes"]:
+                for k in ["name", "role", "groups", "email", "phone", "rel", "persona_style", "custom_persona", "notes", "channel"]:
                     if k in data:
                         p[k] = data[k]
                 self._save_state()
@@ -1504,15 +1550,21 @@ class HeoDataStore:
                 except Exception:
                     pass
 
+        cfg = self.get_config()
+        zalo_cfg = cfg.get("zalo", {})
+        zalo["enabled"] = self.is_channel_enabled("zalo")
+        zalo["bot_name"] = zalo_cfg.get("bot_name", "Bé Heo (Zalo)")
+        zalo["persona_style"] = zalo_cfg.get("persona_style", "inherit")
+        zalo["channel_notes"] = zalo_cfg.get("channel_notes", "")
         zalo["connected"] = has_session and is_running
         zalo["logged_in"] = has_session
         zalo["bridge_alive"] = is_running
         zalo["account_name"] = account_name if has_session else "Chưa liên kết"
         zalo["account_id"] = account_id
         zalo["phone"] = phone
-        zalo["tag_filter"] = zalo.get("tag_filter", True)
-        zalo["groups"] = self.state.get("groups", [])
-        zalo["synced_groups"] = [g.get("name", "") for g in self.state.get("groups", [])]
+        zalo["tag_filter"] = zalo_cfg.get("tag_filter", zalo.get("tag_filter", True))
+        zalo["groups"] = [g for g in self.get_groups() if g.get("channel", "zalo") == "zalo"]
+        zalo["synced_groups"] = [g.get("name", "") for g in zalo["groups"]]
         zalo.setdefault("recent_messages", [])
         return zalo
 
@@ -1552,6 +1604,7 @@ class HeoDataStore:
                     ag = json.load(f)
                     existing_ids = {g.get("id") for g in self.state.get("groups", [])}
                     for g in ag:
+                        g["channel"] = "zalo"
                         if g.get("id") not in existing_ids:
                             self.state.setdefault("groups", []).append(g)
                             loaded_count += 1

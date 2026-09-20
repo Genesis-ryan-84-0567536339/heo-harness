@@ -97,10 +97,19 @@ class ZaloChannelPlugin(BasePlugin):
         store = self.ctx.inject("data_store") or self.ctx.inject("store")
         if store and hasattr(store, "is_bot_enabled") and not store.is_bot_enabled():
             if store and hasattr(store, "add_live_log"):
-                store.add_live_log("zalo", "WARN", f"Bé Heo đang TẠM DỪNG, bỏ qua xử lý tin nhắn từ {sender_name}", content)
+                store.add_live_log("zalo", "WARN", f"Bé Heo đang TẠM DỪNG (Toàn Cục), bỏ qua xử lý tin nhắn từ {sender_name}", content)
             return {
                 "handled": False,
                 "reason": "Bot is paused (Emergency Pause active)",
+                "evidence_ref": raw_evidence_ref
+            }
+
+        if store and hasattr(store, "is_channel_enabled") and not store.is_channel_enabled("zalo"):
+            if store and hasattr(store, "add_live_log"):
+                store.add_live_log("zalo", "WARN", f"Kênh Zalo Gateway đang TẮT độc lập, bỏ qua xử lý tin nhắn từ {sender_name}", content)
+            return {
+                "handled": False,
+                "reason": "Zalo Gateway is disabled independently",
                 "evidence_ref": raw_evidence_ref
             }
 
