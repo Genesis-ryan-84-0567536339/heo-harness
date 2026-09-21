@@ -791,14 +791,29 @@
       </div>
     </div>
 
-    <nav class="nav-hub-list">
-      <div class="nav-section-label">Vận hành hằng ngày</div>
+        <nav class="nav-hub-list">
+      <!-- ═══ MIỀN 1: ĐIỀU HÀNH & THEO DÕI ═══ -->
+      <div class="nav-section-label">Điều hành & Theo dõi</div>
       <button class="nav-hub-item active" data-hub="command" onclick="switchHub('command')">
         <div class="nav-hub-left">
           <i class="ph ph-gauge"></i>
-          <span>Tổng quan</span>
+          <span>Tổng quan điều hành</span>
         </div>
         <span class="nav-badge danger" id="badge-attention">0</span>
+      </button>
+      <button class="nav-hub-item" data-hub="work" onclick="switchHub('work')">
+        <div class="nav-hub-left">
+          <i class="ph ph-kanban"></i>
+          <span>Công việc & Tiến độ</span>
+        </div>
+        <span class="nav-badge neutral" id="badge-works">0</span>
+      </button>
+      <button class="nav-hub-item" data-hub="approvals" onclick="switchHub('approvals')">
+        <div class="nav-hub-left">
+          <i class="ph ph-seal-check"></i>
+          <span>Phê duyệt chiến lược</span>
+        </div>
+        <span class="nav-badge danger" id="badge-approvals">0</span>
       </button>
       <button class="nav-hub-item" data-hub="zalo" onclick="switchHub('zalo')">
         <div class="nav-hub-left">
@@ -814,22 +829,9 @@
         </div>
         <span class="nav-badge" id="badge-whatsapp-status" style="background:var(--status-warn-bg);color:var(--status-warn)">QR</span>
       </button>
-      <button class="nav-hub-item" data-hub="work" onclick="switchHub('work')">
-        <div class="nav-hub-left">
-          <i class="ph ph-kanban"></i>
-          <span>Công việc</span>
-        </div>
-        <span class="nav-badge neutral" id="badge-works">0</span>
-      </button>
-      <button class="nav-hub-item" data-hub="governance" onclick="switchHub('governance')">
-        <div class="nav-hub-left">
-          <i class="ph ph-seal-check"></i>
-          <span>Phê duyệt & PIN</span>
-        </div>
-        <span class="nav-badge danger" id="badge-approvals">0</span>
-      </button>
 
-      <div class="nav-section-label">Dữ liệu & Tri thức</div>
+      <!-- ═══ MIỀN 2: DỮ LIỆU & TƯ LIỆU ═══ -->
+      <div class="nav-section-label">Dữ liệu & Tư liệu</div>
       <button class="nav-hub-item" data-hub="directory" onclick="switchHub('directory')">
         <div class="nav-hub-left">
           <i class="ph ph-users-three"></i>
@@ -840,40 +842,69 @@
       <button class="nav-hub-item" data-hub="media_vault" onclick="switchHub('media_vault')">
         <div class="nav-hub-left">
           <i class="ph ph-folders"></i>
-          <span>Kho tài liệu & Media</span>
+          <span>Kho tư liệu & Media</span>
         </div>
         <span class="nav-badge neutral" id="badge-media-vault">0</span>
       </button>
+      <button class="nav-hub-item" data-hub="chat_intelligence" onclick="switchHub('chat_intelligence')">
+        <div class="nav-hub-left">
+          <i class="ph ph-cpu"></i>
+          <span>Khai thác Chat Data</span>
+        </div>
+        <span class="nav-badge good" id="badge-chat-intel">0</span>
+      </button>
+
+      <!-- ═══ MIỀN 3: THỐNG KÊ & DỰ BÁO ═══ -->
+      <div class="nav-section-label">Thống kê & Dự báo</div>
       <button class="nav-hub-item" data-hub="intelligence" onclick="switchHub('intelligence')">
         <div class="nav-hub-left">
           <i class="ph ph-chart-line-up"></i>
-          <span>Báo cáo & Dự báo</span>
+          <span>Báo cáo & Dự báo 72h</span>
         </div>
       </button>
+      <button class="nav-hub-item" data-hub="system_logs" onclick="switchHub('system_logs')">
+        <div class="nav-hub-left">
+          <i class="ph ph-activity"></i>
+          <span>Nhật ký trực chiến</span>
+        </div>
+        <span class="nav-badge live">LIVE</span>
+      </button>
 
-      <div class="nav-section-label">Trợ lý</div>
+      <!-- ═══ MIỀN 4: THIẾT LẬP & CÀI ĐẶT ═══ -->
+      <div class="nav-section-label">Thiết lập & Cài đặt</div>
       <button class="nav-hub-item" data-hub="assistant" onclick="switchHub('assistant')">
         <div class="nav-hub-left">
           <i class="ph ph-sparkle"></i>
-          <span>Bé Heo & Quota</span>
+          <span>Trợ lý Bé Heo & Quota</span>
         </div>
         <span class="nav-badge live">0 ₫</span>
       </button>
-
-      <div class="nav-section-label">Hệ thống</div>
+      <button class="nav-hub-item" data-hub="ai_brain" onclick="switchHub('ai_brain')">
+        <div class="nav-hub-left">
+          <i class="ph ph-atom"></i>
+          <span>Bộ não AI & Đổi Model</span>
+        </div>
+        <span class="nav-badge neutral">AI</span>
+      </button>
       <button class="nav-hub-item" data-hub="mcp_connectors" onclick="switchHub('mcp_connectors')">
         <div class="nav-hub-left">
           <i class="ph ph-plugs-connected"></i>
-          <span>Kho ứng dụng MCP</span>
+          <span>Kho ứng dụng MCP Hub</span>
         </div>
         <span class="nav-badge good" id="badge-mcp-count">48 App</span>
       </button>
       <button class="nav-hub-item" data-hub="modules" onclick="switchHub('modules')">
         <div class="nav-hub-left">
           <i class="ph ph-puzzle-piece"></i>
-          <span>Tiện ích mở rộng DSH</span>
+          <span>Khung gầm & Plugin DSH</span>
         </div>
         <span class="nav-badge good" id="badge-modules-count">11</span>
+      </button>
+      <button class="nav-hub-item" data-hub="security_pin" onclick="switchHub('security_pin')">
+        <div class="nav-hub-left">
+          <i class="ph ph-shield-check"></i>
+          <span>An ninh & Mã PIN Admin</span>
+        </div>
       </button>
     </nav>
 
@@ -1310,15 +1341,39 @@ async function toggleMasterBot() {
 // ROUTING & HUB SWITCHING
 // ==========================================
 function switchHub(hubKey, subtabKey = null) {
-  state.activeHub = hubKey;
-  if (subtabKey) {
-    state.subtabs[hubKey] = subtabKey;
+  let effectiveHub = hubKey;
+  let effectiveSubtab = subtabKey;
+
+  // Xử lý các miền chức năng gom nhóm thông minh
+  if (hubKey === 'approvals') {
+    effectiveHub = 'governance';
+    effectiveSubtab = 'approvals';
+  } else if (hubKey === 'system_logs') {
+    effectiveHub = 'governance';
+    effectiveSubtab = 'logs';
+  } else if (hubKey === 'ai_brain') {
+    effectiveHub = 'assistant';
+    effectiveSubtab = 'quota';
+  } else if (hubKey === 'security_pin') {
+    effectiveHub = 'governance';
+    effectiveSubtab = 'pin';
   }
+
+  state.activeHub = effectiveHub;
+  if (effectiveSubtab) {
+    state.subtabs[effectiveHub] = effectiveSubtab;
+  }
+  
+  // Highlight đúng mục menu đang chọn
   $$('.nav-hub-item').forEach(el => {
-    el.classList.toggle('active', el.getAttribute('data-hub') === hubKey);
+    const dataHub = el.getAttribute('data-hub');
+    const isActive = dataHub === hubKey || (dataHub === effectiveHub && !['approvals', 'system_logs', 'ai_brain', 'security_pin'].includes(hubKey));
+    el.classList.toggle('active', isActive);
   });
+
   renderActiveHub();
-  if (hubKey === 'zalo') {
+
+  if (effectiveHub === 'zalo') {
     startZaloQrPolling();
   }
 }
@@ -1377,8 +1432,17 @@ function renderActiveHub() {
       break;
 
     case 'assistant':
-      titleEl.textContent = 'Trợ Lý Bé Heo & Quota AI';
-      subEl.textContent = 'Live Chat, Thiết Lập Danh Xưng Heo & Giám Sát Quota Google Antigravity';
+      const astSub = state.subtabs.assistant || 'chat';
+      if (astSub === 'quota') {
+        titleEl.textContent = 'Bộ Não AI & Giám Sát Quota';
+        subEl.textContent = 'Google Antigravity CLI 0đ Token, Xoay Vòng 4 Key Gemini & Dự Phòng DeepSeek';
+      } else if (astSub === 'heo_cfg') {
+        titleEl.textContent = 'Thiết Lập Bé Heo & Sếp';
+        subEl.textContent = 'Cấu hình danh xưng Em - Sếp, 7 thái độ persona và phạm vi phản hồi';
+      } else {
+        titleEl.textContent = 'Trợ Lý Bé Heo (Live Chat)';
+        subEl.textContent = 'Trò chuyện điều phối trực tiếp cùng Bé Heo và thực thi tác vụ';
+      }
       container.innerHTML = renderAssistantHub();
       break;
 
@@ -1401,8 +1465,17 @@ function renderActiveHub() {
       break;
 
     case 'governance':
-      titleEl.textContent = 'Mã PIN & Governance';
-      subEl.textContent = 'Mã PIN Quản Trị Viên SHA-256, Phê Duyệt SSOT & Hạ Tầng DSH';
+      const govSub = state.subtabs.governance || 'pin';
+      if (govSub === 'approvals') {
+        titleEl.textContent = 'Phê Duyệt Chiến Lược (Approvals)';
+        subEl.textContent = 'Danh sách duyệt chi P1 và cấp phép hành động an ninh SSOT của Sếp';
+      } else if (govSub === 'logs') {
+        titleEl.textContent = 'Nhật Ký Trực Chiến (Live Stream Logs)';
+        subEl.textContent = 'Giám sát luồng thông điệp thời gian thực từ Zalo, WhatsApp, Lõi Harness và Tường Lửa';
+      } else {
+        titleEl.textContent = 'An Ninh Hệ Thống & Mã PIN Admin';
+        subEl.textContent = 'Mã PIN bảo mật quản trị viên SHA-256 & Bất biến tác quyền Anh Cơ La';
+      }
       container.innerHTML = renderGovernanceHub();
       break;
 
