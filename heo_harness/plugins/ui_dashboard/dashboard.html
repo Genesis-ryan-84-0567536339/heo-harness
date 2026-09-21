@@ -1061,6 +1061,13 @@
         </div>
         <span class="nav-badge good" id="badge-modules-count">11/8</span>
       </button>
+      <button class="nav-hub-item" data-hub="mcp_connectors" onclick="switchHub('mcp_connectors')">
+        <div class="nav-hub-left">
+          <span class="nav-hub-icon">🔌</span>
+          <span>Kho Ứng Dụng MCP Hub</span>
+        </div>
+        <span class="nav-badge good" id="badge-mcp-count">7 Sẵn Sàng</span>
+      </button>
 
       <div class="nav-section-label" style="padding-left:10px;margin-top:10px">An Ninh & Quản Trị</div>
       <button class="nav-hub-item" data-hub="governance" onclick="switchHub('governance')">
@@ -1171,6 +1178,7 @@ let state = {
     assistant: 'chat',       // Default to Live Chat
     governance: 'pin',       // Default to Admin PIN & Security
     modules: 'plugins',      // Default to Active Plugins
+    mcp_connectors: 'connectors', // Default to 1-Click App Connectors
     zalo: 'gateway',         // Default to Gateway QR & Settings
     whatsapp: 'gateway'      // Default to Gateway QR & Messages
   },
@@ -1214,6 +1222,8 @@ let state = {
   chat_intel_filter: { channel: 'all', group: 'all', person: 'all', category: 'all', priority: 'all', q: '' },
   media_vault: { stats: {}, files: [] },
   media_vault_filter: { kind: 'all', group: 'all', person: 'all', channel: 'all', q: '' },
+  mcp_connectors: { total_connectors: 0, connected_connectors: 0, active_servers: 0, total_tools_ready: 0, connectors: [], servers: [] },
+  mcp_filter: { category: 'all', status: 'all', q: '' },
   work_filter: { channel: 'all', group: 'all', person: 'all', q: '' },
   theme: 'dark'
 };
@@ -1295,7 +1305,7 @@ async function fetchAllData() {
     const [
       cfgRes, gRes, qRes, pinRes, wRes, cRes, aRes, grpRes, pplRes,
       polRes, exRes, attRes, insRes, outRes, lrnRes, artRes, mtrRes, bkRes, audRes, zRes, zaloMsgRes, waRes, waMsgRes,
-      plgRes, catRes, sklRes, botRes, accRes, ciRes, mvRes
+      plgRes, catRes, sklRes, botRes, accRes, ciRes, mvRes, mcpRes
     ] = await Promise.all([
       fetch('/api/config').then(r => r.json()).catch(() => ({})),
       fetch('/api/google/info').then(r => r.json()).catch(() => ({})),
@@ -1326,7 +1336,8 @@ async function fetchAllData() {
       fetch('/api/bot/status').then(r => r.json()).catch(() => ({ enabled: true })),
       fetch('/api/accounts/list').then(r => r.json()).catch(() => ({ boss_profiles: [], channels: [] })),
       fetch('/api/chat/intelligence').then(r => r.json()).catch(() => ({ stats: {}, messages: [] })),
-      fetch('/api/media/vault').then(r => r.json()).catch(() => ({ stats: {}, files: [] }))
+      fetch('/api/media/vault').then(r => r.json()).catch(() => ({ stats: {}, files: [] })),
+      fetch('/api/mcp/connectors').then(r => r.json()).catch(() => ({}))
     ]);
 
     state.config = cfgRes.config || {};
@@ -1359,6 +1370,7 @@ async function fetchAllData() {
     state.accounts = accRes || { boss_profiles: [], channels: [] };
     state.chat_intelligence = ciRes || { stats: {}, messages: [] };
     state.media_vault = mvRes || { stats: {}, files: [] };
+    state.mcp_connectors = mcpRes || { total_connectors: 0, connected_connectors: 0, active_servers: 0, total_tools_ready: 0, connectors: [], servers: [] };
 
     updateBadges();
     renderActiveHub();
@@ -1379,6 +1391,15 @@ function updateBadges() {
   if (modBadge) {
     modBadge.textContent = `${state.plugins.length}/${state.skills.length}`;
   }
+
+  // Cập nhật số lượng MCP Connectors sẵn sàng
+  const mcpBadge = $('#badge-mcp-count');
+  if (mcpBadge) {
+    const conn = state.mcp_connectors?.connected_connectors || 0;
+    mcpBadge.textContent = `${conn} Sẵn Sàng`;
+    mcpBadge.className = `nav-badge ${conn > 0 ? 'good' : 'neutral'}`;
+  }
+
   $('#badge-works').textContent = state.works.length || 0;
   const pendingAppr = state.approvals.filter(a => a.status === 'PENDING').length;
   $('#badge-approvals').textContent = pendingAppr || 0;
@@ -1579,6 +1600,12 @@ function renderActiveHub() {
       titleEl.textContent = 'Module & Skills Hub';
       subEl.textContent = 'Quản Lý 11 Plugins DSH, 8 Kỹ Năng Nghiệp Vụ Bé Heo & Kho Thư Viện Main Repo';
       container.innerHTML = renderModulesHub();
+      break;
+
+    case 'mcp_connectors':
+      titleEl.textContent = 'Kho Ứng Dụng MCP Hub (App Connectors)';
+      subEl.textContent = 'Tích hợp 1-Click các dịch vụ chuẩn hóa (Google Drive, Gmail, GitHub, Playwright...) và MCP Servers tùy chỉnh';
+      container.innerHTML = renderMcpConnectorsHub();
       break;
 
     case 'governance':
@@ -6481,6 +6508,845 @@ async function installCatalogPlugin(id) {
     showToast(d.error || 'Lỗi cài đặt plugin');
   }
 }
+
+// ==========================================
+// MCP CONNECTORS & APP HUB
+// ==========================================
+
+function renderMcpConnectorsHub() {
+  const currentSub = state.subtabs.mcp_connectors || 'connectors';
+  const mcpData = state.mcp_connectors || { total_connectors: 0, connected_connectors: 0, active_servers: 0, total_tools_ready: 0, connectors: [], servers: [] };
+  const totalCount = mcpData.total_connectors || (mcpData.connectors ? mcpData.connectors.length : 14);
+  const activeCount = mcpData.active_servers || 0;
+
+  return `
+    <div class="hub-header">
+      <div class="hub-header-top">
+        <div>
+          <h1 class="hub-title">🔌 Kho Ứng Dụng MCP Hub (App Connectors)</h1>
+          <p class="hub-desc">
+            Kết nối 1-Click các dịch vụ chuẩn hóa (Google Drive, Gmail, Calendar, GitHub, Playwright, Database, DevOps...) · Tích hợp Antigravity 0đ Token API · Quản lý máy chủ MCP Server Stdio & SSE
+          </p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn sm" onclick="switchSubtab('mcp_connectors', 'custom')" style="display:inline-flex;align-items:center;gap:6px">
+            ➕ Thêm MCP Tùy Chỉnh
+          </button>
+          <button class="btn primary sm" onclick="fetchAllData()" style="display:inline-flex;align-items:center;gap:6px">
+            🔄 Làm Mới Kết Nối
+          </button>
+        </div>
+      </div>
+
+      <!-- Hub Subtabs -->
+      <div class="hub-subnav" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button class="hub-subnav-btn ${currentSub === 'connectors' ? 'active' : ''}" onclick="switchSubtab('mcp_connectors', 'connectors')">
+            🏪 Kho Ứng Dụng 1-Click (${totalCount})
+          </button>
+          <button class="hub-subnav-btn ${currentSub === 'servers' ? 'active' : ''}" onclick="switchSubtab('mcp_connectors', 'servers')">
+            🔌 Máy Chủ MCP Trực Chiến (${activeCount})
+          </button>
+          <button class="hub-subnav-btn ${currentSub === 'custom' ? 'active' : ''}" onclick="switchSubtab('mcp_connectors', 'custom')">
+            ⚙️ Cấu Hình MCP Tùy Chỉnh
+          </button>
+        </div>
+      </div>
+    </div>
+
+    ${currentSub === 'connectors' ? renderMcpAppCatalogView() : currentSub === 'servers' ? renderMcpActiveServersView() : renderMcpCustomBuilderView()}
+  `;
+}
+
+function renderMcpAppCatalogView() {
+  const mcp = state.mcp_connectors || { total_connectors: 0, connected_connectors: 0, active_servers: 0, total_tools_ready: 0, connectors: [], servers: [] };
+  const f = state.mcp_filter || { category: 'all', status: 'all', q: '' };
+
+  const categories = [
+    { id: 'all', name: 'Tất Cả Danh Mục' },
+    { id: 'Google Workspace', name: 'Google Workspace' },
+    { id: 'Lập Trình & Git', name: 'Lập Trình & Git' },
+    { id: 'Tự Động Hóa & Web', name: 'Tự Động Hóa & Web' },
+    { id: 'Cơ Sở Dữ Liệu', name: 'Cơ Sở Dữ Liệu' },
+    { id: 'Dữ Liệu Web', name: 'Dữ Liệu Web' },
+    { id: 'Hạ Tầng & DevOps', name: 'Hạ Tầng & DevOps' },
+    { id: 'Trí Tuệ & Trợ Lý', name: 'Trí Tuệ & Trợ Lý' }
+  ];
+
+  return `
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Tổng Số Ứng Dụng Catalog</div>
+        <div class="kpi-val" style="color:var(--brand)">${mcp.total_connectors || (mcp.connectors ? mcp.connectors.length : 14)}</div>
+        <div class="kpi-sub">Chuẩn Hóa 1-Click Connect</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Đã Kết Nối Trực Tuyến</div>
+        <div class="kpi-val" style="color:#10b981">${mcp.connected_connectors || 0}</div>
+        <div class="kpi-sub">Trực chiến sẵn sàng phục vụ Sếp</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Số Lượng Công Cụ (Tools)</div>
+        <div class="kpi-val" style="color:#38bdf8">${mcp.total_tools_ready || 0}</div>
+        <div class="kpi-sub">Bé Heo gọi tự động qua Prompt</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Chi Phí Token API</div>
+        <div class="kpi-val" style="color:#a855f7">0đ / Tháng</div>
+        <div class="kpi-sub">Antigravity 2.0 Core SSOT</div>
+      </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="card" style="margin-bottom:20px;padding:12px 18px">
+      <div style="display:grid;grid-template-columns:1.2fr 1fr 1.8fr auto;gap:12px;align-items:end">
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN THEO DANH MỤC</label>
+          <select class="form-select" onchange="setMcpCategoryFilter(this.value)">
+            ${categories.map(c => `<option value="${escapeHtml(c.id)}" ${f.category === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">TRẠNG THÁI KẾT NỐI</label>
+          <select class="form-select" onchange="setMcpStatusFilter(this.value)">
+            <option value="all" ${f.status === 'all' ? 'selected' : ''}>Tất Cả Trạng Thái</option>
+            <option value="CONNECTED" ${f.status === 'CONNECTED' ? 'selected' : ''}>🟢 Đã Kết Nối (Sẵn Sàng)</option>
+            <option value="DISCONNECTED" ${f.status === 'DISCONNECTED' ? 'selected' : ''}>⚪ Chưa Liên Kết</option>
+            <option value="MUTED" ${f.status === 'MUTED' ? 'selected' : ''}>🟡 Tạm Tắt (Muted)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px">TÌM KIẾM ỨNG DỤNG / TOOLS</label>
+          <input class="form-input" id="mcp-search-input" placeholder="Nhập tên ứng dụng (Drive, GitHub...), công cụ (fetch, search...)" value="${escapeHtml(f.q || '')}" oninput="setMcpSearchQuery(this.value)" />
+        </div>
+
+        <div>
+          <button class="btn sm" onclick="resetMcpFilters()" style="height:36px;white-space:nowrap">🧹 Xóa Lọc</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Connectors Grid -->
+    <div id="mcp-cards-grid">
+      ${renderMcpCardsOnly()}
+    </div>
+  `;
+}
+
+function renderMcpCardsOnly() {
+  const mcp = state.mcp_connectors || { connectors: [] };
+  const f = state.mcp_filter || { category: 'all', status: 'all', q: '' };
+  const allConnectors = mcp.connectors || [];
+
+  const filtered = allConnectors.filter(app => {
+    if (f.category !== 'all' && app.category !== f.category) return false;
+    if (f.status !== 'all' && app.status !== f.status) return false;
+    if (f.q && f.q.trim()) {
+      const q = f.q.trim().toLowerCase();
+      const matchName = (app.name || '').toLowerCase().includes(q);
+      const matchDesc = (app.description || '').toLowerCase().includes(q);
+      const matchProv = (app.provider || '').toLowerCase().includes(q);
+      const matchTools = (app.tools || []).some(t => (t.name || '').toLowerCase().includes(q) || (t.desc || '').toLowerCase().includes(q));
+      if (!matchName && !matchDesc && !matchProv && !matchTools) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">🔌</div>
+        <div class="empty-title">Không Tìm Thấy Ứng Dụng Nào</div>
+        <div class="empty-desc">Không có ứng dụng hoặc công cụ MCP nào khớp với điều kiện lọc hiện tại.</div>
+        <button class="btn sm" onclick="resetMcpFilters()">🧹 Xóa Bộ Lọc</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));gap:16px">
+      ${filtered.map(app => {
+        const isConnected = app.status === 'CONNECTED';
+        const isMuted = app.status === 'MUTED';
+        const tools = app.tools || [];
+        const previewTools = tools.slice(0, 3);
+        const extraToolsCount = tools.length - previewTools.length;
+
+        let statusBadge = '<span class="badge neutral" style="font-size:11px">⚪ CHƯA NỐI</span>';
+        if (isConnected) {
+          statusBadge = '<span class="badge good" style="font-size:11px;font-weight:700">🟢 ĐÃ KẾT NỐI</span>';
+        } else if (isMuted) {
+          statusBadge = '<span class="badge warning" style="font-size:11px;font-weight:700">🟡 TẠM TẮT</span>';
+        }
+
+        return `
+          <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;padding:16px;position:relative;transition:all 0.2s ease;border-top:3px solid ${app.color || '#3b82f6'}">
+            <div>
+              <!-- Header Row -->
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">
+                    ${app.icon || '🔌'}
+                  </div>
+                  <div>
+                    <div style="font-weight:700;font-size:15px;color:var(--text);display:flex;align-items:center;gap:6px">
+                      ${escapeHtml(app.name)}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
+                      ${escapeHtml(app.provider || 'Antigravity MCP')} · <span style="color:var(--text-faint)">${escapeHtml(app.category || '')}</span>
+                    </div>
+                  </div>
+                </div>
+                <div>${statusBadge}</div>
+              </div>
+
+              <!-- Description -->
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:10px 0;min-height:38px">
+                ${escapeHtml(app.description || '')}
+              </div>
+
+              <!-- Tools List Pill -->
+              <div style="margin:12px 0 14px 0">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <span style="font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px">
+                    🛠️ ${tools.length} CÔNG CỤ (TOOLS):
+                  </span>
+                  <a href="javascript:void(0)" onclick="openInspectAppTools('${escapeHtml(app.id)}')" style="font-size:11px;color:#38bdf8;text-decoration:none">
+                    Xem Chi Tiết ↗
+                  </a>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px">
+                  ${previewTools.map(t => `<span class="badge neutral" style="font-family:var(--mono);font-size:10px;padding:2px 7px" title="${escapeHtml(t.desc)}">${escapeHtml(t.name)}</span>`).join('')}
+                  ${extraToolsCount > 0 ? `<span class="badge neutral" style="font-size:10px;padding:2px 7px;color:var(--text-muted)">+${extraToolsCount} khác</span>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Action Row -->
+            <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px">
+                ${isConnected || isMuted ? `
+                  <label class="switch-toggle" title="${isConnected ? 'Gạt để tạm tắt server này' : 'Gạt để kích hoạt lại server này'}">
+                    <input type="checkbox" ${isConnected ? 'checked' : ''} onchange="toggleMcpServerAction('${escapeHtml(app.server_key)}', this.checked)">
+                    <span class="switch-slider"></span>
+                  </label>
+                  <span style="font-size:11px;color:${isConnected ? '#10b981' : 'var(--text-muted)'};font-weight:600">
+                    ${isConnected ? 'Trực Chiến' : 'Tạm Tắt'}
+                  </span>
+                ` : `
+                  <span class="badge neutral" style="font-size:10px">${escapeHtml(app.auth_type || 'Zero-Config')}</span>
+                `}
+              </div>
+
+              <div style="display:flex;gap:6px;align-items:center">
+                <button class="btn sm" onclick="openInspectAppTools('${escapeHtml(app.id)}')">
+                  🔍 Tools
+                </button>
+                ${isConnected ? `
+                  <button class="btn sm danger" onclick="disconnectAppAction('${escapeHtml(app.id)}')" title="Ngắt kết nối ứng dụng">
+                    Ngắt
+                  </button>
+                ` : isMuted ? `
+                  <button class="btn sm primary" onclick="toggleMcpServerAction('${escapeHtml(app.server_key)}', true)">
+                    ▶️ Kích Hoạt
+                  </button>
+                ` : `
+                  <button class="btn sm primary" onclick="openConnectAppModal('${escapeHtml(app.id)}')">
+                    ⚡ Kết Nối
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderMcpActiveServersView() {
+  const mcp = state.mcp_connectors || { servers: [] };
+  const rawServers = mcp.servers || [];
+
+  return `
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Tổng Máy Chủ MCP Đang Cấu Hình</div>
+        <div class="kpi-val" style="color:var(--brand)">${rawServers.length}</div>
+        <div class="kpi-sub">Đồng bộ ~/.gemini/config/mcp_config.json</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Đang Trực Tuyến (Online)</div>
+        <div class="kpi-val" style="color:#10b981">${rawServers.filter(s => s.enabled).length}</div>
+        <div class="kpi-sub">Sẵn sàng phản hồi prompt của Sếp</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Đang Tạm Tắt (Muted)</div>
+        <div class="kpi-val" style="color:#f59e0b">${rawServers.filter(s => !s.enabled).length}</div>
+        <div class="kpi-sub">Lưu cấu hình an toàn</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Chuẩn Giao Thức</div>
+        <div class="kpi-val" style="color:#38bdf8">JSON-RPC</div>
+        <div class="kpi-sub">Stdio & Remote SSE Transport</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="card-title">🔌 Danh Sách Máy Chủ MCP Servers Khởi Chạy (Raw Ground Truth)</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
+            Cấu hình Single Source of Truth tại <code>~/.gemini/config/mcp_config.json</code>
+          </div>
+        </div>
+        <button class="btn sm primary" onclick="switchSubtab('mcp_connectors', 'custom')">
+          ➕ Thêm Máy Chủ MCP
+        </button>
+      </div>
+
+      ${rawServers.length === 0 ? `
+        <div class="empty-state">
+          <div class="empty-icon">🔌</div>
+          <div class="empty-title">Chưa Có Máy Chủ MCP Nào</div>
+          <div class="empty-desc">Chưa có máy chủ MCP nào được kích hoạt. Hãy chọn ứng dụng từ Kho Ứng Dụng để kết nối 1-click.</div>
+          <button class="btn sm primary" onclick="switchSubtab('mcp_connectors', 'connectors')">🏪 Vào Kho Ứng Dụng</button>
+        </div>
+      ` : `
+        <div class="table-responsive">
+          <table class="table" style="width:100%">
+            <thead>
+              <tr>
+                <th style="width:20%">Tên Máy Chủ</th>
+                <th style="width:12%">Giao Thức</th>
+                <th style="width:36%">Lệnh Thực Thi / Endpoint</th>
+                <th style="width:12%">Trạng Thái</th>
+                <th style="width:10%;text-align:center">Bật/Tắt</th>
+                <th style="width:10%;text-align:right">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rawServers.map(srv => {
+                const isOnline = srv.enabled;
+                const cmdDisplay = srv.type === 'sse' 
+                  ? srv.serverUrl 
+                  : `${srv.command || ''} ${(srv.args || []).join(' ')}`.trim();
+
+                return `
+                  <tr>
+                    <td>
+                      <div style="font-weight:700;font-family:var(--mono);color:var(--text);font-size:13px">
+                        ${escapeHtml(srv.name)}
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge neutral" style="font-family:var(--mono);font-size:11px">
+                        ${srv.type ? srv.type.toUpperCase() : 'STDIO'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);word-break:break-all;max-width:380px" title="${escapeHtml(cmdDisplay)}">
+                        ${escapeHtml(cmdDisplay)}
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge ${isOnline ? 'good' : 'warning'}" style="font-size:11px;font-weight:700">
+                        ${isOnline ? '🟢 ONLINE' : '🟡 MUTED'}
+                      </span>
+                    </td>
+                    <td style="text-align:center">
+                      <label class="switch-toggle" title="${isOnline ? 'Tắt server này' : 'Bật server này'}">
+                        <input type="checkbox" ${isOnline ? 'checked' : ''} onchange="toggleMcpServerAction('${escapeHtml(srv.name)}', this.checked)">
+                        <span class="switch-slider"></span>
+                      </label>
+                    </td>
+                    <td style="text-align:right">
+                      <div style="display:flex;gap:4px;justify-content:flex-end">
+                        <button class="btn sm" onclick="openInspectRawServer('${escapeHtml(srv.name)}')" title="Xem cấu hình chi tiết">
+                          🔍
+                        </button>
+                        <button class="btn sm danger" onclick="openDeleteMcpServerModal('${escapeHtml(srv.name)}')" title="Xóa máy chủ này (Yêu cầu mã PIN)">
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function renderMcpCustomBuilderView() {
+  return `
+    <div class="card" style="max-width:800px;margin:0 auto;padding:24px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:14px">
+        <span style="font-size:32px">⚙️</span>
+        <div>
+          <h2 style="font-size:17px;font-weight:700;color:var(--text);margin:0">Cấu Hình Máy Chủ MCP Tùy Chỉnh (Custom MCP Builder)</h2>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
+            Thêm bất kỳ máy chủ MCP theo chuẩn Model Context Protocol vào Antigravity Brain
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label class="form-label" style="font-weight:700">Tên Định Danh Máy Chủ (Server Name) <span style="color:var(--danger)">*</span></label>
+          <input type="text" class="form-input" id="custom-mcp-name" placeholder="vd: my-postgres-db, custom-tools, jira-mcp" autofocus />
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Tên viết liền, không dấu, dùng dấu gạch nối (vd: postgres-analytics).</div>
+        </div>
+
+        <div>
+          <label class="form-label" style="font-weight:700">Giao Thức Truyền Tải (Transport Protocol)</label>
+          <div style="display:flex;gap:20px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text)">
+              <input type="radio" name="custom-mcp-type" value="stdio" checked onchange="toggleCustomMcpType('stdio')">
+              <span><b>Stdio</b> (Lệnh dòng lệnh cục bộ - Command Line)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text)">
+              <input type="radio" name="custom-mcp-type" value="sse" onchange="toggleCustomMcpType('sse')">
+              <span><b>SSE</b> (Remote HTTP Server-Sent Events)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- STDIO Section -->
+        <div id="custom-mcp-stdio-fields">
+          <div style="margin-bottom:14px">
+            <label class="form-label" style="font-weight:700">Lệnh Thực Thi (Command) <span style="color:var(--danger)">*</span></label>
+            <input type="text" class="form-input" id="custom-mcp-command" placeholder="vd: npx, uvx, python3, node" value="npx" />
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Lệnh nhị phân thực thi máy chủ MCP (vd: npx, python3, uvx, docker).</div>
+          </div>
+
+          <div>
+            <label class="form-label" style="font-weight:700">Danh Sách Tham Số (Arguments)</label>
+            <textarea class="form-input" id="custom-mcp-args" rows="3" placeholder="-y\n@modelcontextprotocol/server-postgres\npostgresql://user:pass@localhost:5432/mydb" style="font-family:var(--mono);font-size:12px"></textarea>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Mỗi dòng một tham số, hoặc cách nhau bởi dấu cách.</div>
+          </div>
+        </div>
+
+        <!-- SSE Section -->
+        <div id="custom-mcp-sse-fields" style="display:none">
+          <div>
+            <label class="form-label" style="font-weight:700">Địa Chỉ Endpoint Máy Chủ SSE (Server URL) <span style="color:var(--danger)">*</span></label>
+            <input type="text" class="form-input" id="custom-mcp-url" placeholder="vd: http://localhost:8000/sse hoặc https://mcp.internal.corp/sse" />
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Endpoint phát sóng sự kiện Server-Sent Events của máy chủ MCP.</div>
+          </div>
+        </div>
+
+        <!-- Environment Variables -->
+        <div>
+          <label class="form-label" style="font-weight:700">Biến Môi Trường (Environment Variables - Tùy Chọn)</label>
+          <textarea class="form-input" id="custom-mcp-env" rows="3" placeholder="API_KEY=sk-xxxx\nDEBUG=true" style="font-family:var(--mono);font-size:12px"></textarea>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Định dạng <code>KEY=VALUE</code> trên mỗi dòng (nếu cần truyền biến môi trường bảo mật).</div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;padding-top:14px;border-top:1px solid var(--border)">
+          <button class="btn" onclick="switchSubtab('mcp_connectors', 'connectors')">Hủy Bỏ</button>
+          <button class="btn primary" onclick="submitCustomMcpAction()" style="display:inline-flex;align-items:center;gap:6px">
+            🚀 Khởi Tạo & Nạp Vào Hệ Thống
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleCustomMcpType(type) {
+  const stdioDiv = document.getElementById('custom-mcp-stdio-fields');
+  const sseDiv = document.getElementById('custom-mcp-sse-fields');
+  if (type === 'sse') {
+    if (stdioDiv) stdioDiv.style.display = 'none';
+    if (sseDiv) sseDiv.style.display = 'block';
+  } else {
+    if (stdioDiv) stdioDiv.style.display = 'block';
+    if (sseDiv) sseDiv.style.display = 'none';
+  }
+}
+
+function setMcpCategoryFilter(cat) {
+  if (!state.mcp_filter) state.mcp_filter = {};
+  state.mcp_filter.category = cat;
+  const grid = document.getElementById('mcp-cards-grid');
+  if (grid) {
+    grid.innerHTML = renderMcpCardsOnly();
+  } else {
+    renderActiveHub();
+  }
+}
+
+function setMcpStatusFilter(st) {
+  if (!state.mcp_filter) state.mcp_filter = {};
+  state.mcp_filter.status = st;
+  const grid = document.getElementById('mcp-cards-grid');
+  if (grid) {
+    grid.innerHTML = renderMcpCardsOnly();
+  } else {
+    renderActiveHub();
+  }
+}
+
+function setMcpSearchQuery(q) {
+  if (!state.mcp_filter) state.mcp_filter = {};
+  state.mcp_filter.q = q;
+  const grid = document.getElementById('mcp-cards-grid');
+  if (grid) {
+    grid.innerHTML = renderMcpCardsOnly();
+  } else {
+    renderActiveHub();
+  }
+}
+
+function resetMcpFilters() {
+  state.mcp_filter = { category: 'all', status: 'all', q: '' };
+  renderActiveHub();
+}
+
+function openInspectAppTools(appId) {
+  const mcp = state.mcp_connectors || { connectors: [] };
+  const app = (mcp.connectors || []).find(a => a.id === appId);
+  if (!app) return;
+
+  const tools = app.tools || [];
+  openModal(`🛠️ Danh Mục Công Cụ: ${escapeHtml(app.name)}`, `
+    <div style="max-height:68vh;overflow-y:auto;padding-right:6px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px">
+          ${app.icon || '🔌'}
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:15px;color:var(--text)">${escapeHtml(app.name)}</div>
+          <div style="font-size:12px;color:var(--text-muted)">Nhà cung cấp: ${escapeHtml(app.provider || 'Antigravity MCP')} · Máy chủ: <code>${escapeHtml(app.server_key)}</code></div>
+        </div>
+      </div>
+
+      <div class="card card-pad" style="background:var(--bg-body);margin-bottom:14px;border:1px solid var(--border-subtle)">
+        <div style="font-weight:700;font-size:12px;color:var(--text);margin-bottom:4px">Mô Tả Nghiệp Vụ:</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.5">${escapeHtml(app.description || '')}</div>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">
+        Danh Sách ${tools.length} Công Cụ (Tools) Sẵn Sàng Cho Bé Heo Gọi:
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${tools.map(t => `
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <span style="font-family:var(--mono);font-weight:700;color:#38bdf8;font-size:13px">${escapeHtml(t.name)}</span>
+              <span class="badge neutral" style="font-size:10px">MCP Tool</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.4">${escapeHtml(t.desc)}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="margin-top:16px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:8px;padding:12px;font-size:12px;color:var(--text);line-height:1.5">
+        💡 <b>Cách Sử Dụng:</b> Sếp chỉ cần ra lệnh tự nhiên qua chat Zalo, WhatsApp hoặc giao diện Dashboard (vd: <i>"Bé Heo, tìm file Báo Cáo Tài Chính trên Google Drive"</i>), Antigravity Brain sẽ tự động ánh xạ và thực thi công cụ tương ứng với chi phí 0đ token!
+      </div>
+    </div>
+  `, null, true, 'Đóng');
+}
+
+function openConnectAppModal(appId) {
+  const mcp = state.mcp_connectors || { connectors: [] };
+  const app = (mcp.connectors || []).find(a => a.id === appId);
+  if (!app) return;
+
+  let formHtml = '';
+
+  if (appId === 'github') {
+    formHtml = `
+      <div class="form-group">
+        <label class="form-label" style="font-weight:700">GitHub Personal Access Token (PAT) <span style="color:var(--danger)">*</span></label>
+        <input type="password" class="form-input" id="mcp-connect-param-github_token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" />
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+          Tạo token tại <b>github.com/settings/tokens</b> với các quyền <code>repo, read:user</code>.
+        </div>
+      </div>
+    `;
+  } else if (appId === 'postgres') {
+    formHtml = `
+      <div class="form-group">
+        <label class="form-label" style="font-weight:700">PostgreSQL Connection URI <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-input" id="mcp-connect-param-connection_string" placeholder="postgresql://user:password@localhost:5432/dbname" />
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Chuỗi kết nối chuẩn cơ sở dữ liệu PostgreSQL.</div>
+      </div>
+    `;
+  } else if (appId === 'mysql') {
+    formHtml = `
+      <div class="form-group">
+        <label class="form-label" style="font-weight:700">MySQL Connection URI <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-input" id="mcp-connect-param-connection_string" placeholder="mysql://user:password@localhost:3306/dbname" />
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Chuỗi kết nối chuẩn cơ sở dữ liệu MySQL.</div>
+      </div>
+    `;
+  } else if (appId === 'sqlite') {
+    formHtml = `
+      <div class="form-group">
+        <label class="form-label" style="font-weight:700">Đường Dẫn File SQLite (.db / .sqlite) <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-input" id="mcp-connect-param-db_path" value="/home/ryan/heo-harness/data/heo.db" />
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Đường dẫn tệp tin cơ sở dữ liệu SQLite trên máy chủ.</div>
+      </div>
+    `;
+  } else if (appId === 'brave_search') {
+    formHtml = `
+      <div class="form-group">
+        <label class="form-label" style="font-weight:700">Brave Search API Key <span style="color:var(--danger)">*</span></label>
+        <input type="password" class="form-input" id="mcp-connect-param-api_key" placeholder="BSAxxxxxxxxxxxxxxxxxxxx" />
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Đăng ký key miễn phí tại <b>brave.com/search/api/</b>.</div>
+      </div>
+    `;
+  } else {
+    // Turnkey apps (Google Workspace, Playwright, Phone Control, Fetch, Docker, Memory Graph)
+    formHtml = `
+      <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;color:#10b981;font-weight:700;font-size:13px;margin-bottom:4px">
+          <span>⚡</span> Hỗ Trợ Kích Hoạt 1-Click Zero-Config (0đ API)
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.5">
+          Ứng dụng này đã được cấu hình sẵn trong hạ tầng hệ điều hành. Sếp chỉ cần nhấn <b>"Xác Thực & Kết Nối Ngay"</b>, hệ thống sẽ tự động liên kết máy chủ MCP vào Google Antigravity Brain.
+        </div>
+      </div>
+    `;
+  }
+
+  openModal(`⚡ Kết Nối Ứng Dụng: ${escapeHtml(app.name)}`, `
+    <div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px">
+          ${app.icon || '🔌'}
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:15px;color:var(--text)">${escapeHtml(app.name)}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${escapeHtml(app.category)} · ${escapeHtml(app.provider || 'Antigravity MCP')}</div>
+        </div>
+      </div>
+
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:16px">
+        ${escapeHtml(app.description || '')}
+      </div>
+
+      ${formHtml}
+    </div>
+  `, async () => {
+    const params = {};
+    if (appId === 'github') {
+      const el = document.getElementById('mcp-connect-param-github_token');
+      if (el && el.value.trim()) params.github_token = el.value.trim();
+    } else if (appId === 'postgres' || appId === 'mysql') {
+      const el = document.getElementById('mcp-connect-param-connection_string');
+      if (el && el.value.trim()) params.connection_string = el.value.trim();
+    } else if (appId === 'sqlite') {
+      const el = document.getElementById('mcp-connect-param-db_path');
+      if (el && el.value.trim()) params.db_path = el.value.trim();
+    } else if (appId === 'brave_search') {
+      const el = document.getElementById('mcp-connect-param-api_key');
+      if (el && el.value.trim()) params.api_key = el.value.trim();
+    }
+
+    showToast(`Đang kích hoạt máy chủ kết nối cho ${app.name}...`);
+    try {
+      const res = await fetch('/api/mcp/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_id: appId, params })
+      });
+      const d = await res.json();
+      if (d.ok) {
+        showToast(d.message || `Đã kết nối thành công ${app.name}!`);
+        closeModal();
+        fetchAllData();
+      } else {
+        showToast(d.error || 'Lỗi khi kết nối ứng dụng');
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối máy chủ');
+    }
+  }, false, '✅ Xác Thực & Kết Nối Ngay');
+}
+
+async function disconnectAppAction(appId) {
+  const mcp = state.mcp_connectors || { connectors: [] };
+  const app = (mcp.connectors || []).find(a => a.id === appId);
+  const appName = app ? app.name : appId;
+
+  openModal(`Xác Nhận Ngắt Kết Nối: ${appName}`, `
+    <div style="font-size:13px;color:var(--text);line-height:1.5;margin-bottom:10px">
+      Sếp có chắc chắn muốn ngắt kết nối ứng dụng <b>${escapeHtml(appName)}</b>?
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);line-height:1.5">
+      Máy chủ MCP tương ứng sẽ bị gỡ bỏ khỏi cấu hình trực chiến của Antigravity Brain. Sếp có thể kết nối lại bất kỳ lúc nào.
+    </div>
+  `, async () => {
+    showToast(`Đang ngắt kết nối ${appName}...`);
+    try {
+      const res = await fetch('/api/mcp/disconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_id: appId })
+      });
+      const d = await res.json();
+      if (d.ok) {
+        showToast(d.message || `Đã ngắt kết nối ${appName}!`);
+        closeModal();
+        fetchAllData();
+      } else {
+        showToast(d.error || 'Lỗi khi ngắt kết nối');
+      }
+    } catch (e) {
+      showToast('Lỗi gửi yêu cầu ngắt kết nối');
+    }
+  }, false, 'Ngắt Kết Nối');
+}
+
+async function toggleMcpServerAction(serverName, enabled) {
+  showToast(`Đang ${enabled ? 'bật' : 'tạm tắt'} máy chủ ${serverName}...`);
+  try {
+    const res = await fetch('/api/mcp/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ server_name: serverName, enabled })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(d.message || `Đã ${enabled ? 'kích hoạt' : 'tạm dừng'} máy chủ ${serverName}!`);
+      fetchAllData();
+    } else {
+      showToast(d.error || 'Lỗi cập nhật trạng thái máy chủ');
+    }
+  } catch (e) {
+    showToast('Lỗi liên lạc hệ thống');
+  }
+}
+
+function openInspectRawServer(serverName) {
+  const mcp = state.mcp_connectors || { servers: [] };
+  const srv = (mcp.servers || []).find(s => s.name === serverName);
+  if (!srv) return;
+
+  openModal(`🔌 Cấu Hình Chi Tiết: ${escapeHtml(srv.name)}`, `
+    <div style="font-size:12px;margin-bottom:10px;color:var(--text-muted)">
+      Trạng thái: <b>${srv.enabled ? '🟢 ONLINE' : '🟡 MUTED'}</b> · Giao thức: <b>${escapeHtml(srv.type ? srv.type.toUpperCase() : 'STDIO')}</b>
+    </div>
+    <pre style="white-space:pre-wrap;font-family:var(--mono);font-size:12px;background:var(--bg-body);padding:14px;border-radius:6px;border:1px solid var(--border);color:var(--text)">${escapeHtml(JSON.stringify(srv, null, 2))}</pre>
+  `, null, false, 'Đóng');
+}
+
+function openDeleteMcpServerModal(serverName) {
+  promptPinConfirm(
+    `🗑️ Xóa Máy Chủ MCP: ${serverName}`,
+    `Hành động này sẽ xóa vĩnh viễn cấu hình máy chủ MCP <b>${escapeHtml(serverName)}</b> khỏi <code>mcp_config.json</code>. Yêu cầu nhập mã PIN Quản trị viên để xác nhận.`,
+    async (pin) => {
+      showToast(`Đang xóa máy chủ ${serverName}...`);
+      try {
+        const res = await fetch('/api/mcp/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ server_name: serverName, pin })
+        });
+        const d = await res.json();
+        if (d.ok) {
+          showToast(d.message || `Đã xóa máy chủ ${serverName}!`);
+          fetchAllData();
+        } else {
+          showToast(d.error || 'Lỗi xóa máy chủ MCP');
+        }
+      } catch (e) {
+        showToast('Lỗi gửi lệnh xóa');
+      }
+    }
+  );
+}
+
+async function submitCustomMcpAction() {
+  const name = document.getElementById('custom-mcp-name') ? document.getElementById('custom-mcp-name').value.trim() : '';
+  if (!name) {
+    showToast('⚠️ Vui lòng nhập tên định danh máy chủ!');
+    return;
+  }
+
+  const typeRadio = document.querySelector('input[name="custom-mcp-type"]:checked');
+  const srvType = typeRadio ? typeRadio.value : 'stdio';
+
+  let command = '';
+  let args = [];
+  let serverUrl = '';
+
+  if (srvType === 'stdio') {
+    const cmdEl = document.getElementById('custom-mcp-command');
+    command = cmdEl ? cmdEl.value.trim() : '';
+    if (!command) {
+      showToast('⚠️ Vui lòng nhập lệnh thực thi (vd: npx, python3)!');
+      return;
+    }
+    const argsEl = document.getElementById('custom-mcp-args');
+    const rawArgs = argsEl ? argsEl.value.trim() : '';
+    if (rawArgs) {
+      args = rawArgs.split('\n').map(a => a.trim()).filter(a => a.length > 0);
+      // Nếu chỉ có 1 dòng mà có khoảng trắng, thử tách nếu không có dấu ngoặc kép
+      if (args.length === 1 && args[0].includes(' ') && !args[0].includes('"')) {
+        args = args[0].split(' ').filter(a => a.length > 0);
+      }
+    }
+  } else {
+    const urlEl = document.getElementById('custom-mcp-url');
+    serverUrl = urlEl ? urlEl.value.trim() : '';
+    if (!serverUrl) {
+      showToast('⚠️ Vui lòng nhập Server URL Endpoint SSE!');
+      return;
+    }
+  }
+
+  const env = {};
+  const envEl = document.getElementById('custom-mcp-env');
+  const rawEnv = envEl ? envEl.value.trim() : '';
+  if (rawEnv) {
+    const lines = rawEnv.split('\n');
+    for (const line of lines) {
+      if (line.includes('=')) {
+        const parts = line.split('=');
+        const k = parts[0].trim();
+        const v = parts.slice(1).join('=').trim();
+        if (k) env[k] = v;
+      }
+    }
+  }
+
+  showToast(`Đang cấu hình máy chủ MCP ${name}...`);
+  try {
+    const res = await fetch('/api/mcp/custom', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        type: srvType,
+        command,
+        args,
+        env,
+        serverUrl
+      })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(d.message || `Đã thêm thành công máy chủ ${name}!`);
+      switchSubtab('mcp_connectors', 'servers');
+      fetchAllData();
+    } else {
+      showToast(d.error || 'Lỗi thêm máy chủ MCP');
+    }
+  } catch (e) {
+    showToast('Lỗi gửi yêu cầu thêm máy chủ');
+  }
+}
+
 
 // ==========================================
 // QUICK CONFIG MODAL (5-SECOND SETUP)

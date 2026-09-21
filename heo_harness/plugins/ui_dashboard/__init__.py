@@ -225,6 +225,15 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             skills = get_skills_list()
             self._send_json({"ok": True, "skills": skills, "count": len(skills)})
 
+        # ================= MCP SERVERS & APP CONNECTORS =================
+        elif path_clean in ["/api/mcp/connectors", "/api/mcp/summary"]:
+            from heo_harness.core.mcp_manager import mcp_manager
+            self._send_json({"ok": True, **mcp_manager.get_summary()})
+
+        elif path_clean == "/api/mcp/servers":
+            from heo_harness.core.mcp_manager import mcp_manager
+            self._send_json({"ok": True, "servers": mcp_manager.get_raw_servers()})
+
         # ================= WORK OS =================
         elif path_clean == "/api/work/list":
             works = store.get_works() if store else []
@@ -1128,6 +1137,52 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json(res)
             else:
                 self._send_json({"ok": False, "error": "Missing file_rel_path parameter"}, 400)
+
+        # ================= MCP SERVERS & APP CONNECTORS =================
+        elif path_clean == "/api/mcp/connect":
+            from heo_harness.core.mcp_manager import mcp_manager
+            app_id = data.get("app_id")
+            params = data.get("params", {})
+            res = mcp_manager.connect_app(app_id, params)
+            self._send_json(res)
+
+        elif path_clean == "/api/mcp/disconnect":
+            from heo_harness.core.mcp_manager import mcp_manager
+            app_id = data.get("app_id")
+            res = mcp_manager.disconnect_app(app_id)
+            self._send_json(res)
+
+        elif path_clean == "/api/mcp/toggle":
+            from heo_harness.core.mcp_manager import mcp_manager
+            server_name = data.get("server_name")
+            enabled = data.get("enabled", True)
+            res = mcp_manager.toggle_server(server_name, enabled)
+            self._send_json(res)
+
+        elif path_clean == "/api/mcp/custom":
+            from heo_harness.core.mcp_manager import mcp_manager
+            name = data.get("name")
+            srv_type = data.get("type", "stdio")
+            command = data.get("command", "")
+            args = data.get("args", [])
+            env = data.get("env", {})
+            server_url = data.get("serverUrl", "")
+            res = mcp_manager.add_custom_server(name, srv_type, command, args, env, server_url)
+            self._send_json(res)
+
+        elif path_clean == "/api/mcp/delete":
+            from heo_harness.core.mcp_manager import mcp_manager
+            name = data.get("server_name") or data.get("name")
+            pin = str(data.get("pin", "")).strip()
+            cfg = store.get_config() if store else {}
+            pin_hash = cfg.get("pin_hash")
+            if pin_hash:
+                import hashlib
+                if hashlib.sha256(pin.encode("utf-8")).hexdigest() != pin_hash:
+                    self._send_json({"ok": False, "error": "Mã PIN quản trị viên không chính xác!"}, 403)
+                    return
+            res = mcp_manager.delete_server(name)
+            self._send_json(res)
 
         # ================= APPROVALS ACTION =================
         elif path_clean == "/api/approvals/action":
