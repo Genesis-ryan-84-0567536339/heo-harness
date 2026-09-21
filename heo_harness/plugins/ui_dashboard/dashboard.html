@@ -13,81 +13,86 @@
        BIG-TECH EXECUTIVE AI DESIGN SYSTEM (Obsidian Glass & Micro-Interactions)
        Inspired by Linear, OpenAI Enterprise, Anthropic Claude & Cursor
        ========================================================================== */
-    
     :root {
-      /* Vercel / Linear Inspired Clean Light Theme */
-      --bg-body: #FAFAFA;
-      --bg-sidebar: #FFFFFF;
-      --bg-topbar: #FFFFFF;
-      --bg-card: #FFFFFF;
-      --bg-card-solid: #FFFFFF;
-      --bg-card-hover: #F3F4F6;
-      --border: #EAEAEA;
-      --border-focus: #000000;
-      --border-subtle: #F5F5F5;
-      --border-hover: #DDDDDD;
+      /* Obsidian Space & Glass Surface */
+      --bg-body: #07090e;
+      --bg-sidebar: #0a0d16;
+      --bg-topbar: rgba(10, 13, 22, 0.82);
+      --bg-card: rgba(15, 20, 32, 0.72);
+      --bg-card-solid: #0f1420;
+      --bg-card-hover: rgba(22, 29, 46, 0.85);
+      --bg-glass-subtle: rgba(255, 255, 255, 0.03);
+      --bg-glass-active: rgba(255, 255, 255, 0.07);
 
-      --text: #111827;
-      --text-muted: #6B7280;
-      --text-faint: #9CA3AF;
+      /* Micro-borders */
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: #6366f1;
+      --border-subtle: rgba(255, 255, 255, 0.04);
+      --border-hover: rgba(255, 255, 255, 0.15);
 
-      --brand: #000000;
-      --brand-hover: #333333;
-      --brand-glow: transparent;
-      --brand-gradient: #000000;
-      
-      --accent: #000000;
-      --accent-glow: transparent;
+      /* Typography */
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+
+      /* Brand Accents */
+      --brand: #10b981;
+      --brand-hover: #059669;
+      --brand-glow: rgba(16, 185, 129, 0.25);
+      --brand-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.25);
       --cyan: #06b6d4;
 
-      --p1: #ef4444;
-      --p1-bg: #fee2e2;
-      --p1-glow: transparent;
+      /* Status Bands */
+      --p1: #f43f5e;
+      --p1-bg: rgba(244, 63, 94, 0.12);
+      --p1-glow: rgba(244, 63, 94, 0.25);
       --p2: #f59e0b;
-      --p2-bg: #fef3c7;
+      --p2-bg: rgba(245, 158, 11, 0.12);
       --p3: #3b82f6;
-      --p3-bg: #dbeafe;
+      --p3-bg: rgba(59, 130, 246, 0.12);
 
-      --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+      /* Typography Stacks */
+      --font: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-      --radius-sm: 4px;
-      --radius-md: 6px;
-      --radius-lg: 8px;
-      --radius-xl: 12px;
+      /* Radii */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
       --radius-full: 9999px;
 
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-      --shadow-glow: none;
+      /* Shadows */
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      --shadow-lg: 0 12px 36px -4px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      --shadow-glow: 0 0 24px -4px var(--brand-glow);
     }
 
-    [data-theme="dark"] {
-      --bg-body: #000000;
-      --bg-sidebar: #0A0A0A;
-      --bg-topbar: #0A0A0A;
-      --bg-card: #111111;
-      --bg-card-solid: #111111;
-      --bg-card-hover: #1A1A1A;
-      --border: #222222;
-      --border-focus: #FFFFFF;
-      --border-subtle: #1A1A1A;
-      --border-hover: #333333;
-      --text: #EDEDED;
-      --text-muted: #888888;
-      --text-faint: #444444;
-      --brand: #FFFFFF;
-      --brand-hover: #CCCCCC;
-      --brand-gradient: #FFFFFF;
-      --p1: #f87171;
-      --p1-bg: rgba(248, 113, 113, 0.1);
-      --p2: #fbbf24;
-      --p2-bg: rgba(251, 191, 36, 0.1);
-      --p3: #60a5fa;
-      --p3-bg: rgba(96, 165, 250, 0.1);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    [data-theme="light"] {
+      --bg-body: #f8fafc;
+      --bg-sidebar: #ffffff;
+      --bg-topbar: rgba(255, 255, 255, 0.88);
+      --bg-card: #ffffff;
+      --bg-card-solid: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --bg-glass-subtle: rgba(0, 0, 0, 0.02);
+      --bg-glass-active: rgba(0, 0, 0, 0.05);
+      --border: #e2e8f0;
+      --border-focus: #4f46e5;
+      --border-subtle: #f1f5f9;
+      --border-hover: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-faint: #94a3b8;
+      --brand: #059669;
+      --brand-hover: #047857;
+      --brand-glow: rgba(5, 150, 105, 0.15);
+      --brand-gradient: linear-gradient(135deg, #059669 0%, #047857 100%);
+      --shadow-md: 0 4px 16px -2px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 12px 32px -4px rgba(0, 0, 0, 0.1);
     }
 
     /* Resets & Base Typography */
@@ -95,8 +100,9 @@
     html, body {
       height: 100%;
       background: var(--bg-body);
-      
-      color: #111827;
+      background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.04) 0%, transparent 40%),
+                        radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.03) 0%, transparent 35%);
+      color: var(--text);
       font-family: var(--font);
       font-size: 13px;
       line-height: 1.55;
@@ -130,8 +136,8 @@
       flex-shrink: 0;
       user-select: none;
       z-index: 10;
-      
-      -webkit-
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
 
     .brand-header {
@@ -158,7 +164,7 @@
       font-size: 13.5px;
       font-weight: 800;
       letter-spacing: -0.01em;
-      color: #111827;
+      color: var(--text);
     }
     .brand-sub {
       font-size: 10.5px;
@@ -215,19 +221,17 @@
       transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .nav-hub-item:hover {
-      background: #FFFFFF;
-      color: #111827;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
       transform: translateX(2px);
     }
-    
     .nav-hub-item.active {
-      background: #F3F4F6;
-      color: #000000;
-      border-color: transparent;
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0.02) 100%);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.25);
       font-weight: 600;
-      box-shadow: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
-
     .nav-hub-left {
       display: flex;
       align-items: center;
@@ -241,12 +245,10 @@
       justify-content: center;
       opacity: 0.85;
     }
-    
     .nav-hub-item.active .nav-hub-icon {
       opacity: 1;
-      filter: none;
+      filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4));
     }
-
     .nav-badge {
       font-size: 10.5px;
       padding: 2px 8px;
@@ -284,7 +286,7 @@
       height: 34px;
       border-radius: 50%;
       background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-      color: #111827;
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -296,7 +298,7 @@
     .user-name {
       font-weight: 700;
       font-size: 12px;
-      color: #111827;
+      color: var(--text);
       line-height: 1.3;
     }
     .user-role {
@@ -326,8 +328,8 @@
       justify-content: space-between;
       padding: 0 24px;
       flex-shrink: 0;
-      
-      -webkit-
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       z-index: 5;
     }
     .topbar-left {
@@ -350,7 +352,7 @@
     .topbar-badge-os {
       font-size: 10px;
       font-weight: 800;
-      background: rgba(16, 185, 129, 0.1);
+      background: linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(6,182,212,0.2) 100%);
       color: #34d399;
       padding: 2px 7px;
       border-radius: 6px;
@@ -365,7 +367,7 @@
     .topbar-title {
       font-size: 14.5px;
       font-weight: 700;
-      color: #111827;
+      color: var(--text);
       letter-spacing: -0.01em;
       white-space: nowrap;
     }
@@ -430,7 +432,7 @@
       font-size: 19px;
       font-weight: 800;
       letter-spacing: -0.02em;
-      color: #111827;
+      color: var(--text);
     }
     .hub-desc {
       font-size: 12.5px;
@@ -460,12 +462,12 @@
     }
     .hub-subnav-btn:hover {
       background: var(--bg-card-hover);
-      color: #111827;
+      color: var(--text);
       border-color: var(--border-hover);
       transform: translateY(-1px);
     }
     .hub-subnav-btn.active {
-      background: rgba(99, 102, 241, 0.1);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.05) 100%);
       color: #818cf8;
       border-color: rgba(99, 102, 241, 0.4);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -481,20 +483,16 @@
     /* ==========================================================================
        CARDS & KPI DESIGN (Glassmorphic Obsidian)
        ========================================================================== */
-    
     .card {
       background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-      transition: all 0.2s ease;
-    }
-    .card:hover {
-      border-color: var(--border-hover);
       box-shadow: var(--shadow-md);
+      overflow: hidden;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-
     .card:hover {
       border-color: var(--border-hover);
       box-shadow: var(--shadow-lg);
@@ -513,7 +511,7 @@
     .card-title {
       font-size: 13.5px;
       font-weight: 700;
-      color: #111827;
+      color: var(--text);
       letter-spacing: -0.01em;
       display: flex;
       align-items: center;
@@ -527,23 +525,25 @@
       gap: 16px;
       margin-bottom: 22px;
     }
-    
     .kpi-card {
-      padding: 16px 20px;
-      background: var(--bg-card);
+      padding: 18px 20px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.005) 100%), var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
+      box-shadow: var(--shadow-md);
       position: relative;
       overflow: hidden;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .kpi-card:hover {
-      border-color: var(--border-hover);
-      box-shadow: var(--shadow-md);
+    .kpi-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
     }
-
-    
     .kpi-card:hover {
       transform: translateY(-2px);
       border-color: var(--border-hover);
@@ -559,7 +559,7 @@
     .kpi-val {
       font-size: 28px;
       font-weight: 800;
-      color: #111827;
+      color: var(--text);
       font-family: var(--mono);
       letter-spacing: -0.02em;
       margin: 8px 0 3px;
@@ -582,45 +582,50 @@
     /* ==========================================================================
        BUTTONS (Executive Precision Micro-Interactions)
        ========================================================================== */
-    
-    
     .btn {
-      padding: 6px 12px;
-      border-radius: var(--radius-md);
+      padding: 7px 14px;
+      border-radius: 9px;
       border: 1px solid var(--border);
-      background: var(--bg-card);
+      background: rgba(255, 255, 255, 0.04);
       color: var(--text);
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.15s ease;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
       text-decoration: none;
-      box-shadow: var(--shadow-sm);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
     .btn:hover {
-      background: var(--bg-card-hover);
+      background: rgba(255, 255, 255, 0.08);
       border-color: var(--border-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .btn:active {
+      transform: translateY(0);
     }
     .btn.primary {
-      background: var(--text);
-      color: var(--bg-body);
-      border: 1px solid transparent;
+      background: var(--brand-gradient);
+      color: #ffffff;
+      border-color: rgba(16, 185, 129, 0.4);
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
     .btn.primary:hover {
-      background: var(--text-muted);
-      color: var(--bg-body);
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
     }
-.btn.danger {
+    .btn.danger {
       background: var(--p1-bg);
       color: var(--p1);
       border-color: rgba(244, 63, 94, 0.3);
     }
     .btn.danger:hover {
       background: #e11d48;
-      color: #111827;
+      color: #fff;
       border-color: #e11d48;
       box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35);
     }
@@ -718,7 +723,7 @@
     }
     table.data-table th {
       padding: 12px 16px;
-      background: #F9FAFB;
+      background: rgba(0, 0, 0, 0.25);
       color: var(--text-faint);
       font-size: 10.5px;
       font-weight: 700;
@@ -729,7 +734,7 @@
     table.data-table td {
       padding: 13px 16px;
       border-bottom: 1px solid var(--border-subtle);
-      color: #111827;
+      color: var(--text);
     }
     table.data-table tr:hover td {
       background: rgba(255, 255, 255, 0.03);
@@ -754,7 +759,7 @@
       border: 1px solid var(--border);
       border-radius: 9px;
       padding: 9px 13px;
-      color: #111827;
+      color: var(--text);
       font-size: 13px;
       font-family: inherit;
       outline: none;
@@ -774,8 +779,8 @@
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.78);
-      
-      -webkit-
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -813,7 +818,7 @@
     .modal-title {
       font-size: 14.5px;
       font-weight: 700;
-      color: #111827;
+      color: var(--text);
       letter-spacing: -0.01em;
     }
     .modal-close {
@@ -827,8 +832,8 @@
       transition: all 0.15s ease;
     }
     .modal-close:hover {
-      background: #F9FAFB;
-      color: #111827;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
     }
     .modal-body {
       padding: 22px;
@@ -841,7 +846,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      background: #F9FAFB;
+      background: rgba(0, 0, 0, 0.25);
     }
 
     /* Live Log Stream Styles */
@@ -870,7 +875,7 @@
       transition: background 0.1s ease;
     }
     .log-row:hover {
-      background: #FFFFFF;
+      background: rgba(255, 255, 255, 0.04);
     }
     .log-time {
       color: #64748b;
@@ -926,8 +931,8 @@
       cursor: pointer;
       transition: all 0.15s ease;
     }
-    .log-type-btn:hover { border-color: var(--brand); color: #111827; }
-    .log-type-btn.active { background: var(--brand); border-color: var(--brand); color: #111827; }
+    .log-type-btn:hover { border-color: var(--brand); color: var(--text); }
+    .log-type-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; }
     .log-row-1on1 { border-left: 3px solid #38bdf8 !important; background: rgba(56, 189, 248, 0.04); }
     .log-row-group { border-left: 3px solid #a855f7 !important; background: rgba(168, 85, 247, 0.04); }
     .log-row-reply { border-left: 3px solid #10b981 !important; background: rgba(16, 185, 129, 0.04); }
@@ -946,7 +951,7 @@
     .wizard-step-node.active .wizard-step-circle { background: var(--brand); border-color: var(--brand); color: #052e16; box-shadow: 0 0 16px rgba(16,185,129,0.5); }
     .wizard-step-node.completed .wizard-step-circle { background: rgba(16,185,129,0.2); border-color: var(--brand); color: var(--brand); }
     .wizard-step-label { font-size: 11px; color: var(--text-muted); margin-top: 6px; font-weight: 600; text-align: center; }
-    .wizard-step-node.active .wizard-step-label { color: #111827; font-weight: 700; }
+    .wizard-step-node.active .wizard-step-label { color: var(--text); font-weight: 700; }
 
     /* Toast Notification */
     #toast {
@@ -954,7 +959,7 @@
       bottom: 24px;
       right: 24px;
       background: #0f1422;
-      color: #111827;
+      color: var(--text);
       border: 1px solid var(--brand);
       padding: 12px 20px;
       border-radius: 12px;
@@ -994,7 +999,7 @@
     .term-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: #080b12; }
     .term-body { flex: 1; padding: 18px; overflow-y: auto; font-size: 12px; color: #38bdf8; line-height: 1.6; white-space: pre-wrap; }
     .term-input-row { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: #080b12; }
-    .term-input { flex: 1; background: transparent; border: none; color: #111827; font-family: var(--mono); font-size: 12.5px; outline: none; }
+    .term-input { flex: 1; background: transparent; border: none; color: #fff; font-family: var(--mono); font-size: 12.5px; outline: none; }
 
     /* Clean Slate Empty State */
     .empty-state {
@@ -1005,7 +1010,7 @@
       border-radius: var(--radius-lg);
     }
     .empty-icon { font-size: 38px; margin-bottom: 12px; opacity: 0.85; }
-    .empty-title { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+    .empty-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
     .empty-desc { font-size: 12px; color: var(--text-muted); max-width: 460px; margin: 0 auto 16px; line-height: 1.6; }
 
     /* Persona Visual Grid */
@@ -1013,7 +1018,7 @@
     .persona-card-item { background: var(--bg-body); border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; transition: all 0.15s ease; display: flex; flex-direction: column; gap: 6px; }
     .persona-card-item:hover { border-color: var(--brand); background: #161e31; transform: translateY(-1px); }
     .persona-card-item.active { border-color: var(--brand); background: rgba(16, 185, 129, 0.08); box-shadow: 0 0 0 1px var(--brand); }
-    .persona-card-title { font-size: 13px; font-weight: 700; color: #111827; display: flex; align-items: center; justify-content: space-between; }
+    .persona-card-title { font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; justify-content: space-between; }
     .persona-card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
   </style>
 </head>
@@ -1023,14 +1028,14 @@
   <!-- SIDEBAR -->
   <aside id="sidebar">
     <div class="brand-header">
-      <div class="brand-logo" style="background:#000;color:#fff;font-family:var(--font);font-size:18px;font-weight:800;border-radius:6px;box-shadow:none;">H</div>
+      <div class="brand-logo">🐷</div>
       <div>
         <div class="brand-title">HEO-HARNESS OS</div>
-        <div class="brand-sub">V6 Actions</div>
+        <div class="brand-sub">V6 Executive Suite</div>
       </div>
     </div>
 
-    <div class="nav-section-label">Command Center</div>
+    <div class="nav-section-label">Điều Hành Chiến Lược</div>
     <div class="nav-hub-list">
       <button class="nav-hub-item active" data-hub="command" onclick="switchHub('command')">
         <div class="nav-hub-left">
@@ -1184,7 +1189,7 @@
 <!-- TERMINAL DRAWER -->
 <aside id="terminal-drawer">
   <div class="term-header">
-    <div style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px">
+    <div style="font-weight:700;color:#fff;display:flex;align-items:center;gap:8px">
       💻 Heo OS Executive Terminal <span class="badge good">ONLINE</span>
     </div>
     <button class="modal-close" onclick="toggleTerminal()">✕ Đóng</button>
@@ -1688,7 +1693,7 @@ function renderCommandCenterHub() {
       <div class="hub-header-top">
         <div>
           <h1 class="hub-title">Executive Command Center</h1>
-          <p class="hub-desc">Executive dashboard for ${state.config.boss_name || 'Sếp Cơ La'}. Real-time production data.</p>
+          <p class="hub-desc">Bảng điều hành hợp nhất của ${state.config.boss_name || 'Sếp Cơ La'}. Dữ liệu thực chứng 100%, không chứa dữ liệu mẫu giả.</p>
         </div>
         <button class="btn primary sm" onclick="recomputeAttention()">Recompute Attention</button>
       </div>
@@ -1697,22 +1702,22 @@ function renderCommandCenterHub() {
     <!-- KPI Metric Cards -->
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">Emergency Queue</div>
+        <div class="kpi-label">Hàng Đợi Khẩn Cấp</div>
         <div class="kpi-val" style="color:var(--p1)">${p1Count + pendingAppr}</div>
-        <div class="kpi-sub">${p1Count} P1 tasks · ${pendingAppr} pending approvals</div>
+        <div class="kpi-sub">${p1Count} việc P1 · ${pendingAppr} phê duyệt chờ</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Pending Approval</div>
+        <div class="kpi-label">Chờ Sếp Phê Duyệt</div>
         <div class="kpi-val" style="color:var(--p2)">${pendingAppr}</div>
-        <div class="kpi-sub">Authorized for ${state.config.boss_name || 'Anh Cơ La'}</div>
+        <div class="kpi-sub">Thẩm quyền tối cao ${state.config.boss_name || 'Anh Cơ La'}</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Active Workspaces</div>
+        <div class="kpi-label">Công Việc Trực Chiến</div>
         <div class="kpi-val" style="color:var(--p3)">${worksCount}</div>
-        <div class="kpi-sub">${worksCount} open workspaces</div>
+        <div class="kpi-sub">${worksCount} việc đang mở (Clean Slate)</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">API Usage</div>
+        <div class="kpi-label">Chi Phí Token API</div>
         <div class="kpi-val" style="color:var(--brand)">0 VNĐ</div>
         <div class="kpi-sub">Google Antigravity Brain 0đ Token</div>
       </div>
@@ -1722,26 +1727,26 @@ function renderCommandCenterHub() {
       <!-- Attention Queue -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Attention Queue</div>
-          <span class="badge good">${state.attention.length} Items</span>
+          <div class="card-title">⚑ Attention Queue Hàng Đầu</div>
+          <span class="badge good">${state.attention.length} Mục Cần Xử Lý</span>
         </div>
         <div style="padding:16px;display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto">
           ${state.attention.length === 0 ? `
             <div style="text-align:center;padding:32px;color:var(--text-muted)">
-              <div style="font-size:28px;margin-bottom:8px"></div>
-              <div style="font-weight:700;color:var(--text)">All caught up</div>
-              <div style="font-size:12px;margin-top:4px">No pending items in your attention queue.</div>
+              <div style="font-size:28px;margin-bottom:8px">🎉</div>
+              <div style="font-weight:700;color:var(--text)">Không có vấn đề tồn đọng</div>
+              <div style="font-size:12px;margin-top:4px">Hàng đợi chỉ đạo của Sếp đang ở trạng thái Clean Slate hoàn hảo.</div>
             </div>
           ` : state.attention.map(item => `
-            <div style="border-left:3px solid ${item.band === 'P1' ? 'var(--p1)' : item.band === 'P2' ? 'var(--p2)' : 'var(--brand)'};background:var(--bg-card);padding:14px 16px;border-radius:10px;border:1px solid var(--border);border-left-width:3px;transition:all 0.15s ease">
+            <div style="border-left:3px solid ${item.band === 'P1' ? 'var(--p1)' : item.band === 'P2' ? 'var(--p2)' : 'var(--brand)'};background:rgba(255,255,255,0.02);padding:14px 16px;border-radius:10px;border:1px solid var(--border);border-left-width:3px;transition:all 0.15s ease">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
                 <span class="badge ${item.band === 'P1' ? 'p1' : item.band === 'P2' ? 'p2' : 'good'}">${item.band}</span>
                 <span style="font-family:var(--mono);font-size:11px;color:var(--text-faint)">${item.subject || ''}</span>
               </div>
               <div style="font-weight:700;font-size:13.5px;color:var(--text);margin-bottom:6px">${item.title}</div>
               <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;gap:12px">
-                <span style="display:flex;align-items:center;gap:6px">${item.action}</span>
-                <button class="btn sm primary" onclick="handleAttentionAction('${item.id}')" style="white-space:nowrap">Review</button>
+                <span style="display:flex;align-items:center;gap:6px">👉 ${item.action}</span>
+                <button class="btn sm primary" onclick="handleAttentionAction('${item.id}')" style="white-space:nowrap">Xử Lý Ngay ➔</button>
               </div>
             </div>
           `).join('')}
@@ -1751,24 +1756,24 @@ function renderCommandCenterHub() {
       <!-- Executive Action Dispatcher (Re-architected Enterprise Layout) -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Quick Actions</div>
-          <span class="badge good">Actions</span>
+          <div class="card-title">⚡ Trung Tâm Tác Vụ Trực Chiến</div>
+          <span class="badge good">Executive Suite</span>
         </div>
         <div class="card-pad" style="display:flex;flex-direction:column;gap:14px;padding:18px">
           <!-- Section 1: Direct Command -->
           <div style="display:flex;flex-direction:column;gap:8px">
             <div style="font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em">
-              Direct AI Command
+              Chỉ Đạo AI Trực Tiếp
             </div>
             <button class="btn primary" style="justify-content:center;padding:11px;font-size:13px;border-radius:10px;gap:8px" onclick="switchHub('assistant', 'chat')">
-              <span>Open Chat Assistant</span>
+              <span>💬</span> <span>Trò Chuyện Trực Tiếp Bé Heo</span>
             </button>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <button class="btn" style="justify-content:center;padding:8px;background:var(--bg-card);color:var(--text);border-color:var(--border)" onclick="openQuickConfigModal()">
-                Settings
+              <button class="btn" style="justify-content:center;padding:8px;background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.25)" onclick="openQuickConfigModal()">
+                ⚡ Cấu Hình (5s)
               </button>
-              <button class="btn" style="justify-content:center;padding:8px;background:var(--bg-card);color:var(--text);border-color:var(--border)" onclick="openOnboardingWizard(1)">
-                Quick Start
+              <button class="btn" style="justify-content:center;padding:8px;background:rgba(59,130,246,0.1);color:#60a5fa;border-color:rgba(59,130,246,0.25)" onclick="openOnboardingWizard(1)">
+                🚀 Khởi Tạo Nhanh
               </button>
             </div>
           </div>
@@ -1776,27 +1781,27 @@ function renderCommandCenterHub() {
           <!-- Section 2: Channels & Stream -->
           <div style="display:flex;flex-direction:column;gap:8px">
             <div style="font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em">
-              Channels & Streaming
+              Kênh Giao Tiếp & Stream
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
               <button class="btn" style="justify-content:flex-start;padding:8px 10px;gap:7px;font-size:12px" onclick="switchHub('zalo', 'qr')">
-                <span>Zalo Gateway</span>
+                <span>💬</span> <span>Zalo Gateway</span>
               </button>
               <button class="btn" style="justify-content:flex-start;padding:8px 10px;gap:7px;font-size:12px" onclick="switchHub('whatsapp', 'qr')">
-                <span>WhatsApp Gateway</span>
+                <span>📱</span> <span>WhatsApp QR</span>
               </button>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <button class="btn" style="justify-content:flex-start;padding:8px 10px;gap:7px;font-size:12px;background:var(--bg-card);color:var(--text);border-color:var(--border)" onclick="switchHub('governance', 'logs')">
-                <span>System Logs</span>
+              <button class="btn" style="justify-content:flex-start;padding:8px 10px;gap:7px;font-size:12px;background:rgba(239,68,68,0.08);color:#f87171;border-color:rgba(239,68,68,0.2)" onclick="switchHub('governance', 'logs')">
+                <span>🔴</span> <span>Live Stream</span>
               </button>
-              <button class="btn" style="justify-content:flex-start;padding:8px 10px;gap:7px;font-size:12px;background:var(--bg-card);color:var(--text);border-color:var(--border)" onclick="openAccountSwitcherModal()">
-                <span>Switch Account</span>
+              <button class="btn" style="justify-content:flex-start;padding:8px 10px;gap:7px;font-size:12px;background:rgba(168,85,247,0.08);color:#c084fc;border-color:rgba(168,85,247,0.2)" onclick="openAccountSwitcherModal()">
+                <span>👤</span> <span>Đổi Profile</span>
               </button>
             </div>
           </div>
 
-          <!-- Section 3: Actions & Work OS -->
+          <!-- Section 3: Executive Suite & Work OS -->
           <div style="display:flex;flex-direction:column;gap:8px">
             <div style="font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em">
               Điều Hành & Quản Trị
@@ -3854,7 +3859,7 @@ function handleZaloQrResponse(data) {
       alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
       alertBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
       alertBox.style.color = 'var(--good)';
-      alertBox.textContent = ' Đã đăng nhập Zalo thành công!';
+      alertBox.textContent = '🎉 Đã đăng nhập Zalo thành công!';
     }
     if (timerText) timerText.textContent = 'Đã kết nối!';
     if (zaloQrPollInterval) {
@@ -4370,7 +4375,7 @@ function convertChatToWorkModal(msgId, idx) {
       });
       const data = await res.json();
       if (data.ok) {
-        showToast(` ${data.message || 'Đã tạo công việc thành công!'}`);
+        showToast(`🎉 ${data.message || 'Đã tạo công việc thành công!'}`);
         closeModal();
         fetchAllData();
       } else {
@@ -4463,7 +4468,7 @@ function convertChatToCalendarModal(msgId, idx) {
       });
       const data = await res.json();
       if (data.ok) {
-        showToast(` ${data.message || 'Đã lên lịch sự kiện thành công!'}`);
+        showToast(`🎉 ${data.message || 'Đã lên lịch sự kiện thành công!'}`);
         closeModal();
         fetchAllData();
       } else {
@@ -4902,7 +4907,7 @@ function openAssignMediaModal(relPath, curGroup, curPerson, curNotes) {
       });
       const data = await res.json();
       if (data.ok) {
-        showToast(' Đã cập nhật thông tin phân gán tệp tin thành công!');
+        showToast('🎉 Đã cập nhật thông tin phân gán tệp tin thành công!');
         closeModal();
         fetchAllData();
       } else {
@@ -4970,7 +4975,7 @@ function convertMediaToWorkModal(fileName, groupName, personName) {
       });
       const data = await res.json();
       if (data.ok) {
-        showToast(' Đã tạo công việc từ tài liệu thành công!');
+        showToast('🎉 Đã tạo công việc từ tài liệu thành công!');
         closeModal();
         fetchAllData();
       } else {
@@ -6680,7 +6685,7 @@ function renderMcpAppCatalogView() {
         <div class="kpi-sub">Bé Heo gọi tự động qua Prompt</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">API Usage</div>
+        <div class="kpi-label">Chi Phí Token API</div>
         <div class="kpi-val" style="color:#a855f7">0đ / Tháng</div>
         <div class="kpi-sub">Antigravity 2.0 Core SSOT</div>
       </div>
@@ -8117,7 +8122,7 @@ function openOnboardingWizard(step = 1) {
     </div>
   `;
 
-  openModal(`Quick Start Cho Người Mới (Bước ${step}/5)`, html, null, true);
+  openModal(`🚀 Khởi Tạo Nhanh Cho Người Mới (Bước ${step}/5)`, html, null, true);
 }
 
 function renderWizardStepContent(step) {
@@ -8126,7 +8131,7 @@ function renderWizardStepContent(step) {
       return `
         <div style="display:flex;flex-direction:column;gap:12px">
           <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);padding:14px;border-radius:8px">
-            <h3 style="color:var(--brand);margin-bottom:6px;font-size:15px"> Chào Mừng Sếp Đến Với Heo-Harness V6!</h3>
+            <h3 style="color:var(--brand);margin-bottom:6px;font-size:15px">🎉 Chào Mừng Sếp Đến Với Heo-Harness V6!</h3>
             <p style="font-size:12px;color:var(--text-muted);line-height:1.6">
               Heo OS là Hệ Điều Hành Trợ Lý Điều Hành Cấp Cao (Executive Intelligence) được xây dựng trên khung sườn <b>DeepSeek Harness (DSH)</b> chuẩn mực: <i>"Everything is a Plugin"</i>, bảo vệ đa tầng bằng Circuit Breaker và hoàn toàn <b>0đ chi phí token API</b> nhờ tận dụng gói Google Antigravity CLI cá nhân.
             </p>
@@ -8289,7 +8294,7 @@ async function completeOnboardingAction() {
     });
     const d = await res.json();
     if (d.ok) {
-      showToast(' Chúc mừng Sếp! Heo OS đã khởi tạo thành công và sẵn sàng trực chiến!');
+      showToast('🎉 Chúc mừng Sếp! Heo OS đã khởi tạo thành công và sẵn sàng trực chiến!');
       closeModal();
       switchHub('command');
       fetchAllData();
