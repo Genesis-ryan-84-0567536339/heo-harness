@@ -202,21 +202,43 @@ CONNECTOR_CATALOG = [
         "color": "#003B57",
         "category": "Cơ Sở Dữ Liệu",
         "provider": "Model Context Protocol",
-        "description": "Thao tác đọc/ghi trực tiếp vào các file cơ sở dữ liệu .db / .sqlite nội bộ trên máy chủ.",
+        "description": "Thao tác đọc/ghi trực tiếp vào file cơ sở dữ liệu heo.db nội bộ của Heo OS (quản lý tin nhắn, công việc, danh bạ 360).",
         "server_key": "sqlite",
         "tools": [
-            {"name": "read_query", "desc": "Truy vấn bảng trong file SQLite"},
-            {"name": "write_query", "desc": "Cập nhật dữ liệu vào file SQLite"}
+            {"name": "read_query", "desc": "Truy vấn bảng trong file SQLite heo.db"},
+            {"name": "write_query", "desc": "Cập nhật dữ liệu vào file SQLite heo.db"}
         ],
-        "turnkey": False,
-        "auth_type": "File Path",
+        "turnkey": True,
+        "auth_type": "Zero-Config (Local DB)",
         "config_template": {
             "command": "npx",
-            "args": ["-y", "mcp-server-sqlite", "--file", "${DB_PATH}"]
+            "args": ["-y", "mcp-server-sqlite", "--db", "${DB_PATH}"]
         },
         "fields": [
-            {"key": "DB_PATH", "label": "Đường dẫn file database (.db)", "placeholder": "/home/ryan/heo-harness/data/app.db", "required": True}
+            {"key": "DB_PATH", "label": "Đường dẫn file database (.db)", "placeholder": "/home/ryan/heo-harness/data/heo.db", "required": False}
         ]
+    },
+    {
+        "id": "filesystem",
+        "name": "Quản Trị Tệp Tin (Local Filesystem)",
+        "icon": "📂",
+        "color": "#F59E0B",
+        "category": "Hạ Tầng & Tác Nghiệp",
+        "provider": "Model Context Protocol",
+        "description": "Đọc, duyệt và quản lý tài liệu trong thư mục làm việc Heo-Harness và Documents của Sếp trên máy chủ.",
+        "server_key": "filesystem",
+        "tools": [
+            {"name": "read_file", "desc": "Đọc nội dung tệp tin văn bản, code, markdown"},
+            {"name": "write_file", "desc": "Ghi hoặc sửa nội dung tệp tin tài liệu"},
+            {"name": "list_directory", "desc": "Liệt kê danh sách file và thư mục con"},
+            {"name": "search_files", "desc": "Tìm kiếm tài liệu theo từ khóa hoặc định dạng"}
+        ],
+        "turnkey": True,
+        "auth_type": "Zero-Config (Cục Bộ)",
+        "config_template": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/ryan/heo-harness", "/home/ryan/Documents"]
+        }
     },
     {
         "id": "brave_search",
@@ -443,7 +465,13 @@ class McpManager:
             raw_env = dict(template.get("env", {}))
 
             # Thay thế các biến ${KEY} bằng giá trị user nhập
-            params = form_params or {}
+            params = dict(form_params or {})
+            for k, v in list(params.items()):
+                params[k.upper()] = v
+                params[k.lower()] = v
+            if app_id == "sqlite" and not params.get("DB_PATH"):
+                params["DB_PATH"] = "/home/ryan/heo-harness/data/heo.db"
+
             resolved_args = []
             for arg in raw_args:
                 val = arg
