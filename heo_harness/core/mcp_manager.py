@@ -15,6 +15,128 @@ DISABLED_CONFIG_PATH = os.path.expanduser("~/.gemini/config/mcp_disabled.json")
 
 # Kho Catalog Ứng Dụng Chuẩn Hóa (Pre-declared Turnkey App Connectors)
 CONNECTOR_CATALOG = [
+    # ================= 0. LÕI DEEPSEEK HARNESS (DSH NATIVE) =================
+    {
+        "id": "dsh_web",
+        "name": "DSH Web Search & Fetch",
+        "icon": "🌐",
+        "color": "#4F46E5",
+        "category": "Lõi DeepSeek Harness (DSH Native)",
+        "provider": "DeepSeek Official",
+        "description": "Bộ tìm kiếm web chính thức của DeepSeek (DeepSeek Search API) và tải trang web qua giao thức HTTP chuẩn.",
+        "server_key": "dsh-web",
+        "tools": [
+            {"name": "web_search", "desc": "Tìm kiếm web trực tiếp qua DeepSeek Official Search Provider"},
+            {"name": "web_fetch", "desc": "Tải và trích xuất nội dung trang web qua HTTP Fetcher"}
+        ],
+        "turnkey": True,
+        "auth_type": "DSH Native Engine",
+        "default_command": "dsh-web-builtin"
+    },
+    {
+        "id": "dsh_subagent",
+        "name": "DSH Subagent Swarm",
+        "icon": "🤖",
+        "color": "#06B6D4",
+        "category": "Lõi DeepSeek Harness (DSH Native)",
+        "provider": "DeepSeek Official",
+        "description": "Khởi tạo và điều phối các tác nhân AI phụ độc lập chạy ngầm song song (Spawn & Fork Mode).",
+        "server_key": "dsh-subagent",
+        "tools": [
+            {"name": "subagent", "desc": "Sinh tác nhân phụ chạy nền xử lý tác vụ độc lập"},
+            {"name": "subagent_fork", "desc": "Nhân bản trạng thái tác nhân hiện tại để thử nghiệm"},
+            {"name": "subagent_control", "desc": "Điều phối, gửi tin và dừng tác nhân phụ"}
+        ],
+        "turnkey": True,
+        "auth_type": "DSH Native Engine",
+        "default_command": "dsh-subagent-builtin"
+    },
+    {
+        "id": "dsh_ralph",
+        "name": "DSH Ralph Loop & Goal",
+        "icon": "🔄",
+        "color": "#EC4899",
+        "category": "Lõi DeepSeek Harness (DSH Native)",
+        "provider": "DeepSeek Official",
+        "description": "Vòng lặp tự chủ Ralph Loop chạy liên tục tối đa 64 rounds để giải quyết triệt để mục tiêu của Sếp.",
+        "server_key": "dsh-ralph",
+        "tools": [
+            {"name": "tool_ralph", "desc": "Vòng lặp tự sửa lỗi và kiểm thử liên tục tới khi thành công"},
+            {"name": "tool_goal", "desc": "Thiết lập mục tiêu dài hạn và theo dõi tiến độ hoàn thành"}
+        ],
+        "turnkey": True,
+        "auth_type": "DSH Native Engine",
+        "default_command": "dsh-ralph-builtin"
+    },
+    {
+        "id": "dsh_todo",
+        "name": "DSH Parallel Todo Manager",
+        "icon": "📋",
+        "color": "#10B981",
+        "category": "Lõi DeepSeek Harness (DSH Native)",
+        "provider": "DeepSeek Official",
+        "description": "Hệ thống quản lý trạng thái công việc (Todo List) tích hợp cơ chế thực thi song song nhiều việc.",
+        "server_key": "dsh-todo",
+        "tools": [
+            {"name": "todo_list", "desc": "Liệt kê danh sách các công việc hiện tại"},
+            {"name": "todo_create", "desc": "Tạo việc mới cần hoàn thành"},
+            {"name": "todo_update", "desc": "Cập nhật tiến độ: pending, in_progress, completed"}
+        ],
+        "turnkey": True,
+        "auth_type": "DSH Native Engine",
+        "default_command": "dsh-todo-builtin"
+    },
+    {
+        "id": "dsh_code_runtime",
+        "name": "DSH Code Runtime Sandbox",
+        "icon": "💻",
+        "color": "#F59E0B",
+        "category": "Lõi DeepSeek Harness (DSH Native)",
+        "provider": "DeepSeek Official",
+        "description": "Máy ảo thực thi mã nguồn an toàn trong Worker Thread cô lập, hỗ trợ phân tích dữ liệu và tính toán phức tạp.",
+        "server_key": "dsh-code-runtime",
+        "tools": [
+            {"name": "code_eval", "desc": "Chạy script Python/JavaScript trong môi trường sandbox"},
+            {"name": "sandbox_run", "desc": "Kiểm tra kết quả và bắt lỗi ngoại lệ cô lập"}
+        ],
+        "turnkey": True,
+        "auth_type": "DSH Native Engine",
+        "default_command": "dsh-code-runtime-builtin"
+    },
+    {
+        "id": "dsh_plan_mode",
+        "name": "DSH Plan Mode & Human Review",
+        "icon": "📐",
+        "color": "#8B5CF6",
+        "category": "Lõi DeepSeek Harness (DSH Native)",
+        "provider": "DeepSeek Official",
+        "description": "Lập kế hoạch chiến lược đa bước và cơ chế hỏi ý kiến Sếp (Human-in-the-Loop) trước khi chạy tác vụ nhạy cảm.",
+        "server_key": "dsh-plan",
+        "tools": [
+            {"name": "plan_mode", "desc": "Xây dựng bản kế hoạch hành động từng bước"},
+            {"name": "tool_ask_user", "desc": "Hiển thị câu hỏi tương tác xác nhận chỉ đạo từ Sếp"}
+        ],
+        "turnkey": True,
+        "auth_type": "DSH Native Engine",
+        "default_command": "dsh-plan-builtin"
+    },
+    {
+        "id": "dsh_mcp_bridge",
+        "name": "DSH MCP Client Bridge",
+        "icon": "🔌",
+        "color": "#3B82F6",
+        "category": "Lõi DeepSeek Harness (DSH Native)",
+        "provider": "DeepSeek Official",
+        "description": "Module cầu nối chuẩn (@deepseek-ai/dsh-mcp-client) tự động kết nối và đăng ký server MCP vào Cordis EventBus.",
+        "server_key": "dsh-mcp-bridge",
+        "tools": [
+            {"name": "mcp_client_mount", "desc": "Gắn kết nối server MCP Stdio hoặc Streamable HTTP"},
+            {"name": "mcp_tool_sync", "desc": "Đồng bộ danh mục tools sang ToolRuntime của DSH"}
+        ],
+        "turnkey": True,
+        "auth_type": "DSH Native Engine",
+        "default_command": "dsh-mcp-client-builtin"
+    },
 
     # ================= 1. GOOGLE WORKSPACE =================
     {
@@ -1021,8 +1143,9 @@ class McpManager:
         apps = []
         for item in CONNECTOR_CATALOG:
             s_key = item.get("server_key")
-            is_active = s_key in active_servers
-            is_disabled = s_key in disabled_servers
+            is_dsh_native = item.get("category") == "Lõi DeepSeek Harness (DSH Native)"
+            is_active = is_dsh_native or (s_key in active_servers)
+            is_disabled = s_key in disabled_servers and not is_dsh_native
 
             if is_active:
                 status = "CONNECTED"
