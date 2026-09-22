@@ -49,7 +49,14 @@ Thay thế cấu trúc 4 domain cũ bằng hệ thống 5 nhóm điều hướng
    - `logs`: Logs
    - `auth_security`: Security PIN
 
-### 1.3. Hoàn Thiện Màn Hình Ưu Tiên Số 1: "Tổng Quan Điều Hành" (Command Overview)
+### 1.3. Khắc Phục Lỗi Xung Đột Phân Hệ Điều Hướng (`workbench_action` vs `workbench`)
+- **Vấn đề phát hiện:** Nút điều hướng "Bàn làm việc (Soạn & Duyệt)" thuộc nhóm **LÀM** mang `data-hub="workbench_action"` nhưng `onclick` trước đó gọi nhầm `switchHub('workbench')`, dẫn đến việc bôi sáng sai nút "Cung ↔ Cầu" (nhóm **HIỂU**) và hiển thị nhầm sàn mậu dịch.
+- **Biện pháp xử lý triệt để:**
+  1. Đổi `onclick="switchHub('workbench_action')"` tại nav button nhóm **LÀM**.
+  2. Bổ sung nhánh xử lý `workbench_action` trong `switchHub()` và đưa vào danh sách ngoại lệ highlight (`['approvals', 'system_logs', 'ai_brain', 'security_pin', 'workbench_action']`) để bảo đảm active-highlight chính xác 100%.
+  3. Thêm `case 'workbench_action'` trong `renderActiveHub()`, hiển thị không gian placeholder chuẩn Nocturne Design Tokens (`renderWorkbenchActionPlaceholder()`) ghi chú rõ ràng `(sẽ triển khai ở ticket sau)`, hoàn toàn tách bạch với sàn Cung ↔ Cầu `workbench`.
+
+### 1.4. Hoàn Thiện Màn Hình Ưu Tiên Số 1: "Tổng Quan Điều Hành" (Command Overview)
 Dựng trọn vẹn màn hình theo phong cách Nocturne Design Tokens (`dashboard.html`):
 - **6 Thẻ KPI Điều Hành Đầu Trang:**
   - Cần xử lý ngay (6 mục P1/P2/P3).
@@ -69,7 +76,7 @@ Dựng trọn vẹn màn hình theo phong cách Nocturne Design Tokens (`dashboa
   - Nhiệt kế hoạt động: Biểu đồ trực quan tần suất hội thoại theo 24 khung giờ trong ngày.
 - **Dữ liệu Mock:** Được gắn chú thích `// TODO: Đấu nối API khi backend triển khai` rõ ràng, không tự ý sáng chế API ngoài phạm vi Ticket 01.
 
-### 1.4. Cập Nhật Bộ Test Tương Thích Branding Mới
+### 1.5. Cập Nhật Bộ Test Tương Thích Branding Mới
 - Cập nhật các câu assert trong `tests/test_ui_dashboard.py` (`test_01_index_html_rendered`) kiểm tra tiêu đề `GEN-HARNESS` và `Genesis Harness OS`, cùng định danh tác quyền `Anh Cơ La (Ryan)`.
 - Giữ nguyên toàn bộ coverage và các test case API khác.
 
@@ -90,7 +97,7 @@ Dựng trọn vẹn màn hình theo phong cách Nocturne Design Tokens (`dashboa
 
 ### 3.1. Chạy `tests/test_ui_dashboard.py`
 ```
-Ran 8 tests in 18.707s
+Ran 8 tests in 18.694s
 OK
 ```
 
