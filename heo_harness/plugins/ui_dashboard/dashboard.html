@@ -1092,9 +1092,9 @@ const $$ = document.querySelectorAll.bind(document);
 let state = {
   activeHub: 'command',
   subtabs: {
-    work: 'kanban',
+    work: 'opp_board',
     directory: 'zalo',       // Default to Zalo Gateway & QR
-    intelligence: 'insights',
+    intelligence: 'care',
     assistant: 'chat',       // Default to Live Chat
     governance: 'pin',       // Default to Admin PIN & Security
     modules: 'plugins',      // Default to Active Plugins
@@ -1622,8 +1622,8 @@ function renderActiveHub() {
       break;
 
     case 'work':
-      titleEl.textContent = 'Work & Schedule';
-      subEl.textContent = 'Bảng Điều Phối Công Việc Kanban & Lịch Trình Canonical (Clean Slate)';
+      titleEl.textContent = 'Bảng cơ hội & Tiến độ';
+      subEl.textContent = 'Opportunity Board · Pipeline sống từ hội thoại · QUẢN';
       container.innerHTML = renderWorkScheduleHub();
       break;
 
@@ -1673,8 +1673,8 @@ function renderActiveHub() {
       break;
 
     case 'intelligence':
-      titleEl.textContent = 'Intelligence & Value';
-      subEl.textContent = 'Dự Báo Rủi Ro, Quy Đổi Giá Trị Thực, Vòng Lặp Học Tập & Kho Báo Cáo';
+      titleEl.textContent = 'Chất lượng chăm sóc';
+      subEl.textContent = 'Care Quality · Cách chăm, không chỉ số lần nhắn · QUẢN';
       container.innerHTML = renderIntelligenceHub();
       break;
 
@@ -1740,8 +1740,8 @@ function renderActiveHub() {
       break;
 
     case 'people_review':
-      titleEl.textContent = 'Đánh Giá Con Người & Chất Lượng Chăm Sóc';
-      subEl.textContent = '4 Phân Hệ Con Người · Bắt Bệnh Hứa Rồi Quên & Kịch Bản Thắng/Thua (SPEC-22 & 23)';
+      titleEl.textContent = 'Đánh giá con người';
+      subEl.textContent = 'People Review · Điểm số có chứng cứ · QUẢN';
       container.innerHTML = renderPeopleReviewHub();
       setTimeout(initPeopleReviewUI, 60);
       break;
@@ -2137,39 +2137,182 @@ async function recomputeAttention() {
 // 2. WORK & SCHEDULE HUB (CLEAN SLATE)
 // ==========================================
 function renderWorkScheduleHub() {
-  const currentSub = state.subtabs.work || 'kanban';
+  const currentSub = state.subtabs.work || 'opp_board';
 
   return `
     <div class="hub-header">
       <div class="hub-header-top">
         <div>
-          <h1 class="hub-title">Điều Hành Công Việc & Lịch Trình (Work & Schedule)</h1>
-          <p class="hub-desc">Quản lý quy trình giao việc 5 cột Kanban, lịch họp/deadline canonical và ma trận phân bổ công việc theo nhóm. 100% dữ liệu thật.</p>
+          <h1 class="hub-title">Bảng Cơ Hội &amp; Tiến Độ</h1>
+          <p class="hub-desc">Pipeline sống từ hội thoại — không phải form nhập tay. Mỗi thẻ trả lời: ai cần gì, nóng đến đâu, tin được đến đâu, nên ghép với ai, và mất gì nếu không làm gì.</p>
         </div>
         <div>
           ${currentSub === 'kanban' ? `
-            <button class="btn primary" onclick="openNewWorkModal()">+ Thêm Công Việc Mới</button>
+            <button class="btn btn-primary" onclick="openNewWorkModal()"><i class="ph ph-plus"></i> Thêm Công Việc Mới</button>
           ` : currentSub === 'calendar' ? `
-            <button class="btn primary" onclick="openNewCalendarModal()">+ Lên Lịch Sự Kiện Mới</button>
+            <button class="btn btn-primary" onclick="openNewCalendarModal()"><i class="ph ph-plus"></i> Lên Lịch Sự Kiện Mới</button>
+          ` : currentSub === 'opp_board' ? `
+            <button class="btn btn-secondary" onclick="switchHub('opportunities')"><i class="ph ph-arrow-square-out"></i> Mở Hộp Thư Ý Nghĩa</button>
           ` : ''}
         </div>
       </div>
 
       <!-- Subnav Pills -->
       <div class="hub-subnav">
+        <button class="hub-subnav-btn ${currentSub === 'opp_board' ? 'active' : ''}" onclick="switchSubtab('work', 'opp_board')">
+          <i class="ph ph-target"></i> Cơ Hội (${(state.df_opps || []).length})
+        </button>
         <button class="hub-subnav-btn ${currentSub === 'kanban' ? 'active' : ''}" onclick="switchSubtab('work', 'kanban')">
-          ✓ Bảng Kanban 5 Cột (${state.works.length})
+          <i class="ph ph-kanban"></i> Kanban Công Việc (${state.works.length})
         </button>
         <button class="hub-subnav-btn ${currentSub === 'calendar' ? 'active' : ''}" onclick="switchSubtab('work', 'calendar')">
-          ◷ Lịch Trình & Nhắc Việc (${state.calendar.length})
+          <i class="ph ph-calendar-check"></i> Lịch Trình &amp; Nhắc (${state.calendar.length})
         </button>
         <button class="hub-subnav-btn ${currentSub === 'matrix' ? 'active' : ''}" onclick="switchSubtab('work', 'matrix')">
-          📊 Ma Trận Phân Bổ Nhóm & Nhân Sự (${state.groups.length} Nhóm)
+          <i class="ph ph-chart-bar"></i> Ma Trận Nhóm (${state.groups.length})
         </button>
       </div>
     </div>
 
-    ${currentSub === 'kanban' ? renderKanbanView() : currentSub === 'calendar' ? renderCalendarView() : renderWorkloadMatrixView()}
+    ${currentSub === 'opp_board' ? renderOpportunityBoardView() : currentSub === 'kanban' ? renderKanbanView() : currentSub === 'calendar' ? renderCalendarView() : renderWorkloadMatrixView()}
+  `;
+}
+
+// ══════════════════════════════════════════════════════════
+// OPPORTUNITY BOARD — Spec F2 mục 5
+// 7 giai đoạn pipeline sống từ hội thoại
+// TODO: Đấu nối API khi backend triển khai (/api/data_factory/opportunities)
+// ══════════════════════════════════════════════════════════
+function renderOpportunityBoardView() {
+  const OPP_STAGES = [
+    { key: 'raw',         label: 'Tín hiệu thô',           tone: 'var(--color-neutral-400,#b2b6ca)', estValue: '≈ 1,9 tỷ ₫' },
+    { key: 'verified',    label: 'Đã xác thực',             tone: 'oklch(0.76 0.12 162)',            estValue: '≈ 1,4 tỷ ₫' },
+    { key: 'matched',     label: 'Đã ráp khớp',             tone: 'oklch(0.76 0.12 162)',            estValue: '≈ 720 triệu ₫' },
+    { key: 'engaging',    label: 'Đang tiếp cận',           tone: 'var(--color-accent,#9184d9)',     estValue: '≈ 410 triệu ₫' },
+    { key: 'negotiating', label: 'Đang đàm phán',          tone: 'oklch(0.84 0.13 84)',             estValue: '≈ 212 triệu ₫' },
+    { key: 'transferred', label: 'Đã chuyển nội bộ',       tone: 'var(--color-accent,#9184d9)',     estValue: '≈ 186 triệu ₫' },
+    { key: 'closed',      label: 'Thắng · Trượt · Ngủ',    tone: 'var(--color-neutral-400,#b2b6ca)', estValue: '9 thắng · 4 trượt' }
+  ];
+
+  const opps = (state.df_opps || []);
+
+  // Dữ liệu mẫu đối chiếu chuẩn từ Gen-Harness Console Design Export (F2 mục 5)
+  // TODO: Đấu nối API khi backend triển khai (/api/data_factory/opportunities)
+  const mockOpps = opps.length === 0 ? [
+    // Tín hiệu thô
+    { id: 'OPP-1851', stage: 'raw',         heat: '58', need: 'Cần kho lạnh 400 pallet khu vực Tân Cảng', who: 'Lê Thị Bích · WhatsApp', value: 'chưa rõ', confidence: 'thấp', match: 'Chưa ráp được nguồn cung', matchOk: false, risk: null },
+    { id: 'OPP-1849', stage: 'raw',         heat: '44', need: 'Hỏi nguồn ván phủ melamine giá sỉ', who: 'Người lạ · Group Ngành gỗ', value: '≈ 200 triệu ₫', confidence: 'thấp', match: 'Chờ xác thực danh tính', matchOk: false, risk: null },
+    // Đã xác thực
+    { id: 'OPP-1842', stage: 'verified',    heat: '91', need: '3 container ván MDF E1 17mm, giao tháng 10', who: 'Xưởng gỗ Bình Dương · Trần Văn Hậu', value: '1,2 tỷ ₫', confidence: 'cao', match: 'Khớp 2 nhà cung cấp trong kho', matchOk: true, risk: 'Chưa ai nhận sau 18 phút. Cơ hội dạng này thường nguội trong 4 giờ.' },
+    { id: 'OPP-1839', stage: 'verified',    heat: '74', need: 'Ứng viên Key Account ngành lạnh', who: 'Võ Thanh Sơn · Group Nhân sự', value: '—', confidence: 'trung bình', match: 'Khớp vị trí đang trống Ban Kinh doanh', matchOk: true, risk: null },
+    // Đã ráp khớp
+    { id: 'OPP-1836', stage: 'matched',     heat: '68', need: 'Ván MDF 540 triệu ₫ cho đơn nội thất', who: 'Gỗ Đông Phương · Đặng Hữu Trí', value: '540 triệu ₫', confidence: 'cao', match: 'Ghép Vũ Hải Đăng + kho Bình Dương', matchOk: true, risk: null },
+    // Đang tiếp cận
+    { id: 'OPP-1828', stage: 'engaging',    heat: '64', need: 'Báo giá nội thất văn phòng trọn gói', who: 'Nội thất Minh Long · Phạm Quốc Minh', value: '310 triệu ₫', confidence: 'cao', match: 'Vũ Hải Đăng đang phụ trách', matchOk: true, risk: null },
+    // Đang đàm phán
+    { id: 'OPP-1815', stage: 'negotiating', heat: '87', need: 'Hợp đồng in ấn quý 4', who: 'Công ty in Thành Phát · Nguyễn Văn Bảo', value: '84 triệu ₫', confidence: 'cao', match: 'Nguyễn Thu Hà đang phụ trách', matchOk: true, risk: 'Ba tin chưa trả lời. Đối thủ Minh Long đã xuất hiện hai lần.' },
+    { id: 'OPP-1811', stage: 'negotiating', heat: '78', need: 'Tuyến vận chuyển lạnh quý 4', who: 'An Khang Logistics · Hoàng Thị Lan', value: '128 triệu ₫', confidence: 'cao', match: 'Trần Minh Khoa · vòng ba', matchOk: true, risk: null },
+    // Đã chuyển nội bộ
+    { id: 'OPP-1802', stage: 'transferred', heat: '52', need: 'Đơn in bao bì 5.000 bản', who: 'Bao bì Sài Gòn Mới', value: '96 triệu ₫', confidence: 'trung bình', match: 'Đã giao Đỗ Thanh Mai', matchOk: true, risk: null },
+    // Thắng / Trượt / Ngủ đông
+    { id: 'OPP-1764', stage: 'closed',      heat: '—',  need: 'Đơn in bao bì tháng 8 — đã thắng', who: 'Công ty in Thành Phát', value: '96 triệu ₫', confidence: 'cao', match: 'Đã ghi vào ERP', matchOk: true, risk: null },
+    { id: 'OPP-1749', stage: 'closed',      heat: '—',  need: 'Ván MDF 510 triệu ₫ — ngủ đông', who: 'Bao bì Sài Gòn Mới', value: '510 triệu ₫', confidence: 'thấp', match: 'Im lặng 41 ngày', matchOk: false, risk: 'Mất do không ai follow sau báo giá đầu tiên.' }
+  ] : opps;
+
+  // Gom theo stage
+  const byStage = {};
+  OPP_STAGES.forEach(s => { byStage[s.key] = []; });
+  mockOpps.forEach(o => {
+    const stageKey = o.stage || 'raw';
+    if (!byStage[stageKey]) byStage[stageKey] = [];
+    byStage[stageKey].push(o);
+  });
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      ${opps.length === 0 ? `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px dashed var(--color-neutral-800,#3f424d);border-radius:var(--radius-md,8px);font-size:11px;color:var(--color-neutral-500,#9397ab);">
+          <i class="ph ph-info" style="font-size:14px;flex:none;"></i>
+          <span>Đang hiển thị <b>dữ liệu mẫu đối chiếu Spec F2</b> — chưa có cơ hội thực từ API. <!-- TODO: Đấu nối API khi backend triển khai --></span>
+        </div>
+      ` : ''}
+
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;row-gap:14px;column-gap:24px;">
+        <div style="flex:1 1 320px;min-width:min(100%,320px);max-width:700px;">
+          <div style="font-size:20px;font-weight:500;letter-spacing:-0.01em;color:var(--color-text,#e9e9ed);">Bảng cơ hội</div>
+          <div style="font-size:12.5px;color:var(--color-neutral-400,#b2b6ca);margin-top:5px;text-wrap:pretty;">Pipeline sống từ hội thoại, không phải form nhập tay. Mỗi thẻ trả lời: ai cần gì, nóng đến đâu, tin được đến đâu, nên ghép với ai, và mất gì nếu không làm gì.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;flex:none;">
+          <span style="font-size:11px;color:var(--color-neutral-500,#9397ab);">Pipeline ước lượng</span>
+          <span style="font-size:15px;font-weight:600;color:var(--color-text,#e9e9ed);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">4,86 tỷ ₫</span>
+          <button class="btn btn-secondary" style="gap:6px;height:30px;padding:0 11px;font-size:11.5px;margin-left:6px;" onclick="switchHub('opportunities')">
+            <i class="ph ph-tray" style="font-size:14px;"></i>Hộp Thư Ý Nghĩa →
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(7,minmax(190px,1fr));gap:10px;align-items:start;min-width:0;overflow-x:auto;padding-bottom:6px;">
+        ${OPP_STAGES.map(stage => {
+          const cards = byStage[stage.key] || [];
+          return `
+            <div style="display:flex;flex-direction:column;gap:9px;min-width:0;">
+              <div style="display:flex;align-items:center;gap:7px;padding:0 2px;">
+                <span style="width:6px;height:6px;flex:none;border-radius:50%;background:${stage.tone};"></span>
+                <span style="flex:1;min-width:0;font-size:10.5px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-neutral-300,#cfd3e5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${stage.label}</span>
+                <span style="flex:none;font-size:10.5px;color:var(--color-neutral-500,#9397ab);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${cards.length}</span>
+              </div>
+              <div style="font-size:10px;color:var(--color-neutral-500,#9397ab);padding:0 2px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${stage.estValue}</div>
+              ${cards.length === 0 ? `
+                <div style="border:1px dashed var(--color-neutral-800,#3f424d);border-radius:var(--radius-md,8px);padding:24px 8px;text-align:center;font-size:10.5px;color:var(--color-neutral-600,#75798c);">Trống</div>
+              ` : cards.map(o => {
+                const heatNum = parseFloat(o.heat);
+                const isFlame = (o.heat || '').includes('🔥');
+                const heatStyle = o.heat === '—'
+                  ? 'flex:none;min-width:28px;text-align:center;font-size:10px;padding:2px 6px;border-radius:var(--radius-sm,4px);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-neutral-500,#9397ab);border:1px solid var(--color-neutral-800,#3f424d);'
+                  : isFlame
+                  ? 'flex:none;font-size:11px;'
+                  : `flex:none;min-width:28px;text-align:center;font-size:10px;font-weight:600;padding:2px 6px;border-radius:var(--radius-sm,4px);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:${heatNum >= 80 ? 'oklch(0.76 0.15 24)' : heatNum >= 60 ? 'oklch(0.84 0.13 84)' : 'var(--color-neutral-400,#b2b6ca)'};border:1px solid ${heatNum >= 80 ? 'oklch(0.76 0.15 24)' : heatNum >= 60 ? 'oklch(0.84 0.13 84)' : 'var(--color-neutral-800,#3f424d)'};`;
+
+                const isConfHigh = o.confidence === 'cao' || parseFloat(o.confidence) >= 80;
+                const isConfMed = o.confidence === 'trung bình' || (parseFloat(o.confidence) >= 60 && parseFloat(o.confidence) < 80);
+                const confTone = isConfHigh ? 'oklch(0.76 0.12 162)' : isConfMed ? 'oklch(0.84 0.13 84)' : 'oklch(0.76 0.15 24)';
+                const confStyle = `flex:none;font-size:9.5px;padding:1px 6px;border-radius:999px;white-space:nowrap;color:${confTone};border:1px solid ${confTone};`;
+
+                const matchTone = o.matchOk !== false ? 'oklch(0.76 0.12 162)' : 'var(--color-neutral-500,#9397ab)';
+                const matchIcon = o.matchOk !== false ? 'ph ph-link' : 'ph ph-link-break';
+
+                return `
+                  <div style="background:var(--color-surface,#232532);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);padding:11px 12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;"
+                       onmouseover="this.style.borderColor='var(--color-neutral-700,#595d6c)'" onmouseout="this.style.borderColor='var(--color-divider,rgba(233,233,237,0.16))'">
+                    <div style="display:flex;align-items:center;gap:7px;">
+                      <span style="${heatStyle}">${escapeHtml(o.heat || '—')}</span>
+                      <span style="flex:1;min-width:0;font-size:9.5px;color:var(--color-neutral-500,#9397ab);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(o.id)}</span>
+                    </div>
+                    <div style="font-size:11.5px;color:var(--color-text,#e9e9ed);line-height:1.4;text-wrap:pretty;">${escapeHtml(o.need || '')}</div>
+                    <div style="font-size:10.5px;color:var(--color-neutral-400,#b2b6ca);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(o.who || '')}</div>
+                    <div style="height:1px;background:var(--color-divider,rgba(233,233,237,0.16));"></div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <span style="flex:1;min-width:0;font-size:10.5px;color:var(--color-neutral-300,#cfd3e5);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(o.value || (o.estimated_value ? (parseFloat(o.estimated_value)/1e6).toFixed(0) + ' tr ₫' : '—'))}</span>
+                      <span style="${confStyle}">${escapeHtml(o.confidence || '—')}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <i class="${matchIcon}" style="font-size:12px;flex:none;color:${matchTone};"></i>
+                      <span style="flex:1;min-width:0;font-size:10px;color:${matchTone};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(o.match || '')}</span>
+                    </div>
+                    ${o.risk ? `
+                      <div style="display:flex;align-items:flex-start;gap:6px;padding:6px 8px;border-radius:var(--radius-sm,4px);background:var(--color-bg,#161826);border:1px solid var(--color-neutral-800,#3f424d);">
+                        <i class="ph ph-warning" style="font-size:11px;flex:none;color:oklch(0.76 0.15 24);margin-top:1px;"></i>
+                        <span style="flex:1;min-width:0;font-size:10px;color:var(--color-neutral-400,#b2b6ca);line-height:1.4;text-wrap:pretty;">${escapeHtml(o.risk)}</span>
+                      </div>
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
   `;
 }
 
@@ -5870,35 +6013,188 @@ async function sendChatMessage() {
 }
 
 // ==========================================
-// 5. INTELLIGENCE & VALUE HUB
+// 5. INTELLIGENCE & VALUE HUB (CARE QUALITY — SPEC F2 MỤC 7)
 // ==========================================
 function renderIntelligenceHub() {
-  const currentSub = state.subtabs.intelligence || 'insights';
+  const currentSub = state.subtabs.intelligence || 'care';
 
   return `
     <div class="hub-header">
       <div class="hub-header-top">
         <div>
-          <h1 class="hub-title">Trí Tuệ & Giá Trị Thực (Intelligence & Value)</h1>
-          <p class="hub-desc">Dự báo rủi ro 72h, quy đổi giá trị thực chứng (Outcomes) và kho tài liệu báo cáo.</p>
+          <h1 class="hub-title">Chất Lượng Chăm Sóc</h1>
+          <p class="hub-desc">Hệ thống không chỉ biết đã nhắn hay chưa, mà biết cách nhắn: follow quá sớm hay quá muộn, hứa rồi quên, quên khách sau báo giá, và kịch bản nào đang chuyển thành deal.</p>
         </div>
       </div>
 
       <!-- Subnav Pills -->
       <div class="hub-subnav">
+        <button class="hub-subnav-btn ${currentSub === 'care' ? 'active' : ''}" onclick="switchSubtab('intelligence', 'care')">
+          <i class="ph ph-heartbeat"></i> Chất Lượng Chăm Sóc
+        </button>
         <button class="hub-subnav-btn ${currentSub === 'insights' ? 'active' : ''}" onclick="switchSubtab('intelligence', 'insights')">
-          ✦ Dự Báo & Rủi Ro (${state.insights.length})
+          <i class="ph ph-sparkle"></i> Dự Báo &amp; Rủi Ro (${state.insights.length})
         </button>
         <button class="hub-subnav-btn ${currentSub === 'outcomes' ? 'active' : ''}" onclick="switchSubtab('intelligence', 'outcomes')">
-          ◈ Đo Lường Giá Trị Thực (${state.outcomes.length})
+          <i class="ph ph-scales"></i> Đo Lường Giá Trị (${state.outcomes.length})
         </button>
         <button class="hub-subnav-btn ${currentSub === 'artifacts' ? 'active' : ''}" onclick="switchSubtab('intelligence', 'artifacts')">
-          📁 Kho Báo Cáo & Tài Liệu (${state.artifacts.length})
+          <i class="ph ph-folder-notch-open"></i> Kho Tài Liệu (${state.artifacts.length})
         </button>
       </div>
     </div>
 
-    ${currentSub === 'insights' ? renderInsightsView() : currentSub === 'outcomes' ? renderOutcomesView() : renderArtifactsView()}
+    ${currentSub === 'care' ? renderCareQualityView() : currentSub === 'insights' ? renderInsightsView() : currentSub === 'outcomes' ? renderOutcomesView() : renderArtifactsView()}
+  `;
+}
+
+// ══════════════════════════════════════════════════════════
+// CARE QUALITY VIEW — Spec F2 mục 7
+// Đối chiếu chuẩn Nocturne Design Tokens (Gen-Harness Console.dc.html)
+// TODO: Đấu nối API khi backend triển khai (/api/care_quality/records)
+// ══════════════════════════════════════════════════════════
+function renderCareQualityView() {
+  const careKpis = [
+    { label: 'Trung vị phản hồi', value: '24', unit: 'phút', sub: 'Mục tiêu dưới 15 phút', tone: 'oklch(0.84 0.13 84)' },
+    { label: 'Follow sau báo giá', value: '68', unit: '%', sub: '32% báo giá không ai follow lại', tone: 'oklch(0.76 0.15 24)' },
+    { label: 'Hứa rồi quên', value: '11', unit: 'lần / 30 ngày', sub: 'Tập trung ở 2 người', tone: 'oklch(0.76 0.15 24)' },
+    { label: 'Khách bị bỏ rơi', value: '6', unit: 'khách', sub: 'Không ai chạm trên 30 ngày', tone: 'oklch(0.76 0.15 24)' },
+    { label: 'Độ phủ follow-up', value: '81', unit: '%', sub: '↑ 7 điểm so với tháng trước', tone: 'oklch(0.76 0.12 162)' }
+  ];
+
+  const careHours = ['08', '10', '12', '14', '16', '18', '20', '22'];
+
+  const careGrid = [
+    { name: 'Nguyễn Thu Hà', v: [14, 22, 38, 84, 96, 62, 0, 0] },
+    { name: 'Trần Minh Khoa', v: [8, 11, 24, 18, 22, 26, 34, 41] },
+    { name: 'Vũ Hải Đăng',   v: [6, 9, 14, 12, 11, 16, 0, 0] },
+    { name: 'Đỗ Thanh Mai',  v: [11, 13, 21, 19, 24, 0, 0, 0] },
+    { name: 'Phạm Anh Tú',   v: [18, 26, 44, 51, 68, 72, 0, 0] }
+  ];
+
+  const carePatterns = [
+    { label: 'Quên khách sau khi gửi báo giá', bar: '100%', n: '19', tone: 'oklch(0.76 0.15 24)' },
+    { label: 'Hứa mốc thời gian rồi không cập nhật', bar: '58%', n: '11', tone: 'oklch(0.76 0.15 24)' },
+    { label: 'Follow quá muộn (sau 7 ngày)', bar: '47%', n: '9', tone: 'oklch(0.84 0.13 84)' },
+    { label: 'Follow quá sớm (dưới 2 giờ, gây phiền)', bar: '32%', n: '6', tone: 'oklch(0.84 0.13 84)' },
+    { label: 'Giọng điệu gây khó chịu', bar: '21%', n: '4', tone: 'oklch(0.84 0.13 84)' },
+    { label: 'Chăm sóc tốt rồi biến mất', bar: '16%', n: '3', tone: 'oklch(0.84 0.13 84)' }
+  ];
+
+  const careScripts = [
+    { text: 'Báo giá kèm mốc giao cụ thể, follow lại đúng ngày đã hứa — thắng 74% các ca áp dụng.', meta: '32 ca · kịch bản thắng', icon: 'ph ph-trophy', tone: 'oklch(0.76 0.12 162)' },
+    { text: 'Gửi mẫu trước khi khách hỏi giá lần hai — thắng 61%.', meta: '18 ca · kịch bản thắng', icon: 'ph ph-trophy', tone: 'oklch(0.76 0.12 162)' },
+    { text: 'Trả lời sau hơn 60 phút ba lần liên tiếp — mất khách 80%.', meta: '15 ca · kịch bản mất', icon: 'ph ph-warning-octagon', tone: 'oklch(0.76 0.15 24)' },
+    { text: 'Để khách tự hỏi tiến độ từ lần thứ hai trở đi — mất khách 68%.', meta: '22 ca · kịch bản mất', icon: 'ph ph-warning-octagon', tone: 'oklch(0.76 0.15 24)' }
+  ];
+
+  return `
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0;">
+      <!-- 5 KPI Cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(176px,1fr));gap:12px;min-width:0;">
+        ${careKpis.map(ck => `
+          <div style="background:var(--color-surface,#232532);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);padding:13px 15px;">
+            <span style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);">${ck.label}</span>
+            <div style="display:flex;align-items:baseline;gap:5px;margin-top:6px;">
+              <span style="font-size:24px;font-weight:600;letter-spacing:-0.02em;color:${ck.tone};line-height:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${ck.value}</span>
+              <span style="font-size:11px;color:var(--color-neutral-500,#9397ab);">${ck.unit}</span>
+            </div>
+            <div style="font-size:11px;color:var(--color-neutral-400,#b2b6ca);margin-top:4px;">${ck.sub}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- 2-Column Responsive Analysis -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start;">
+        <!-- Left: Heatmap Tốc độ phản hồi -->
+        <div style="background:var(--color-surface,#232532);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--color-text,#e9e9ed);">Tốc độ phản hồi theo khung giờ</div>
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);margin-top:1px;">Trung vị phút · theo nhân viên</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;">
+              <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--color-neutral-400,#b2b6ca);"><span style="width:8px;height:8px;border-radius:2px;background:oklch(0.76 0.12 162);"></span>&lt; 15 phút</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--color-neutral-400,#b2b6ca);"><span style="width:8px;height:8px;border-radius:2px;background:oklch(0.84 0.13 84);"></span>15–60</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--color-neutral-400,#b2b6ca);"><span style="width:8px;height:8px;border-radius:2px;background:oklch(0.76 0.15 24);"></span>&gt; 60</span>
+            </div>
+          </div>
+          <div style="padding:13px 16px 16px;">
+            <div style="display:grid;grid-template-columns:120px repeat(8,minmax(0,1fr));gap:4px;align-items:center;">
+              <span></span>
+              ${careHours.map(h => `
+                <span style="font-size:9.5px;text-align:center;color:var(--color-neutral-500,#9397ab);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${h}h</span>
+              `).join('')}
+              ${careGrid.map(cg => `
+                <span style="font-size:11px;color:var(--color-neutral-300,#cfd3e5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(cg.name)}</span>
+                ${cg.v.map((v, idx) => {
+                  const isZero = v === 0;
+                  const bg = isZero
+                    ? 'var(--color-neutral-900,#292b31)'
+                    : v > 60
+                    ? 'oklch(0.66 0.17 24 / 0.22)'
+                    : v >= 15
+                    ? 'oklch(0.79 0.12 82 / 0.18)'
+                    : 'oklch(0.76 0.12 162 / 0.16)';
+                  const fg = isZero
+                    ? 'var(--color-neutral-500,#9397ab)'
+                    : v > 60
+                    ? 'oklch(0.76 0.15 24)'
+                    : v >= 15
+                    ? 'oklch(0.84 0.13 84)'
+                    : 'oklch(0.76 0.12 162)';
+                  const title = `${cg.name} · ${careHours[idx]}:00 — ${isZero ? 'không hoạt động' : v + ' phút'}`;
+                  return `
+                    <span style="display:grid;place-items:center;height:28px;border-radius:var(--radius-sm,4px);font-size:10.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:${bg};color:${fg};" title="${escapeHtml(title)}">${isZero ? '—' : v}</span>
+                  `;
+                }).join('')}
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Lỗi lặp lại + Kịch bản -->
+        <div style="display:flex;flex-direction:column;gap:16px;min-width:0;">
+          <!-- Lỗi chăm sóc lặp lại -->
+          <div style="background:var(--color-surface,#232532);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);overflow:hidden;">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px;font-weight:600;color:var(--color-text,#e9e9ed);">Lỗi chăm sóc lặp lại</div>
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);margin-top:1px;">30 ngày · toàn tổ chức</div>
+            </div>
+            <div style="padding:6px 0 10px;">
+              ${carePatterns.map(cp => `
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 16px;">
+                  <span style="flex:1;min-width:0;font-size:11.5px;color:var(--color-neutral-300,#cfd3e5);text-wrap:pretty;">${escapeHtml(cp.label)}</span>
+                  <span style="width:52px;height:4px;flex:none;border-radius:2px;background:var(--color-divider,rgba(233,233,237,0.16));overflow:hidden;">
+                    <span style="display:block;height:4px;width:${cp.bar};background:${cp.tone};opacity:.85;"></span>
+                  </span>
+                  <span style="width:40px;flex:none;text-align:right;font-size:11px;color:${cp.tone};font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${cp.n}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Kịch bản thắng và mất khách -->
+          <div style="background:var(--color-surface,#232532);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);overflow:hidden;">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px;font-weight:600;color:var(--color-text,#e9e9ed);">Kịch bản thắng và mất khách</div>
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);margin-top:1px;">Rút từ 214 ca đã đóng</div>
+            </div>
+            <div style="padding:12px 16px 14px;display:flex;flex-direction:column;gap:11px;">
+              ${careScripts.map(sp => `
+                <div style="display:flex;align-items:flex-start;gap:10px;">
+                  <i class="${sp.icon}" style="font-size:15px;flex:none;color:${sp.tone};margin-top:1px;"></i>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:11.5px;color:var(--color-neutral-300,#cfd3e5);line-height:1.5;text-wrap:pretty;">${escapeHtml(sp.text)}</div>
+                    <div style="font-size:10px;color:var(--color-neutral-500,#9397ab);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(sp.meta)}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -12240,105 +12536,84 @@ let peopleReviewState = {
   reviews: [],
   careRecords: [],
   brokenPromises: [],
-  activeTab: 'EMPLOYEE', // 'EMPLOYEE', 'CUSTOMER', 'CANDIDATE', 'TRAINEE', 'CARE_QUALITY'
+  activeTab: 'staff', // 'staff', 'customer', 'candidate', 'learner'
   expandedPersonId: null
 };
 
+// ══════════════════════════════════════════════════════════
+// PEOPLE REVIEW HUB — Spec F2 mục 6
+// Đối chiếu chuẩn Nocturne Design Tokens (Gen-Harness Console.dc.html)
+// ══════════════════════════════════════════════════════════
 function renderPeopleReviewHub() {
+  const curTab = peopleReviewState.activeTab || 'staff';
+  const counts = peopleReviewState.summary?.people_counts || {};
+
+  const tabs = [
+    { key: 'staff',     label: 'Nhân viên',  count: counts.EMPLOYEE?.count  || '28', altKey: 'EMPLOYEE' },
+    { key: 'customer',  label: 'Khách hàng', count: counts.CUSTOMER?.count  || '96', altKey: 'CUSTOMER' },
+    { key: 'candidate', label: 'Ứng viên',   count: counts.CANDIDATE?.count || '11', altKey: 'CANDIDATE' },
+    { key: 'learner',   label: 'Học viên',   count: counts.TRAINEE?.count   || '13', altKey: 'TRAINEE' }
+  ];
+
   return `
-    <div style="display:flex;flex-direction:column;gap:20px;margin-bottom:30px">
-      
-      <!-- 1. TOP KPI COMMAND BAR (4 CHỈ SỐ CON NGƯỜI & CHẤT LƯỢNG CHĂM SÓC) -->
-      <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:16px">
-        
-        <div class="card" style="padding:16px;background:rgba(15,23,42,0.92);border:1px solid rgba(192,132,252,0.25);border-left:4px solid #c084fc;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase">👥 Con Người Theo Dõi</span>
-            <span class="badge" style="background:rgba(192,132,252,0.15);color:#c084fc;font-size:10px">4 Phân Hệ</span>
-          </div>
-          <div style="font-size:24px;font-weight:800;color:#f8fafc;margin:6px 0 2px 0" id="pr-kpi-total-people">9 Đối Tượng</div>
-          <div style="font-size:11.5px;color:#94a3b8" id="pr-kpi-people-detail">3 NV · 3 Khách · 2 Ứng viên · 1 HV</div>
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0;">
+      <!-- Header Bar -->
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;row-gap:14px;column-gap:24px;">
+        <div style="flex:1 1 320px;min-width:min(100%,320px);max-width:700px;">
+          <div style="font-size:20px;font-weight:500;letter-spacing:-0.01em;color:var(--color-text,#e9e9ed);">Đánh giá con người</div>
+          <div style="font-size:12.5px;color:var(--color-neutral-400,#b2b6ca);margin-top:5px;text-wrap:pretty;">Điểm số là công cụ hỗ trợ quản lý, không phải bản án. Mỗi dòng có xu hướng, tín hiệu nổi bật trong tuần, khuyến nghị và nút xem chứng cứ gốc.</div>
         </div>
-
-        <div class="card" style="padding:16px;background:rgba(15,23,42,0.92);border:1px solid rgba(52,211,153,0.25);border-left:4px solid #34d399;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase">⚡ Chất Lượng Chăm Sóc</span>
-            <span class="badge" style="background:rgba(52,211,153,0.15);color:#34d399;font-size:10px">Team Health</span>
-          </div>
-          <div style="font-size:24px;font-weight:800;color:#34d399;margin:6px 0 2px 0" id="pr-kpi-health-score">82.7 / 100đ</div>
-          <div style="font-size:11.5px;color:#94a3b8" id="pr-kpi-response-time">Tốc độ phản hồi: 10.2 phút</div>
+        <div style="display:flex;align-items:center;gap:9px;flex:none;">
+          <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:oklch(0.84 0.13 84);border:1px solid oklch(0.84 0.13 84);border-radius:999px;padding:4px 10px;">
+            <i class="ph ph-lock-simple" style="font-size:13px;"></i>Dữ liệu khoá ở cấp Owner
+          </span>
+          <button class="btn btn-secondary" style="gap:6px;height:30px;padding:0 11px;font-size:11.5px;" onclick="fetchPeopleReviewData()" title="Quét lại dữ liệu">
+            <i class="ph ph-arrows-clockwise" style="font-size:14px;"></i>Làm mới
+          </button>
         </div>
-
-        <div class="card" style="padding:16px;background:rgba(15,23,42,0.92);border:1px solid rgba(244,63,94,0.35);border-left:4px solid #f43f5e;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <span style="font-size:11px;font-weight:700;color:#f43f5e;text-transform:uppercase">🚨 Bệnh "Hứa Rồi Quên"</span>
-            <span class="badge danger" style="font-size:10px" id="pr-kpi-broken-badge">3 Cảnh Báo</span>
-          </div>
-          <div style="font-size:24px;font-weight:800;color:#f43f5e;margin:6px 0 2px 0" id="pr-kpi-broken-count">3 Lời Hứa Trễ</div>
-          <div style="font-size:11.5px;color:#fda4af">Có nguy cơ làm mất khách</div>
-        </div>
-
-        <div class="card" style="padding:16px;background:rgba(15,23,42,0.92);border:1px solid rgba(251,191,36,0.25);border-left:4px solid #fbbf24;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase">⚠️ Khách Bị Bỏ Rơi</span>
-            <span class="badge warm" style="font-size:10px">> 72h Im Lặng</span>
-          </div>
-          <div style="font-size:24px;font-weight:800;color:#fbbf24;margin:6px 0 2px 0" id="pr-kpi-abandoned-count">2 Khách Hàng</div>
-          <div style="font-size:11.5px;color:#94a3b8">Cần phân công follow-up ngay</div>
-        </div>
-
       </div>
 
-      <!-- 2. HỘP CẢNH BÁO BẮT BỆNH "HỨA RỒI QUÊN" (BROKEN PROMISES RADAR) -->
-      <div id="pr-broken-promises-panel" class="card" style="padding:16px 20px;background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.3);border-radius:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <i class="ph ph-warning-octagon" style="color:#f43f5e;font-size:20px"></i>
+      <!-- Radar Lời Hứa Trễ Hạn (Broken Promises) nếu có -->
+      <div id="pr-broken-promises-panel" style="display:none;padding:14px 16px;background:oklch(0.66 0.17 24 / 0.12);border:1px solid oklch(0.76 0.15 24 / 0.35);border-radius:var(--radius-md,8px);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <i class="ph ph-warning-octagon" style="color:oklch(0.76 0.15 24);font-size:18px;"></i>
             <div>
-              <div style="font-size:13px;font-weight:800;color:#f43f5e;text-transform:uppercase">RADAR PHÁT HIỆN LỜI HỨA TRỄ HẠN (CARE PATTERN RADAR — SPEC-23)</div>
-              <div style="font-size:11px;color:#fda4af">AI tự động quét tin nhắn phát hiện nhân sự hứa nhưng không làm hoặc trễ hạn</div>
+              <div style="font-size:12px;font-weight:600;color:oklch(0.76 0.15 24);text-transform:uppercase;letter-spacing:0.05em;">RADAR PHÁT HIỆN LỜI HỨA TRỄ HẠN (SPEC-23)</div>
+              <div style="font-size:11px;color:var(--color-neutral-400,#b2b6ca);">AI tự động quét tin nhắn phát hiện nhân sự hứa nhưng không cập nhật mốc thời gian</div>
             </div>
           </div>
-          <span class="badge danger" style="font-size:10.5px;padding:3px 8px" id="pr-broken-alert-tag">3 Vụ Việc Cần Xử Lý</span>
+          <span class="badge danger" id="pr-broken-alert-tag" style="font-size:10px;">0 Cảnh Báo</span>
         </div>
-
-        <div style="display:flex;flex-direction:column;gap:10px" id="pr-broken-promises-list">
-          <!-- Render danh sách lời hứa trễ hạn -->
-        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="pr-broken-promises-list"></div>
       </div>
 
-      <!-- 3. SUBTABS CHUYỂN ĐỔI 4 BOARD CON NGƯỜI & KỊCH BẢN CHĂM SÓC -->
-      <div class="card" style="padding:10px 16px;background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.1);border-radius:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-        
-        <div style="display:flex;gap:6px;background:rgba(0,0,0,0.4);padding:4px;border-radius:8px;border:1px solid rgba(255,255,255,0.08)">
-          <button class="btn sm" id="tab-pr-employee" onclick="switchPeopleTab('EMPLOYEE')" style="font-size:12px;font-weight:700;padding:6px 14px">
-            <i class="ph ph-users"></i> 1. Nhân Viên (<span id="count-pr-emp">3</span>)
-          </button>
-          <button class="btn sm" id="tab-pr-customer" onclick="switchPeopleTab('CUSTOMER')" style="font-size:12px;font-weight:700;padding:6px 14px">
-            <i class="ph ph-crown"></i> 2. Khách Hàng Key (<span id="count-pr-cus">3</span>)
-          </button>
-          <button class="btn sm" id="tab-pr-candidate" onclick="switchPeopleTab('CANDIDATE')" style="font-size:12px;font-weight:700;padding:6px 14px">
-            <i class="ph ph-target"></i> 3. Ứng Viên (<span id="count-pr-can">2</span>)
-          </button>
-          <button class="btn sm" id="tab-pr-trainee" onclick="switchPeopleTab('TRAINEE')" style="font-size:12px;font-weight:700;padding:6px 14px">
-            <i class="ph ph-graduation-cap"></i> 4. Học Viên (<span id="count-pr-trn">1</span>)
-          </button>
-          <button class="btn sm" id="tab-pr-care" onclick="switchPeopleTab('CARE_QUALITY')" style="font-size:12px;font-weight:700;padding:6px 14px;background:rgba(99,102,241,0.2);color:#c7d2fe">
-            <i class="ph ph-chart-line-up"></i> 5. Bắt Bệnh Kịch Bản Thắng/Thua
-          </button>
-        </div>
-
-        <button class="btn sm" onclick="fetchPeopleReviewData()" title="Làm mới dữ liệu">
-          <i class="ph ph-arrows-clockwise"></i> Quét Lại Dữ Liệu
-        </button>
-
+      <!-- Subtabs 4 Phân Hệ Con Người -->
+      <div style="display:flex;align-items:center;gap:2px;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+        ${tabs.map(t => {
+          const isActive = (curTab === t.key || curTab === t.altKey);
+          return `
+            <button id="tab-pr-${t.key}" onclick="switchPeopleTab('${t.key}')"
+                    style="height:34px;padding:0 14px;border:none;background:transparent;font:inherit;font-size:12.5px;font-weight:${isActive ? '600' : '400'};color:${isActive ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)'};cursor:pointer;border-bottom:2px solid ${isActive ? 'var(--color-accent,#9184d9)' : 'transparent'};margin-bottom:-1px;display:flex;align-items:center;gap:7px;">
+              <span>${t.label}</span>
+              <span style="font-size:10.5px;color:var(--color-neutral-500,#9397ab);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${t.count}</span>
+            </button>
+          `;
+        }).join('')}
       </div>
 
-      <!-- 4. NỘI DUNG BẢNG ĐIỆN CON NGƯỜI (DYNAMIC CONTENT) -->
-      <div id="pr-dynamic-content" style="min-height:380px">
-        <div style="padding:40px;text-align:center;color:#94a3b8">Đang nạp bảng đánh giá con người...</div>
+      <!-- Danh Sách Đánh Giá Con Người (Dynamic Content) -->
+      <div id="pr-dynamic-content" style="min-height:300px;">
+        <!-- renderPeopleActiveTab() sẽ nạp vào đây -->
       </div>
 
+      <!-- Ghi Chú Bản Quyền & Trách Nhiệm Thẩm Định -->
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px dashed var(--color-neutral-800,#3f424d);border-radius:var(--radius-md,8px);">
+        <i class="ph ph-scales" style="font-size:16px;flex:none;color:var(--color-neutral-500,#9397ab);margin-top:1px;"></i>
+        <span style="flex:1;min-width:0;font-size:11.5px;color:var(--color-neutral-400,#b2b6ca);line-height:1.55;text-wrap:pretty;">
+          Mọi đánh giá nhân sự và ứng viên đều phải có chứng cứ, có chỗ phản biện và có người chịu trách nhiệm. Cảnh báo ở đây là tín hiệu, không phải kết luận kỷ luật tự động — hệ thống không tự ra quyết định nhân sự.
+        </span>
+      </div>
     </div>
   `;
 }
@@ -12350,75 +12625,49 @@ async function initPeopleReviewUI() {
 async function fetchPeopleReviewData() {
   try {
     const [resSum, resList, resCare, resBroken] = await Promise.all([
-      fetch('/api/people_review/summary').then(r => r.json()),
-      fetch('/api/people_review/list').then(r => r.json()),
-      fetch('/api/care_quality/records').then(r => r.json()),
-      fetch('/api/care_quality/broken_promises?status=UNRESOLVED').then(r => r.json())
+      fetch('/api/people_review/summary').then(r => r.json()).catch(() => ({ ok: false })),
+      fetch('/api/people_review/list').then(r => r.json()).catch(() => ({ ok: false })),
+      fetch('/api/care_quality/records').then(r => r.json()).catch(() => ({ ok: false })),
+      fetch('/api/care_quality/broken_promises?status=UNRESOLVED').then(r => r.json()).catch(() => ({ ok: false }))
     ]);
 
-    if (resSum.ok) {
+    if (resSum && resSum.ok) {
       peopleReviewState.summary = resSum;
       updatePeopleReviewKPIs(resSum);
     }
-    if (resList.ok) {
+    if (resList && resList.ok) {
       peopleReviewState.reviews = resList.reviews || [];
     }
-    if (resCare.ok) {
+    if (resCare && resCare.ok) {
       peopleReviewState.careRecords = resCare.records || [];
     }
-    if (resBroken.ok) {
+    if (resBroken && resBroken.ok) {
       peopleReviewState.brokenPromises = resBroken.broken_promises || [];
       renderBrokenPromisesList(peopleReviewState.brokenPromises);
     }
 
-    switchPeopleTab(peopleReviewState.activeTab || 'EMPLOYEE');
+    renderPeopleActiveTab();
   } catch (err) {
-    showToast('Lỗi nạp đánh giá con người: ' + err.message);
+    console.warn('Lỗi nạp đánh giá con người:', err);
+    renderPeopleActiveTab();
   }
 }
 
 function updatePeopleReviewKPIs(s) {
   const cq = s.care_quality || {};
-  const counts = s.people_counts || {};
-
-  const totalP = (counts.EMPLOYEE?.count||0) + (counts.CUSTOMER?.count||0) + (counts.CANDIDATE?.count||0) + (counts.TRAINEE?.count||0);
-  const pCountEl = document.getElementById('pr-kpi-total-people');
-  const pDetailEl = document.getElementById('pr-kpi-people-detail');
-  if (pCountEl) pCountEl.textContent = `${totalP} Đối Tượng`;
-  if (pDetailEl) pDetailEl.textContent = `${counts.EMPLOYEE?.count||0} NV · ${counts.CUSTOMER?.count||0} Khách · ${counts.CANDIDATE?.count||0} Ứng viên · ${counts.TRAINEE?.count||0} HV`;
-
-  const hScoreEl = document.getElementById('pr-kpi-health-score');
-  const rTimeEl = document.getElementById('pr-kpi-response-time');
-  if (hScoreEl) hScoreEl.textContent = `${cq.team_health_score || 82.5} / 100đ`;
-  if (rTimeEl) rTimeEl.textContent = `Tốc độ phản hồi: ${cq.team_avg_response_min || 6.8} phút (Follow-up: ${cq.team_avg_follow_up_pct || 78}%)`;
-
-  const bCountEl = document.getElementById('pr-kpi-broken-count');
-  const bBadgeEl = document.getElementById('pr-kpi-broken-badge');
-  const bAlertTag = document.getElementById('pr-broken-alert-tag');
-  const sidebarBadge = document.getElementById('badge-broken-promises');
-
   const bCount = cq.total_broken_promises || 0;
-  if (bCountEl) bCountEl.textContent = `${bCount} Lời Hứa Trễ`;
-  if (bBadgeEl) bBadgeEl.textContent = `${bCount} Cảnh Báo`;
-  if (bAlertTag) bAlertTag.textContent = `${bCount} Vụ Việc Cần Xử Lý`;
-  if (sidebarBadge) sidebarBadge.textContent = `${bCount} Cảnh Báo`;
-
-  const abCountEl = document.getElementById('pr-kpi-abandoned-count');
-  if (abCountEl) abCountEl.textContent = `${cq.total_abandoned_clients || 2} Khách Hàng`;
-
-  const cEmp = document.getElementById('count-pr-emp');
-  const cCus = document.getElementById('count-pr-cus');
-  const cCan = document.getElementById('count-pr-can');
-  const cTrn = document.getElementById('count-pr-trn');
-  if (cEmp) cEmp.textContent = counts.EMPLOYEE?.count || 0;
-  if (cCus) cCus.textContent = counts.CUSTOMER?.count || 0;
-  if (cCan) cCan.textContent = counts.CANDIDATE?.count || 0;
-  if (cTrn) cTrn.textContent = counts.TRAINEE?.count || 0;
+  const sidebarBadge = document.getElementById('badge-broken-promises');
+  if (sidebarBadge) {
+    sidebarBadge.textContent = bCount > 0 ? `${bCount} Cảnh Báo` : 'Bình Thường';
+    sidebarBadge.style.background = bCount > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(52,211,153,0.15)';
+    sidebarBadge.style.color = bCount > 0 ? '#f43f5e' : '#34d399';
+  }
 }
 
 function renderBrokenPromisesList(list) {
   const container = document.getElementById('pr-broken-promises-list');
   const panel = document.getElementById('pr-broken-promises-panel');
+  const tag = document.getElementById('pr-broken-alert-tag');
   if (!container || !panel) return;
 
   if (!list || list.length === 0) {
@@ -12426,34 +12675,32 @@ function renderBrokenPromisesList(list) {
     return;
   }
   panel.style.display = 'block';
+  if (tag) tag.textContent = `${list.length} Vụ Việc Cần Xử Lý`;
 
   container.innerHTML = list.map(b => {
     const isCritical = b.severity === 'CRITICAL';
-    const badgeColor = isCritical ? '#f43f5e' : (b.severity === 'HIGH' ? '#fbbf24' : '#38bdf8');
-    
+    const badgeColor = isCritical ? 'oklch(0.76 0.15 24)' : (b.severity === 'HIGH' ? 'oklch(0.84 0.13 84)' : 'var(--color-accent,#9184d9)');
+
     return `
-      <div style="background:rgba(0,0,0,0.45);border:1px solid rgba(244,63,94,0.25);border-left:3px solid ${badgeColor};border-radius:6px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:14px">
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <span class="badge" style="background:${badgeColor}22;color:${badgeColor};font-size:9.5px;font-weight:800">${b.severity}</span>
-            <span style="font-weight:700;color:#f8fafc;font-size:12px">👤 ${escapeHtml(b.employee_name)}</span>
-            <span style="color:#94a3b8;font-size:11px">hứa với khách:</span>
-            <span style="font-weight:700;color:#38bdf8;font-size:12px">👑 ${escapeHtml(b.client_name)}</span>
-            <span style="color:#64748b;font-size:10.5px">(${escapeHtml(b.channel)})</span>
+      <div style="background:var(--color-surface,#232532);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-left:3px solid ${badgeColor};border-radius:var(--radius-sm,4px);padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
+            <span style="font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,0.2);color:${badgeColor};">${b.severity}</span>
+            <span style="font-weight:600;color:var(--color-text,#e9e9ed);font-size:11.5px;">${escapeHtml(b.employee_name)}</span>
+            <span style="color:var(--color-neutral-500,#9397ab);font-size:10.5px;">hứa với</span>
+            <span style="font-weight:600;color:var(--color-accent,#9184d9);font-size:11.5px;">${escapeHtml(b.client_name)}</span>
+            <span style="color:var(--color-neutral-600,#75798c);font-size:10px;">(${escapeHtml(b.channel || 'Zalo')})</span>
           </div>
-          <div style="font-size:12px;color:#f8fafc;font-style:italic">
-            "${escapeHtml(b.promise_text)}"
-          </div>
-          <div style="font-size:10.5px;color:#fda4af;margin-top:2px">
-            ⏰ Hạn đã hứa: ${escapeHtml(b.promised_deadline)} · <b>ĐÃ TRỄ HẠN ${b.delay_hours} GIỜ</b>
+          <div style="font-size:11.5px;color:var(--color-neutral-300,#cfd3e5);font-style:italic;">"${escapeHtml(b.promise_text)}"</div>
+          <div style="font-size:10px;color:oklch(0.76 0.15 24);margin-top:2px;">
+            ⏰ Hạn đã hứa: ${escapeHtml(b.promised_deadline)} · <b>ĐÃ TRỄ ${b.delay_hours} GIỜ</b>
           </div>
         </div>
-
-        <div style="display:flex;gap:8px;white-space:nowrap">
-          <button class="btn sm" onclick="remindEmployeePromise('${b.id}', '${escapeHtml(b.employee_name)}')" style="font-size:11px;background:rgba(244,63,94,0.2);color:#fda4af;border:1px solid rgba(244,63,94,0.3)">
-            <i class="ph ph-bell"></i> Nhắc Nhở Ngay
+        <div style="display:flex;gap:6px;flex:none;">
+          <button class="btn btn-secondary" style="font-size:10.5px;height:26px;padding:0 8px;" onclick="remindEmployeePromise('${b.id}', '${escapeHtml(b.employee_name)}')">
+            <i class="ph ph-bell"></i> Nhắc Nhở
           </button>
-          <button class="btn sm primary" onclick="resolvePromiseAction('${b.id}')" style="font-size:11px">
+          <button class="btn btn-primary" style="font-size:10.5px;height:26px;padding:0 8px;" onclick="resolvePromiseAction('${b.id}')">
             <i class="ph ph-check"></i> Đã Xong
           </button>
         </div>
@@ -12463,23 +12710,31 @@ function renderBrokenPromisesList(list) {
 }
 
 function switchPeopleTab(tab) {
-  peopleReviewState.activeTab = tab;
-  
-  const tabs = [
-    { key: 'employee', type: 'EMPLOYEE' },
-    { key: 'customer', type: 'CUSTOMER' },
-    { key: 'candidate', type: 'CANDIDATE' },
-    { key: 'trainee', type: 'TRAINEE' },
-    { key: 'care', type: 'CARE_QUALITY' }
-  ];
+  // Normalize alias
+  const mapKey = {
+    'EMPLOYEE': 'staff',
+    'CUSTOMER': 'customer',
+    'CANDIDATE': 'candidate',
+    'TRAINEE': 'learner',
+    'CARE_QUALITY': 'care'
+  };
+  const normalized = mapKey[tab] || tab;
 
+  if (normalized === 'care') {
+    switchHub('intelligence', 'care');
+    return;
+  }
+
+  peopleReviewState.activeTab = normalized;
+
+  const tabs = ['staff', 'customer', 'candidate', 'learner'];
   tabs.forEach(t => {
-    const el = document.getElementById(`tab-pr-${t.key}`);
+    const el = document.getElementById(`tab-pr-${t}`);
     if (el) {
-      const match = (tab === t.type);
-      el.className = match ? 'btn sm primary' : 'btn sm';
-      el.style.background = match ? 'var(--color-primary)' : 'rgba(0,0,0,0.4)';
-      el.style.color = match ? '#fff' : (t.key === 'care' ? '#c7d2fe' : '#cbd5e1');
+      const match = (normalized === t);
+      el.style.fontWeight = match ? '600' : '400';
+      el.style.color = match ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)';
+      el.style.borderBottom = match ? '2px solid var(--color-accent,#9184d9)' : 'transparent';
     }
   });
 
@@ -12498,167 +12753,202 @@ function togglePersonDetail(personId) {
 function renderPeopleActiveTab() {
   const container = document.getElementById('pr-dynamic-content');
   if (!container) return;
-
-  if (peopleReviewState.activeTab === 'CARE_QUALITY') {
-    renderCareQualityTab(container);
-  } else {
-    renderPeopleBoardTable(container, peopleReviewState.activeTab);
-  }
+  renderPeopleBoardTable(container, peopleReviewState.activeTab || 'staff');
 }
 
-// -----------------------------------------------------------------------------
-// BẢNG ĐIỆN ĐÁNH GIÁ CON NGƯỜI (TICKER TABLE CHO 4 BOARD)
-// -----------------------------------------------------------------------------
-function renderPeopleBoardTable(container, personType) {
-  const people = peopleReviewState.reviews.filter(p => p.person_type === personType);
-  if (!people || people.length === 0) {
-    container.innerHTML = `
-      <div class="card" style="padding:40px;text-align:center;color:#94a3b8">
-        Chưa có hồ sơ con người nào thuộc phân hệ này.
-      </div>
-    `;
-    return;
-  }
+// ══════════════════════════════════════════════════════════
+// BẢNG CON NGƯỜI CHI TIẾT (NOCTURNE CARDS — SPEC F2 MỤC 6)
+// TODO: Đấu nối API khi backend triển khai (/api/people_review/list)
+// ══════════════════════════════════════════════════════════
+function renderPeopleBoardTable(container, tabKey) {
+  const rawReviews = peopleReviewState.reviews || [];
+
+  // Chuẩn hoá phân loại từ API nếu có
+  const typeMap = {
+    'staff': ['EMPLOYEE', 'staff'],
+    'customer': ['CUSTOMER', 'customer'],
+    'candidate': ['CANDIDATE', 'candidate'],
+    'learner': ['TRAINEE', 'learner']
+  };
+  const acceptedTypes = typeMap[tabKey] || [tabKey];
+  const matchedApiPeople = rawReviews.filter(p => acceptedTypes.includes(p.person_type));
+
+  // Dữ liệu mẫu đối chiếu chuẩn từ Gen-Harness Console Design Export (F2 mục 6)
+  const mockDataset = {
+    staff: [
+      { id: 'P-M01', name: 'Nguyễn Thu Hà', initials: 'TH', role: 'Trưởng ban Tài chính · 11 khách', score: '62', trend: 'down', tone: 'oklch(0.76 0.15 24)',
+        signal: 'Trung vị phản hồi tăng từ 12 lên 84 phút. Ba khách nhắc lại mà chưa được trả lời, trong đó có Thành Phát 87 điểm rủi ro.',
+        rec: 'Giảm tải: chuyển 4 khách sang Đỗ Thanh Mai. Đây là dấu hiệu quá tải, không phải thờ ơ.', recIcon: 'ph ph-scales',
+        evidence_quote: 'Khách: "Em ơi hợp đồng in ấn quý 4 bên em duyệt xong chưa? Anh hỏi từ hôm qua chưa thấy ai phản hồi." (20/09 14:22)',
+        ai_coaching_notes: 'Quá tải đột biến do ôm 11 khách VIP cùng lúc. Cần phân bổ lại bớt quan hệ đối tác để giảm áp lực phản hồi.' },
+      { id: 'P-M02', name: 'Trần Minh Khoa', initials: 'MK', role: 'Giám đốc vận hành · 14 khách', score: '71', trend: 'flat', tone: 'oklch(0.84 0.13 84)',
+        signal: 'Chất lượng chăm sóc tốt nhưng đang là cầu nối của 9 nhóm và ôm 14 quan hệ — rủi ro tập trung một người.',
+        rec: 'Phân bổ lại 3 quan hệ đối tác cho Vũ Hải Đăng để giảm rủi ro phụ thuộc.', recIcon: 'ph ph-users-three',
+        evidence_quote: 'Nội bộ: "Anh Khoa ơi bên An Khang đang hỏi lại điều khoản thanh toán đợt 3, anh chốt giúp em nhé." (21/09 10:15)',
+        ai_coaching_notes: 'Đang là nút cổ chai thông tin (SPOF). Cần ủy quyền cho các trưởng nhóm cấp dưới xử lý các đầu việc thông thường.' },
+      { id: 'P-M03', name: 'Vũ Hải Đăng', initials: 'HĐ', role: 'Trưởng phòng Kinh doanh · 8 khách', score: '84', trend: 'up', tone: 'oklch(0.76 0.12 162)',
+        signal: 'Tỷ lệ follow sau báo giá đạt 92%, cao nhất tổ chức. Hai khách lạnh được làm ấm lại trong tuần.',
+        rec: 'Lấy kịch bản follow của người này làm mẫu chuẩn cho ban kinh doanh.', recIcon: 'ph ph-star',
+        evidence_quote: 'Khách: "Cảm ơn Đăng đã gửi mẫu và giải thích cặn kẽ biểu giá. Bên anh quyết định chốt đơn tuần này." (21/09 15:30)',
+        ai_coaching_notes: 'Kịch bản follow mẫu mực: luôn gửi tài liệu kèm mốc cam kết cụ thể, bám sát tiến độ khách hàng.' },
+      { id: 'P-M04', name: 'Đỗ Thanh Mai', initials: 'TM', role: 'Kế toán trưởng · 6 khách', score: '78', trend: 'up', tone: 'oklch(0.76 0.12 162)',
+        signal: 'Phản hồi đều trong giờ hành chính, không có tin nào quá 30 phút. Ngoài giờ không trả lời — phù hợp giờ im lặng.',
+        rec: 'Còn dư tải, có thể nhận thêm 3–4 khách từ Ban Tài chính.', recIcon: 'ph ph-plus-circle',
+        evidence_quote: 'Khách: "Chị Mai gửi hóa đơn VAT và đối chiếu công nợ nhanh quá, cảm ơn chị nhiều." (20/09 16:40)',
+        ai_coaching_notes: 'Kỷ luật thời gian chuẩn mực, xử lý chứng từ nhanh và chính xác. Có thể san sẻ bớt khách từ Hà.' },
+      { id: 'P-M05', name: 'Phạm Anh Tú', initials: 'AT', role: 'Quản lý kho · 4 khách', score: '54', trend: 'down', tone: 'oklch(0.84 0.13 84)',
+        signal: 'Hai lần hứa mốc giao hàng rồi không cập nhật lại. Một khách phải tự hỏi tiến độ ba lần.',
+        rec: 'Bật nhắc tự động cho mọi lời hứa có mốc thời gian của người này.', recIcon: 'ph ph-bell-ringing',
+        evidence_quote: 'Khách: "Anh Tú ơi hẹn thứ Ba giao 2 kiện phụ kiện mà giờ thứ Năm rồi chưa thấy đâu?" (19/09 09:18)',
+        ai_coaching_notes: 'Thói quen hứa mốc thời gian rồi quên cập nhật. Cần kích hoạt bot tự động cảnh báo trước hạn 2h.' }
+    ],
+    customer: [
+      { id: 'C-M01', name: 'Nguyễn Văn Bảo - In Thành Phát', initials: 'NB', role: 'Khách hàng VIP · Doanh thu 840tr · Zalo', score: '82', trend: 'down', tone: 'oklch(0.84 0.13 84)',
+        signal: 'Đang hỏi tiến độ hợp đồng in ấn quý 4, nhắc lại 2 lần chưa có phản hồi. Có rủi ro đối thủ Minh Long tiếp cận.',
+        rec: 'Ưu tiên gửi mẫu và gọi trực tiếp làm rõ biểu giá trong hôm nay.', recIcon: 'ph ph-phone-call',
+        evidence_quote: 'Khách: "Bên Minh Long chào giá thấp hơn 4% và cam kết giao 10 ngày. Em kiểm tra lại giúp anh nhé." (21/09 11:20)',
+        ai_coaching_notes: 'Khách VIP nhạy cảm về mốc giao hàng. Cần Trưởng phòng xử lý phản hồi ngay.' },
+      { id: 'C-M02', name: 'Trần Văn Hậu - Xưởng gỗ Bình Dương', initials: 'TH', role: 'Khách hàng chiến lược · Cung cấp ván MDF · Zalo', score: '89', trend: 'up', tone: 'oklch(0.76 0.12 162)',
+        signal: 'Vừa chốt đơn 1,2 tỷ MDF E1 17mm. Tương tác tích cực, yêu cầu giao đúng hẹn tháng 10.',
+        rec: 'Phân công theo dõi mốc vận chuyển và cập nhật lịch trình 2 ngày/lần.', recIcon: 'ph ph-truck',
+        evidence_quote: 'Khách: "Xác nhận chốt đơn 3 container giao đầu tháng 10 nhé. Nhớ đảm bảo chứng chỉ E1." (21/09 09:15)',
+        ai_coaching_notes: 'Quan hệ rất vững. Cần giữ cam kết chất lượng để chuẩn bị cho đơn quý 1/2027.' }
+    ],
+    candidate: [
+      { id: 'CD-M01', name: 'Võ Thanh Sơn', initials: 'TS', role: 'Ứng viên Key Account ngành lạnh · WhatsApp', score: '74', trend: 'up', tone: 'oklch(0.76 0.12 162)',
+        signal: 'Đã hoàn thành vòng phỏng vấn 1, phù hợp 85% tiêu chí năng lực ngành logistics lạnh.',
+        rec: 'Lên lịch phỏng vấn vòng 2 với Giám đốc Vận hành trong tuần này.', recIcon: 'ph ph-calendar',
+        evidence_quote: 'HR: "Ứng viên có 5 năm kinh nghiệm mảng kho lạnh, xử lý tình huống giao tiếp tốt." (20/09 15:00)',
+        ai_coaching_notes: 'Ứng viên sáng giá cho vị trí đang trống của Ban Kinh doanh.' },
+      { id: 'CD-M02', name: 'Lê Minh Hoàng', initials: 'MH', role: 'Ứng viên Lập trình viên Python · Telegram', score: '68', trend: 'flat', tone: 'oklch(0.84 0.13 84)',
+        signal: 'Kinh nghiệm 3 năm FastAPI/asyncio, đã hoàn thành bài test kiến trúc plugin.',
+        rec: 'Soát xét code test và gửi thư mời trao đổi trực tiếp.', recIcon: 'ph ph-code',
+        evidence_quote: 'Tech Lead: "Code sạch, hiểu cơ chế EventBus và Circuit Breaker." (21/09 14:00)',
+        ai_coaching_notes: 'Cần kiểm tra thêm kinh nghiệm tối ưu SQLite concurrency và background tasks.' }
+    ],
+    learner: [
+      { id: 'L-M01', name: 'Hoàng Văn Nam', initials: 'HN', role: 'Học viên Khoá Chuyển đổi số K4 · Zalo Group', score: '91', trend: 'up', tone: 'oklch(0.76 0.12 162)',
+        signal: 'Nộp bài tập thực hành sớm, tham gia 100% buổi thảo luận nhóm, tích cực hỗ trợ học viên khác.',
+        rec: 'Đề xuất làm nhóm trưởng dự án tốt nghiệp và mời tham gia mạng lưới chuyên gia.', recIcon: 'ph ph-certificate',
+        evidence_quote: 'Giảng viên: "Nam áp dụng bài tập vào quy trình công ty thực tế rất xuất sắc." (21/09 20:00)',
+        ai_coaching_notes: 'Học viên xuất sắc, tiềm năng trở thành đại sứ giải pháp của Gen-Harness.' }
+    ]
+  };
+
+  // Ưu tiên dữ liệu thật từ API, fallback sang mock
+  const people = matchedApiPeople.length > 0 ? matchedApiPeople.map(p => ({
+    id: p.id,
+    name: p.full_name || p.name,
+    initials: (p.full_name || p.name || 'U').split(' ').map(w => w[0]).slice(-2).join('').toUpperCase(),
+    role: `${p.role || 'Thành viên'} · ${p.department || 'Bộ phận'}`,
+    score: String(p.overall_score || 75),
+    trend: p.trend ? p.trend.toLowerCase() : 'flat',
+    tone: (p.overall_score >= 80) ? 'oklch(0.76 0.12 162)' : (p.overall_score >= 65) ? 'oklch(0.84 0.13 84)' : 'oklch(0.76 0.15 24)',
+    signal: p.highlight_signal || 'Chưa có tín hiệu bất thường trong tuần.',
+    rec: p.ai_coaching_notes || 'Duy trì theo dõi nhịp tương tác.',
+    recIcon: 'ph ph-sparkle',
+    evidence_quote: p.evidence_quote || 'Hội thoại đang diễn ra trên kênh chỉ định.',
+    ai_coaching_notes: p.ai_coaching_notes || 'Hệ thống đang tích lũy dữ liệu đối soạt.'
+  })) : (mockDataset[tabKey] || mockDataset.staff);
 
   container.innerHTML = `
-    <div class="card" style="padding:0;overflow:hidden;background:rgba(15,23,42,0.95);border:1px solid rgba(255,255,255,0.12);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.4)">
-      
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left">
-          
-          <thead>
-            <tr style="background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(255,255,255,0.15);color:#94a3b8;text-transform:uppercase;font-size:10.5px;letter-spacing:0.5px">
-              <th style="padding:12px 14px;width:220px">ĐỐI TƯỢNG & VAI TRÒ</th>
-              <th style="padding:12px 14px;text-align:center;width:110px">ĐIỂM & XU HƯỚNG</th>
-              <th style="padding:12px 14px">TÍN HIỆU HÀNH VI THẬT (CHAT EVIDENCE)</th>
-              <th style="padding:12px 14px;width:280px">AI KHUYẾN NGHỊ COACHING (SSOT)</th>
-              <th style="padding:12px 14px;text-align:center;width:100px">KÊNH</th>
-              <th style="padding:12px 14px;text-align:center;width:120px">HÀNH ĐỘNG</th>
-            </tr>
-          </thead>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      ${people.map(p => {
+        const isExpanded = (peopleReviewState.expandedPersonId === p.id);
+        const trendIcon = p.trend === 'up' ? 'ph ph-trend-up' : (p.trend === 'down' ? 'ph ph-trend-down' : 'ph ph-minus');
 
-          <tbody>
-            ${people.map(p => {
-              const isExpanded = peopleReviewState.expandedPersonId === p.id;
-              
-              const trendIcon = p.trend === 'UP' ? '↗' : (p.trend === 'DOWN' ? '↘' : '→');
-              const trendColor = p.trend === 'UP' ? '#34d399' : (p.trend === 'DOWN' ? '#f43f5e' : '#fbbf24');
-              const scoreColor = p.overall_score >= 85 ? '#34d399' : (p.overall_score >= 70 ? '#fbbf24' : '#f43f5e');
+        return `
+          <div style="background:var(--color-surface,#232532);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);padding:14px 16px;display:flex;flex-direction:column;gap:12px;"
+               onmouseover="this.style.borderColor='var(--color-neutral-700,#595d6c)'" onmouseout="this.style.borderColor='var(--color-divider,rgba(233,233,237,0.16))'">
+            <!-- Dòng Tóm Tắt 5 Cột Chuẩn Design Export -->
+            <div style="display:grid;grid-template-columns:212px 96px minmax(0,1fr) 260px auto;gap:16px;align-items:center;">
+              <!-- Col 1: Đối tượng & Vai trò -->
+              <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                <span style="width:30px;height:30px;flex:none;border-radius:50%;background:var(--color-accent-900,#2b2741);border:1px solid var(--color-accent-800,#423a6a);display:grid;place-items:center;font-size:10px;font-weight:600;color:var(--color-accent-300,#d2cefd);">
+                  ${p.initials}
+                </span>
+                <div style="min-width:0;">
+                  <div style="font-size:12.5px;font-weight:500;color:var(--color-text,#e9e9ed);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(p.name)}</div>
+                  <div style="font-size:10.5px;color:var(--color-neutral-500,#9397ab);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(p.role)}</div>
+                </div>
+              </div>
 
-              return `
-                <tr onclick="togglePersonDetail('${p.id}')" style="cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);background:${isExpanded ? 'rgba(192,132,252,0.1)' : 'transparent'};transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='${isExpanded ? 'rgba(192,132,252,0.1)' : 'transparent'}'">
-                  
-                  <!-- Tên & Vai Trò -->
-                  <td style="padding:10px 14px">
-                    <div style="font-weight:700;color:#f8fafc;font-size:13px;display:flex;align-items:center;gap:6px">
-                      <span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:rgba(192,132,252,0.2);color:#c084fc;text-align:center;line-height:24px;font-size:10px;font-weight:800">
-                        ${(p.full_name||'U').slice(0,2).toUpperCase()}
-                      </span>
-                      <span>${escapeHtml(p.full_name)}</span>
+              <!-- Col 2: Điểm & Xu hướng -->
+              <div style="display:flex;align-items:center;gap:7px;">
+                <span style="font-size:22px;font-weight:600;color:${p.tone};line-height:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${p.score}</span>
+                <i class="${trendIcon}" style="font-size:14px;color:${p.tone};"></i>
+              </div>
+
+              <!-- Col 3: Tín hiệu nổi bật tuần này -->
+              <div style="min-width:0;">
+                <div style="font-size:9.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);">Tín hiệu nổi bật tuần này</div>
+                <div style="font-size:12px;color:var(--color-neutral-300,#cfd3e5);margin-top:4px;line-height:1.5;text-wrap:pretty;">${escapeHtml(p.signal)}</div>
+              </div>
+
+              <!-- Col 4: Khuyến nghị -->
+              <div style="min-width:0;">
+                <div style="font-size:9.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);">Khuyến nghị</div>
+                <div style="display:flex;align-items:flex-start;gap:7px;margin-top:4px;">
+                  <i class="${p.recIcon || 'ph ph-sparkle'}" style="font-size:14px;flex:none;color:${p.tone};margin-top:1px;"></i>
+                  <span style="flex:1;min-width:0;font-size:12px;color:var(--color-neutral-300,#cfd3e5);line-height:1.5;text-wrap:pretty;">${escapeHtml(p.rec)}</span>
+                </div>
+              </div>
+
+              <!-- Col 5: Nút Hành Động -->
+              <div style="display:flex;flex-direction:column;gap:7px;flex:none;">
+                <button class="btn btn-secondary" style="gap:5px;height:27px;padding:0 10px;font-size:11px;white-space:nowrap;" onclick="event.stopPropagation(); togglePersonDetail('${p.id}')">
+                  <i class="ph ph-quotes" style="font-size:12px;"></i>${isExpanded ? 'Đóng' : 'Xem chứng cứ'}
+                </button>
+                <button class="btn btn-ghost" style="gap:5px;height:24px;padding:0 8px;font-size:10.5px;white-space:nowrap;" onclick="event.stopPropagation(); promptCoachingNote('${p.id}', '${escapeHtml(p.name)}')">
+                  Sửa điểm tay
+                </button>
+              </div>
+            </div>
+
+            <!-- Drawer Soi Sâu Chứng Cứ khi click Xem Chứng Cứ -->
+            ${isExpanded ? `
+              <div style="border-top:1px solid var(--color-divider,rgba(233,233,237,0.16));padding-top:12px;display:grid;grid-template-columns:1.5fr 1fr;gap:16px;">
+                <!-- Cột Trái: Trích dẫn & Lập luận AI -->
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <div style="background:var(--color-bg,#161826);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-sm,4px);padding:10px 12px;">
+                    <div style="font-size:10.5px;font-weight:600;color:var(--color-accent,#9184d9);text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;gap:6px;">
+                      <i class="ph ph-quotes"></i> CHỨNG CỨ HỘI THOẠI GỐC (RAW CHAT AUDIT):
                     </div>
-                    <div style="font-size:11px;color:#94a3b8;margin-top:2px">
-                      ${escapeHtml(p.role)} · <span style="color:#64748b">${escapeHtml(p.department)}</span>
+                    <div style="font-size:12px;color:var(--color-text,#e9e9ed);font-style:italic;line-height:1.5;">
+                      "${escapeHtml(p.evidence_quote || 'Chưa có trích dẫn chat.')}"
                     </div>
-                  </td>
+                  </div>
 
-                  <!-- Điểm & Xu hướng -->
-                  <td style="padding:10px 14px;text-align:center">
-                    <div style="display:flex;align-items:center;justify-content:center;gap:4px">
-                      <span style="font-size:18px;font-weight:900;color:${scoreColor}">${p.overall_score}</span>
-                      <span style="font-size:16px;font-weight:800;color:${trendColor}">${trendIcon}</span>
+                  <div style="background:var(--color-bg,#161826);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-sm,4px);padding:10px 12px;">
+                    <div style="font-size:10.5px;font-weight:600;color:oklch(0.84 0.13 84);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+                      <i class="ph ph-brain"></i> LẬP LUẬN ĐỐI SOÁT &amp; COACHING CỦA AI:
                     </div>
-                    <div style="font-size:9.5px;color:#64748b">${p.trend === 'UP' ? 'Đang lên' : (p.trend === 'DOWN' ? 'Giảm sút' : 'Ổn định')}</div>
-                  </td>
-
-                  <!-- Tín hiệu nổi bật tuần này -->
-                  <td style="padding:10px 14px">
-                    <div style="font-size:12px;color:#cbd5e1;line-height:1.4">
-                      ${escapeHtml(p.highlight_signal)}
+                    <div style="font-size:11.5px;color:var(--color-neutral-300,#cfd3e5);line-height:1.4;">
+                      ${escapeHtml(p.ai_coaching_notes || 'Đang theo dõi dữ liệu.')}
                     </div>
-                  </td>
+                  </div>
+                </div>
 
-                  <!-- Đề xuất coaching của AI -->
-                  <td style="padding:10px 14px">
-                    <div style="font-size:11.5px;color:#fbbf24;line-height:1.4;background:rgba(0,0,0,0.25);padding:6px 10px;border-radius:6px;border-left:2px solid #fbbf24">
-                      <i class="ph ph-sparkle"></i> ${escapeHtml(p.ai_coaching_notes)}
-                    </div>
-                  </td>
-
-                  <!-- Kênh -->
-                  <td style="padding:10px 14px;text-align:center">
-                    <span class="badge" style="background:rgba(255,255,255,0.08);color:#cbd5e1;font-size:10px">
-                      ${escapeHtml(p.evidence_channel || 'Zalo')}
-                    </span>
-                  </td>
-
-                  <!-- Nút Soi Chứng Cứ (SPEC-22) -->
-                  <td style="padding:10px 14px;text-align:center">
-                    <button class="btn sm" onclick="event.stopPropagation(); togglePersonDetail('${p.id}')" style="font-size:11px;padding:5px 10px;background:${isExpanded ? 'rgba(192,132,252,0.25)' : 'rgba(255,255,255,0.06)'};color:${isExpanded ? '#c084fc' : '#cbd5e1'};border:1px solid ${isExpanded ? '#c084fc' : 'rgba(255,255,255,0.15)'}">
-                      <i class="ph ${isExpanded ? 'ph-caret-up' : 'ph-eye'}"></i> ${isExpanded ? 'Đóng' : 'Xem Chứng Cứ'}
-                    </button>
-                  </td>
-
-                </tr>
-
-                <!-- DRAWER SOI SÂU CHỨNG CỨ KHI CLICK DÒNG -->
-                ${isExpanded ? `
-                  <tr style="background:rgba(10,15,30,0.85);border-bottom:2px solid rgba(192,132,252,0.3)">
-                    <td colspan="6" style="padding:18px 22px">
-                      
-                      <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:18px">
-                        
-                        <!-- Cột Trái: Trích Dẫn Chứng Cứ Gốc & Lập Luận AI -->
-                        <div style="display:flex;flex-direction:column;gap:12px">
-                          <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(192,132,252,0.25);border-radius:8px;padding:14px">
-                            <div style="font-size:11px;font-weight:700;color:#c084fc;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px">
-                              <i class="ph ph-quotes"></i> CHỨNG CỨ HỘI THOẠI GỐC (RAW CHAT AUDIT):
-                            </div>
-                            <div style="font-size:12.5px;color:#f8fafc;font-style:italic;line-height:1.5;background:rgba(255,255,255,0.02);padding:10px 12px;border-radius:6px;border-left:3px solid #c084fc">
-                              "${escapeHtml(p.evidence_quote || 'Chưa có trích dẫn chat gốc.')}"
-                            </div>
-                          </div>
-
-                          <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(251,191,36,0.2);border-radius:8px;padding:12px 14px">
-                            <div style="font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:6px">
-                              <i class="ph ph-brain"></i> LẬP LUẬN ĐỐI SOÁT & COACHING CỦA AI:
-                            </div>
-                            <div style="font-size:12px;color:#cbd5e1;line-height:1.4">
-                              ${escapeHtml(p.ai_coaching_notes || 'Chưa có khuyến nghị coaching.')}
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Cột Phải: Bộ Lệnh Next Action Cho Sếp -->
-                        <div style="display:flex;flex-direction:column;gap:10px;background:rgba(0,0,0,0.3);padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,0.08)">
-                          <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:4px">
-                            HÀNH ĐỘNG ĐIỀU HÀNH CỦA SẾP
-                          </div>
-
-                          <button class="btn sm primary" onclick="event.stopPropagation(); promptCoachingNote('${p.id}', '${escapeHtml(p.full_name)}')" style="font-size:11.5px;padding:8px 12px;display:flex;align-items:center;gap:6px;justify-content:center">
-                            <i class="ph ph-paper-plane-tilt"></i> Gửi Chỉ Thị Coaching Trực Tiếp
-                          </button>
-
-                          <button class="btn sm" onclick="event.stopPropagation(); showToast('⚡ Đã phân công theo dõi đặc biệt đối tượng này!');" style="font-size:11px;padding:8px 12px;display:flex;align-items:center;gap:6px;justify-content:center;background:rgba(255,255,255,0.06)">
-                            <i class="ph ph-shield-check"></i> Đưa Vào Radar Theo Dõi Ưu Tiên
-                          </button>
-
-                          <button class="btn sm" onclick="event.stopPropagation(); togglePersonDetail('${p.id}')" style="font-size:11px;padding:6px 12px;margin-top:auto;color:#94a3b8">
-                            Thu Gọn ✕
-                          </button>
-                        </div>
-
-                      </div>
-
-                    </td>
-                  </tr>
-                ` : ''}
-              `;
-            }).join('')}
-          </tbody>
-
-        </table>
-      </div>
-
+                <!-- Cột Phải: Bộ Lệnh Next Action Cho Sếp -->
+                <div style="display:flex;flex-direction:column;gap:8px;background:var(--color-bg,#161826);padding:12px;border-radius:var(--radius-sm,4px);border:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+                  <div style="font-size:10px;font-weight:600;color:var(--color-neutral-500,#9397ab);text-transform:uppercase;margin-bottom:2px;">
+                    HÀNH ĐỘNG ĐIỀU HÀNH CỦA SẾP
+                  </div>
+                  <button class="btn btn-primary" style="gap:6px;height:28px;font-size:11px;" onclick="event.stopPropagation(); promptCoachingNote('${p.id}', '${escapeHtml(p.name)}')">
+                    <i class="ph ph-paper-plane-tilt"></i> Gửi Chỉ Thị Coaching Trực Tiếp
+                  </button>
+                  <button class="btn btn-secondary" style="gap:6px;height:28px;font-size:11px;" onclick="event.stopPropagation(); showToast('⚡ Đã đưa vào radar theo dõi ưu tiên!');">
+                    <i class="ph ph-shield-check"></i> Đưa Vào Radar Ưu Tiên
+                  </button>
+                  <button class="btn btn-ghost" style="height:24px;font-size:10.5px;margin-top:auto;color:var(--color-neutral-400,#b2b6ca);" onclick="event.stopPropagation(); togglePersonDetail('${p.id}')">
+                    Thu Gọn ✕
+                  </button>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('')}
     </div>
   `;
 }
