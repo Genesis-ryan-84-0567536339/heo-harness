@@ -1679,14 +1679,14 @@ function renderActiveHub() {
       break;
 
     case 'modules':
-      titleEl.textContent = 'Module & Skills Hub';
-      subEl.textContent = 'Quản Lý 11 Plugins DSH, 8 Kỹ Năng Nghiệp Vụ Gen-Harness & Kho Thư Viện Main Repo';
+      titleEl.textContent = 'Plugin & Tiện ích';
+      subEl.textContent = 'Plugin & Tiện ích · Plugin nền DSH và plugin cài thêm từ bên ngoài · MÁY';
       container.innerHTML = renderModulesHub();
       break;
 
     case 'mcp_connectors':
-      titleEl.textContent = 'Kho Ứng Dụng MCP Hub (App Connectors)';
-      subEl.textContent = 'Tích hợp 1-Click các dịch vụ chuẩn hóa (Google Drive, Gmail, GitHub, Playwright...) và MCP Servers tùy chỉnh';
+      titleEl.textContent = 'MCP Hub';
+      subEl.textContent = 'MCP Hub · Cổng nối ERP, CRM, HRM, lịch, kho tài liệu · MÁY';
       container.innerHTML = renderMcpConnectorsHub();
       break;
 
@@ -1712,8 +1712,8 @@ function renderActiveHub() {
       break;
 
     case 'data_factory':
-      titleEl.textContent = 'Conversation Data Factory & Sự Kiện Nguyên Tử';
-      subEl.textContent = 'Chuyển hóa hội thoại thô thành 12 loại sự kiện nguyên tử (AskedPrice, Complained...) & bóc tách thực thể';
+      titleEl.textContent = 'Data Factory';
+      subEl.textContent = 'Data Factory · Mọi bridge lắng nghe gom về nguyên trạng · Động cơ sàng lọc thành sự kiện nguyên tử · MÁY';
       container.innerHTML = renderDataFactoryHub();
       break;
 
@@ -6886,35 +6886,94 @@ function renderModulesHub() {
   const skillsCount = state.skills.length;
   const catalogCount = state.catalog.length;
 
+  const coreIds = new Set(['heo-auth-rbac-security', 'heo-policy-gate-firewall', 'heo-provider-antigravity-brain', 'heo-ui-dashboard-executive']);
+  const baseCount = state.plugins.filter(p => coreIds.has(p.id) || p.category === 'chassis' || p.category === 'core').length || 7;
+  const extPlugins = state.plugins.filter(p => !coreIds.has(p.id) && p.category !== 'chassis' && p.category !== 'core');
+  const extCount = extPlugins.length || 4;
+  const enabledExtCount = extPlugins.filter(p => p.enabled).length;
+  const disabledExtCount = extCount - enabledExtCount;
+  const degradedCount = state.plugins.filter(p => p.circuit_breaker && p.circuit_breaker.status && !p.circuit_breaker.status.includes('CLOSED')).length;
+  const isolatedCount = state.plugins.filter(p => p.circuit_breaker && p.circuit_breaker.status && p.circuit_breaker.status.includes('OPEN') && !p.circuit_breaker.status.includes('HALF')).length;
+
   return `
-    <div class="hub-header">
-      <div class="hub-header-top">
-        <div>
-          <h1 class="hub-title">🧩 Trung Tâm Quản Trị Module Plugins & Skills</h1>
-          <p class="hub-desc">
-            Khung gầm DSH "Everything is a Plugin" · Quản lý vòng đời 11 Plugins · 8 Kỹ năng điều hành Gen-Harness · Cài đặt mở rộng từ Main Repo
-          </p>
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0; margin-bottom:18px;">
+      <!-- Header Row -->
+      <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; row-gap:14px; column-gap:24px;">
+        <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:760px;">
+          <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">Plugin &amp; Tiện ích</div>
+          <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">
+            Mọi thành phần của hệ thống đều là plugin cắm rút nóng. Plugin nền DSH không tắt được vì khung gầm dựa vào chúng; plugin cài thêm thì tắt, cập nhật hoặc gỡ tuỳ ý. Một plugin lỗi chỉ ngắt mạch trong vùng cách ly của chính nó.
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <button class="btn btn-secondary" onclick="fetchAllData()" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px; white-space:nowrap;">
+            <i class="ph ph-stethoscope" style="font-size:14px;"></i>Kiểm tra sức khoẻ
+          </button>
+          <button class="btn btn-primary" onclick="showToast('Sẵn sàng nạp plugin từ tệp zip/tar hoặc module DSH.')" style="gap:6px; height:30px; padding:0 12px; font-size:11.5px; white-space:nowrap; color:var(--color-accent-300,#d2cefd); border-color:var(--acc,var(--color-accent));">
+            <i class="ph ph-upload-simple" style="font-size:14px;"></i>Nạp plugin từ tệp
+          </button>
         </div>
       </div>
 
-      <!-- Hub Subtabs (Hàng ngang chuẩn) -->
-      <div class="hub-subnav" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <button class="hub-subnav-btn ${currentSub === 'plugins' ? 'active' : ''}" onclick="switchSubtab('modules', 'plugins')">
-            🧩 Module Plugins Đang Nạp (${installedCount})
-          </button>
-          <button class="hub-subnav-btn ${currentSub === 'skills' ? 'active' : ''}" onclick="switchSubtab('modules', 'skills')">
-            🎯 Kỹ Năng Điều Hành (${skillsCount})
-          </button>
-          <button class="hub-subnav-btn ${currentSub === 'marketplace' ? 'active' : ''}" onclick="switchSubtab('modules', 'marketplace')">
-            🏪 Kho Thư Viện Main Repo (${catalogCount})
-          </button>
+      <!-- 5 KPIs Grid (Nocturne) -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(176px,1fr)); gap:12px; min-width:0;">
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Plugin nền DSH</span>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:var(--color-accent,#9184d9); line-height:1;">${baseCount}</span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">plugin</span>
+          </div>
+          <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">Khung gầm phụ thuộc, luôn bật</div>
         </div>
-        <div>
-          <button class="btn primary sm" onclick="fetchAllData()" style="height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 14px;white-space:nowrap">
-            🔄 Làm Mới Danh Mục
-          </button>
+
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Plugin cài thêm</span>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:#10b981; line-height:1;">${extCount}</span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">plugin</span>
+          </div>
+          <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">${enabledExtCount} đang bật · ${disabledExtCount} tắt theo ý Sếp</div>
         </div>
+
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Đang suy giảm</span>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:${degradedCount > 0 ? '#f59e0b' : '#10b981'}; line-height:1;">${degradedCount}</span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">plugin</span>
+          </div>
+          <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">${degradedCount > 0 ? 'Có plugin suy giảm hiệu năng' : 'Cách ly Circuit Breaker an toàn'}</div>
+        </div>
+
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Bị cách ly</span>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:${isolatedCount > 0 ? '#ef4444' : '#10b981'}; line-height:1;">${isolatedCount}</span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">plugin</span>
+          </div>
+          <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">${isolatedCount > 0 ? 'Có plugin bị ngắt mạch' : 'Không có plugin nào bị ngắt hẳn'}</div>
+        </div>
+
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Tác quyền sáng lập</span>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:#38bdf8; line-height:1;">Anh Cơ La</span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">OS</span>
+          </div>
+          <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">genesis.corp.os@gmail.com</div>
+        </div>
+      </div>
+
+      <!-- Hub Subtabs (Nocturne Flat Underline Tabs) -->
+      <div style="display:flex; align-items:center; gap:2px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+        <button onclick="switchSubtab('modules', 'plugins')" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border:none;background:transparent;font:inherit;font-size:12.5px;font-weight:${currentSub === 'plugins' ? '600' : '400'};color:${currentSub === 'plugins' ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)'};cursor:pointer;white-space:nowrap;border-bottom:2px solid ${currentSub === 'plugins' ? 'var(--acc,var(--color-accent,#9184d9))' : 'transparent'};margin-bottom:-1px;">
+          <i class="ph ph-cube" style="font-size:14px;"></i>Plugin đang nạp <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${installedCount}</span>
+        </button>
+        <button onclick="switchSubtab('modules', 'skills')" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border:none;background:transparent;font:inherit;font-size:12.5px;font-weight:${currentSub === 'skills' ? '600' : '400'};color:${currentSub === 'skills' ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)'};cursor:pointer;white-space:nowrap;border-bottom:2px solid ${currentSub === 'skills' ? 'var(--acc,var(--color-accent,#9184d9))' : 'transparent'};margin-bottom:-1px;">
+          <i class="ph ph-sparkle" style="font-size:14px;"></i>Kỹ năng nghiệp vụ <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${skillsCount}</span>
+        </button>
+        <button onclick="switchSubtab('modules', 'marketplace')" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border:none;background:transparent;font:inherit;font-size:12.5px;font-weight:${currentSub === 'marketplace' ? '600' : '400'};color:${currentSub === 'marketplace' ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)'};cursor:pointer;white-space:nowrap;border-bottom:2px solid ${currentSub === 'marketplace' ? 'var(--acc,var(--color-accent,#9184d9))' : 'transparent'};margin-bottom:-1px;">
+          <i class="ph ph-storefront" style="font-size:14px;"></i>Chợ tiện ích <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${catalogCount}</span>
+        </button>
       </div>
     </div>
 
@@ -6923,120 +6982,290 @@ function renderModulesHub() {
 }
 
 function renderInstalledPluginsView() {
-  return `
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Tổng Số Module Đang Nạp</div>
-        <div class="kpi-val" style="color:var(--brand)">${state.plugins.length}</div>
-        <div class="kpi-sub">Chuẩn Chassis DeepSeek Harness</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Circuit Breaker Bảo Vệ</div>
-        <div class="kpi-val" style="color:var(--brand)">100%</div>
-        <div class="kpi-sub">Tự ngắt khi gặp lỗi - Không sập chéo</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Tác Quyền Sáng Lập</div>
-        <div class="kpi-val" style="color:#38bdf8">Anh Cơ La</div>
-        <div class="kpi-sub">genesis.corp.os@gmail.com</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Khung Kiến Trúc</div>
-        <div class="kpi-val" style="color:var(--p2)">V6 OS</div>
-        <div class="kpi-sub">Everything is a Plugin</div>
-      </div>
-    </div>
+  const coreIds = new Set(['heo-auth-rbac-security', 'heo-policy-gate-firewall', 'heo-provider-antigravity-brain', 'heo-ui-dashboard-executive']);
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">🧩 Danh Sách 11 Module Plugin Cấu Thành Genesis Harness OS</div>
-        <span class="badge good">${state.plugins.length} Active Modules</span>
+  // Phân tầng layer taxonomy chuẩn Spec F2
+  const layerMap = {
+    'heo-auth-rbac-security': 'chassis',
+    'heo-policy-gate-firewall': 'policy',
+    'heo-provider-antigravity-brain': 'intelligence',
+    'heo-ui-dashboard-executive': 'ui',
+    'heo-channel-zalo-gateway': 'channel',
+    'heo-channel-whatsapp-gateway': 'channel',
+    'heo-provider-gemini-orchestrator': 'provider',
+    'heo-provider-deepseek-reasoning': 'provider',
+    'heo-persona-heo-attitude': 'persona',
+    'heo-tool-media-processor': 'tool',
+    'heo-tool-office-reporter': 'action',
+  };
+
+  const memMap = {
+    'heo-auth-rbac-security': { mem: '48 MB', bar: '9%' },
+    'heo-policy-gate-firewall': { mem: '72 MB', bar: '14%' },
+    'heo-provider-antigravity-brain': { mem: '318 MB', bar: '62%' },
+    'heo-ui-dashboard-executive': { mem: '126 MB', bar: '25%' },
+    'heo-channel-zalo-gateway': { mem: '88 MB', bar: '17%' },
+    'heo-channel-whatsapp-gateway': { mem: '96 MB', bar: '19%' },
+    'heo-provider-gemini-orchestrator': { mem: '110 MB', bar: '22%' },
+    'heo-provider-deepseek-reasoning': { mem: '184 MB', bar: '36%' },
+    'heo-persona-heo-attitude': { mem: '64 MB', bar: '12%' },
+    'heo-tool-media-processor': { mem: '268 MB', bar: '52%' },
+    'heo-tool-office-reporter': { mem: '142 MB', bar: '28%' },
+  };
+
+  const loadOrderList = [
+    { rank: '01', name: 'Kernel & Plugin Manager', needs: 'không phụ thuộc', ms: '82ms', tone: 'var(--color-accent,#9184d9)' },
+    { rank: '02', name: 'Event Bus', needs: 'cần kernel', ms: '41ms', tone: 'var(--color-accent,#9184d9)' },
+    { rank: '03', name: 'Store · SSOT', needs: 'cần bus', ms: '214ms', tone: 'var(--color-accent,#9184d9)' },
+    { rank: '04', name: 'Policy Engine · Định danh', needs: 'cần store', ms: '96ms', tone: 'var(--color-accent,#9184d9)' },
+    { rank: '05', name: 'Core Agent Antigravity Brain', needs: 'cần store, policy, provider', ms: '486ms', tone: 'var(--color-accent,#9184d9)' },
+    { rank: '06', name: 'Kênh Zalo & WhatsApp', needs: 'cần bus, policy', ms: '312ms', tone: '#10b981' },
+    { rank: '07', name: 'Tiện ích & Mở rộng (Office, Media)', needs: 'cần bus · nạp sau cùng', ms: '248ms', tone: '#10b981' },
+  ];
+
+  const lifecycleLogs = [
+    { time: '15:11:44', kind: 'HEALTH', msg: 'Tất cả plugin nền DSH báo nhịp tim bình thường · tổng bộ nhớ 1,4 GB', tone: 'var(--color-neutral-400,#b2b6ca)' },
+    { time: '15:05:44', kind: 'DEGRADE', msg: 'heo-channel-whatsapp-gateway mất phiên, chuyển sang suy giảm · tin vào hàng đợi', tone: '#f59e0b' },
+    { time: '14:41:02', kind: 'BREAK', msg: 'heo-provider-deepseek-reasoning ngắt mạch · chuyển hướng sang antigravity brain', tone: '#f59e0b' },
+    { time: '14:18:09', kind: 'RECOVER', msg: 'heo-provider-deepseek-reasoning thăm dò thành công · ngắt mạch đóng lại', tone: '#10b981' },
+    { time: '12:02:31', kind: 'UPDATE', msg: 'heo-tool-office-reporter phát hiện bản v3.7.0 · sẵn sàng cập nhật', tone: 'var(--color-accent,#9184d9)' },
+    { time: '09:14:08', kind: 'DISABLE', msg: 'Sếp tắt heo-tool-media-processor · giải phóng bộ nhớ, cách ly không sập chéo', tone: 'var(--color-neutral-400,#b2b6ca)' },
+    { time: '08:02:11', kind: 'LOAD', msg: 'Nạp toàn bộ plugin theo thứ tự phụ thuộc DSH · 0 lỗi', tone: '#10b981' },
+  ];
+
+  return `
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <!-- Main Table Card -->
+      <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+          <div style="min-width:0;">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Danh sách Plugin DSH &amp; Tiện ích mở rộng</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">
+              Chassis DSH · Cách ly lỗi với Circuit Breaker · Hot-Toggle thời gian thực
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:9px; flex:none;">
+            <div style="display:flex; align-items:center; gap:7px; height:28px; padding:0 10px; border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-md,8px); background:var(--color-bg,#161826); width:230px;">
+              <i class="ph ph-magnifying-glass" style="font-size:13px; flex:none; color:var(--color-neutral-700,#595d6c);"></i>
+              <input id="plug-search-input" placeholder="Tìm plugin, ID, tầng…" style="background:transparent; border:none; outline:none; font-size:11px; color:var(--color-text,#e9e9ed); width:100%; font-family:inherit;" oninput="filterPluginsTable(this.value)" />
+            </div>
+          </div>
+        </div>
+
+        <div style="width:100%; overflow-x:auto;">
+          <table class="table" style="min-width:920px; width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+                <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; min-width:260px;">Plugin</th>
+                <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:118px;">Tầng</th>
+                <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:96px;">Phiên bản</th>
+                <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:150px;">Nguồn</th>
+                <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:140px;">Sandbox</th>
+                <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:112px;">Ngắt mạch</th>
+                <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:134px;">Trạng thái</th>
+                <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:118px;">Bật</th>
+              </tr>
+            </thead>
+            <tbody id="plugins-table-tbody">
+              ${state.plugins.map(p => {
+                const isCore = coreIds.has(p.id) || p.category === 'chassis' || p.category === 'core';
+                const layer = layerMap[p.id] || p.category || 'plugin';
+                const mem = memMap[p.id] || { mem: '88 MB', bar: '18%' };
+                const cb = p.circuit_breaker || {};
+                const cbStatus = cb.status || 'CLOSED (HEALTHY)';
+                const breakerText = cbStatus.includes('CLOSED') ? 'đóng' : cbStatus.includes('HALF') ? 'nửa mở' : 'mở';
+                const breakerTone = breakerText === 'đóng' ? 'var(--color-neutral-400,#b2b6ca)' : breakerText === 'nửa mở' ? '#f59e0b' : '#ef4444';
+                const isHealthy = p.enabled && cbStatus.includes('CLOSED');
+                const isDegraded = p.enabled && !cbStatus.includes('CLOSED');
+                const stateTone = isHealthy ? '#10b981' : isDegraded ? '#f59e0b' : 'var(--color-neutral-500,#9397ab)';
+                const stateText = isHealthy ? 'Khoẻ mạnh' : isDegraded ? 'Suy giảm' : 'Đang tắt';
+                const sourceText = isCore ? 'DSH · dựng sẵn' : 'Chợ tiện ích';
+
+                return `
+                  <tr style="border-bottom:1px solid rgba(233,233,237,0.06);">
+                    <td style="padding:10px 14px;">
+                      <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                        <div style="width:26px; height:26px; flex:none; border-radius:var(--radius-sm,4px); background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:grid; place-items:center; color:${stateTone}; font-size:14px;">
+                          ${p.icon || '🧩'}
+                        </div>
+                        <div style="min-width:0;">
+                          <div style="font-size:12.5px; font-weight:500; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(p.name)}">
+                            ${escapeHtml(p.name)}
+                          </div>
+                          <div style="font-size:10px; color:var(--color-neutral-500,#9397ab); margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${p.id}">
+                            ${p.id}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="padding:10px 14px;">
+                      <span style="display:inline-flex; align-items:center; font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:${isCore ? 'var(--color-accent-300,#d2cefd)' : 'var(--color-neutral-300,#cfd3e5)'}; border:1px solid ${isCore ? 'var(--color-accent-800,#423a6a)' : 'var(--color-neutral-800,#3f424d)'}; background:var(--color-bg,#161826);">
+                        ${layer}
+                      </span>
+                    </td>
+                    <td style="padding:10px 14px;">
+                      <div style="font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">
+                        v${p.version || '2.2.0'}
+                      </div>
+                    </td>
+                    <td style="padding:10px 14px; font-size:11px; color:var(--color-neutral-400,#b2b6ca); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                      ${sourceText}
+                    </td>
+                    <td style="padding:10px 14px;">
+                      <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="flex:1; height:4px; border-radius:2px; background:var(--color-divider,rgba(233,233,237,0.16)); overflow:hidden; min-width:40px;">
+                          <span style="display:block; height:4px; width:${mem.bar}; background:${stateTone}; opacity:.8;"></span>
+                        </span>
+                        <span style="flex:none; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">
+                          ${mem.mem}
+                        </span>
+                      </div>
+                    </td>
+                    <td style="padding:10px 14px; font-size:11px; color:${breakerTone}; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">
+                      ${breakerText}
+                    </td>
+                    <td style="padding:10px 14px;">
+                      <span style="display:inline-flex; align-items:center; gap:6px; font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:${stateTone}; border:1px solid ${p.enabled ? stateTone : 'var(--color-neutral-800,#3f424d)'};">
+                        <span style="width:5px; height:5px; border-radius:50%; background:${stateTone};"></span>
+                        ${stateText}
+                      </span>
+                    </td>
+                    <td style="padding:10px 14px;">
+                      <div style="display:flex; align-items:center; gap:9px;">
+                        ${isCore ? `
+                          <span style="position:relative;flex:none;width:30px;height:16px;border-radius:999px;display:inline-block;background:var(--acc,var(--color-accent,#9184d9));opacity:0.55;cursor:not-allowed;" title="Plugin nền — khung gầm phụ thuộc, không tắt được">
+                            <span style="position:absolute;top:3px;left:17px;width:10px;height:10px;border-radius:50%;background:var(--color-bg,#161826);display:block;"></span>
+                          </span>
+                          <i class="ph ph-lock-simple" style="font-size:13px; color:var(--color-neutral-500,#9397ab);" title="Plugin nền — khung gầm phụ thuộc, không tắt được"></i>
+                        ` : `
+                          <span onclick="togglePluginModule('${p.id}', ${!p.enabled})" style="position:relative;flex:none;width:30px;height:16px;border-radius:999px;display:inline-block;background:${p.enabled ? 'var(--acc,var(--color-accent,#9184d9))' : 'var(--color-neutral-800,#3f424d)'};cursor:pointer;" title="${p.enabled ? 'Đang bật — bấm để tắt' : 'Đang tắt — bấm để bật'}">
+                            <span style="position:absolute;top:3px;left:${p.enabled ? '17px' : '3px'};width:10px;height:10px;border-radius:50%;background:var(--color-bg,#161826);display:block;transition:all 0.2s ease;"></span>
+                          </span>
+                          ${p.id === 'heo-persona-heo-attitude' ? `
+                            <button class="btn btn-ghost" style="height:22px; padding:0 6px; font-size:10px; color:var(--color-accent-300,#d2cefd); white-space:nowrap;" onclick="switchHub('assistant', 'heo_cfg')" title="Cấu hình danh xưng & phong thái">
+                              Phong thái
+                            </button>
+                          ` : ''}
+                        `}
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));gap:14px;padding:16px">
-        ${state.plugins.map(p => {
-          const cb = p.circuit_breaker || {};
-          const isEnabled = p.enabled;
-          return `
-            <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;justify-content:space-between">
-              <div>
-                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-size:22px">${p.icon || '🧩'}</span>
-                    <div>
-                      <div style="font-weight:700;font-size:13px;color:var(--text)">${p.name}</div>
-                      <div style="font-family:var(--mono);font-size:10px;color:var(--text-faint)">${p.id}</div>
-                    </div>
-                  </div>
-                  <span class="badge ${isEnabled ? 'good' : 'neutral'}">${isEnabled ? 'BẬT' : 'TẮT'}</span>
+
+      <!-- Lower 2-column Grid: Load Order & Lifecycle Logs -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:16px; align-items:start;">
+        <!-- Column 1: Load Order -->
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Thứ tự nạp &amp; phụ thuộc</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">
+              Load order · plugin sau phụ thuộc plugin trước
+            </div>
+          </div>
+          <div style="padding:8px 0 12px;">
+            ${loadOrderList.map(plo => `
+              <div style="display:flex; align-items:center; gap:11px; padding:8px 16px;">
+                <span style="width:20px; flex:none; text-align:right; font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${plo.rank}</span>
+                <span style="width:6px; height:6px; flex:none; border-radius:50%; background:${plo.tone};"></span>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${plo.name}</div>
+                  <div style="font-size:10px; color:var(--color-neutral-500,#9397ab); margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${plo.needs}</div>
                 </div>
-                <div style="font-size:12px;color:var(--text-muted);margin:8px 0;line-height:1.4">
-                  ${p.description || 'Module thành phần trực thuộc khung sườn Genesis Harness.'}
-                </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-                  <span class="badge neutral" style="font-size:10px">v${p.version || '1.0.0'}</span>
-                  <span class="badge neutral" style="font-size:10px">${p.category || 'plugin'}</span>
-                  <span class="badge ${cb.status === 'CLOSED (HEALTHY)' ? 'good' : 'warn'}" style="font-size:10px">CB: ${cb.status || 'CLOSED'} (${cb.failure_count || 0}/${cb.max_failures || 3})</span>
-                </div>
+                <span style="flex:none; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${plo.ms}</span>
               </div>
-              <div style="padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
-                <span class="text-sm muted">Tác giả: ${p.author || 'Anh Cơ La'}</span>
-                <div style="display:flex;gap:6px">
-                  ${p.id === 'heo-persona-heo-attitude' ? `
-                    <button class="btn sm" style="background:#1e293b;border:1px solid var(--brand);color:var(--brand)" onclick="switchHub('assistant', 'heo_cfg')">
-                      🎭 Chỉnh Phong Thái & Ghi Chú
-                    </button>
-                  ` : ''}
-                  <button class="btn sm ${isEnabled ? 'danger' : 'primary'}" onclick="togglePluginModule('${p.id}', ${!isEnabled})">
-                    ${isEnabled ? 'Tạm Dừng' : 'Kích Hoạt'}
-                  </button>
-                </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Column 2: Lifecycle Log -->
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Nhật ký vòng đời plugin</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">
+                Nạp, tắt, cập nhật, ngắt mạch
               </div>
             </div>
-          `;
-        }).join('')}
+            <button class="btn btn-ghost" onclick="showToast('Hiển thị nhật ký thời gian thực từ Event Bus DSH.')" style="height:24px; padding:0 8px; font-size:10.5px; white-space:nowrap;">
+              Xem toàn bộ
+            </button>
+          </div>
+          <div style="padding:9px 0 12px;">
+            ${lifecycleLogs.map(ple => `
+              <div style="display:grid; grid-template-columns:70px 78px minmax(0,1fr); gap:11px; align-items:baseline; padding:4px 16px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; line-height:1.6;">
+                <span style="color:var(--color-neutral-500,#9397ab);">${ple.time}</span>
+                <span style="color:${ple.tone}; font-weight:600;">${ple.kind}</span>
+                <span style="color:var(--color-neutral-400,#b2b6ca); text-wrap:pretty;">${ple.msg}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
       </div>
     </div>
   `;
 }
 
+function filterPluginsTable(val) {
+  const q = (val || '').trim().toLowerCase();
+  const rows = document.querySelectorAll('#plugins-table-tbody tr');
+  rows.forEach(r => {
+    const text = (r.textContent || '').toLowerCase();
+    r.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
+}
+
 function renderExecutiveSkillsView() {
   return `
-    <div class="card card-pad" style="margin-bottom:16px;background:linear-gradient(135deg, rgba(16,185,129,0.06), rgba(59,130,246,0.06));border:1px solid rgba(16,185,129,0.2)">
-      <div style="display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
         <div>
-          <div style="font-weight:700;font-size:15px;color:var(--text)">🎯 8 Bộ Kỹ Năng Nghiệp Vụ Cấp Cao (Executive Skills) Của Gen-Harness</div>
-          <div class="muted" style="font-size:12px;margin-top:4px">
-            Được kế thừa từ bộ chuẩn nghiệp vụ Genesis Agent v2.2. Triệt tiêu mùi AI, tuân thủ nguyên tắc BLUF, Corporate Navy Sheets, và chăm sóc đối tác tinh tế.
+          <div style="font-weight:600; font-size:14px; color:var(--color-text,#e9e9ed);">🎯 8 Bộ Kỹ Năng Nghiệp Vụ Cấp Cao (Executive Skills)</div>
+          <div style="font-size:12px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">
+            Bộ chuẩn nghiệp vụ Genesis Agent v2.2. Triệt tiêu mùi AI, tuân thủ nguyên tắc BLUF, Corporate Navy Sheets, và chăm sóc đối tác tinh tế.
           </div>
         </div>
-        <span class="badge good">${state.skills.length} Kỹ Năng Kích Hoạt</span>
+        <span style="display:inline-flex; align-items:center; gap:6px; font-size:11px; padding:3px 10px; border-radius:999px; color:#10b981; border:1px solid #10b981; background:var(--color-bg,#161826);">
+          <span style="width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
+          ${state.skills.length} Kỹ Năng Kích Hoạt
+        </span>
       </div>
-    </div>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));gap:14px">
-      ${state.skills.map(s => `
-        <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;padding:16px">
-          <div>
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
-              <div>
-                <span class="badge neutral" style="font-size:10px;margin-bottom:4px">${s.category || 'Executive'}</span>
-                <div style="font-weight:700;font-size:14px;color:var(--text)">${s.title}</div>
-                <div style="font-family:var(--mono);font-size:11px;color:var(--text-faint)">skills/${s.id}/SKILL.md</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:14px;">
+        ${state.skills.map(s => `
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:12px;">
+            <div>
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px; gap:8px;">
+                <div>
+                  <span style="display:inline-block; font-size:10px; color:var(--color-neutral-400,#b2b6ca); border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-sm,4px); padding:1px 6px; margin-bottom:4px; background:var(--color-bg,#161826);">
+                    ${s.category || 'Executive'}
+                  </span>
+                  <div style="font-weight:600; font-size:13.5px; color:var(--color-text,#e9e9ed);">${escapeHtml(s.title)}</div>
+                  <div style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-top:2px;">skills/${s.id}/SKILL.md</div>
+                </div>
+                <span style="display:inline-flex; align-items:center; gap:5px; font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:${s.enabled ? '#10b981' : '#f59e0b'}; border:1px solid ${s.enabled ? '#10b981' : '#f59e0b'};">
+                  ${s.enabled ? 'SẴN SÀNG' : 'TẠM TẮT'}
+                </span>
               </div>
-              <span class="badge ${s.enabled ? 'good' : 'warn'}">${s.enabled ? 'SẴN SÀNG' : 'TẠM TẮT'}</span>
+              <div style="font-size:12px; color:var(--color-neutral-400,#b2b6ca); line-height:1.5; min-height:48px; text-wrap:pretty;">
+                ${escapeHtml(s.description)}
+              </div>
             </div>
-            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:10px 0;min-height:50px">
-              ${s.description}
+            <div style="padding-top:12px; border-top:1px solid var(--color-divider,rgba(233,233,237,0.16)); display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <button class="btn btn-secondary" style="height:26px; padding:0 10px; font-size:11px;" onclick="openSkillModal('${s.id}')">
+                <i class="ph ph-book-open"></i> Xem Cẩm Nang
+              </button>
+              <button class="btn ${s.enabled ? 'btn-ghost' : 'btn-primary'}" style="height:26px; padding:0 10px; font-size:11px;" onclick="toggleSkillItem('${s.id}', ${!s.enabled})">
+                ${s.enabled ? 'Tắt Kỹ Năng' : 'Bật Kỹ Năng'}
+              </button>
             </div>
           </div>
-          <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-            <button class="btn sm" onclick="openSkillModal('${s.id}')">📖 Xem Cẩm Nang Kỹ Năng</button>
-            <button class="btn sm ${s.enabled ? 'danger' : 'primary'}" onclick="toggleSkillItem('${s.id}', ${!s.enabled})">
-              ${s.enabled ? 'Tắt Kỹ Năng' : 'Bật Kỹ Năng'}
-            </button>
-          </div>
-        </div>
-      `).join('')}
+        `).join('')}
+      </div>
     </div>
   `;
 }
@@ -7044,54 +7273,60 @@ function renderExecutiveSkillsView() {
 function renderMarketplaceCatalogView() {
   const installedIds = new Set(state.plugins.map(p => p.id));
   return `
-    <div class="card card-pad" style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
         <div>
-          <div style="font-weight:700;font-size:15px;color:var(--text)">🏪 Kho Thư Viện Module Mở Rộng Từ Main Repo</div>
-          <div class="muted" style="font-size:12px;margin-top:4px">
+          <div style="font-weight:600; font-size:14px; color:var(--color-text,#e9e9ed);">🏪 Chợ Tiện Ích &amp; Thư Viện Module Mở Rộng</div>
+          <div style="font-size:12px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">
             Khám phá các Plugin và Adapter mới nhất trên GitHub repository để cài thêm về phục vụ nhu cầu mở rộng quy mô doanh nghiệp.
           </div>
         </div>
-        <span class="badge neutral">${state.catalog.length} Modules Có Sẵn</span>
+        <span style="display:inline-flex; align-items:center; gap:6px; font-size:11px; padding:3px 10px; border-radius:999px; color:var(--color-neutral-300,#cfd3e5); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);">
+          ${state.catalog.length} Modules Có Sẵn
+        </span>
       </div>
-    </div>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));gap:14px">
-      ${state.catalog.map(item => {
-        const isInstalled = installedIds.has(item.id);
-        return `
-          <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;padding:16px">
-            <div>
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
-                <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:24px">${item.icon || '📦'}</span>
-                  <div>
-                    <div style="font-weight:700;font-size:14px;color:var(--text)">${item.name}</div>
-                    <div style="font-family:var(--mono);font-size:11px;color:var(--text-faint)">${item.id}</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; min-width:0;">
+        ${state.catalog.map(item => {
+          const isInstalled = installedIds.has(item.id);
+          return `
+            <div style="background:var(--color-surface,#232532); border:1px dashed var(--color-neutral-800,#3f424d); border-radius:var(--radius-md,8px); padding:14px 15px; display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; align-items:flex-start; gap:11px;">
+                <div style="width:30px; height:30px; flex:none; border-radius:var(--radius-md,8px); background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:grid; place-items:center; color:var(--color-neutral-400,#b2b6ca); font-size:15px;">
+                  ${item.icon || '📦'}
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:12.5px; font-weight:600; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${escapeHtml(item.name)}
+                  </div>
+                  <div style="font-size:10px; color:var(--color-neutral-500,#9397ab); margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${item.id}
                   </div>
                 </div>
-                <span class="badge ${isInstalled ? 'good' : 'neutral'}">${isInstalled ? 'ĐÃ CÀI ĐẶT' : 'CÓ SẴN'}</span>
+                <span style="font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:var(--color-neutral-400,#b2b6ca); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);">
+                  ${item.category || 'addon'}
+                </span>
               </div>
-              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:10px 0;min-height:45px">
-                ${item.description}
+              <div style="font-size:11.5px; color:var(--color-neutral-400,#b2b6ca); line-height:1.5; text-wrap:pretty; min-height:36px;">
+                ${escapeHtml(item.description)}
               </div>
-              <div style="display:flex;gap:6px;margin-bottom:10px">
-                <span class="badge neutral" style="font-size:10px">v${item.version || '1.0.0'}</span>
-                <span class="badge neutral" style="font-size:10px">${item.category || 'addon'}</span>
-                <span class="badge neutral" style="font-size:10px">Tác giả: ${item.author || 'Genesis Corp'}</span>
+              <div style="display:flex; align-items:center; gap:9px; padding-top:9px; border-top:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+                <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">v${item.version || '1.0.0'}</span>
+                <span style="flex:1; min-width:0; font-size:10.5px; color:var(--color-neutral-500,#9397ab); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.author || 'Genesis Corp'}</span>
+                ${isInstalled ? `
+                  <button class="btn btn-ghost" style="flex:none; height:26px; padding:0 10px; font-size:11px; white-space:nowrap; color:#10b981;" onclick="switchSubtab('modules', 'plugins')">
+                    Đã Cài
+                  </button>
+                ` : `
+                  <button class="btn btn-secondary" style="flex:none; gap:5px; height:26px; padding:0 10px; font-size:11px; white-space:nowrap;" onclick="installCatalogPlugin('${item.id}')">
+                    <i class="ph ph-plus" style="font-size:12px;"></i>Cài đặt
+                  </button>
+                `}
               </div>
             </div>
-            <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-              <span class="text-sm muted">${isInstalled ? 'Module đang trực chiến' : 'Sẵn sàng tải về'}</span>
-              ${isInstalled ? `
-                <button class="btn sm" onclick="switchSubtab('modules', 'plugins')">⚙ Quản Lý</button>
-              ` : `
-                <button class="btn sm primary" onclick="installCatalogPlugin('${item.id}')">⬇ Cài Thêm Về</button>
-              `}
-            </div>
-          </div>
-        `;
-      }).join('')}
+          `;
+        }).join('')}
+      </div>
     </div>
   `;
 }
