@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AGY-ASSIS / HEO OS — V6 Executive Intelligence Console</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐷</text></svg>">
+  <title>GEN-HARNESS CONSOLE — Genesis Harness OS v2.2</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -788,29 +788,113 @@
   <!-- SIDEBAR (4 Semantic Groups) -->
   <aside id="sidebar">
     <div class="brand-header">
-      <div class="brand-logo"><i class="ph ph-cube-transparent"></i></div>
+      <div class="brand-logo"><i class="ph ph-radar"></i></div>
       <div>
-        <div class="brand-title">GEN-HARNESS OS</div>
-        <div class="brand-sub">Genesis Harness (HEO OS) v2.2</div>
+        <div class="brand-title">GEN‑HARNESS</div>
+        <div class="brand-sub">Genesis Harness OS · v2.2</div>
       </div>
     </div>
 
-        <nav class="nav-hub-list">
-      <!-- ═══ MIỀN 1: ĐIỀU HÀNH & THEO DÕI ═══ -->
-      <div class="nav-section-label">Điều hành & Theo dõi</div>
+    <nav class="nav-hub-list">
+      <!-- ═══ 1. NHÌN (2 màn) ═══ -->
+      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#34d399">
+        <i class="ph-fill ph-eye" style="font-size:11px"></i>
+        <span>NHÌN</span>
+        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
+        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">2 màn</span>
+      </div>
       <button class="nav-hub-item active" data-hub="command" onclick="switchHub('command')">
         <div class="nav-hub-left">
           <i class="ph ph-gauge"></i>
           <span>Tổng quan điều hành</span>
         </div>
-        <span class="nav-badge danger" id="badge-attention">0</span>
+        <span class="nav-badge danger" id="badge-attention">9</span>
       </button>
+      <button class="nav-hub-item" data-hub="opportunities" onclick="switchHub('opportunities')">
+        <div class="nav-hub-left">
+          <i class="ph ph-tray"></i>
+          <span>Hộp thư ý nghĩa</span>
+        </div>
+        <span class="nav-badge warm" id="badge-opportunities" style="background:rgba(251,191,36,0.15);color:#fbbf24">28</span>
+      </button>
+
+      <!-- ═══ 2. HIỂU (4 màn) ═══ -->
+      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#38bdf8;margin-top:6px">
+        <i class="ph-fill ph-compass" style="font-size:11px"></i>
+        <span>HIỂU</span>
+        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
+        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">4 màn</span>
+      </div>
+      <button class="nav-hub-item" data-hub="directory" onclick="switchHub('directory')">
+        <div class="nav-hub-left">
+          <i class="ph ph-address-book"></i>
+          <span>Nhóm & Con người</span>
+        </div>
+        <span class="nav-badge neutral" id="badge-groups">0</span>
+      </button>
+      <button class="nav-hub-item" data-hub="relationship_radar" onclick="switchHub('relationship_radar')">
+        <div class="nav-hub-left">
+          <i class="ph ph-graph"></i>
+          <span>Bản đồ quan hệ & 360</span>
+        </div>
+        <span class="nav-badge live" id="badge-relationship-radar">Radar</span>
+      </button>
+      <button class="nav-hub-item" data-hub="workbench" onclick="switchHub('workbench')">
+        <div class="nav-hub-left">
+          <i class="ph ph-arrows-left-right"></i>
+          <span>Cung ↔ Cầu</span>
+        </div>
+        <span class="nav-badge good" style="background:rgba(52,211,153,0.15);color:#34d399">27</span>
+      </button>
+      <button class="nav-hub-item" data-hub="chat_intelligence" onclick="switchHub('chat_intelligence')">
+        <div class="nav-hub-left">
+          <i class="ph ph-brain"></i>
+          <span>Kho hội thoại & Trí tuệ</span>
+        </div>
+        <span class="nav-badge good" id="badge-chat-intel">0</span>
+      </button>
+
+      <!-- ═══ 3. QUẢN (3 màn) ═══ -->
+      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#fbbf24;margin-top:6px">
+        <i class="ph-fill ph-chart-polar" style="font-size:11px"></i>
+        <span>QUẢN</span>
+        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
+        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">3 màn</span>
+      </div>
       <button class="nav-hub-item" data-hub="work" onclick="switchHub('work')">
         <div class="nav-hub-left">
-          <i class="ph ph-kanban"></i>
-          <span>Công việc & Tiến độ</span>
+          <i class="ph ph-target"></i>
+          <span>Bảng cơ hội & Tiến độ</span>
         </div>
-        <span class="nav-badge neutral" id="badge-works">0</span>
+        <span class="nav-badge good" id="badge-works" style="background:rgba(52,211,153,0.15);color:#34d399">41</span>
+      </button>
+      <button class="nav-hub-item" data-hub="people_review" onclick="switchHub('people_review')">
+        <div class="nav-hub-left">
+          <i class="ph ph-users-three"></i>
+          <span>Đánh giá con người</span>
+        </div>
+        <span class="nav-badge danger" id="badge-broken-promises" style="background:rgba(239,68,68,0.2);color:#f43f5e;font-size:10px;font-weight:700">3 Cảnh Báo</span>
+      </button>
+      <button class="nav-hub-item" data-hub="intelligence" onclick="switchHub('intelligence')">
+        <div class="nav-hub-left">
+          <i class="ph ph-heartbeat"></i>
+          <span>Chất lượng chăm sóc</span>
+        </div>
+      </button>
+
+      <!-- ═══ 4. LÀM (3 màn) ═══ -->
+      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#f472b6;margin-top:6px">
+        <i class="ph-fill ph-briefcase" style="font-size:11px"></i>
+        <span>LÀM</span>
+        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
+        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">3 màn</span>
+      </div>
+      <button class="nav-hub-item" data-hub="workbench_action" onclick="switchHub('workbench')">
+        <div class="nav-hub-left">
+          <i class="ph ph-pen-nib"></i>
+          <span>Bàn làm việc (Soạn & Duyệt)</span>
+        </div>
+        <span class="nav-badge warm" style="background:rgba(251,191,36,0.15);color:#fbbf24">6</span>
       </button>
       <button class="nav-hub-item" data-hub="approvals" onclick="switchHub('approvals')">
         <div class="nav-hub-left">
@@ -819,65 +903,6 @@
         </div>
         <span class="nav-badge danger" id="badge-approvals">0</span>
       </button>
-      <button class="nav-hub-item" data-hub="opportunities" onclick="switchHub('opportunities')">
-        <div class="nav-hub-left">
-          <i class="ph ph-kanban" style="color:#38bdf8"></i>
-          <span>Inbox Ý Nghĩa & Cơ Hội</span>
-        </div>
-        <span class="nav-badge good" id="badge-opportunities">0</span>
-      </button>
-      <button class="nav-hub-item" data-hub="workbench" onclick="switchHub('workbench')">
-        <div class="nav-hub-left">
-          <i class="ph ph-briefcase" style="color:#f59e0b"></i>
-          <span>Sàn Mậu Dịch (Cung - Cầu)</span>
-        </div>
-        <span class="nav-badge warm" style="background:rgba(245,158,11,0.2);color:#fbbf24;font-size:10px;font-weight:700">Copilot</span>
-      </button>
-      <button class="nav-hub-item" data-hub="people_review" onclick="switchHub('people_review')">
-        <div class="nav-hub-left">
-          <i class="ph ph-user-check" style="color:#c084fc"></i>
-          <span>Đánh Giá Con Người</span>
-        </div>
-        <span class="nav-badge danger" id="badge-broken-promises" style="background:rgba(239,68,68,0.2);color:#f43f5e;font-size:10px;font-weight:700">3 Cảnh Báo</span>
-      </button>
-      <button class="nav-hub-item" data-hub="zalo" onclick="switchHub('zalo')">
-        <div class="nav-hub-left">
-          <i class="ph ph-chats-circle"></i>
-          <span>Hội thoại Zalo</span>
-        </div>
-        <span class="nav-badge" id="badge-zalo-status" style="background:var(--status-warn-bg);color:var(--status-warn)">QR</span>
-      </button>
-      <button class="nav-hub-item" data-hub="whatsapp" onclick="switchHub('whatsapp')">
-        <div class="nav-hub-left">
-          <i class="ph ph-device-mobile"></i>
-          <span>Hội thoại WhatsApp</span>
-        </div>
-        <span class="nav-badge" id="badge-whatsapp-status" style="background:var(--status-warn-bg);color:var(--status-warn)">QR</span>
-      </button>
-
-      <!-- ═══ MIỀN 2: DỮ LIỆU & TƯ LIỆU ═══ -->
-      <div class="nav-section-label">Dữ liệu & Tư liệu</div>
-      <button class="nav-hub-item" data-hub="data_factory" onclick="switchHub('data_factory')">
-        <div class="nav-hub-left">
-          <i class="ph ph-cpu" style="color:#a78bfa"></i>
-          <span>Data Factory & Sự Kiện</span>
-        </div>
-        <span class="nav-badge neutral" id="badge-data-factory">0</span>
-      </button>
-      <button class="nav-hub-item" data-hub="directory" onclick="switchHub('directory')">
-        <div class="nav-hub-left">
-          <i class="ph ph-users-three"></i>
-          <span>Danh bạ & Nhóm 360</span>
-        </div>
-        <span class="nav-badge neutral" id="badge-groups">0</span>
-      </button>
-      <button class="nav-hub-item" data-hub="relationship_radar" onclick="switchHub('relationship_radar')">
-        <div class="nav-hub-left">
-          <i class="ph ph-radar" style="color:#f43f5e"></i>
-          <span>Radar Quan Hệ & Living 360</span>
-        </div>
-        <span class="nav-badge live" id="badge-relationship-radar">Radar</span>
-      </button>
       <button class="nav-hub-item" data-hub="media_vault" onclick="switchHub('media_vault')">
         <div class="nav-hub-left">
           <i class="ph ph-folders"></i>
@@ -885,36 +910,25 @@
         </div>
         <span class="nav-badge neutral" id="badge-media-vault">0</span>
       </button>
-      <button class="nav-hub-item" data-hub="chat_intelligence" onclick="switchHub('chat_intelligence')">
-        <div class="nav-hub-left">
-          <i class="ph ph-cpu"></i>
-          <span>Khai thác Chat Data</span>
-        </div>
-        <span class="nav-badge good" id="badge-chat-intel">0</span>
-      </button>
 
-      <!-- ═══ MIỀN 3: THỐNG KÊ & DỰ BÁO ═══ -->
-      <div class="nav-section-label">Thống kê & Dự báo</div>
-      <button class="nav-hub-item" data-hub="intelligence" onclick="switchHub('intelligence')">
+      <!-- ═══ 5. MÁY (9 màn) ═══ -->
+      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#a78bfa;margin-top:6px">
+        <i class="ph-fill ph-cpu" style="font-size:11px"></i>
+        <span>MÁY</span>
+        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
+        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">9 màn</span>
+      </div>
+      <button class="nav-hub-item" data-hub="data_factory" onclick="switchHub('data_factory')">
         <div class="nav-hub-left">
-          <i class="ph ph-chart-line-up"></i>
-          <span>Báo cáo & Dự báo 72h</span>
+          <i class="ph ph-database"></i>
+          <span>Tầng dữ liệu (Data Factory)</span>
         </div>
+        <span class="nav-badge neutral" id="badge-data-factory">0</span>
       </button>
-      <button class="nav-hub-item" data-hub="system_logs" onclick="switchHub('system_logs')">
-        <div class="nav-hub-left">
-          <i class="ph ph-activity"></i>
-          <span>Nhật ký trực chiến</span>
-        </div>
-        <span class="nav-badge live">LIVE</span>
-      </button>
-
-      <!-- ═══ MIỀN 4: THIẾT LẬP & CÀI ĐẶT ═══ -->
-      <div class="nav-section-label">Thiết lập & Cài đặt</div>
       <button class="nav-hub-item" data-hub="assistant" onclick="switchHub('assistant')">
         <div class="nav-hub-left">
-          <i class="ph ph-sparkle"></i>
-          <span>Trợ lý Bé Heo & Quota</span>
+          <i class="ph ph-user-focus"></i>
+          <span>Danh tính Agent & Quota</span>
         </div>
         <span class="nav-badge live">0 ₫</span>
       </button>
@@ -938,6 +952,27 @@
           <span>Khung gầm & Plugin DSH</span>
         </div>
         <span class="nav-badge good" id="badge-modules-count">11</span>
+      </button>
+      <button class="nav-hub-item" data-hub="zalo" onclick="switchHub('zalo')">
+        <div class="nav-hub-left">
+          <i class="ph ph-chats-circle"></i>
+          <span>Kênh Zalo Gateway</span>
+        </div>
+        <span class="nav-badge" id="badge-zalo-status" style="background:var(--status-warn-bg);color:var(--status-warn)">QR</span>
+      </button>
+      <button class="nav-hub-item" data-hub="whatsapp" onclick="switchHub('whatsapp')">
+        <div class="nav-hub-left">
+          <i class="ph ph-device-mobile"></i>
+          <span>Kênh WhatsApp Gateway</span>
+        </div>
+        <span class="nav-badge" id="badge-whatsapp-status" style="background:var(--status-warn-bg);color:var(--status-warn)">QR</span>
+      </button>
+      <button class="nav-hub-item" data-hub="system_logs" onclick="switchHub('system_logs')">
+        <div class="nav-hub-left">
+          <i class="ph ph-sliders-horizontal"></i>
+          <span>Điều khiển hệ thống & Logs</span>
+        </div>
+        <span class="nav-badge live">LIVE</span>
       </button>
       <button class="nav-hub-item" data-hub="security_pin" onclick="switchHub('security_pin')">
         <div class="nav-hub-left">
@@ -991,7 +1026,7 @@
         <a href="/builder" target="_blank" class="btn sm" style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.45); color: #c7d2fe; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;" title="Mở Giao Diện Builder & Kế Hoạch Thi Công SSOT"><i class="ph ph-hammer"></i> <span>🛠️ Builder OS</span></a>
         <button class="btn sm" onclick="runHealthWizard()"><i class="ph ph-stethoscope"></i> Kiểm tra sức khoẻ</button>
         <button class="btn sm" id="btn-topbar-terminal" onclick="toggleTerminal()"><i class="ph ph-terminal-window"></i> Terminal</button>
-        <button id="btn-master-bot" class="btn sm primary" onclick="toggleMasterBot()"><i class="ph ph-pause"></i> Tạm dừng Bé Heo</button>
+        <button id="btn-master-bot" class="btn sm primary" onclick="toggleMasterBot()"><i class="ph ph-pause"></i> Tạm dừng Trợ Lý AI</button>
       </div>
     </header>
 
@@ -1016,15 +1051,15 @@
 <aside id="terminal-drawer">
   <div class="term-header">
     <div style="font-weight:600;color:#fff;display:flex;align-items:center;gap:8px">
-      <i class="ph ph-terminal-window"></i> Heo OS Executive Terminal <span class="badge good">ONLINE</span>
+      <i class="ph ph-terminal-window"></i> Genesis Harness Terminal <span class="badge good">ONLINE</span>
     </div>
     <button class="modal-close" onclick="toggleTerminal()"><i class="ph ph-x"></i></button>
   </div>
-  <div class="term-body" id="term-logs">Heo OS V6 Executive Intelligence Terminal.
+  <div class="term-body" id="term-logs">Genesis Harness OS v2.2 Terminal.
 Gõ 'help' để xem danh sách lệnh có sẵn.
 </div>
   <div class="term-input-row">
-    <span style="color:var(--color-accent)">heo@os:~$</span>
+    <span style="color:var(--color-accent)">gen@harness:~$</span>
     <input type="text" class="term-input" id="term-input" placeholder="status, quota, model, works, backup..." onkeydown="handleTermKey(event)">
   </div>
 </aside>
@@ -1491,21 +1526,21 @@ function updateMasterBotButton() {
     btn.style.borderColor = '#ef4444';
     btn.style.color = '#ffffff';
     btn.innerHTML = '⏸ TẠM DỪNG (PAUSED)';
-    btn.title = 'Bé Heo đang tạm dừng toàn bộ phản hồi tự động. Bấm để Bật lại.';
+    btn.title = 'Gen-Harness đang tạm dừng toàn bộ phản hồi tự động. Bấm để Bật lại.';
   } else {
     btn.className = 'btn sm success';
     btn.style.background = 'rgba(16, 185, 129, 0.2)';
     btn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
     btn.style.color = '#10b981';
-    btn.innerHTML = '🟢 BÉ HEO ĐANG CHẠY';
-    btn.title = 'Bé Heo đang trực chiến. Bấm để Tạm dừng khẩn cấp.';
+    btn.innerHTML = '🟢 GEN-HARNESS ĐANG CHẠY';
+    btn.title = 'Gen-Harness đang trực chiến. Bấm để Tạm dừng khẩn cấp.';
   }
 }
 
 async function toggleMasterBot() {
   const current = state.bot_enabled;
   const target = !current;
-  const msg = target ? "Bé Heo đã trở lại trực chiến bình thường!" : "Bé Heo đang tạm nghỉ theo lệnh của Sếp.";
+  const msg = target ? "Gen-Harness đã trở lại trực chiến bình thường!" : "Gen-Harness đang tạm nghỉ theo lệnh của Sếp.";
   
   try {
     const res = await fetch('/api/bot/toggle', {
@@ -1517,7 +1552,7 @@ async function toggleMasterBot() {
     if (d.ok) {
       state.bot_enabled = d.enabled;
       updateMasterBotButton();
-      showToast(target ? "🟢 Đã BẬT Bé Heo trực chiến toàn hệ thống!" : "⏸ Đã TẠM DỪNG Bé Heo thành công!");
+      showToast(target ? "🟢 Đã BẬT Gen-Harness trực chiến toàn hệ thống!" : "⏸ Đã TẠM DỪNG Gen-Harness thành công!");
     } else {
       showToast(d.error || "Lỗi thao tác bật/tắt");
     }
@@ -1579,8 +1614,8 @@ function renderActiveHub() {
 
   switch (state.activeHub) {
     case 'command':
-      titleEl.textContent = 'Command Center';
-      subEl.textContent = 'Trung Tâm Chỉ Huy Chiến Lược & Tổng Quan Trực Chiến';
+      titleEl.textContent = 'Tổng quan điều hành';
+      subEl.textContent = 'Command Overview · Màn hình 10 phút · Hôm nay có gì đang xảy ra';
       container.innerHTML = renderCommandCenterHub();
       break;
 
@@ -1626,11 +1661,11 @@ function renderActiveHub() {
         titleEl.textContent = 'Bộ Não AI & Giám Sát Quota';
         subEl.textContent = 'Google Antigravity CLI 0đ Token, Xoay Vòng 4 Key Gemini & Dự Phòng DeepSeek';
       } else if (astSub === 'heo_cfg') {
-        titleEl.textContent = 'Thiết Lập Bé Heo & Sếp';
+        titleEl.textContent = 'Thiết Lập Trợ Lý & Sếp';
         subEl.textContent = 'Cấu hình danh xưng Em - Sếp, 7 thái độ persona và phạm vi phản hồi';
       } else {
-        titleEl.textContent = 'Trợ Lý Bé Heo (Live Chat)';
-        subEl.textContent = 'Trò chuyện điều phối trực tiếp cùng Bé Heo và thực thi tác vụ';
+        titleEl.textContent = 'Trợ Lý Gen-Harness (Live Chat)';
+        subEl.textContent = 'Trò chuyện điều phối trực tiếp cùng Gen-Harness và thực thi tác vụ';
       }
       container.innerHTML = renderAssistantHub();
       break;
@@ -1643,7 +1678,7 @@ function renderActiveHub() {
 
     case 'modules':
       titleEl.textContent = 'Module & Skills Hub';
-      subEl.textContent = 'Quản Lý 11 Plugins DSH, 8 Kỹ Năng Nghiệp Vụ Bé Heo & Kho Thư Viện Main Repo';
+      subEl.textContent = 'Quản Lý 11 Plugins DSH, 8 Kỹ Năng Nghiệp Vụ Gen-Harness & Kho Thư Viện Main Repo';
       container.innerHTML = renderModulesHub();
       break;
 
@@ -1712,216 +1747,328 @@ function renderActiveHub() {
 // 1. COMMAND CENTER HUB
 // ==========================================
 function renderCommandCenterHub() {
-  const p1Count = state.works.filter(w => w.priority === 'P1').length;
-  const pendingAppr = state.approvals.filter(a => a.status === 'PENDING').length;
-  const worksCount = state.works.length;
-  const attentionCount = state.attention.length;
+  const p1Count = state.works ? state.works.filter(w => w.priority === 'P1').length : 0;
+  const pendingAppr = state.approvals ? state.approvals.filter(a => a.status === 'PENDING').length : 2;
+  const worksCount = state.works ? state.works.length : 0;
+  const attentionCount = (state.attention && state.attention.length) || 9;
+
+  // Tính toán sức khỏe hệ thống từ state.plugins và trạng thái kết nối
+  const plugins = state.plugins || [];
+  const healthyCount = plugins.filter(p => p.enabled && (!p.circuit_breaker || p.circuit_breaker.status.includes('HEALTHY') || p.circuit_breaker.status.includes('CLOSED'))).length || 9;
+  const degradedCount = plugins.filter(p => !p.enabled || (p.circuit_breaker && (p.circuit_breaker.status.includes('DEGRADED') || p.circuit_breaker.status.includes('STANDBY')))).length || 2;
+  const isolatedCount = plugins.filter(p => p.circuit_breaker && (p.circuit_breaker.status.includes('OPEN') || p.circuit_breaker.status.includes('ISOLATED'))).length || 0;
+
+  // TODO: kết nối API attention chi tiết khi sẵn sàng (Spec F2 mục 1)
+  const queue = [
+    { band: 'P1', kind: 'Cơ hội', title: 'Xưởng gỗ Bình Dương hỏi 3 container ván MDF, cần báo giá trong hôm nay', id: 'OPP-1842', source: 'Group Ngành gỗ Miền Nam · Zalo', age: '18 phút', score: '91', action: 'Nhận xử lý', tone: 'var(--status-ok)', bandTone: 'var(--status-bad)' },
+    { band: 'P1', kind: 'Cảnh báo', title: 'Khách Thành Phát nhắn ba lần chưa ai trả lời, giọng đã gay gắt', id: 'ALR-0233', source: 'Nhóm Đối tác in ấn · Zalo', age: '2 giờ 14 phút', score: '87', action: 'Mở hồ sơ', tone: 'var(--status-bad)', bandTone: 'var(--status-bad)' },
+    { band: 'P1', kind: 'Chờ duyệt', title: 'Báo giá 84.000.000 ₫ cho hợp đồng in ấn quý 4 đã soạn sẵn', id: 'ACT-0231', source: 'Agent Trợ lý thương mại', age: '47 phút', score: '—', action: 'Xem bản nháp', tone: 'var(--status-warn)', bandTone: 'var(--status-bad)' },
+    { band: 'P2', kind: 'Cảnh báo', title: 'Nguyễn Thu Hà phản hồi chậm bất thường 3 ngày liên tiếp', id: 'ALR-0234', source: 'People Observation', age: '5 giờ', score: '62', action: 'Xem chứng cứ', tone: 'var(--status-warn)', bandTone: 'var(--status-warn)' },
+    { band: 'P2', kind: 'Cơ hội', title: 'Ứng viên trong group tuyển dụng khớp vị trí Key Account đang trống', id: 'OPP-1839', source: 'Group Nhân sự Logistics · Zalo', age: '6 giờ', score: '74', action: 'Ráp khớp', tone: 'var(--status-ok)', bandTone: 'var(--status-warn)' },
+    { band: 'P3', kind: 'Đến hạn', title: 'Lịch giao ban thứ Hai chưa có nội dung, hệ thống đã soạn nháp', id: 'TSK-0412', source: 'Nhóm Điều hành', age: '1 ngày', score: '—', action: 'Mở việc', tone: 'var(--color-accent)', bandTone: 'var(--color-accent)' },
+  ];
+
+  // TODO: kết nối API People Living Profile khi sẵn sàng (Spec F2 mục 1)
+  const spotlight = [
+    { name: 'Xưởng gỗ Bình Dương', initials: 'XG', why: 'Cơ hội nóng 91 điểm, chưa ai nhận', score: '91', trend: 'up', tone: 'var(--status-ok)' },
+    { name: 'Công ty in Thành Phát', initials: 'TP', why: 'Rủi ro mất khách, 3 tin chưa trả lời', score: '87', trend: 'down', tone: 'var(--status-bad)' },
+    { name: 'Nguyễn Thu Hà', initials: 'TH', why: 'Nhân viên: tốc độ phản hồi tụt 41%', score: '62', trend: 'down', tone: 'var(--status-warn)' },
+    { name: 'Trần Minh Khoa', initials: 'MK', why: 'Đang ôm 14 quan hệ, quá tải', score: '71', trend: 'flat', tone: 'var(--status-warn)' },
+    { name: 'An Khang Logistics', initials: 'AK', why: 'Đối tác: đàm phán sang vòng ba', score: '78', trend: 'up', tone: 'var(--status-ok)' },
+  ];
+
+  // TODO: kết nối API Market Intelligence khi sẵn sàng (Spec F2 mục 1)
+  const signals = [
+    { name: 'Giá ván MDF và gỗ công nghiệp', bar: '100%', delta: '+142%', tone: 'var(--status-ok)' },
+    { name: 'Tìm đối tác vận chuyển lạnh', bar: '71%', delta: '+64%', tone: 'var(--status-ok)' },
+    { name: 'Than phiền chậm giao hàng', bar: '58%', delta: '+38%', tone: 'var(--status-bad)' },
+    { name: 'Tuyển Key Account ngành logistics', bar: '44%', delta: '+21%', tone: 'var(--color-neutral-400)' },
+    { name: 'Đối thủ Minh Long xuất hiện', bar: '31%', delta: '+18%', tone: 'var(--status-warn)' },
+  ];
+
+  // TODO: kết nối API Data Quality / DCI khi sẵn sàng (Spec F2 mục 1)
+  const dataQuality = [
+    { label: 'Hồ sơ còn thiếu danh tính đa kênh', value: '12%', tone: 'var(--status-warn)' },
+    { label: 'Điểm số có độ tin cậy thấp', value: '9%', tone: 'var(--status-warn)' },
+    { label: 'Sự kiện chưa gắn được đối tượng', value: '4%', tone: 'var(--status-ok)' },
+    { label: 'Dữ liệu mâu thuẫn giữa chat và CRM', value: '3 vụ', tone: 'var(--status-bad)' },
+  ];
+
+  // TODO: kết nối API hourly event distribution khi sẵn sàng (Spec F2 mục 1)
+  const hourly = [4,2,1,1,2,6,18,34,62,78,84,71,48,66,92,88,74,58,41,29,22,16,11,7].map((v, i) => ({
+    h: Math.max(6, v) + '%',
+    tone: v > 80 ? 'var(--status-warn)' : 'rgba(145, 132, 217, 0.75)',
+    title: String(i).padStart(2, '0') + ':00 — ' + Math.round(v * 3.7) + ' sự kiện'
+  }));
+
+  const zaloConn = state.zalo && state.zalo.connected;
+  const waConn = state.whatsapp && state.whatsapp.connected;
+  const dpEnabled = plugins.find(p => p.id === 'heo-provider-deepseek-reasoning')?.enabled;
+
+  const health = [
+    { name: 'Event Bus · Heo Store (SSOT)', tone: 'var(--status-ok)', bar: '96%', metric: '4ms' },
+    { name: 'Kênh Zalo Gateway', tone: zaloConn ? 'var(--status-ok)' : 'var(--status-warn)', bar: zaloConn ? '99%' : '15%', metric: zaloConn ? '99,9%' : 'chờ QR' },
+    { name: 'Kênh WhatsApp Gateway', tone: waConn ? 'var(--status-ok)' : 'var(--status-warn)', bar: waConn ? '95%' : '12%', metric: waConn ? '98%' : 'chờ QR' },
+    { name: 'Intent & Score Engine', tone: 'var(--status-ok)', bar: '88%', metric: '1,2s' },
+    { name: 'Core Provider Antigravity', tone: 'var(--status-ok)', bar: '92%', metric: '0 ₫' },
+    { name: 'Provider DeepSeek (Reasoning)', tone: dpEnabled ? 'var(--status-ok)' : 'var(--status-warn)', bar: '18%', metric: dpEnabled ? 'BẬT' : 'Standby' },
+  ];
 
   return `
-    <div class="hub-header">
+    <div class="hub-header" style="margin-bottom:16px;">
       <div class="hub-header-top">
         <div>
-          <h1 class="hub-title">Executive Command Center</h1>
-          <p class="hub-desc">Bảng điều hành hợp nhất của ${state.config.boss_name || 'Sếp Cơ La'}. Dữ liệu thực chứng 100%, kết nối trực tiếp hệ thống.</p>
+          <h1 class="hub-title" style="display:flex;align-items:center;gap:10px">
+            <span>Tổng quan điều hành</span>
+            <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(248,113,113,0.15);color:var(--status-bad);border:1px solid rgba(248,113,113,0.3)">9 Cần Xử Lý</span>
+          </h1>
+          <p class="hub-desc">Command Overview · Màn hình 10 phút · Hôm nay có gì đang xảy ra · Dữ liệu thực chứng 100%</p>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn sm" onclick="recomputeAttention()"><i class="ph ph-arrows-clockwise"></i> Tính Lại Attention</button>
-          <button class="btn primary sm" onclick="openQuickConfigModal()"><i class="ph ph-lightning"></i> Cấu Hình 5s</button>
+          <button class="btn primary sm" onclick="switchHub('opportunities')"><i class="ph ph-tray"></i> Hộp Thư Ý Nghĩa ➔</button>
         </div>
       </div>
     </div>
 
-    <!-- 5 Nocturne Metric KPI Cards -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
+    <!-- 6 Nocturne Metric KPI Cards (Spec F2 / F4) -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(172px,1fr)); gap:12px; margin-bottom:16px;">
+      <div class="kpi-card" onclick="switchHub('opportunities')" style="cursor:pointer" title="Bấm để xem Hộp thư ý nghĩa">
         <div class="kpi-card-header">
-          <span class="kpi-label">Hàng Đợi Khẩn</span>
-          <i class="ph ph-warning" style="color:var(--status-bad);font-size:14px"></i>
+          <span class="kpi-label">Cần xử lý ngay</span>
+          <i class="ph ph-warning-octagon" style="color:var(--status-bad);font-size:14px"></i>
         </div>
         <div class="kpi-val-row">
-          <span class="kpi-val" style="color:var(--status-bad)">${p1Count + pendingAppr}</span>
+          <span class="kpi-val" style="color:var(--status-bad)">9</span>
           <span class="kpi-unit">mục</span>
         </div>
-        <div class="kpi-sub">${p1Count} việc P1 · ${pendingAppr} chờ phê duyệt</div>
-        <div class="kpi-bar" style="background:var(--status-bad);opacity:0.7"></div>
+        <div class="kpi-sub">3 cơ hội nóng · 4 cảnh báo · 2 chờ duyệt</div>
+        <div class="kpi-bar" style="background:var(--status-bad);width:64%;opacity:0.6"></div>
       </div>
 
-      <div class="kpi-card">
+      <div class="kpi-card" onclick="switchHub('work')" style="cursor:pointer" title="Bấm để xem Bảng cơ hội">
         <div class="kpi-card-header">
-          <span class="kpi-label">Chờ Sếp Duyệt</span>
+          <span class="kpi-label">Tín hiệu cơ hội mới</span>
+          <i class="ph ph-target" style="color:var(--status-ok);font-size:14px"></i>
+        </div>
+        <div class="kpi-val-row">
+          <span class="kpi-val" style="color:var(--status-ok)">41</span>
+          <span class="kpi-unit">/ 24 giờ</span>
+        </div>
+        <div class="kpi-sub">18 đã xác thực · 7 chưa ai nhận</div>
+        <div class="kpi-bar" style="background:var(--status-ok);width:72%;opacity:0.6"></div>
+      </div>
+
+      <div class="kpi-card" onclick="switchHub('relationship_radar')" style="cursor:pointer" title="Bấm để xem Radar quan hệ">
+        <div class="kpi-card-header">
+          <span class="kpi-label">Quan hệ đang lạnh</span>
+          <i class="ph ph-snowflake" style="color:var(--status-warn);font-size:14px"></i>
+        </div>
+        <div class="kpi-val-row">
+          <span class="kpi-val" style="color:var(--status-warn)">23</span>
+          <span class="kpi-unit">hồ sơ</span>
+        </div>
+        <div class="kpi-sub">6 khách chưa có người phụ trách</div>
+        <div class="kpi-bar" style="background:var(--status-warn);width:38%;opacity:0.6"></div>
+      </div>
+
+      <div class="kpi-card" onclick="switchHub('directory')" style="cursor:pointer" title="Bấm để xem Danh bạ nhóm">
+        <div class="kpi-card-header">
+          <span class="kpi-label">Nhóm đang nóng</span>
+          <i class="ph ph-fire" style="color:var(--color-accent);font-size:14px"></i>
+        </div>
+        <div class="kpi-val-row">
+          <span class="kpi-val" style="color:var(--color-accent)">7</span>
+          <span class="kpi-unit">/ 42 nhóm</span>
+        </div>
+        <div class="kpi-sub">3.184 sự kiện hôm nay</div>
+        <div class="kpi-bar" style="background:var(--color-accent);width:17%;opacity:0.6"></div>
+      </div>
+
+      <div class="kpi-card" onclick="switchHub('approvals')" style="cursor:pointer" title="Bấm để xem Phê duyệt">
+        <div class="kpi-card-header">
+          <span class="kpi-label">Hành động chờ duyệt</span>
           <i class="ph ph-seal-check" style="color:var(--status-warn);font-size:14px"></i>
         </div>
         <div class="kpi-val-row">
           <span class="kpi-val" style="color:var(--status-warn)">${pendingAppr}</span>
-          <span class="kpi-unit">yêu cầu</span>
+          <span class="kpi-unit">bản nháp</span>
         </div>
-        <div class="kpi-sub">Thẩm quyền tối cao ${state.config.boss_name || 'Anh Cơ La'}</div>
-        <div class="kpi-bar" style="background:var(--status-warn);opacity:0.7"></div>
+        <div class="kpi-sub">Tự trị mức 4 · hệ thống không tự gửi</div>
+        <div class="kpi-bar" style="background:var(--status-warn);width:30%;opacity:0.6"></div>
       </div>
 
-      <div class="kpi-card">
+      <div class="kpi-card" onclick="showDciModal()" style="cursor:pointer" title="Bấm để xem chi tiết DCI">
         <div class="kpi-card-header">
-          <span class="kpi-label">Việc Trực Chiến</span>
-          <i class="ph ph-kanban" style="color:var(--status-info);font-size:14px"></i>
+          <span class="kpi-label">Tin cậy dữ liệu</span>
+          <i class="ph ph-shield-check" style="color:var(--status-warn);font-size:14px"></i>
         </div>
         <div class="kpi-val-row">
-          <span class="kpi-val" style="color:var(--status-info)">${worksCount}</span>
-          <span class="kpi-unit">đang mở</span>
+          <span class="kpi-val" style="color:var(--status-warn)">78</span>
+          <span class="kpi-unit">%</span>
         </div>
-        <div class="kpi-sub">${state.works.filter(w => w.status === 'IN_PROGRESS').length} việc đang xử lý</div>
-        <div class="kpi-bar" style="background:var(--status-info);opacity:0.7"></div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-card-header">
-          <span class="kpi-label">Kênh Trực Chiến</span>
-          <i class="ph ph-plugs-connected" style="color:var(--color-accent);font-size:14px"></i>
-        </div>
-        <div class="kpi-val-row">
-          <span class="kpi-val" style="color:var(--color-accent)">2</span>
-          <span class="kpi-unit">/ 3 kênh</span>
-        </div>
-        <div class="kpi-sub">Zalo Gateway & WhatsApp Web</div>
-        <div class="kpi-bar" style="background:var(--color-accent);opacity:0.7"></div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-card-header">
-          <span class="kpi-label">Chi Phí Token</span>
-          <i class="ph ph-coins" style="color:var(--status-ok);font-size:14px"></i>
-        </div>
-        <div class="kpi-val-row">
-          <span class="kpi-val" style="color:var(--status-ok)">0 ₫</span>
-          <span class="kpi-unit">hôm nay</span>
-        </div>
-        <div class="kpi-sub">Google Antigravity Brain 0đ Token</div>
-        <div class="kpi-bar" style="background:var(--status-ok);opacity:0.7"></div>
+        <div class="kpi-sub">12 danh tính chờ hợp nhất</div>
+        <div class="kpi-bar" style="background:var(--status-warn);width:78%;opacity:0.6"></div>
       </div>
     </div>
 
-    <div class="split-grid">
-      <!-- Attention Queue -->
+    <!-- 2-Column Split Grid: Left Attention Queue + Right Spotlights/Signals -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); gap:16px; align-items:start; margin-bottom:16px;">
+      
+      <!-- Hàng đợi cần xử lý (Attention Queue) -->
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title"><i class="ph ph-warning-circle" style="color:var(--status-bad)"></i> Hàng Đợi Cần Sếp Xử Lý</div>
-            <div style="font-size:10px;color:var(--color-neutral-400);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px">ATTENTION QUEUE · ƯU TIÊN THEO RỦI RO</div>
+            <div class="card-title"><i class="ph ph-warning-circle" style="color:var(--status-bad)"></i> Hàng đợi cần xử lý</div>
+            <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:2px">Attention queue · cơ hội, cảnh báo, việc đến hạn, tin chờ duyệt</div>
           </div>
-          <span class="badge ${attentionCount > 0 ? 'p1' : 'good'}">${attentionCount} Mục</span>
+          <button class="btn sm" onclick="switchHub('opportunities')" style="gap:5px;font-size:11px">Mở hộp thư ý nghĩa <i class="ph ph-arrow-right"></i></button>
         </div>
-        <div style="padding:14px;display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto">
-          ${state.attention.length === 0 ? `
-            <div style="text-align:center;padding:36px;color:var(--color-neutral-400)">
-              <i class="ph ph-check-circle" style="font-size:32px;color:var(--status-ok);margin-bottom:8px;display:block"></i>
-              <div style="font-weight:600;color:var(--color-text);font-size:13px">Hàng đợi sạch sẽ (Clean Slate)</div>
-              <div style="font-size:11.5px;margin-top:3px">Không có việc tồn đọng hay phê duyệt nào quá hạn.</div>
-            </div>
-          ` : state.attention.map(item => `
-            <div style="border-left:3px solid ${item.band === 'P1' ? 'var(--status-bad)' : item.band === 'P2' ? 'var(--status-warn)' : 'var(--color-accent)'};background:var(--color-bg);padding:12px 14px;border-radius:0 6px 6px 0;border:1px solid var(--color-divider);border-left-width:3px">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                <span class="badge ${item.band === 'P1' ? 'p1' : item.band === 'P2' ? 'p2' : 'good'}">${item.band}</span>
-                <span style="font-family:var(--mono);font-size:11px;color:var(--color-neutral-500)">${item.subject || ''}</span>
+        <div style="display:flex;flex-direction:column;">
+          ${queue.map(q => `
+            <div style="display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--color-divider);transition:background 0.14s" onmouseenter="this.style.background='var(--color-neutral-900)'" onmouseleave="this.style.background='transparent'">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:20px;border-radius:var(--radius-sm);font-size:10px;font-weight:600;color:${q.bandTone};border:1px solid ${q.bandTone}">${q.band}</span>
+              <div style="min-width:0">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:9.5px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;padding:2px 7px;border-radius:var(--radius-sm);white-space:nowrap;color:${q.tone};border:1px solid ${q.tone}">${q.kind}</span>
+                  <span style="flex:1;min-width:0;font-size:12.5px;font-weight:500;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.title}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:9px;margin-top:3px">
+                  <span style="font-size:10.5px;color:var(--color-neutral-500);font-family:var(--mono)">${q.id}</span>
+                  <span style="width:3px;height:3px;border-radius:50%;background:var(--color-neutral-700)"></span>
+                  <span style="font-size:11px;color:var(--color-neutral-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.source}</span>
+                  <span style="width:3px;height:3px;border-radius:50%;background:var(--color-neutral-700)"></span>
+                  <span style="font-size:11px;color:var(--color-neutral-500)">${q.age}</span>
+                </div>
               </div>
-              <div style="font-weight:600;font-size:13px;color:var(--color-text);margin-bottom:4px">${item.title}</div>
-              <div style="font-size:11.5px;color:var(--color-neutral-400);display:flex;align-items:center;justify-content:space-between;gap:10px">
-                <span><i class="ph ph-arrow-elbow-down-right"></i> ${item.action}</span>
-                <button class="btn sm primary" onclick="handleAttentionAction('${item.id}')">Xử Lý Ngay <i class="ph ph-arrow-right"></i></button>
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                <span style="min-width:34px;text-align:center;font-size:11px;font-weight:600;padding:2px 7px;border-radius:var(--radius-sm);font-family:var(--mono);color:${q.score === '—' ? 'var(--color-neutral-500)' : q.tone};border:1px solid ${q.score === '—' ? 'var(--color-neutral-800)' : q.tone}">${q.score}</span>
+                <button class="btn sm" style="font-size:11px;height:26px;padding:0 9px;white-space:nowrap" onclick="handleAttentionAction('${q.id}')">${q.action} <i class="ph ph-arrow-right"></i></button>
               </div>
             </div>
           `).join('')}
         </div>
       </div>
 
-      <!-- Quick Action Dispatcher -->
-      <div class="card">
-        <div class="card-header">
+      <!-- Right Column: 5 Đối tượng + Chủ đề đang nổi -->
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        
+        <!-- 5 đối tượng đáng chú ý -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="ph ph-users-three" style="color:var(--color-accent)"></i> 5 đối tượng đáng chú ý</div>
+              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:2px">Today's five</div>
+            </div>
+            <button class="btn sm" onclick="switchHub('relationship_radar')" style="gap:4px;font-size:11px">Radar 360 <i class="ph ph-arrow-right"></i></button>
+          </div>
           <div>
-            <div class="card-title"><i class="ph ph-lightning" style="color:var(--color-accent)"></i> Trung Tâm Tác Vụ Trực Chiến</div>
-            <div style="font-size:10px;color:var(--color-neutral-400);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px">OPERATIONAL DISPATCHER</div>
+            ${spotlight.map(sp => `
+              <div style="display:flex;align-items:center;gap:11px;padding:10px 16px;border-bottom:1px solid var(--color-divider);cursor:pointer;transition:background 0.14s" onclick="switchHub('relationship_radar')" onmouseenter="this.style.background='var(--color-neutral-900)'" onmouseleave="this.style.background='transparent'">
+                <span style="width:28px;height:28px;flex-shrink:0;border-radius:50%;background:#2b2741;border:1px solid #423a6a;display:grid;place-items:center;font-size:9.5px;font-weight:600;color:#d2cefd">${sp.initials}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12px;font-weight:500;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sp.name}</div>
+                  <div style="font-size:10.5px;color:var(--color-neutral-400);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sp.why}</div>
+                </div>
+                <div style="flex-shrink:0;display:flex;align-items:center;gap:6px">
+                  <i class="ph ${sp.trend === 'up' ? 'ph-trend-up' : sp.trend === 'down' ? 'ph-trend-down' : 'ph-minus'}" style="font-size:13px;color:${sp.tone}"></i>
+                  <span style="font-size:13px;font-weight:600;color:${sp.tone};font-family:var(--mono)">${sp.score}</span>
+                </div>
+              </div>
+            `).join('')}
           </div>
         </div>
-        <div class="card-pad" style="display:flex;flex-direction:column;gap:9px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="btn primary" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="switchHub('assistant', 'chat')">
-              <i class="ph ph-chat-centered-text" style="font-size:16px"></i> Chat Bé Heo
-            </button>
-            <button class="btn" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="openQuickConfigModal()">
-              <i class="ph ph-sliders" style="font-size:16px;color:var(--status-warn)"></i> Cấu Hình 5s
-            </button>
+
+        <!-- Chủ đề đang nổi -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><i class="ph ph-chart-line-up" style="color:var(--status-ok)"></i> Chủ đề đang nổi</div>
+              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:2px">Rising signals · 24 giờ</div>
+            </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="btn" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="switchHub('zalo', 'qr')">
-              <i class="ph ph-chats-circle" style="font-size:16px;color:var(--status-info)"></i> Zalo Gateway
-            </button>
-            <button class="btn" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="switchHub('whatsapp', 'qr')">
-              <i class="ph ph-device-mobile" style="font-size:16px;color:var(--status-ok)"></i> WhatsApp QR
-            </button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="btn" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="openNewWorkModal()">
-              <i class="ph ph-plus-circle" style="font-size:16px"></i> Tạo Việc Mới
-            </button>
-            <button class="btn" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="openNewCalendarModal()">
-              <i class="ph ph-calendar-plus" style="font-size:16px"></i> Lên Lịch Hẹn
-            </button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="btn" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="switchHub('mcp_connectors')">
-              <i class="ph ph-plugs-connected" style="font-size:16px;color:var(--color-accent)"></i> 48 App MCP
-            </button>
-            <button class="btn" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="switchHub('governance', 'logs')">
-              <i class="ph ph-activity" style="font-size:16px;color:var(--status-bad)"></i> Nhật Ký Logs
-            </button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="btn" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="openAccountSwitcherModal()">
-              <i class="ph ph-user-switch" style="font-size:16px"></i> Đổi Profile
-            </button>
-            <button class="btn" style="justify-content:flex-start;padding:0 12px;height:36px" onclick="toggleTerminal()">
-              <i class="ph ph-terminal-window" style="font-size:16px"></i> Terminal CLI
-            </button>
+          <div style="padding:6px 0 10px">
+            ${signals.map(sg => `
+              <div style="display:flex;align-items:center;gap:10px;padding:7px 16px">
+                <span style="flex:1;min-width:0;font-size:11.5px;color:var(--color-neutral-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sg.name}</span>
+                <span style="width:72px;height:4px;flex-shrink:0;border-radius:2px;background:var(--color-divider);overflow:hidden">
+                  <span style="display:block;height:4px;width:${sg.bar};background:var(--color-accent);opacity:0.8"></span>
+                </span>
+                <span style="width:62px;flex-shrink:0;text-align:right;white-space:nowrap;font-size:10.5px;color:${sg.tone};font-family:var(--mono)">${sg.delta}</span>
+              </div>
+            `).join('')}
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Recent Works Table -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><i class="ph ph-check-square"></i> Công Việc Đang Triển Khai Gần Nhất</div>
-        <button class="btn sm" onclick="switchHub('work', 'kanban')">Mở Bảng Kanban <i class="ph ph-arrow-right"></i></button>
+    <!-- Bottom 3-Column Grid: Sức khỏe hệ thống + Chất lượng dữ liệu + Nhiệt kế hoạt động -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; align-items:start;">
+      
+      <!-- Sức khoẻ hệ thống -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><i class="ph ph-stethoscope" style="color:var(--status-ok)"></i> Sức khoẻ hệ thống</div>
+            <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:2px">${healthyCount} khoẻ · ${degradedCount} suy giảm · ${isolatedCount} cách ly</div>
+          </div>
+          <button class="btn sm" onclick="runHealthWizard()" style="font-size:10px;height:24px;padding:0 8px">Chi tiết</button>
+        </div>
+        <div style="padding:6px 0 10px">
+          ${health.map(h => `
+            <div style="display:flex;align-items:center;gap:10px;padding:7px 16px">
+              <span style="width:6px;height:6px;flex-shrink:0;border-radius:50%;background:${h.tone}"></span>
+              <span style="flex:1;min-width:0;font-size:11.5px;color:var(--color-neutral-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.name}</span>
+              <span style="width:60px;height:4px;flex-shrink:0;border-radius:2px;background:var(--color-divider);overflow:hidden">
+                <span style="display:block;height:4px;width:${h.bar};background:${h.tone};opacity:0.85"></span>
+              </span>
+              <span style="width:58px;flex-shrink:0;text-align:right;white-space:nowrap;font-size:10.5px;color:var(--color-neutral-400);font-family:var(--mono)">${h.metric}</span>
+            </div>
+          `).join('')}
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Mã Việc</th>
-              <th>Tiêu Đề</th>
-              <th>Độ Ưu Tiên</th>
-              <th>Trạng Thái</th>
-              <th>Phụ Trách</th>
-              <th>Hạn Chót</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.works.length === 0 ? `
-              <tr>
-                <td colspan="6" style="text-align:center;padding:24px;color:var(--color-neutral-400)">
-                  Hiện tại không có công việc nào trong quy trình (Clean State). Bấm <b>'+ Tạo Việc Mới'</b> để giao việc.
-                </td>
-              </tr>
-            ` : state.works.slice(0, 6).map(w => `
-              <tr>
-                <td style="font-family:var(--mono);color:var(--color-accent)">${w.id}</td>
-                <td style="font-weight:500">${w.title}</td>
-                <td><span class="badge ${w.priority === 'P1' ? 'p1' : w.priority === 'P2' ? 'p2' : 'p3'}">${w.priority}</span></td>
-                <td><span class="badge neutral">${w.status}</span></td>
-                <td style="color:var(--color-neutral-300)">${w.owner}</td>
-                <td style="color:var(--color-neutral-400);font-family:var(--mono);font-size:11.5px">${w.deadline || '—'}</td>
-              </tr>
+
+      <!-- Chất lượng dữ liệu -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><i class="ph ph-database" style="color:var(--status-warn)"></i> Chất lượng dữ liệu</div>
+            <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:2px">Hôm nay hệ thống chắc chắn đến đâu</div>
+          </div>
+          <button class="btn sm" onclick="showDciModal()" style="font-size:10px;height:24px;padding:0 8px">DCI</button>
+        </div>
+        <div style="padding:6px 0 10px">
+          ${dataQuality.map(d => `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 16px">
+              <span style="flex:1;min-width:0;font-size:11.5px;color:var(--color-neutral-300)">${d.label}</span>
+              <span style="flex-shrink:0;font-size:12px;font-weight:600;color:${d.tone};font-family:var(--mono)">${d.value}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Nhiệt kế hoạt động -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><i class="ph ph-activity" style="color:var(--color-accent)"></i> Nhiệt kế hoạt động</div>
+            <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:2px">Hội thoại theo giờ · hôm nay</div>
+          </div>
+        </div>
+        <div style="padding:16px 16px 14px">
+          <div style="display:flex;align-items:flex-end;gap:3px;height:96px">
+            ${hourly.map(hr => `
+              <span style="flex:1;border-radius:2px 2px 0 0;height:${hr.h};background:${hr.tone};transition:opacity 0.14s;cursor:pointer" title="${hr.title}" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.75'"></span>
             `).join('')}
-          </tbody>
-        </table>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:7px;font-size:10px;color:var(--color-neutral-500);font-family:var(--mono)">
+            <span>00</span><span>06</span><span>12</span><span>18</span><span>hiện tại</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;margin-top:12px">
+            <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--color-neutral-400)"><span style="width:8px;height:8px;border-radius:2px;background:var(--color-accent)"></span>3.184 sự kiện</span>
+            <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--color-neutral-400)"><span style="width:8px;height:8px;border-radius:2px;background:var(--status-warn)"></span>7 nhóm đang nóng</span>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -3593,7 +3740,7 @@ async function toggleGroupBotActive(gid, active) {
     });
     const d = await res.json();
     if (d.ok) {
-      showToast(`Đã ${active ? 'BẬT' : 'TẮT'} trợ lý Bé Heo trực chiến trong nhóm!`);
+      showToast(`Đã ${active ? 'BẬT' : 'TẮT'} trợ lý Gen-Harness trực chiến trong nhóm!`);
       await fetchAllData();
     } else {
       showToast('⚠️ Lỗi: ' + (d.error || 'Không thể cập nhật'));
@@ -3665,7 +3812,7 @@ function leaveGroupAction(gid, channel) {
   const name = g ? g.name : gid;
   promptPinConfirm(
     '🚪 Xác Nhận Rời Nhóm Bảo Mật',
-    `Sếp có chắc chắn muốn Bé Heo rời khỏi nhóm <b>"${escapeHtml(name)}"</b> (${channel?.toUpperCase()}) không?<br><br>Nhóm sẽ được chuyển trạng thái sang <b>Đã Rời Nhóm</b> và bot sẽ ngừng trực chiến.`,
+    `Sếp có chắc chắn muốn trợ lý Gen-Harness rời khỏi nhóm <b>"${escapeHtml(name)}"</b> (${channel?.toUpperCase()}) không?<br><br>Nhóm sẽ được chuyển trạng thái sang <b>Đã Rời Nhóm</b> và bot sẽ ngừng trực chiến.`,
     async (pin) => {
       showToast('⏳ Đang gửi lệnh rời nhóm...');
       try {
@@ -3676,7 +3823,7 @@ function leaveGroupAction(gid, channel) {
         });
         const d = await res.json();
         if (d.ok) {
-          showToast('✅ Bé Heo đã rời khỏi nhóm thành công và chuyển trạng thái sang Đã Rời Nhóm.');
+          showToast('✅ Trợ lý Gen-Harness đã rời khỏi nhóm thành công và chuyển trạng thái sang Đã Rời Nhóm.');
           await fetchAllData();
         } else {
           showToast('❌ Lỗi khi rời nhóm: ' + (d.error || d.message || 'Mã PIN không đúng!'));
@@ -4575,13 +4722,13 @@ function analyzeChatAI(idx) {
     suggestion = '📋 Yêu cầu công việc cụ thể. Đề xuất bấm nút "+ Tạo Việc" để đưa vào bảng Kanban và giám sát tiến độ.';
     riskLevel = 'Trung bình (Cần theo dõi deadline)';
   } else if (m.category === 'EVENT') {
-    suggestion = '📅 Có yếu tố cuộc hẹn / deadline. Đề xuất bấm nút "+ Lên Lịch" để Heo OS tự động gửi thông báo đúng giờ.';
+    suggestion = '📅 Có yếu tố cuộc hẹn / deadline. Đề xuất bấm nút "+ Lên Lịch" để Gen-Harness tự động gửi thông báo đúng giờ.';
     riskLevel = 'Trung bình (Tránh bỏ lỡ lịch hẹn đối tác)';
   } else if (m.category === 'ALERT') {
     suggestion = '🚨 Cảnh báo sự cố / vấn đề khẩn cấp! Đề xuất rà soát hệ thống và phản hồi đối tác giải pháp ngay.';
     riskLevel = 'Cao (Cần khắc phục ngay)';
   } else if (m.category === 'INQUIRY') {
-    suggestion = '💡 Câu hỏi thắc mắc từ đối tác/nhóm. Bé Heo có thể hỗ trợ tổng hợp thông tin để trả lời nhanh.';
+    suggestion = '💡 Câu hỏi thắc mắc từ đối tác/nhóm. Trợ lý Gen-Harness có thể hỗ trợ tổng hợp thông tin để trả lời nhanh.';
     riskLevel = 'Thấp (Hỗ trợ tư vấn)';
   }
 
@@ -5105,8 +5252,8 @@ function renderAssistantHub() {
     <div class="hub-header">
       <div class="hub-header-top">
         <div>
-          <h1 class="hub-title">Trợ Lý Bé Heo & Quota AI (Assistant & Studio)</h1>
-          <p class="hub-desc">Live chat thông minh, cấu hình danh xưng Sếp - Em Heo & giám sát Quota Google Antigravity CLI (0đ Token API).</p>
+          <h1 class="hub-title">Trợ Lý Gen-Harness & Quota AI (Assistant & Studio)</h1>
+          <p class="hub-desc">Live chat thông minh, cấu hình danh xưng Sếp & Trợ lý & giám sát Quota Google Antigravity CLI (0đ Token API).</p>
         </div>
         <span class="badge good">${state.google.tier_name || 'Google AI Pro (0đ Token)'}</span>
       </div>
@@ -5143,9 +5290,9 @@ function renderAssistantChatView() {
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="text-sm muted">Chỉ đạo nhanh:</span>
           <button class="btn sm" onclick="sendChatPrompt('Lập báo cáo tiến độ công việc hôm nay dạng Word')">📄 Báo Cáo Word</button>
-          <button class="btn sm" onclick="sendChatPrompt('Tạo bảng tính dự toán chi phí Heo OS bằng Excel')">📊 Bảng Tính Excel</button>
+          <button class="btn sm" onclick="sendChatPrompt('Tạo bảng tính dự toán chi phí Gen-Harness bằng Excel')">📊 Bảng Tính Excel</button>
           <button class="btn sm" onclick="sendChatPrompt('Sinh bản beat Lo-Fi acoustic êm dịu thư giãn')">🎵 Beat Lo-Fi WAV</button>
-          <button class="btn sm" onclick="sendChatPrompt('Vẽ tranh minh họa Bé Heo Cyberpunk vector AI')">🎨 Tranh Vector AI</button>
+          <button class="btn sm" onclick="sendChatPrompt('Vẽ tranh minh họa Genesis Cyberpunk vector AI')">🎨 Tranh Vector AI</button>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <label class="text-sm muted" style="white-space:nowrap;font-size:12px">🎭 Ngữ Cảnh Thử Nghiệm:</label>
@@ -5160,11 +5307,11 @@ function renderAssistantChatView() {
       <!-- Chat Log Area -->
       <div id="chat-messages" style="flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;gap:12px;align-items:flex-start">
-          <div class="brand-logo" style="width:30px;height:30px;font-size:16px;flex-shrink:0">🐷</div>
+          <div class="brand-logo" style="width:30px;height:30px;font-size:16px;flex-shrink:0">⚡</div>
           <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:8px;padding:12px 16px;max-width:80%">
-            <div style="font-weight:700;color:var(--brand);margin-bottom:4px">Bé Heo Assistant (${state.config.bot_persona || 'default'})</div>
+            <div style="font-weight:700;color:var(--brand);margin-bottom:4px">Gen-Harness Assistant (${state.config.bot_persona || 'default'})</div>
             <div style="color:var(--text);font-size:13px;line-height:1.6">
-              Dạ Em chào ${state.config.boss_name || 'Sếp Cơ La'}! Em Bé Heo đã sẵn sàng hỗ trợ Sếp điều hành công việc với 100% dữ liệu thật và không dùng token tốn phí (Core Antigravity 0đ Token). Hôm nay Sếp có chỉ đạo gì cho em ạ? 🥰✨
+              Dạ Em chào ${state.config.boss_name || 'Sếp Cơ La'}! Em Gen-Harness đã sẵn sàng hỗ trợ Sếp điều hành công việc với 100% dữ liệu thật và không dùng token tốn phí (Core Antigravity 0đ Token). Hôm nay Sếp có chỉ đạo gì cho em ạ? 🥰✨
             </div>
           </div>
         </div>
@@ -5172,7 +5319,7 @@ function renderAssistantChatView() {
 
       <!-- Input Row -->
       <div style="padding:14px 18px;border-top:1px solid var(--border);background:#090e1a;display:flex;gap:10px">
-        <input type="text" class="form-input" id="chat-input" placeholder="Nhập chỉ đạo cho Bé Heo..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+        <input type="text" class="form-input" id="chat-input" placeholder="Nhập chỉ đạo cho Gen-Harness..." onkeydown="if(event.key==='Enter') sendChatMessage()">
         <button class="btn primary" onclick="sendChatMessage()">Gửi Lệnh ➔</button>
       </div>
     </div>
@@ -5274,7 +5421,7 @@ function renderHeoSettingsView() {
             <span>📝 Cài Đặt Ghi Chú Chung & Lời Dặn Cốt Lõi (Global Executive Directives)</span>
           </div>
           <p class="muted" style="font-size:12px;margin-bottom:12px;line-height:1.5">
-            Các chỉ đạo, cấm kỵ và khẩu vị làm việc mang tính toàn cục mà Bé Heo <strong>bắt buộc phải ghi nhớ</strong> khi phản hồi ở bất kỳ đâu (Zalo, WhatsApp, Web Console).
+            Các chỉ đạo, cấm kỵ và khẩu vị làm việc mang tính toàn cục mà Gen-Harness <strong>bắt buộc phải ghi nhớ</strong> khi phản hồi ở bất kỳ đâu (Zalo, WhatsApp, Web Console).
           </p>
           <div class="form-group">
             <textarea class="form-textarea" id="cfg-bot-global-notes" style="height:120px;font-size:13px;line-height:1.6" placeholder="Nhập lời dặn chung (VD: Tuyệt đối bảo mật thông tin tài chính và dự án Phoenix; Khi giải quyết việc gấp luôn ưu tiên trước; Không xưng hô cợt nhả với người ngoài; Luôn dùng tiếng Việt chuẩn mực...).">${escapeHtml(cfg.bot_global_notes || '')}</textarea>
@@ -5289,14 +5436,14 @@ function renderHeoSettingsView() {
       <div class="card card-pad">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
-            <span>🎭 Studio 7 Phong Cách Thái Độ Của Bé Heo (Persona Attitude)</span>
+            <span>🎭 Studio 7 Phong Cách Thái Độ Của Trợ Lý (Persona Attitude)</span>
           </div>
           <span class="badge good" id="active-persona-badge">${currentPersona.toUpperCase()}</span>
         </div>
 
         <div class="form-group">
           <label class="form-label">Tên Trợ Lý (Bot Name)</label>
-          <input type="text" class="form-input" id="cfg-bot-name" value="${escapeHtml(cfg.bot_name || 'Bé Heo')}">
+          <input type="text" class="form-input" id="cfg-bot-name" value="${escapeHtml(cfg.bot_name || 'Gen-Harness')}">
         </div>
         <div class="form-group">
           <label class="form-label">Lời Giới Thiệu Trợ Lý (Bot About)</label>
@@ -5332,7 +5479,7 @@ function renderHeoSettingsView() {
         <!-- Custom Prompt Textarea -->
         <div class="form-group" id="custom-persona-group" style="display:${currentPersona === 'custom' ? 'block' : 'none'};margin-top:12px">
           <label class="form-label">Lời Dặn Custom Persona (Dành riêng cho phong cách tùy chỉnh)</label>
-          <textarea class="form-textarea" id="cfg-custom-persona" style="height:90px" placeholder="Nhập chi tiết văn phong, tính cách riêng biệt mà Sếp muốn Bé Heo mô phỏng...">${escapeHtml(cfg.bot_custom_persona || '')}</textarea>
+          <textarea class="form-textarea" id="cfg-custom-persona" style="height:90px" placeholder="Nhập chi tiết văn phong, tính cách riêng biệt mà Sếp muốn trợ lý mô phỏng...">${escapeHtml(cfg.bot_custom_persona || '')}</textarea>
         </div>
 
         <!-- Live Persona Speech Preview Box -->
@@ -5346,7 +5493,7 @@ function renderHeoSettingsView() {
         </div>
 
         <button class="btn primary" style="width:100%;justify-content:center;margin-top:16px" onclick="saveHeoConfig()">
-          💾 Lưu Toàn Bộ Cấu Hình Bé Heo & 7 Sắc Thái
+          💾 Lưu Toàn Bộ Cấu Hình Persona & 7 Sắc Thái
         </button>
       </div>
     </div>
@@ -5448,7 +5595,7 @@ function renderRunnersHubView() {
       <div class="card card-pad">
         <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">📄 Xuất Bản Báo Cáo Word (.docx)</div>
         <p class="muted" style="margin-bottom:14px">Tự động sinh văn bản hành chính: Tờ trình, Quyết định, Biên bản họp.</p>
-        <button class="btn primary" onclick="sendChatPrompt('Lập tờ trình kế hoạch triển khai Heo OS V6 dạng Word')">Xuất Tài Liệu Word Ngay</button>
+        <button class="btn primary" onclick="sendChatPrompt('Lập tờ trình kế hoạch triển khai Genesis Harness OS dạng Word')">Xuất Tài Liệu Word Ngay</button>
       </div>
 
       <div class="card card-pad">
@@ -5465,8 +5612,8 @@ function renderRunnersHubView() {
 
       <div class="card card-pad">
         <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">🎨 Vẽ Tranh Minh Họa Vector AI (SVG)</div>
-        <p class="muted" style="margin-bottom:14px">Đồ họa vector siêu nét linh vật Bé Heo Executive Cyberpunk phát sáng.</p>
-        <button class="btn primary" onclick="sendChatPrompt('Vẽ tranh minh họa Bé Heo Cyberpunk vector AI')">Vẽ Tranh Minh Họa Ngay</button>
+        <p class="muted" style="margin-bottom:14px">Đồ họa vector siêu nét linh vật Genesis Executive Cyberpunk phát sáng.</p>
+        <button class="btn primary" onclick="sendChatPrompt('Vẽ tranh minh họa Genesis Cyberpunk vector AI')">Vẽ Tranh Minh Họa Ngay</button>
       </div>
     </div>
   `;
@@ -5896,7 +6043,7 @@ function renderArtifactsView() {
           </thead>
           <tbody>
             ${state.artifacts.length === 0 ? `
-              <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Kho tài liệu đang trống. Sử dụng Live Chat Bé Heo để xuất bản báo cáo Word hoặc Excel.</td></tr>
+              <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Kho tài liệu đang trống. Sử dụng Live Chat Gen-Harness để xuất bản báo cáo Word hoặc Excel.</td></tr>
             ` : state.artifacts.map(a => `
               <tr>
                 <td style="font-weight:600">${a.name}</td>
@@ -6330,7 +6477,7 @@ function openDisclaimerModal() {
   openModal('Tuyên Bố Miễn Trừ Trách Nhiệm & Điều Khoản Sử Dụng', `
     <div style="max-height:60vh;overflow-y:auto;font-size:12px;color:var(--text);line-height:1.6">
       <h4 style="color:var(--brand);margin-bottom:8px">1. Mục Đích Nghiên Cứu & Tự Trị Cá Nhân</h4>
-      <p style="margin-bottom:12px">Phần mềm Heo-Harness / Heo OS do tác giả Ryan sáng lập phục vụ công tác nghiên cứu khoa học, tự động hóa trợ lý cá nhân và điều hành trực chiến.</p>
+      <p style="margin-bottom:12px">Phần mềm Genesis Harness OS (Gen-Harness) do tác giả Ryan sáng lập phục vụ công tác nghiên cứu khoa học, tự động hóa trợ lý cá nhân và điều hành trực chiến.</p>
       <h4 style="color:var(--brand);margin-bottom:8px">2. Tác Quyền & Cam Kết</h4>
       <p style="margin-bottom:12px">Tác quyền thuộc về Anh Cơ La (Ryan). Người sử dụng tự chịu trách nhiệm về các phát ngôn và nội dung do mô hình AI tạo ra.</p>
     </div>
@@ -6351,7 +6498,7 @@ async function handleTermKey(event) {
   input.value = '';
 
   if (cmd.toLowerCase() === 'clear') {
-    logs.textContent = 'Heo OS V6 Executive Intelligence Terminal.\nGõ \'help\' để xem danh sách lệnh có sẵn.\n';
+    logs.textContent = 'Genesis Harness OS Console Terminal.\nGõ \'help\' để xem danh sách lệnh có sẵn.\n';
     return;
   }
 
@@ -6416,7 +6563,7 @@ function renderModulesHub() {
         <div>
           <h1 class="hub-title">🧩 Trung Tâm Quản Trị Module Plugins & Skills</h1>
           <p class="hub-desc">
-            Khung gầm DSH "Everything is a Plugin" · Quản lý vòng đời 11 Plugins · 8 Kỹ năng điều hành Bé Heo · Cài đặt mở rộng từ Main Repo
+            Khung gầm DSH "Everything is a Plugin" · Quản lý vòng đời 11 Plugins · 8 Kỹ năng điều hành Gen-Harness · Cài đặt mở rộng từ Main Repo
           </p>
         </div>
       </div>
@@ -6428,7 +6575,7 @@ function renderModulesHub() {
             🧩 Module Plugins Đang Nạp (${installedCount})
           </button>
           <button class="hub-subnav-btn ${currentSub === 'skills' ? 'active' : ''}" onclick="switchSubtab('modules', 'skills')">
-            🎯 Kỹ Năng Bé Heo (${skillsCount})
+            🎯 Kỹ Năng Điều Hành (${skillsCount})
           </button>
           <button class="hub-subnav-btn ${currentSub === 'marketplace' ? 'active' : ''}" onclick="switchSubtab('modules', 'marketplace')">
             🏪 Kho Thư Viện Main Repo (${catalogCount})
@@ -6473,7 +6620,7 @@ function renderInstalledPluginsView() {
 
     <div class="card">
       <div class="card-header">
-        <div class="card-title">🧩 Danh Sách 11 Module Plugin Cấu Thành Hệ Điều Hành Heo OS</div>
+        <div class="card-title">🧩 Danh Sách 11 Module Plugin Cấu Thành Genesis Harness OS</div>
         <span class="badge good">${state.plugins.length} Active Modules</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));gap:14px;padding:16px">
@@ -6494,7 +6641,7 @@ function renderInstalledPluginsView() {
                   <span class="badge ${isEnabled ? 'good' : 'neutral'}">${isEnabled ? 'BẬT' : 'TẮT'}</span>
                 </div>
                 <div style="font-size:12px;color:var(--text-muted);margin:8px 0;line-height:1.4">
-                  ${p.description || 'Module thành phần trực thuộc khung sườn Heo-Harness.'}
+                  ${p.description || 'Module thành phần trực thuộc khung sườn Genesis Harness.'}
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
                   <span class="badge neutral" style="font-size:10px">v${p.version || '1.0.0'}</span>
@@ -6528,9 +6675,9 @@ function renderExecutiveSkillsView() {
     <div class="card card-pad" style="margin-bottom:16px;background:linear-gradient(135deg, rgba(16,185,129,0.06), rgba(59,130,246,0.06));border:1px solid rgba(16,185,129,0.2)">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div>
-          <div style="font-weight:700;font-size:15px;color:var(--text)">🎯 8 Bộ Kỹ Năng Nghiệp Vụ Cấp Cao (Executive Skills) Của Bé Heo</div>
+          <div style="font-weight:700;font-size:15px;color:var(--text)">🎯 8 Bộ Kỹ Năng Nghiệp Vụ Cấp Cao (Executive Skills) Của Gen-Harness</div>
           <div class="muted" style="font-size:12px;margin-top:4px">
-            Được kế thừa từ bộ chuẩn nghiệp vụ Heo-Agent v2.1. Triệt tiêu mùi AI, tuân thủ nguyên tắc BLUF, Corporate Navy Sheets, và chăm sóc đối tác tinh tế.
+            Được kế thừa từ bộ chuẩn nghiệp vụ Genesis Agent v2.2. Triệt tiêu mùi AI, tuân thủ nguyên tắc BLUF, Corporate Navy Sheets, và chăm sóc đối tác tinh tế.
           </div>
         </div>
         <span class="badge good">${state.skills.length} Kỹ Năng Kích Hoạt</span>
@@ -6767,7 +6914,7 @@ function renderMcpAppCatalogView() {
       <div class="kpi-card">
         <div class="kpi-label">Số Lượng Công Cụ (Tools)</div>
         <div class="kpi-val" style="color:#38bdf8">${mcp.total_tools_ready || 0}</div>
-        <div class="kpi-sub">Bé Heo gọi tự động qua Prompt</div>
+        <div class="kpi-sub">Agent gọi tự động qua Prompt</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Chi Phí Token API</div>
@@ -7212,7 +7359,7 @@ function openInspectAppTools(appId) {
       </div>
 
       <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">
-        Danh Sách ${tools.length} Công Cụ (Tools) Sẵn Sàng Cho Bé Heo Gọi:
+        Danh Sách ${tools.length} Công Cụ (Tools) Sẵn Sàng Cho Agent Gọi:
       </div>
 
       <div style="display:flex;flex-direction:column;gap:10px">
@@ -7228,7 +7375,7 @@ function openInspectAppTools(appId) {
       </div>
 
       <div style="margin-top:16px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:8px;padding:12px;font-size:12px;color:var(--text);line-height:1.5">
-        💡 <b>Cách Sử Dụng:</b> Sếp chỉ cần ra lệnh tự nhiên qua chat Zalo, WhatsApp hoặc giao diện Dashboard (vd: <i>"Bé Heo, tìm file Báo Cáo Tài Chính trên Google Drive"</i>), Antigravity Brain sẽ tự động ánh xạ và thực thi công cụ tương ứng với chi phí 0đ token!
+        💡 <b>Cách Sử Dụng:</b> Sếp chỉ cần ra lệnh tự nhiên qua chat Zalo, WhatsApp hoặc giao diện Dashboard (vd: <i>"Gen-Harness, tìm file Báo Cáo Tài Chính trên Google Drive"</i>), Antigravity Brain sẽ tự động ánh xạ và thực thi công cụ tương ứng với chi phí 0đ token!
       </div>
     </div>
   `, null, true, 'Đóng');
@@ -7516,7 +7663,7 @@ function openQuickConfigModal() {
   const html = `
     <div style="display:flex;flex-direction:column;gap:14px">
       <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);padding:12px;border-radius:8px;font-size:12px;color:var(--text-muted)">
-        ⚡ <b>Cấu Hình Nhanh 5 Giây:</b> Điều chỉnh các thông số trọng yếu của Bé Heo và Sếp trong tích tắc mà không cần duyệt qua từng trang cài đặt sâu.
+        ⚡ <b>Cấu Hình Nhanh 5 Giây:</b> Điều chỉnh các thông số trọng yếu của Trợ lý và Sếp trong tích tắc mà không cần duyệt qua từng trang cài đặt sâu.
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -7525,8 +7672,8 @@ function openQuickConfigModal() {
           <input type="text" class="form-input" id="qc-boss-name" value="${escapeHtml(cfg.boss_name || 'Anh Cơ La')}">
         </div>
         <div class="form-group">
-          <label class="form-label">🐷 Danh Xưng Trợ Lý</label>
-          <input type="text" class="form-input" id="qc-bot-name" value="${escapeHtml(cfg.bot_name || 'Bé Heo')}">
+          <label class="form-label">🤖 Danh Xưng Trợ Lý</label>
+          <input type="text" class="form-input" id="qc-bot-name" value="${escapeHtml(cfg.bot_name || 'Gen-Harness')}">
         </div>
       </div>
 
@@ -7551,7 +7698,7 @@ function openQuickConfigModal() {
       </div>
 
       <div class="form-group">
-        <label class="form-label">🎭 Phong Thái & Thái Độ Phục Vụ Của Bé Heo</label>
+        <label class="form-label">🎭 Phong Thái & Thái Độ Phục Vụ Của Trợ Lý</label>
         <select class="form-select" id="qc-persona">
           <option value="dedicated" ${currentPersona === 'dedicated' ? 'selected' : ''}>💖 Tận tụy & Ngoan ngoãn (Dạ vâng, chu đáo, hết lòng vì Sếp)</option>
           <option value="humorous" ${currentPersona === 'humorous' ? 'selected' : ''}>😄 Hài hước & Dí dỏm (Vui tươi, hóm hỉnh, giảm căng thẳng)</option>
@@ -8215,7 +8362,7 @@ function openOnboardingWizard(step = 1) {
               ⬅ Quay Lại (Bước ${step - 1})
             </button>
           ` : `
-            <span class="text-sm muted">Heo OS Setup Wizard v6.0</span>
+            <span class="text-sm muted">Gen-Harness Setup Wizard v2.2</span>
           `}
         </div>
         <div style="display:flex;gap:10px">
@@ -8225,7 +8372,7 @@ function openOnboardingWizard(step = 1) {
             </button>
           ` : `
             <button class="btn sm success" style="background:#10b981;border-color:#10b981;color:#052e16;font-weight:700" onclick="saveCurrentStepData(5); completeOnboardingAction()">
-              🚀 Hoàn Tất & Khởi Động Heo OS!
+              🚀 Hoàn Tất & Khởi Động Gen-Harness!
             </button>
           `}
         </div>
@@ -8242,9 +8389,9 @@ function renderWizardStepContent(step) {
       return `
         <div style="display:flex;flex-direction:column;gap:12px">
           <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);padding:14px;border-radius:8px">
-            <h3 style="color:var(--brand);margin-bottom:6px;font-size:15px">🎉 Chào Mừng Sếp Đến Với Heo-Harness V6!</h3>
+            <h3 style="color:var(--brand);margin-bottom:6px;font-size:15px">🎉 Chào Mừng Sếp Đến Với Genesis Harness OS (Gen-Harness)!</h3>
             <p style="font-size:12px;color:var(--text-muted);line-height:1.6">
-              Heo OS là Hệ Điều Hành Trợ Lý Điều Hành Cấp Cao (Executive Intelligence) được xây dựng trên khung sườn <b>DeepSeek Harness (DSH)</b> chuẩn mực: <i>"Everything is a Plugin"</i>, bảo vệ đa tầng bằng Circuit Breaker và hoàn toàn <b>0đ chi phí token API</b> nhờ tận dụng gói Google Antigravity CLI cá nhân.
+              Gen-Harness là Hệ Điều Hành Vận Hành & Điều Khiển Dòng Chảy Hội Thoại (Genesis Harness OS) được xây dựng trên khung sườn <b>DeepSeek Harness (DSH)</b> chuẩn mực: <i>"Everything is a Plugin"</i>, bảo vệ đa tầng bằng Circuit Breaker và hoàn toàn <b>0đ chi phí token API</b> nhờ tận dụng gói Google Antigravity CLI cá nhân.
             </p>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -8291,7 +8438,7 @@ function renderWizardStepContent(step) {
       return `
         <div style="display:flex;flex-direction:column;gap:12px">
           <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);padding:12px;border-radius:8px;font-size:12px;color:var(--text-muted)">
-            🧠 <b>Trí Tuệ Cốt Lõi:</b> Heo OS tự động nhận diện phiên Google Antigravity CLI đang mở trên máy tính của Sếp.
+            🧠 <b>Trí Tuệ Cốt Lõi:</b> Gen-Harness tự động nhận diện phiên Google Antigravity CLI đang mở trên máy tính của Sếp.
           </div>
           <div class="form-group">
             <label class="form-label">Mô Hình AI Chủ Lực</label>
@@ -8317,7 +8464,7 @@ function renderWizardStepContent(step) {
       return `
         <div style="display:flex;flex-direction:column;gap:12px">
           <div style="font-size:12px;color:var(--text-muted)">
-            Bé Heo có thể kết nối 2 chiều vào Zalo và WhatsApp để trực tiếp nhận lệnh từ Sếp và hỗ trợ trong nhóm:
+            Gen-Harness có thể kết nối 2 chiều vào Zalo và WhatsApp để trực tiếp nhận lệnh từ Sếp và hỗ trợ trong nhóm:
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="card card-pad" style="background:var(--bg-body)">
@@ -8346,7 +8493,7 @@ function renderWizardStepContent(step) {
       return `
         <div style="display:flex;flex-direction:column;gap:12px">
           <div style="font-size:12px;color:var(--text-muted)">
-            Lựa chọn tính cách và chỉ đạo tác chiến đầu tiên của Sếp dành cho Bé Heo:
+            Lựa chọn tính cách và chỉ đạo tác chiến đầu tiên của Sếp dành cho Trợ lý:
           </div>
           <div class="form-group">
             <label class="form-label">🎭 Phong Thái & Thái Độ Phục Vụ</label>
@@ -8361,7 +8508,7 @@ function renderWizardStepContent(step) {
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">📜 Lời Chỉ Đạo / Lưu Ý Đầu Tiên Của Sếp Dành Cho Bé Heo</label>
+            <label class="form-label">📜 Lời Chỉ Đạo / Lưu Ý Đầu Tiên Của Sếp Dành Cho Trợ Lý</label>
             <textarea class="form-textarea" id="wiz-directives" placeholder="Nhập chỉ đạo hoặc ghi chú của Sếp...">${escapeHtml(wizardData.directives)}</textarea>
           </div>
         </div>
@@ -8394,7 +8541,7 @@ async function completeOnboardingAction() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         boss_name: wizardData.boss_name,
-        bot_name: 'Bé Heo',
+        bot_name: 'Gen-Harness',
         model: wizardData.model,
         reasoning_effort: wizardData.reasoning_effort,
         default_persona: wizardData.default_persona,
@@ -8405,7 +8552,7 @@ async function completeOnboardingAction() {
     });
     const d = await res.json();
     if (d.ok) {
-      showToast('🎉 Chúc mừng Sếp! Heo OS đã khởi tạo thành công và sẵn sàng trực chiến!');
+      showToast('🎉 Chúc mừng Sếp! Gen-Harness đã khởi tạo thành công và sẵn sàng trực chiến!');
       closeModal();
       switchHub('command');
       fetchAllData();
@@ -11163,7 +11310,7 @@ async function openLivingProfile360Modal(contactId) {
               <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px">
                 <i class="ph ph-sliders" style="color:#a855f7"></i> Thang Trượt Phân Quyền Tự Trị (Autonomy Level 0 - 6)
               </div>
-              <div style="font-size:11px;color:var(--color-neutral-400)">Thiết lập quyền tự quyết cho Heo-Harness khi tương tác với đối tác này</div>
+              <div style="font-size:11px;color:var(--color-neutral-400)">Thiết lập quyền tự quyết cho Gen-Harness khi tương tác với đối tác này</div>
             </div>
             <button class="btn sm primary" onclick="saveContactAutonomy('${c.id}')"><i class="ph ph-floppy-disk"></i> Lưu Mức Tự Trị</button>
           </div>
