@@ -1718,8 +1718,8 @@ function renderActiveHub() {
       break;
 
     case 'relationship_radar':
-      titleEl.textContent = 'Radar Quan Hệ, Bản Đồ Mạng Lưới & Hồ Sơ Sống 360';
-      subEl.textContent = 'Bản đồ mạng lưới đồ thị tương tác, phân tích nhiệt độ quan hệ, giải thích điểm Explainable AI, kiểm soát lượt bóng & thang đo 6 cấp tự trị';
+      titleEl.textContent = 'Bản đồ quan hệ & 360';
+      subEl.textContent = 'Không phải danh bạ. Trọng số quan hệ thay đổi theo tần suất, chiều tương tác và giai đoạn — phát hiện cầu nối, khách lạnh và điểm nghẽn';
       container.innerHTML = renderRelationshipRadarHub();
       if ((state.subtabs.relationship_radar || 'graph') === 'graph') {
         setTimeout(initRelationshipGraphCanvas, 60);
@@ -9332,27 +9332,27 @@ function renderRelationshipRadarHub() {
     <div class="hub-header">
       <div class="hub-header-top">
         <div>
-          <h1 class="hub-title">Radar Quan Hệ, Bản Đồ Mạng Lưới & Hồ Sơ Sống 360</h1>
+          <h1 class="hub-title">Bản đồ quan hệ &amp; Hồ sơ sống 360</h1>
           <p class="hub-desc">
-            Bản đồ đồ thị mạng lưới tương tác (Canvas HTML5), phân tích nhiệt độ quan hệ, giải thích điểm Explainable AI, trọng tài kiểm soát lượt bóng & thang trượt 6 cấp tự trị.
+            Không phải danh bạ. Trọng số của mỗi quan hệ thay đổi theo tần suất, chiều tương tác và giai đoạn — thấy rõ ai là cầu nối, khách nào đang lạnh, ai đang ôm quá nhiều việc.
           </p>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn primary" onclick="openMergeContactsModal()"><i class="ph ph-link"></i> Hợp Nhất Định Danh</button>
-          <button class="btn" onclick="fetchAllData()"><i class="ph ph-arrows-clockwise"></i> Làm Mới</button>
+          <button class="btn primary sm" onclick="openMergeContactsModal()"><i class="ph ph-link"></i> Hợp Nhất Định Danh</button>
+          <button class="btn sm" onclick="fetchAllData()"><i class="ph ph-arrows-clockwise"></i> Làm Mới</button>
         </div>
       </div>
 
-      <!-- Subnav Tabs Chặng 4 -->
-      <div style="display:flex;gap:8px;margin-top:16px;border-bottom:1px solid var(--color-divider);padding-bottom:12px">
-        <button class="btn ${curSub === 'graph' ? 'primary' : 'subtle'} sm" onclick="switchSubtab('relationship_radar', 'graph')">
-          <i class="ph ph-graph"></i> 🕸️ Bản Đồ Mạng Lưới Đồ Thị (Graph Canvas)
+      <!-- Subnav Pills Nocturne Style -->
+      <div class="hub-subnav">
+        <button class="hub-subnav-btn ${curSub === 'graph' ? 'active' : ''}" onclick="switchSubtab('relationship_radar', 'graph')">
+          <i class="ph ph-graph"></i> Bản đồ đồ thị (Graph Canvas)
         </button>
-        <button class="btn ${curSub === 'radar' ? 'primary' : 'subtle'} sm" onclick="switchSubtab('relationship_radar', 'radar')">
-          <i class="ph ph-fire"></i> 📊 Radar Nhiệt Độ & Trọng Tài Bóng
+        <button class="hub-subnav-btn ${curSub === 'radar' ? 'active' : ''}" onclick="switchSubtab('relationship_radar', 'radar')">
+          <i class="ph ph-fire"></i> Radar nhiệt độ &amp; Trọng tài bóng
         </button>
-        <button class="btn ${curSub === 'profiles' ? 'primary' : 'subtle'} sm" onclick="switchSubtab('relationship_radar', 'profiles')">
-          <i class="ph ph-user-list"></i> 👤 Danh Sách Hồ Sơ Sống 360 (${contacts.length})
+        <button class="hub-subnav-btn ${curSub === 'profiles' ? 'active' : ''}" onclick="switchSubtab('relationship_radar', 'profiles')">
+          <i class="ph ph-user-list"></i> Hồ sơ sống 360 (${contacts.length})
         </button>
       </div>
     </div>
