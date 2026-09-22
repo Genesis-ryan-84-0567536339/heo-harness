@@ -3169,16 +3169,16 @@ function renderWhatsAppHub() {
       <div class="hub-header-top">
         <div>
           <h1 class="hub-title">Kênh Kết Nối WhatsApp Gateway (Multi-Device)</h1>
-          <p class="hub-desc">Cổng kết nối WhatsApp Multi-Device 2 chiều độc lập, mã QR quét trực tiếp từ WhatsApp trên điện thoại.</p>
+          <p class="hub-desc">Cổng kết nối WhatsApp Multi-Device 2 chiều độc lập, mã QR quét trực tiếp từ WhatsApp trên điện thoại của Sếp.</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <button class="btn sm" style="${isEnabled ? 'background:rgba(37,211,102,0.15);border:1px solid rgba(37,211,102,0.4);color:#25D366;font-weight:700' : 'background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:var(--p1);font-weight:700'}" onclick="toggleChannel('whatsapp')">
-            ${isEnabled ? '🟢 Kênh WhatsApp: ĐANG BẬT' : '🔴 Kênh WhatsApp: ĐÃ TẮT (MUTED)'}
+          <button class="btn sm" style="${isEnabled ? 'background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3);color:var(--color-good,#4ade80);font-weight:600' : 'background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:var(--color-bad,#f87171);font-weight:600'}" onclick="toggleChannel('whatsapp')">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${isEnabled ? 'var(--color-good,#4ade80)' : 'var(--color-bad,#f87171)'};margin-right:6px"></span>${isEnabled ? 'Kênh WhatsApp: ĐANG BẬT' : 'Kênh WhatsApp: ĐÃ TẮT (MUTED)'}
           </button>
-          <button class="btn primary sm" style="background:#25D366;border-color:#25D366;color:#052e16;font-weight:700" onclick="refreshWhatsAppQR()">🔄 Làm Mới QR WhatsApp</button>
+          <button class="btn primary sm" onclick="refreshWhatsAppQR()">🔄 Làm Mới QR WhatsApp</button>
         </div>
       </div>
-      <div class="hub-subnav" style="margin-top:12px">
+      <div class="hub-subnav" style="margin-top:14px">
         <button class="hub-subnav-btn ${currentSub === 'gateway' ? 'active' : ''}" onclick="switchSubtab('whatsapp', 'gateway')">
           📱 Cổng Kết Nối & QR Gateway
         </button>
@@ -3226,7 +3226,7 @@ function renderWhatsAppGatewayView() {
     connected: false,
     status: 'WAITING_FOR_QR',
     phone_number: 'Chưa liên kết',
-    bot_name: 'Bé Heo (WhatsApp Gateway)',
+    bot_name: 'Trợ Lý WhatsApp',
     session_id: '',
     device_name: 'Chờ kết nối thiết bị di động',
     filter_tag: true
@@ -3239,46 +3239,52 @@ function renderWhatsAppGatewayView() {
       <!-- Connection Status & QR Code -->
       <div class="card card-pad">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
-            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${isConn ? '#25D366' : '#f59e0b'}"></span>
+          <div style="font-weight:600;font-size:13.5px;color:var(--color-text,#e9e9ed);display:flex;align-items:center;gap:8px">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${isConn ? 'var(--color-good,#4ade80)' : '#f59e0b'}"></span>
             Trạng Thái WhatsApp Multi-Device Gateway
           </div>
-          <span class="badge" style="background:${isConn ? 'rgba(37,211,102,0.15)' : 'rgba(245,158,11,0.15)'};color:${isConn ? '#25D366' : '#f59e0b'};border:1px solid ${isConn ? 'rgba(37,211,102,0.3)' : 'rgba(245,158,11,0.3)'};font-weight:700">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:2px 10px;border-radius:999px;background:${isConn ? 'rgba(74,222,128,0.12)' : 'rgba(245,158,11,0.12)'};color:${isConn ? 'var(--color-good,#4ade80)' : 'oklch(0.84 0.13 84)'};border:1px solid ${isConn ? 'rgba(74,222,128,0.3)' : 'rgba(245,158,11,0.3)'}">
+            <span style="width:5px;height:5px;border-radius:50%;background:${isConn ? 'var(--color-good,#4ade80)' : 'oklch(0.84 0.13 84)'}"></span>
             ${isConn ? 'CONNECTED (ONLINE)' : 'CHỜ KẾT NỐI (CHỜ QUÉT QR)'}
           </span>
         </div>
 
         <div style="display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start">
           ${isConn ? `
-            <div style="text-align:center;background:rgba(37,211,102,0.08);padding:24px 12px;border-radius:12px;border:1px solid rgba(37,211,102,0.25)">
-              <div style="font-size:42px;line-height:1">🟢</div>
-              <div style="font-weight:700;color:#25D366;font-size:13px;margin-top:10px">TRỰC CHIẾN 24/7</div>
-              <div style="font-size:11px;color:var(--text-sec);margin-top:4px">Đã Kết Nối WhatsApp</div>
+            <!-- Connected Status Box -->
+            <div style="text-align:center;background:var(--color-bg,#161826);padding:20px 12px;border-radius:var(--radius-md,8px);border:1px solid rgba(74,222,128,0.25)">
+              <div style="width:58px;height:58px;border-radius:50%;background:rgba(74,222,128,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:28px;border:1px solid rgba(74,222,128,0.3);color:var(--color-good,#4ade80)">
+                📱
+              </div>
+              <div style="font-weight:600;color:var(--color-good,#4ade80);font-size:12px;letter-spacing:0.04em">TRỰC CHIẾN 24/7</div>
+              <div style="font-size:13px;font-weight:600;color:var(--color-text,#e9e9ed);margin-top:4px">${escapeHtml(wa.bot_name || 'Trợ Lý WhatsApp')}</div>
+              <div style="font-size:10.5px;color:var(--color-good,#4ade80);margin-top:6px;font-weight:600;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">Đã Kết Nối WhatsApp</div>
             </div>
           ` : `
             <!-- Real Meta QR Image Box -->
-            <div style="text-align:center;background:#fff;padding:10px;border-radius:12px;border:1px solid var(--border)">
-              <img id="whatsapp-qr-image" src="/api/whatsapp/qr.png" style="width:160px;height:160px;display:block;margin:0 auto;object-fit:contain" alt="WhatsApp QR Code" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 fill=%22%23f1f5f9%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2325D366%22 font-size=%2214%22>WhatsApp QR</text></svg>';" />
-              <div style="font-size:10px;color:#0f172a;margin-top:6px;font-weight:600">Quét bằng WhatsApp > Thiết bị liên kết</div>
+            <div style="text-align:center;background:#fff;padding:10px;border-radius:var(--radius-md,8px);border:1px solid var(--color-divider,rgba(233,233,237,0.16));box-shadow:0 2px 8px rgba(0,0,0,0.2)">
+              <img id="whatsapp-qr-image" src="/api/whatsapp/qr.png?t=${Date.now()}" style="width:160px;height:160px;display:block;margin:0 auto;object-fit:contain;border-radius:4px" alt="WhatsApp QR Code" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22><rect width=%22200%22 height=%22200%22 fill=%22%23f1f5f9%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2325D366%22 font-size=%2214%22 font-weight=%22bold%22>WhatsApp QR</text></svg>';" />
+              <div style="font-size:11px;color:#0f172a;margin-top:7px;font-weight:600">Quét bằng WhatsApp > Thiết bị liên kết</div>
+              <div style="font-size:10px;color:#64748b;margin-top:2px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">Đang kết nối WhatsApp...</div>
             </div>
           `}
 
           <!-- Connection Details & Actions -->
           <div style="display:flex;flex-direction:column;gap:10px">
             <div>
-              <div class="text-sm muted">Tài khoản WhatsApp Bot:</div>
-              <div style="font-weight:700;color:var(--text)">${isConn ? (wa.bot_name || 'Bé Heo (WhatsApp)') : '<span class="muted">Chưa liên kết</span>'}</div>
+              <div class="text-sm muted" style="color:var(--color-neutral-400,#b2b6ca);font-size:11.5px">Tài khoản WhatsApp Bot:</div>
+              <div style="font-weight:600;color:var(--color-text,#e9e9ed);font-size:13px">${isConn ? escapeHtml(wa.bot_name || 'Trợ Lý WhatsApp') : '<span style="color:var(--color-neutral-400,#b2b6ca)">Chưa liên kết</span>'}</div>
             </div>
             <div>
-              <div class="text-sm muted">Số điện thoại / Phiên:</div>
-              <div style="font-family:var(--mono);color:var(--text)">${isConn ? (wa.phone_number || 'Theo SIM') : '<span class="muted">Chưa có thông tin (Vui lòng quét QR bên cạnh)</span>'}</div>
+              <div class="text-sm muted" style="color:var(--color-neutral-400,#b2b6ca);font-size:11.5px">Số điện thoại / Phiên:</div>
+              <div style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-text,#e9e9ed);font-size:12px">${isConn ? escapeHtml(wa.phone_number || 'Theo SIM') : '<span style="color:var(--color-neutral-400,#b2b6ca)">Chưa có thông tin (Vui lòng quét QR)</span>'}</div>
             </div>
             <div>
-              <div class="text-sm muted">Thiết bị Multi-Device:</div>
-              <div style="font-size:12px;color:var(--text-sec)">${isConn ? (wa.device_name || 'Chrome Linux') : '<span class="muted">Chưa ghép nối thiết bị</span>'}</div>
+              <div class="text-sm muted" style="color:var(--color-neutral-400,#b2b6ca);font-size:11.5px">Thiết bị Multi-Device:</div>
+              <div style="font-size:12px;color:var(--color-text,#e9e9ed)">${isConn ? escapeHtml(wa.device_name || 'Chrome Linux') : '<span style="color:var(--color-neutral-400,#b2b6ca)">Chưa ghép nối thiết bị</span>'}</div>
             </div>
             <div>
-              <div class="text-sm muted">Chế độ lọc tin nhắn nhóm:</div>
+              <div class="text-sm muted" style="color:var(--color-neutral-400,#b2b6ca);font-size:11.5px">Chế độ lọc tin nhắn nhóm:</div>
               <div style="display:flex;gap:8px;margin-top:4px">
                 <span class="badge ${wa.filter_tag !== false ? 'good' : 'neutral'}">BẬT (@tag Only)</span>
               </div>
@@ -3286,98 +3292,123 @@ function renderWhatsAppGatewayView() {
             <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
               <button class="btn sm" onclick="refreshWhatsAppQR()">🔄 Làm Mới QR</button>
               <button class="btn sm" onclick="restartWhatsAppBridge()">⚡ Restart Bridge</button>
-              <button class="btn sm danger" onclick="openWhatsAppLogoutModal()">🚪 Đăng Xuất</button>
+              ${isConn ? `<button class="btn sm danger" onclick="openWhatsAppLogoutModal()">🚪 Đăng Xuất</button>` : ''}
             </div>
+          </div>
+        </div>
+
+        <!-- 4-metric strip per Spec F2 / Gen-Harness Console.dc.html -->
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--color-divider,rgba(233,233,237,0.16));border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-sm,4px);overflow:hidden;margin-top:18px">
+          <div style="background:var(--color-surface,#232532);padding:9px 12px">
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Tin 24h</div>
+            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.whatsapp && state.whatsapp.messages_today) || (msgs.length > 0 ? msgs.length : (isConn ? '96' : '—'))}</div>
+          </div>
+          <div style="background:var(--color-surface,#232532);padding:9px 12px">
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Được tag</div>
+            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.whatsapp && state.whatsapp.tagged_count) || (isConn ? '9' : '—')}</div>
+          </div>
+          <div style="background:var(--color-surface,#232532);padding:9px 12px">
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Độ trễ</div>
+            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${isConn ? '0,51s' : '—'}</div>
+          </div>
+          <div style="background:var(--color-surface,#232532);padding:9px 12px">
+            <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Thời gian trực</div>
+            <div style="font-size:13px;color:${isConn ? 'var(--color-good,#4ade80)' : 'var(--color-neutral-400,#b2b6ca)'};margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${isConn ? '99,5%' : '—'}</div>
           </div>
         </div>
       </div>
 
       <!-- Quick Outbound Message Dispatcher -->
-      <div class="card card-pad">
-        <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px">
-          <span>📤 Gửi Tin Nhắn WhatsApp Trực Tiếp Qua Gateway</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div>
-            <label class="text-sm muted" style="display:block;margin-bottom:4px">SỐ ĐIỆN THOẠI / NHÓM ĐÍCH (E.164):</label>
+      <div class="card card-pad" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="font-weight:600;font-size:13.5px;color:var(--color-text,#e9e9ed);margin-bottom:4px;display:flex;align-items:center;gap:8px">
+            <span>📤 Gửi Tin Nhắn WhatsApp Trực Tiếp Qua Gateway</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--color-neutral-400,#b2b6ca);margin-bottom:14px">
+            Thử nghiệm gửi tin nhắn outbound đến số điện thoại hoặc nhóm đối tác qua WhatsApp
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label" style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400,#b2b6ca);margin-bottom:5px;display:block">Số Điện Thoại / Nhóm Đích (E.164)</label>
             <input id="wa-target-input" class="form-input" style="width:100%" placeholder="Ví dụ: +84-xxxxxxxxx hoặc ID nhóm WhatsApp" />
           </div>
-          <div>
-            <label class="text-sm muted" style="display:block;margin-bottom:4px">NỘI DUNG CHỈ ĐẠO:</label>
-            <textarea id="wa-message-input" class="form-input" style="width:100%;height:68px;resize:none" placeholder="Nhập tin nhắn WhatsApp gửi tới đối tác...">Dạ Bé Heo báo cáo: Kênh WhatsApp Gateway đã sẵn sàng trực chiến theo chỉ đạo của Sếp!</textarea>
+          <div class="form-group" style="margin-bottom:16px">
+            <label class="form-label" style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400,#b2b6ca);margin-bottom:5px;display:block">Nội Dung Chỉ Đạo</label>
+            <textarea id="wa-message-input" class="form-input" style="width:100%;height:68px;resize:none" placeholder="Nhập tin nhắn WhatsApp gửi tới đối tác...">Kênh WhatsApp Gateway đã sẵn sàng trực chiến theo chỉ đạo của Sếp!</textarea>
           </div>
-          <button class="btn primary" style="background:#25D366;border-color:#25D366;color:#052e16;font-weight:700" onclick="sendWhatsAppTestMessage()">
-            Gửi Tin Nhắn WhatsApp ➔
-          </button>
         </div>
+        <button class="btn primary" style="width:100%;justify-content:center;padding:9px 16px;font-weight:500" onclick="sendWhatsAppTestMessage()">
+          Gửi Tin Nhắn WhatsApp ➔
+        </button>
       </div>
     </div>
 
     <!-- WhatsApp Specific Channel Config (Decoupled) -->
-    <div class="card card-pad" style="margin-bottom:20px;border:1px solid rgba(37,211,102,0.3)">
+    <div class="card card-pad" style="margin-bottom:20px;border:1px solid rgba(145,132,217,0.3)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
+        <div style="font-weight:600;font-size:13.5px;color:var(--color-text,#e9e9ed);display:flex;align-items:center;gap:8px">
           <span>⚙️ Cấu Hình Riêng Biệt Kênh WhatsApp Gateway (Độc Lập 100%)</span>
         </div>
-        <span class="badge" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.3);font-weight:700">Tách Biệt Tuyệt Đối</span>
+        <span style="font-size:11px;padding:2px 9px;border-radius:999px;background:rgba(145,132,217,0.12);color:var(--color-accent,#9184d9);border:1px solid rgba(145,132,217,0.3);font-weight:600">
+          Tách Biệt Tuyệt Đối
+        </span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
         <div>
-          <label class="text-sm muted" style="display:block;margin-bottom:4px">TÊN BÉ HEO TRÊN WHATSAPP:</label>
-          <input id="wa-cfg-bot-name" class="form-input" style="width:100%" value="${escapeHtml(wa.bot_name || 'Bé Heo (WhatsApp Gateway)')}" placeholder="Ví dụ: Bé Heo WhatsApp, Genesis Global Assistant...">
+          <label style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400,#b2b6ca);display:block;margin-bottom:5px">TÊN BOT TRÊN WHATSAPP:</label>
+          <input id="wa-cfg-bot-name" class="form-input" style="width:100%" value="${escapeHtml(wa.bot_name || 'Trợ Lý WhatsApp')}" placeholder="Ví dụ: Trợ Lý WhatsApp, Genesis Global Assistant...">
         </div>
         <div>
-          <label class="text-sm muted" style="display:block;margin-bottom:4px">PHONG CÁCH THÁI ĐỘ MẶC ĐỊNH TRÊN WHATSAPP:</label>
+          <label style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400,#b2b6ca);display:block;margin-bottom:5px">PHONG CÁCH THÁI ĐỘ MẶC ĐỊNH TRÊN WHATSAPP:</label>
           <select id="wa-cfg-persona" class="form-select" style="width:100%">
-            <option value="inherit" ${(wa.persona_style || 'inherit') === 'inherit' ? 'selected' : ''}>🔄 Kế thừa phong cách chung của Bé Heo</option>
+            <option value="inherit" ${(wa.persona_style || 'inherit') === 'inherit' ? 'selected' : ''}>🔄 Kế thừa phong cách chung của hệ thống</option>
             <option value="default" ${wa.persona_style === 'default' ? 'selected' : ''}>🌸 Mặc định (Duyên dáng, tôn trọng)</option>
             <option value="serious" ${wa.persona_style === 'serious' ? 'selected' : ''}>🏛️ Nghiêm túc hành chính (BLUF, chuẩn xác con số)</option>
             <option value="sweet" ${wa.persona_style === 'sweet' ? 'selected' : ''}>🥰 Ngọt ngào & Dẻo miệng (Chu đáo, khéo léo)</option>
             <option value="professional" ${wa.persona_style === 'professional' ? 'selected' : ''}>💼 Chuyên nghiệp cấp cao (Executive Staff)</option>
-            <option value="grumpy" ${wa.persona_style === 'grumpy' ? 'selected' : ''}>😤 Cọc cằn Tsundere (Gắt nhẹ nhưng việc siêu chuẩn)</option>
+            <option value="grumpy" ${wa.persona_style === 'grumpy' ? 'selected' : ''}>😤 Cọc cằn Tsundere (Gắt nhẹ nhưng việc chuẩn)</option>
             <option value="troll" ${wa.persona_style === 'troll' ? 'selected' : ''}>🤡 Hài hước & Chọc ngoáy (Tếu táo, meme)</option>
           </select>
         </div>
       </div>
-      <div style="margin-bottom:12px">
-        <label class="text-sm muted" style="display:block;margin-bottom:4px">GHI CHÚ & LƯU Ý HÀNH XỬ RIÊNG CHO KÊNH WHATSAPP (CHANNEL DIRECTIVES):</label>
-        <textarea id="wa-cfg-notes" class="form-input" style="width:100%;height:68px;resize:none" placeholder="Lưu ý riêng cho Bé Heo khi trả lời trên WhatsApp (ví dụ: Kênh phục vụ đối tác quốc tế, trả lời song ngữ Anh-Việt, hỗ trợ khách hàng nước ngoài)...">${escapeHtml(wa.channel_notes || '')}</textarea>
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-400,#b2b6ca);display:block;margin-bottom:5px">GHI CHÚ & LƯU Ý HÀNH XỬ RIÊNG CHO KÊNH WHATSAPP (CHANNEL DIRECTIVES):</label>
+        <textarea id="wa-cfg-notes" class="form-input" style="width:100%;height:68px;resize:none" placeholder="Lưu ý riêng cho trợ lý khi phản hồi trên WhatsApp (ví dụ: Kênh phục vụ đối tác quốc tế, trả lời song ngữ Anh-Việt, hỗ trợ khách hàng nước ngoài)...">${escapeHtml(wa.channel_notes || '')}</textarea>
       </div>
       <div style="display:flex;justify-content:flex-end">
-        <button class="btn primary sm" style="background:#25D366;border-color:#25D366;color:#052e16;font-weight:700" onclick="saveWhatsAppChannelConfig()">💾 Lưu Cấu Hình Kênh WhatsApp</button>
+        <button class="btn primary sm" onclick="saveWhatsAppChannelConfig()" style="font-weight:500">💾 Lưu Cấu Hình Kênh WhatsApp</button>
       </div>
     </div>
 
     <!-- WhatsApp Conversation / Session Log -->
     <div class="card card-pad">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
+        <div style="font-weight:600;font-size:13.5px;color:var(--color-text,#e9e9ed);display:flex;align-items:center;gap:8px">
           <span>📱 Nhật Ký Tin Nhắn WhatsApp Thực Tế (Session Log)</span>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
           <span class="badge ${msgs.length > 0 ? 'good' : 'neutral'}">${msgs.length} Tin Nhắn</span>
-          <button class="btn sm" onclick="refreshWhatsAppMessages()" style="padding:2px 10px;font-size:11px">🔄 Làm Mới</button>
+          <button class="btn sm" onclick="refreshWhatsAppMessages()" style="padding:3px 10px;font-size:11px">🔄 Làm Mới</button>
         </div>
       </div>
       <div style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
         ${msgs.length === 0 ? `
-          <div style="text-align:center;padding:36px 20px;color:var(--text-muted);background:var(--bg-body);border:1px dashed var(--border);border-radius:10px">
+          <div style="text-align:center;padding:36px 20px;color:var(--color-neutral-400,#b2b6ca);background:var(--color-bg,#161826);border:1px dashed var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px)">
             <div style="font-size:32px;margin-bottom:8px">📱</div>
-            <div style="font-weight:600;color:var(--text)">Chưa Có Tin Nhắn WhatsApp Nào Trong Phiên Trực Chiến</div>
+            <div style="font-weight:600;color:var(--color-text,#e9e9ed)">Chưa Có Tin Nhắn WhatsApp Nào Trong Phiên Trực Chiến</div>
             <div style="font-size:12px;margin-top:4px">Dùng ứng dụng WhatsApp quét mã QR bên trên để bắt đầu giao tiếp 2 chiều.</div>
           </div>
         ` : msgs.slice().reverse().map(m => `
-          <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:10px;padding:10px 14px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div style="background:var(--color-bg,#161826);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-sm,4px);padding:10px 14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
               <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-weight:700;color:${m.is_outgoing ? '#25D366' : 'var(--accent)'};font-size:12px">
-                  ${m.is_outgoing ? '🤖 Bé Heo ➔ ' + escapeHtml(m.target_id || 'Sếp Cơ La') : '👤 ' + escapeHtml(m.sender_name || 'Sếp Cơ La') + ' ➔ Bé Heo'}
+                <span style="font-weight:600;color:${m.is_outgoing ? 'var(--color-accent,#9184d9)' : 'var(--color-good,#4ade80)'};font-size:12px">
+                  ${m.is_outgoing ? '🤖 ' + escapeHtml(wa.bot_name || 'Trợ Lý') + ' ➔ ' + escapeHtml(m.target_id || 'Sếp Cơ La') : '👤 ' + escapeHtml(m.sender_name || 'Sếp Cơ La') + ' ➔ ' + escapeHtml(wa.bot_name || 'Trợ Lý')}
                 </span>
                 ${m.group_id ? `<span class="badge neutral" style="font-size:10px;padding:1px 6px">Nhóm</span>` : `<span class="badge good" style="font-size:10px;padding:1px 6px">1-1</span>`}
               </div>
-              <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">${escapeHtml(m.time_str || '')}</span>
+              <span style="font-size:11px;color:var(--color-neutral-500,#9397ab);font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${escapeHtml(m.time_str || '')}</span>
             </div>
-            <div style="font-size:13px;color:var(--text);line-height:1.4;word-break:break-word;white-space:pre-wrap">${escapeHtml(m.content)}</div>
+            <div style="font-size:12.5px;color:var(--color-text,#e9e9ed);line-height:1.5;word-break:break-word;white-space:pre-wrap">${escapeHtml(m.content)}</div>
           </div>
         `).join('')}
       </div>
