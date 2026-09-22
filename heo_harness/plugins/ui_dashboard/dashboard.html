@@ -889,7 +889,7 @@
         <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
         <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">3 màn</span>
       </div>
-      <button class="nav-hub-item" data-hub="workbench_action" onclick="switchHub('workbench')">
+      <button class="nav-hub-item" data-hub="workbench_action" onclick="switchHub('workbench_action')">
         <div class="nav-hub-left">
           <i class="ph ph-pen-nib"></i>
           <span>Bàn làm việc (Soạn & Duyệt)</span>
@@ -1581,6 +1581,8 @@ function switchHub(hubKey, subtabKey = null) {
   } else if (hubKey === 'security_pin') {
     effectiveHub = 'governance';
     effectiveSubtab = 'pin';
+  } else if (hubKey === 'workbench_action') {
+    effectiveHub = 'workbench_action';
   }
 
   state.activeHub = effectiveHub;
@@ -1591,7 +1593,7 @@ function switchHub(hubKey, subtabKey = null) {
   // Highlight đúng mục menu đang chọn
   $$('.nav-hub-item').forEach(el => {
     const dataHub = el.getAttribute('data-hub');
-    const isActive = dataHub === hubKey || (dataHub === effectiveHub && !['approvals', 'system_logs', 'ai_brain', 'security_pin'].includes(hubKey));
+    const isActive = dataHub === hubKey || (dataHub === effectiveHub && !['approvals', 'system_logs', 'ai_brain', 'security_pin', 'workbench_action'].includes(hubKey));
     el.classList.toggle('active', isActive);
   });
 
@@ -1731,6 +1733,12 @@ function renderActiveHub() {
       setTimeout(initCommercialWorkbenchUI, 60);
       break;
 
+    case 'workbench_action':
+      titleEl.textContent = 'Bàn làm việc (Soạn & Duyệt)';
+      subEl.textContent = 'Bàn làm việc điều hành tập trung · Soạn thảo & Duyệt tác vụ (sẽ triển khai ở ticket sau)';
+      container.innerHTML = renderWorkbenchActionPlaceholder();
+      break;
+
     case 'people_review':
       titleEl.textContent = 'Đánh Giá Con Người & Chất Lượng Chăm Sóc';
       subEl.textContent = '4 Phân Hệ Con Người · Bắt Bệnh Hứa Rồi Quên & Kịch Bản Thắng/Thua (SPEC-22 & 23)';
@@ -1741,6 +1749,31 @@ function renderActiveHub() {
     default:
       container.innerHTML = `<div class="card card-pad">Đang tải phân hệ điều hành...</div>`;
   }
+}
+
+function renderWorkbenchActionPlaceholder() {
+  return `
+    <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div class="card card-pad" style="text-align:center;padding:64px 24px;background:var(--color-surface,#121622);border:1px solid var(--color-border,#23293d);border-radius:12px;max-width:720px;margin:32px auto">
+        <div style="width:56px;height:56px;border-radius:14px;background:rgba(244,114,182,0.12);border:1px solid rgba(244,114,182,0.3);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px">
+          <i class="ph ph-pen-nib" style="font-size:28px;color:#f472b6"></i>
+        </div>
+        <h2 style="font-size:18px;font-weight:700;color:var(--color-text,#e9e9ed);margin-bottom:8px">Bàn làm việc (Soạn & Duyệt)</h2>
+        <p style="font-size:13px;color:var(--color-neutral-400,#b2b6ca);line-height:1.6;margin-bottom:16px">
+          Không gian tập trung dành cho Sếp và Agent để soạn thảo công văn, rà soát văn bản và xử lý tác vụ theo thời gian thực.
+        </p>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:6px;font-size:12px;color:#fbbf24;margin-bottom:24px">
+          <i class="ph ph-hourglass-high"></i>
+          <span>Màn hình thuộc nhóm <b>LÀM</b> (sẽ triển khai ở ticket sau)</span>
+        </div>
+        <div>
+          <button class="btn primary sm" onclick="switchHub('command')">
+            <i class="ph ph-arrow-left"></i> Quay lại Tổng quan điều hành
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // ==========================================
