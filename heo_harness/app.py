@@ -13,6 +13,7 @@ from heo_harness.core.bus import EventBus
 from heo_harness.core.manager import PluginManager
 from heo_harness.core.policy import PolicyEngine
 from heo_harness.core.store import HeoDataStore
+from heo_harness.core.event_store import get_event_store
 
 class HeoHarnessApp:
     def __init__(self, config_path: str = None):
@@ -22,6 +23,10 @@ class HeoHarnessApp:
         self.policy_engine = PolicyEngine()
         self.manager = PluginManager(self.ctx, self.bus)
         self.store = HeoDataStore()
+        self.event_store = get_event_store()
+
+        # Đăng ký listener tự động bóc tách sự kiện nguyên tử khi có tin nhắn inbound (SPEC-30)
+        self.event_store.register_event_bus_listeners(self.bus)
 
         # Cung cấp các dịch vụ nền tảng cho Context container
         self.ctx.provide("plugin_manager", self.manager)
@@ -29,7 +34,9 @@ class HeoHarnessApp:
         self.ctx.provide("event_bus", self.bus)
         self.ctx.provide("data_store", self.store)
         self.ctx.provide("store", self.store)
+        self.ctx.provide("event_store", self.event_store)
         self.running = False
+
 
     def start(self) -> None:
         self.running = True

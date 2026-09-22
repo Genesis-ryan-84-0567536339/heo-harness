@@ -5,6 +5,11 @@ Tác giả sáng lập: Anh Cơ La (genesis.corp.os@gmail.com)
 """
 
 from heo_harness.core.plugin import BasePlugin, PluginMetadata, PluginCategory
+from heo_harness.core.rbac import (
+    ROLE_OWNER, ROLE_MANAGER, ROLE_OPERATOR, ROLE_AGENT, ROLE_AUDITOR,
+    ALL_ROLES, ROLE_DEFINITIONS, normalize_role, has_permission,
+    can_role_act, get_role_view_policy
+)
 
 AUTHOR_NAME = "Anh Cơ La"
 AUTHOR_EMAIL = "genesis.corp.os@gmail.com"
@@ -13,11 +18,11 @@ class AuthPlugin(BasePlugin):
     metadata = PluginMetadata(
         id="heo-auth-rbac-security",
         name="Định Danh Tác Quyền & Bảo Mật RBAC",
-        version="1.0.0",
+        version="1.1.0",
         author="Anh Cơ La",
         author_email="genesis.corp.os@gmail.com",
         category=PluginCategory.CORE,
-        description="Bảo vệ bất biến danh tính tác giả Anh Cơ La, quản lý mã PIN Admin và phân quyền Chủ nhân.",
+        description="Bảo vệ bất biến danh tính tác giả Anh Cơ La, quản lý mã PIN Admin và phân quyền 5 cấp độ (Owner, Manager, Operator, Agent, Auditor).",
         icon="🔐",
         default_enabled=True
     )
@@ -52,3 +57,34 @@ class AuthPlugin(BasePlugin):
             "protected": True,
             "invariant": True
         }
+
+    # ==================== RBAC 5-TIER HELPERS (SPEC-36) ====================
+    def get_active_profile(self) -> dict:
+        store = getattr(self.ctx, "store", None)
+        if store and hasattr(store, "get_active_boss_profile"):
+            return store.get_active_boss_profile()
+        return {
+            "id": "acc-boss-owner",
+            "name": AUTHOR_NAME,
+            "role_tier": ROLE_OWNER,
+            "role": "Chủ Nhân Tối Cao (Owner)",
+            "permissions": "FULL_ROOT_RBAC",
+            "active": True
+        }
+
+    def get_active_role(self) -> str:
+        prof = self.get_active_profile()
+        return prof.get("role_tier") or normalize_role(prof.get("role", ROLE_OWNER))
+
+    def has_permission(self, permission: str) -> bool:
+        return has_permission(self.get_active_role(), permission)
+
+    def can_act(self) -> bool:
+        return can_role_act(self.get_active_role())
+
+    def get_view_policy(self) -> dict:
+        return get_role_view_policy(self.get_active_role())
+
+    def get_all_roles(self) -> list:
+        return [get_role_view_policy(r) for r in ALL_ROLES]
+

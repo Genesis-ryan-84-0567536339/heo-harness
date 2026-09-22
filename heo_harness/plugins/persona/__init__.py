@@ -206,11 +206,28 @@ class PersonaPlugin(BasePlugin):
             if p_notes:
                 person_notes_block += f"  + Ghi chú lưu ý: {p_notes}\n"
 
+        active_agent = store.get_active_agent_identity() if store and hasattr(store, "get_active_agent_identity") else None
+        agent_identity_block = ""
+        if active_agent:
+            bot_name = active_agent.get("name", bot_name)
+            agent_role = active_agent.get("role", "Trợ Lý Điều Hành")
+            autonomy_lvl = active_agent.get("autonomy_level", 4)
+            forbidden = active_agent.get("forbidden_actions", [])
+            forbid_text = "\n".join([f"    * {f}" for f in forbidden]) if forbidden else "    * Tuân thủ 100% chỉ đạo của Sếp."
+            agent_identity_block = (
+                f"- ĐẠI DIỆN AGENT IDENTITY ĐANG TRỰC CHIẾN (GEN-HARNESS OS):\n"
+                f"  + Định danh: {active_agent.get('display_name', bot_name)}\n"
+                f"  + Vai trò phụ trách: {agent_role}\n"
+                f"  + Mức tự trị được cấp phép: Cấp {autonomy_lvl}/6\n"
+                f"  + Ranh giới nghiêm cấm (Forbidden Actions):\n{forbid_text}\n"
+            )
+
         return (
-            f"\n\n[HỆ THỐNG DANH XƯNG, THÁI ĐỘ & GHI CHÚ ĐIỀU HÀNH]:\n"
+            f"\n\n[HỆ THỐNG ĐA DANH TÍNH AGENT IDENTITY & THÁI ĐỘ ỨNG XỬ]:\n"
             f"- Tên của bạn: {bot_name}\n"
             f"- Chủ nhân tối cao: {boss_name}\n"
-            f"- Giới thiệu về bạn: {cfg['bot_about']}\n"
+            f"- Giới thiệu về bạn: {active_agent.get('about') if active_agent else cfg['bot_about']}\n"
+            f"{agent_identity_block}"
             f"{tone_text}"
             f"{global_notes_block}"
             f"{group_notes_block}"

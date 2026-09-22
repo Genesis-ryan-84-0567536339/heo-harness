@@ -32,10 +32,14 @@ logs/*
 data/*
 !data/.gitkeep
 !data/beats/**
+!data/builder_plan.json
+!data/agent_build_logs.json
+!data/spec_audit_data.json
 
 # Artifacts generated at runtime
 artifacts/reports/*
 !artifacts/reports/.gitkeep
+!artifacts/reports/gen_harness_builder.html
 artifacts/media/*
 !artifacts/media/.gitkeep
 

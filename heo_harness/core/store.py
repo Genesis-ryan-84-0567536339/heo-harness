@@ -30,6 +30,12 @@ import base64
 import subprocess
 import urllib.request
 import urllib.parse
+from heo_harness.core.rbac import (
+    ROLE_OWNER, ROLE_MANAGER, ROLE_OPERATOR, ROLE_AGENT, ROLE_AUDITOR,
+    ALL_ROLES, normalize_role, has_permission, can_role_act,
+    get_role_view_policy, get_canonical_profiles
+)
+
 
 DEFAULT_BOT_ABOUT = (
     "Em là Trợ lý Điều hành AI Cấp cao trực thuộc hệ sinh thái Genesis Corp OS, do Sếp quản lý và điều hành. "
@@ -590,43 +596,16 @@ class HeoDataStore:
         self._save_state()
         return True
 
-    # ==================== MULTI-ACCOUNT & PROFILE MANAGEMENT ====================
+    # ==================== MULTI-ACCOUNT & PROFILE MANAGEMENT (SPEC-36 RBAC) ====================
     def _get_default_accounts(self, app_cfg: dict = None) -> dict:
         cfg = app_cfg or self._load_config_file()
         boss_name = cfg.get("boss_name", "Anh Cơ La (Ryan)")
+        canonical = get_canonical_profiles(boss_name)
         return {
-            "active_boss_id": "acc-boss-1",
+            "active_boss_id": "acc-boss-owner",
             "active_zalo_id": "acc-zalo-1",
             "active_wa_id": "acc-wa-1",
-            "boss_profiles": [
-                {
-                    "id": "acc-boss-1",
-                    "name": boss_name if ("Cơ La" in boss_name or "Ryan" in boss_name) else f"{boss_name} (Chính)",
-                    "role": "Chủ Nhân Tối Cao (Owner)",
-                    "email": "genesis.corp.os@gmail.com",
-                    "badge": "Tác Quyền Duy Nhất",
-                    "permissions": "FULL_ROOT_RBAC",
-                    "active": True
-                },
-                {
-                    "id": "acc-boss-2",
-                    "name": "Ban Cố Vấn & Trực Chiến",
-                    "role": "Phó Ban Điều Hành (Co-Executive)",
-                    "email": "deputy@genesis.corp",
-                    "badge": "Quản Trị Viên",
-                    "permissions": "READ_WRITE_APPROVAL",
-                    "active": False
-                },
-                {
-                    "id": "acc-boss-3",
-                    "name": "Tài Khoản Khách (Guest Demo)",
-                    "role": "Khách Tham Quan Hệ Thống",
-                    "email": "guest@genesis.corp",
-                    "badge": "Chỉ Đọc (Read-Only)",
-                    "permissions": "READ_ONLY",
-                    "active": False
-                }
-            ],
+            "boss_profiles": canonical,
             "zalo_profiles": [
                 {
                     "id": "acc-zalo-1",
@@ -669,7 +648,91 @@ class HeoDataStore:
             accs = self._get_default_accounts()
             self.state["accounts"] = accs
             self._save_state()
+
+        # Đồng bộ và chuẩn hoá 5 Tầng RBAC (SPEC-36 SSOT H2)
+        boss_profiles = accs.get("boss_profiles", [])
+        existing_tiers = set()
+        for p in boss_profiles:
+            tier = p.get("role_tier") or normalize_role(p.get("role") or p.get("permissions") or "")
+            p["role_tier"] = tier
+            existing_tiers.add(tier)
+            if not p.get("avatar"):
+                icons = {"owner": "👑", "manager": "👔", "operator": "🎯", "agent": "💼", "auditor": "🛡️"}
+                p["avatar"] = icons.get(tier, "👤")
+
+        # Nếu thiếu vai trò trong 5 tier, tự động bù canonical profile tương ứng
+        cfg = self._load_config_file()
+        boss_name = cfg.get("boss_name", "Anh Cơ La (Ryan)")
+        canonical = get_canonical_profiles(boss_name)
+        needed_sync = False
+        for c in canonical:
+            if c["role_tier"] not in existing_tiers:
+                c["active"] = False
+                boss_profiles.append(c)
+                existing_tiers.add(c["role_tier"])
+                needed_sync = True
+
+        # Đảm bảo có đúng 1 profile active
+        active_id = accs.get("active_boss_id")
+        active_found = False
+        for p in boss_profiles:
+            if p.get("id") == active_id:
+                p["active"] = True
+                active_found = True
+            else:
+                p["active"] = False
+
+        if not active_found and boss_profiles:
+            boss_profiles[0]["active"] = True
+            accs["active_boss_id"] = boss_profiles[0]["id"]
+            needed_sync = True
+
+        accs["boss_profiles"] = boss_profiles
+        
+        # Gắn kèm active_rbac_policy để frontend áp dụng tức thì
+        active_prof = next((p for p in boss_profiles if p.get("active")), boss_profiles[0]) if boss_profiles else {}
+        active_tier = active_prof.get("role_tier", ROLE_OWNER)
+        accs["active_role_tier"] = active_tier
+        accs["active_rbac_policy"] = get_role_view_policy(active_tier)
+
+        if needed_sync:
+            self.state["accounts"] = accs
+            self._save_state()
+
         return accs
+
+    def get_active_boss_profile(self) -> dict:
+        accs = self.get_accounts()
+        boss_profiles = accs.get("boss_profiles", [])
+        active_id = accs.get("active_boss_id")
+        for p in boss_profiles:
+            if p.get("id") == active_id or p.get("active"):
+                return p
+        return boss_profiles[0] if boss_profiles else {
+            "id": "acc-boss-owner",
+            "name": "Anh Cơ La (Ryan)",
+            "role_tier": ROLE_OWNER,
+            "role": "Chủ Nhân Tối Cao (Owner)",
+            "permissions": "FULL_ROOT_RBAC",
+            "active": True
+        }
+
+    def switch_rbac_role(self, role_tier: str) -> tuple[bool, str, dict]:
+        """Chuyển nhanh quyền RBAC sang 1 trong 5 Canonical Roles (SPEC-36)"""
+        norm_tier = normalize_role(role_tier)
+        accs = self.get_accounts()
+        boss_profiles = accs.get("boss_profiles", [])
+        target_profile = None
+        for p in boss_profiles:
+            if p.get("role_tier") == norm_tier:
+                target_profile = p
+                break
+        
+        if not target_profile:
+            return False, f"Không tìm thấy hồ sơ cho vai trò: {norm_tier}", accs
+            
+        return self.switch_account("boss", target_profile["id"])
+
 
     def switch_account(self, acc_type: str, acc_id: str) -> tuple[bool, str, dict]:
         accounts = self.get_accounts()
@@ -693,8 +756,18 @@ class HeoDataStore:
             return False, f"Không tìm thấy tài khoản {acc_id}", accounts
 
         accounts[active_key] = acc_id
+
+        # Cập nhật ngay tức thì active_role_tier và active_rbac_policy khi switch boss
+        if type_clean == "boss":
+            active_prof = next((p for p in accounts.get("boss_profiles", []) if p.get("active")), None)
+            if active_prof:
+                active_tier = active_prof.get("role_tier") or normalize_role(active_prof.get("role", ROLE_OWNER))
+                accounts["active_role_tier"] = active_tier
+                accounts["active_rbac_policy"] = get_role_view_policy(active_tier)
+
         self.state["accounts"] = accounts
         self._save_state()
+
 
         self.add_audit("owner", "account.switch", acc_id, f"Chuyển sang tài khoản {type_clean}: {target_name}", "SUCCESS")
         self.add_live_log("system", "INFO", f"Đã chuyển đổi tài khoản {type_clean.upper()} sang: {target_name}")
@@ -3074,3 +3147,112 @@ Timestamp: {v['verified_at']}"""
         else:
             output = f"Lệnh '{cmd}' không được hỗ trợ hoặc bị giới hạn bởi tường lửa Heo OS. Nhập 'help' để xem các lệnh có sẵn."
             return {"ok": True, "output": output}
+
+    # =========================================================================
+    # MULTI-AGENT IDENTITY ENGINE (Spec E13 & SPEC-02)
+    # =========================================================================
+    def get_agent_identities(self) -> list:
+        """Lấy danh sách toàn bộ Agent Identities đã cấu hình."""
+        identities_file = os.path.join(self.data_dir, "agent_identities.json")
+        if os.path.exists(identities_file):
+            try:
+                with open(identities_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return []
+
+    def get_agent_identity(self, identity_id: str) -> dict:
+        """Lấy thông tin 1 Agent Identity theo ID."""
+        for item in self.get_agent_identities():
+            if item.get("id") == identity_id:
+                return item
+        return None
+
+    def get_active_agent_identity(self, channel: str = None) -> dict:
+        """Lấy Agent Identity đang active. Nếu có chỉ định channel, ưu tiên identity hỗ trợ channel đó."""
+        identities = self.get_agent_identities()
+        if not identities:
+            return None
+        # Tìm identity active khớp channel
+        if channel:
+            for it in identities:
+                if it.get("active") and channel in it.get("channels", []):
+                    return it
+        # Tìm identity active bất kỳ
+        for it in identities:
+            if it.get("active"):
+                return it
+        # Mặc định identity đầu tiên
+        return identities[0]
+
+    def set_active_agent_identity(self, identity_id: str) -> bool:
+        """Kích hoạt một Agent Identity làm đại diện chính thức."""
+        identities_file = os.path.join(self.data_dir, "agent_identities.json")
+        identities = self.get_agent_identities()
+        found = False
+        for it in identities:
+            if it.get("id") == identity_id:
+                it["active"] = True
+                found = True
+            else:
+                it["active"] = False
+        if found:
+            try:
+                with open(identities_file, "w", encoding="utf-8") as f:
+                    json.dump(identities, f, ensure_ascii=False, indent=2)
+                # Đồng bộ tên bot sang config chính
+                active_agent = self.get_agent_identity(identity_id)
+                if active_agent:
+                    self.update_config({
+                        "bot_name": active_agent.get("name", "Gen-Harness Copilot"),
+                        "bot_persona": active_agent.get("tone", "professional"),
+                        "bot_about": active_agent.get("about", "")
+                    })
+                return True
+            except Exception:
+                pass
+        return False
+
+    def save_agent_identity(self, identity_data: dict) -> dict:
+        """Tạo mới hoặc cập nhật một Agent Identity."""
+        identities_file = os.path.join(self.data_dir, "agent_identities.json")
+        identities = self.get_agent_identities()
+        identity_id = identity_data.get("id")
+        if not identity_id:
+            identity_id = "agent-" + uuid.uuid4().hex[:8]
+            identity_data["id"] = identity_id
+            identity_data["created_at"] = time.strftime("%Y-%m-%d")
+
+        existing_idx = -1
+        for idx, it in enumerate(identities):
+            if it.get("id") == identity_id:
+                existing_idx = idx
+                break
+
+        if existing_idx >= 0:
+            identities[existing_idx].update(identity_data)
+        else:
+            identities.append(identity_data)
+
+        try:
+            with open(identities_file, "w", encoding="utf-8") as f:
+                json.dump(identities, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+        return identity_data
+
+    def delete_agent_identity(self, identity_id: str) -> bool:
+        """Xóa một Agent Identity tùy chỉnh (không xóa template mặc định)."""
+        identities_file = os.path.join(self.data_dir, "agent_identities.json")
+        identities = self.get_agent_identities()
+        new_list = [it for it in identities if it.get("id") != identity_id or it.get("is_default")]
+        if len(new_list) < len(identities):
+            try:
+                with open(identities_file, "w", encoding="utf-8") as f:
+                    json.dump(new_list, f, ensure_ascii=False, indent=2)
+                return True
+            except Exception:
+                pass
+        return False

@@ -16,10 +16,15 @@ import urllib.parse
 import uuid
 from pathlib import Path
 import yaml
-import re
 import subprocess
+from heo_harness.core.rbac import (
+    ROLE_OWNER, ROLE_MANAGER, ROLE_OPERATOR, ROLE_AGENT, ROLE_AUDITOR,
+    ALL_ROLES, ROLE_DEFINITIONS, normalize_role, has_permission,
+    can_role_act, get_role_view_policy
+)
 
 def get_skills_list(base_dir: str = None) -> list:
+
     if not base_dir:
         base_dir = str(Path(__file__).resolve().parents[3])
     skills_dir = os.path.join(base_dir, "skills")
@@ -153,6 +158,9 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 elif file_path.endswith(".jpg") or file_path.endswith(".jpeg"):
                     content_type = "image/jpeg"
                     disposition_type = "inline"
+                elif file_path.endswith(".html"):
+                    content_type = "text/html; charset=utf-8"
+                    disposition_type = "inline"
 
                 try:
                     with open(file_path, "rb") as f:
@@ -171,6 +179,105 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"error": f"File not found: {rel_path}"}, 404)
                 return
+
+        if path_clean in ["/builder", "/builder.html", "/spec-audit", "/spec_audit"]:
+            builder_html_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "artifacts", "reports", "gen_harness_builder.html"))
+            if not os.path.exists(builder_html_path):
+                builder_html_path = os.path.abspath(os.path.join("artifacts", "reports", "gen_harness_builder.html"))
+            if not os.path.exists(builder_html_path):
+                builder_html_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "artifacts", "reports", "gen_harness_spec_audit.html"))
+            if not os.path.exists(builder_html_path):
+                builder_html_path = os.path.abspath(os.path.join("artifacts", "reports", "gen_harness_spec_audit.html"))
+            if os.path.exists(builder_html_path):
+                with open(builder_html_path, "r", encoding="utf-8") as f:
+                    content = f.read().encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+            else:
+                self._send_json({"error": "Builder UI file missing"}, 404)
+                return
+
+        elif path_clean in ["/test", "/test.html"]:
+            test_html_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "artifacts", "reports", "gen_harness_test_ui.html"))
+            if not os.path.exists(test_html_path):
+                test_html_path = os.path.abspath(os.path.join("artifacts", "reports", "gen_harness_test_ui.html"))
+            if os.path.exists(test_html_path):
+                with open(test_html_path, "r", encoding="utf-8") as f:
+                    content = f.read().encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+            else:
+                self._send_json({"error": "Test UI file missing"}, 404)
+                return
+
+        elif path_clean in ["/api/builder/state", "/api/builder_state"]:
+            plan_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "builder_plan.json"))
+            if not os.path.exists(plan_file):
+                plan_file = os.path.abspath(os.path.join("data", "builder_plan.json"))
+            if os.path.exists(plan_file):
+                try:
+                    with open(plan_file, "r", encoding="utf-8") as f:
+                        plan_data = json.load(f)
+                    self._send_json({"ok": True, "data": plan_data})
+                    return
+                except Exception as e:
+                    self._send_json({"ok": False, "error": str(e)}, 500)
+                    return
+            self._send_json({"ok": False, "error": "Plan file not found"}, 404)
+            return
+
+        elif path_clean in ["/api/builder/spec_raw", "/api/builder_spec_raw"]:
+            spec_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "docs", "Gen-Harness-Product-Spec-LOCKED.md"))
+            if not os.path.exists(spec_file):
+                spec_file = os.path.abspath(os.path.join("docs", "Gen-Harness-Product-Spec-LOCKED.md"))
+            if not os.path.exists(spec_file):
+                spec_file = "/home/ryan/Documents/Ryan-Workplace/Heo-Harness/Gen-Harness-Product-Spec-LOCKED.md"
+            if os.path.exists(spec_file):
+                try:
+                    with open(spec_file, "r", encoding="utf-8") as f:
+                        spec_text = f.read()
+                    self._send_json({"ok": True, "spec": spec_text})
+                    return
+                except Exception as e:
+                    self._send_json({"ok": False, "error": str(e)}, 500)
+                    return
+            self._send_json({"ok": False, "error": "Spec file not found"}, 404)
+            return
+
+        elif path_clean in ["/api/builder/logs", "/api/builder_logs"]:
+            log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "agent_build_logs.json"))
+            if not os.path.exists(log_file):
+                log_file = os.path.abspath(os.path.join("data", "agent_build_logs.json"))
+            if os.path.exists(log_file):
+                try:
+                    with open(log_file, "r", encoding="utf-8") as f:
+                        logs = json.load(f)
+                    self._send_json({"ok": True, "logs": logs, "count": len(logs)})
+                    return
+                except Exception as e:
+                    self._send_json({"ok": False, "error": str(e)}, 500)
+                    return
+            self._send_json({"ok": True, "logs": [], "count": 0})
+            return
+
+        elif path_clean in ["/api/agent_identities", "/api/agent-identities"]:
+            if store and hasattr(store, "get_agent_identities"):
+                identities = store.get_agent_identities()
+                active = store.get_active_agent_identity()
+                self._send_json({"ok": True, "identities": identities, "active_id": active.get("id") if active else None})
+            else:
+                self._send_json({"ok": False, "error": "Store unavailable"}, 500)
+            return
 
         if path_clean in ["/", "/index.html"]:
             html_path = os.path.join(os.path.dirname(__file__), "dashboard.html")
@@ -431,6 +538,21 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             accs = store.get_accounts() if store and hasattr(store, "get_accounts") else {}
             self._send_json({"ok": True, "accounts": accs})
 
+        elif path_clean in ["/api/rbac/profile", "/api/rbac/current"]:
+            active_p = store.get_active_boss_profile() if store and hasattr(store, "get_active_boss_profile") else {}
+            tier = active_p.get("role_tier") or normalize_role(active_p.get("role", "owner"))
+            self._send_json({
+                "ok": True,
+                "profile": active_p,
+                "role_tier": tier,
+                "policy": get_role_view_policy(tier)
+            })
+
+        elif path_clean in ["/api/rbac/roles", "/api/rbac/list"]:
+            roles_meta = [get_role_view_policy(r) for r in ALL_ROLES]
+            self._send_json({"ok": True, "roles": roles_meta})
+
+
         elif path_clean in ["/api/logs/live", "/api/live_logs"]:
             parsed = urllib.parse.urlparse(self.path)
             params = urllib.parse.parse_qs(parsed.query)
@@ -537,6 +659,191 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             msgs = store.get_zalo_messages() if store else []
             self._send_json({"ok": True, "messages": msgs, "count": len(msgs)})
 
+        # ================= CONVERSATION DATA FACTORY & ATOMIC EVENTS =================
+        elif path_clean in ["/api/data_factory/events", "/api/events/list"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            filter_type = query_params.get("type", ["ALL"])[0]
+            try:
+                limit = int(query_params.get("limit", [50])[0])
+            except Exception:
+                limit = 50
+            evts = df.get_atomic_events(limit=limit, filter_type=filter_type)
+            self._send_json({"ok": True, "events": evts, "count": len(evts)})
+
+        elif path_clean in ["/api/data_factory/entities", "/api/entities/list"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            try:
+                limit = int(query_params.get("limit", [100])[0])
+            except Exception:
+                limit = 100
+            ents = df.get_entities(limit=limit)
+            self._send_json({"ok": True, "entities": ents, "count": len(ents)})
+
+        elif path_clean in ["/api/data_factory/opportunities", "/api/opportunities/list"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            try:
+                limit = int(query_params.get("limit", [50])[0])
+            except Exception:
+                limit = 50
+            opps = df.get_opportunities(limit=limit)
+            self._send_json({"ok": True, "opportunities": opps, "count": len(opps)})
+
+        elif path_clean in ["/api/data_factory/contacts", "/api/contacts/list"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            try:
+                limit = int(query_params.get("limit", [50])[0])
+            except Exception:
+                limit = 50
+            cnts = df.get_contacts(limit=limit)
+            self._send_json({"ok": True, "contacts": cnts, "count": len(cnts)})
+
+        elif path_clean in ["/api/data_factory/stats", "/api/data_factory_stats"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            stats = df.get_stats()
+            self._send_json({"ok": True, "stats": stats})
+
+        # ================= RELATIONSHIP GRAPH & LIVING PROFILES =================
+        elif path_clean in ["/api/relationship/graph", "/api/relationship_graph"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            graph = df.get_relationship_graph()
+            self._send_json(graph)
+
+        elif path_clean in ["/api/contacts/detail", "/api/data_factory/contact_detail"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            cid = query_params.get("id", [""])[0]
+            if not cid:
+                self._send_json({"ok": False, "error": "Missing contact id"}, 400)
+            else:
+                detail = df.get_contact_detail(cid)
+        # ================= COMMERCIAL WORKBENCH & COPILOT & DCI =================
+        elif path_clean in ["/api/commercial/documents", "/api/commercial_documents"]:
+            from heo_harness.core.commercial_workbench import get_commercial_workbench
+            wb = get_commercial_workbench()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            status = query_params.get("status", [None])[0]
+            docs = wb.get_documents(status=status)
+            self._send_json({"ok": True, "documents": docs, "count": len(docs)})
+
+        elif path_clean in ["/api/commercial/document_detail", "/api/commercial_document_detail"]:
+            from heo_harness.core.commercial_workbench import get_commercial_workbench
+            wb = get_commercial_workbench()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            doc_id = query_params.get("id", [""])[0]
+            if not doc_id:
+                self._send_json({"ok": False, "error": "Missing document id"}, 400)
+            else:
+                detail = wb.get_document_detail(doc_id)
+                self._send_json(detail)
+
+        elif path_clean in ["/api/commercial/catalog", "/api/commercial_catalog"]:
+            from heo_harness.core.commercial_workbench import get_commercial_workbench
+            wb = get_commercial_workbench()
+            catalog = wb.get_service_catalog()
+            self._send_json({"ok": True, "catalog": catalog, "count": len(catalog)})
+
+        elif path_clean in ["/api/system/dci", "/api/data_confidence_index"]:
+            from heo_harness.core.commercial_workbench import get_commercial_workbench
+            wb = get_commercial_workbench()
+            dci = wb.calculate_data_confidence_index()
+            self._send_json(dci)
+
+        # ================= SÀN RÁP NỐI CUNG - CẦU THƯƠNG MẠI (MATCHMAKER) =================
+        elif path_clean in ["/api/commercial/matchmaker/summary", "/api/matchmaker/summary"]:
+            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
+            mm = get_supply_demand_matchmaker()
+            self._send_json(mm.get_summary())
+
+        elif path_clean in ["/api/commercial/matchmaker/matches", "/api/matchmaker/matches"]:
+            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
+            mm = get_supply_demand_matchmaker()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            tier = query_params.get("tier", ["ALL"])[0]
+            category = query_params.get("category", ["ALL"])[0]
+            status = query_params.get("status", ["ALL"])[0]
+            matches = mm.get_matches(tier=tier, category=category, status=status)
+            self._send_json({"ok": True, "matches": matches, "count": len(matches)})
+
+        elif path_clean in ["/api/commercial/matchmaker/demands", "/api/matchmaker/demands"]:
+            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
+            mm = get_supply_demand_matchmaker()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            category = query_params.get("category", ["ALL"])[0]
+            demands = mm.get_all_demands(category=category)
+            self._send_json({"ok": True, "demands": demands, "count": len(demands)})
+
+        elif path_clean in ["/api/commercial/matchmaker/supplies", "/api/matchmaker/supplies"]:
+            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
+            mm = get_supply_demand_matchmaker()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            category = query_params.get("category", ["ALL"])[0]
+            supplies = mm.get_all_supplies(category=category)
+            self._send_json({"ok": True, "supplies": supplies, "count": len(supplies)})
+
+        # ================= PEOPLE REVIEW & CARE QUALITY (SPEC-22, 23 & SPEC-36 RBAC) =================
+        elif path_clean in ["/api/people_review/summary", "/api/care_quality/summary"]:
+            active_p = store.get_active_boss_profile() if store and hasattr(store, "get_active_boss_profile") else {}
+            tier = active_p.get("role_tier") or normalize_role(active_p.get("role", "owner"))
+            if not has_permission(tier, "people_review.view"):
+                self._send_json({
+                    "ok": True,
+                    "total_candidates": 0,
+                    "avg_score": 0,
+                    "pending_actions": 0,
+                    "high_risk_candidates": 0,
+                    "restricted": True,
+                    "role_tier": tier,
+                    "message": "🔒 Dữ liệu đánh giá nhân sự bị khoá đối với vai trò này (Yêu cầu Manager, Owner hoặc Auditor)."
+                })
+                return
+            from heo_harness.core.people_review import get_people_review_engine
+            pr = get_people_review_engine()
+            self._send_json(pr.get_summary())
+
+        elif path_clean in ["/api/people_review/list", "/api/people_review"]:
+            active_p = store.get_active_boss_profile() if store and hasattr(store, "get_active_boss_profile") else {}
+            tier = active_p.get("role_tier") or normalize_role(active_p.get("role", "owner"))
+            if not has_permission(tier, "people_review.view"):
+                self._send_json({"ok": True, "reviews": [], "count": 0, "restricted": True, "role_tier": tier, "message": "Quyền truy cập dữ liệu nhân sự bị khoá"})
+                return
+            from heo_harness.core.people_review import get_people_review_engine
+            pr = get_people_review_engine()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            ptype = query_params.get("type", ["ALL"])[0]
+            reviews = pr.get_people_reviews(person_type=ptype)
+            self._send_json({"ok": True, "reviews": reviews, "count": len(reviews)})
+
+        elif path_clean in ["/api/care_quality/records", "/api/care_quality/list"]:
+            active_p = store.get_active_boss_profile() if store and hasattr(store, "get_active_boss_profile") else {}
+            tier = active_p.get("role_tier") or normalize_role(active_p.get("role", "owner"))
+            if not has_permission(tier, "people_review.view"):
+                self._send_json({"ok": True, "records": [], "count": 0, "restricted": True, "role_tier": tier, "message": "Quyền truy cập chất lượng chăm sóc bị khoá"})
+                return
+            from heo_harness.core.people_review import get_people_review_engine
+            pr = get_people_review_engine()
+            records = pr.get_care_quality_records()
+            self._send_json({"ok": True, "records": records, "count": len(records)})
+
+
+        elif path_clean in ["/api/care_quality/broken_promises", "/api/broken_promises"]:
+            from heo_harness.core.people_review import get_people_review_engine
+            pr = get_people_review_engine()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            status = query_params.get("status", ["ALL"])[0]
+            promises = pr.get_broken_promises(status=status)
+            self._send_json({"ok": True, "broken_promises": promises, "count": len(promises)})
+
         else:
             self._send_json({"error": "Endpoint not found"}, 404)
 
@@ -553,11 +860,441 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
         except Exception:
             data = {}
 
+        # ================= SPEC-36 RBAC ENFORCEMENT ENGINE (MỤC H2 SPEC LOCKED) =================
+        active_prof = store.get_active_boss_profile() if store and hasattr(store, "get_active_boss_profile") else {}
+        active_role = active_prof.get("role_tier") or normalize_role(active_prof.get("role", "owner"))
+
+        # 1. Auditor: "Xem log, không hành động" (Mọi action write/update/delete đều bị chặn)
+        is_switch_req = path_clean in ["/api/accounts/switch", "/api/accounts_switch", "/api/rbac/switch", "/api/rbac_switch"]
+        if not can_role_act(active_role) and not is_switch_req:
+            self._send_json({
+                "ok": False,
+                "error": "🛡️ Vai trò Kiểm Toán (Auditor) chỉ có quyền ĐỌC logs và báo cáo. Mọi thao tác hành động, ghi dữ liệu hoặc phê duyệt đều bị vô hiệu hoá.",
+                "role_tier": active_role,
+                "restricted": True
+            }, 403)
+            return
+
+        # 2. People Review & Care Quality: Khoá chặt với Operator và Agent
+        if path_clean in [
+            "/api/care_quality/resolve_promise",
+            "/api/care_quality/remind_promise",
+            "/api/people_review/coaching",
+            "/api/people_review/action"
+        ]:
+            if not has_permission(active_role, "people_review.coaching"):
+                self._send_json({
+                    "ok": False,
+                    "error": "🔒 Vai trò hiện tại không có thẩm quyền can thiệp dữ liệu Đánh Giá Nhân Sự (Yêu cầu Manager hoặc Owner).",
+                    "role_tier": active_role,
+                    "restricted": True
+                }, 403)
+                return
+
+        # 3. System Config & Terminal CLI: Chỉ dành riêng cho Owner tối cao
+        if path_clean in ["/api/quick_config", "/api/quick-config", "/api/terminal/exec"]:
+            if active_role != ROLE_OWNER:
+                self._send_json({
+                    "ok": False,
+                    "error": "👑 Chỉ Chủ Nhân Tối Cao (Owner) mới có quyền truy cập cấu hình hệ thống & Terminal CLI.",
+                    "role_tier": active_role,
+                    "restricted": True
+                }, 403)
+                return
+
+        if path_clean in ["/api/builder/save", "/api/builder_save"]:
+
+            plan_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "builder_plan.json"))
+            if not os.path.exists(os.path.dirname(plan_file)):
+                plan_file = os.path.abspath(os.path.join("data", "builder_plan.json"))
+            try:
+                new_plan = data.get("data") if ("data" in data and isinstance(data["data"], dict)) else data
+                with open(plan_file, "w", encoding="utf-8") as f:
+                    json.dump(new_plan, f, ensure_ascii=False, indent=2)
+                wp_file = "/home/ryan/Documents/Ryan-Workplace/Heo-Harness/data/builder_plan.json"
+                if os.path.exists(os.path.dirname(wp_file)):
+                    try:
+                        with open(wp_file, "w", encoding="utf-8") as f:
+                            json.dump(new_plan, f, ensure_ascii=False, indent=2)
+                    except Exception:
+                        pass
+                self._send_json({"ok": True, "message": "Đã lưu kế hoạch thi công Builder thành công!"})
+                return
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, 500)
+                return
+
+        elif path_clean in ["/api/builder/update_item", "/api/builder_update_item"]:
+            item_id = data.get("id")
+            plan_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "builder_plan.json"))
+            if not os.path.exists(plan_file):
+                plan_file = os.path.abspath(os.path.join("data", "builder_plan.json"))
+            try:
+                with open(plan_file, "r", encoding="utf-8") as f:
+                    current_plan = json.load(f)
+                updated = False
+                for it in current_plan.get("items", []):
+                    if it.get("id") == item_id:
+                        for k in ["status", "status_label", "pct", "milestone", "priority", "target_date", "dev_notes", "checklist", "owner"]:
+                            if k in data:
+                                it[k] = data[k]
+                        updated = True
+                        break
+                if updated:
+                    with open(plan_file, "w", encoding="utf-8") as f:
+                        json.dump(current_plan, f, ensure_ascii=False, indent=2)
+                    wp_file = "/home/ryan/Documents/Ryan-Workplace/Heo-Harness/data/builder_plan.json"
+                    if os.path.exists(os.path.dirname(wp_file)):
+                        try:
+                            with open(wp_file, "w", encoding="utf-8") as f:
+                                json.dump(current_plan, f, ensure_ascii=False, indent=2)
+                        except Exception:
+                            pass
+                    self._send_json({"ok": True, "message": f"Đã cập nhật tiêu chí {item_id}!"})
+                else:
+                    self._send_json({"ok": False, "error": f"Không tìm thấy tiêu chí {item_id}"}, 404)
+                return
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, 500)
+                return
+
+        elif path_clean in ["/api/builder/logs", "/api/builder_logs"]:
+            log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "agent_build_logs.json"))
+            if not os.path.exists(log_file):
+                log_file = os.path.abspath(os.path.join("data", "agent_build_logs.json"))
+            try:
+                logs = []
+                if os.path.exists(log_file):
+                    with open(log_file, "r", encoding="utf-8") as f:
+                        logs = json.load(f)
+
+                entry = {
+                    "id": data.get("id") or f"BUILD-{time.strftime('%Y%m%d')}-{len(logs)+1:02d}",
+                    "timestamp": data.get("timestamp") or time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "agent_name": data.get("agent_name", "AI Assistant Agent"),
+                    "milestone": data.get("milestone", "MS-General"),
+                    "title": data.get("title", "Lượt xây dựng hệ thống"),
+                    "summary": data.get("summary", ""),
+                    "specs_completed": data.get("specs_completed", []),
+                    "files_modified": data.get("files_modified", []),
+                    "verification_status": data.get("verification_status", "PASS"),
+                    "next_agent_instructions": data.get("next_agent_instructions", "")
+                }
+                logs.append(entry)
+                with open(log_file, "w", encoding="utf-8") as f:
+                    json.dump(logs, f, ensure_ascii=False, indent=2)
+
+                wp_log = "/home/ryan/Documents/Ryan-Workplace/Heo-Harness/data/agent_build_logs.json"
+                try:
+                    with open(wp_log, "w", encoding="utf-8") as f:
+                        json.dump(logs, f, ensure_ascii=False, indent=2)
+                except Exception:
+                    pass
+
+                self._send_json({"ok": True, "entry": entry, "message": "Đã lưu nhật ký xây dựng thành công!"})
+                return
+            except Exception as e:
+                self._send_json({"ok": False, "error": str(e)}, 500)
+                return
+
+        elif path_clean in ["/api/agent_identities/set_active", "/api/agent-identities/set_active"]:
+            agent_id = data.get("id")
+            if store and hasattr(store, "set_active_agent_identity") and agent_id:
+                success = store.set_active_agent_identity(agent_id)
+                if success:
+                    active = store.get_active_agent_identity()
+                    self._send_json({"ok": True, "active": active, "message": f"Đã kích hoạt Agent: {active.get('name')}"})
+                else:
+                    self._send_json({"ok": False, "error": "Không tìm thấy Agent Identity"}, 404)
+            else:
+                self._send_json({"ok": False, "error": "Thiếu id hoặc Store không hỗ trợ"}, 400)
+            return
+
+        elif path_clean in ["/api/agent_identities/save", "/api/agent-identities/save"]:
+            if store and hasattr(store, "save_agent_identity"):
+                saved = store.save_agent_identity(data)
+                self._send_json({"ok": True, "agent": saved, "message": f"Đã lưu Agent Identity: {saved.get('name')}"})
+            else:
+                self._send_json({"ok": False, "error": "Store không hỗ trợ"}, 500)
+            return
+
+        elif path_clean in ["/api/agent_identities/delete", "/api/agent-identities/delete"]:
+            agent_id = data.get("id")
+            if store and hasattr(store, "delete_agent_identity") and agent_id:
+                ok = store.delete_agent_identity(agent_id)
+                self._send_json({"ok": ok, "message": "Đã xóa Agent Identity thành công!" if ok else "Không thể xóa template mặc định"})
+            else:
+                self._send_json({"ok": False, "error": "Thiếu id"}, 400)
+            return
+
+        # ================= DATA FACTORY & OPPORTUNITY KANBAN =================
+        elif path_clean in ["/api/data_factory/opportunity/update_stage", "/api/opportunity/update_stage"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            opp_id = data.get("opp_id")
+            new_stage = data.get("stage")
+            if not opp_id or not new_stage:
+                self._send_json({"ok": False, "error": "Missing opp_id or stage"}, 400)
+                return
+            success = df.update_opportunity_stage(opp_id, new_stage)
+            self._send_json({"ok": success, "message": f"Đã chuyển cơ hội sang {new_stage}" if success else "Cập nhật thất bại"})
+            return
+
+        elif path_clean in ["/api/data_factory/opportunity/create", "/api/opportunity/create"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            title = data.get("title", "Cơ hội mới")
+            contact_name = data.get("contact_name", "Đối tác")
+            need_summary = data.get("need_summary", "")
+            est_val = float(data.get("estimated_value", 0.0))
+            channel = data.get("channel", "manual")
+            stage = data.get("stage", "SIGNAL")
+            res = df.create_opportunity(title, contact_name, need_summary, est_val, channel, stage)
+            self._send_json({"ok": True, "opportunity": res})
+            return
+
+        elif path_clean in ["/api/data_factory/opportunity/update", "/api/opportunity/update"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            opp_id = data.get("id") or data.get("opp_id")
+            if not opp_id:
+                self._send_json({"ok": False, "error": "Missing opportunity id"}, 400)
+                return
+            updates = {k: v for k, v in data.items() if k not in ["id", "opp_id"]}
+            success = df.update_opportunity(opp_id, updates)
+            self._send_json({"ok": success, "message": "Đã cập nhật chi tiết cơ hội!" if success else "Cập nhật thất bại"})
+            return
+
+        elif path_clean in ["/api/data_factory/opportunity/delete", "/api/opportunity/delete"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            opp_id = data.get("id") or data.get("opp_id")
+            if not opp_id:
+                self._send_json({"ok": False, "error": "Missing opportunity id"}, 400)
+                return
+            success = df.delete_opportunity(opp_id)
+            self._send_json({"ok": success, "message": "Đã xóa cơ hội khỏi Pipeline" if success else "Xóa thất bại"})
+            return
+
+        elif path_clean in ["/api/data_factory/opportunity/match", "/api/opportunity/match"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            opp_id = data.get("id") or data.get("opp_id")
+            if not opp_id:
+                self._send_json({"ok": False, "error": "Missing opportunity id"}, 400)
+                return
+            match_res = df.match_opportunity_supply_demand(opp_id)
+            self._send_json({"ok": True, "match": match_res})
+            return
+
+        elif path_clean in ["/api/data_factory/event/archive", "/api/event/archive"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            evt_id = data.get("id") or data.get("event_id")
+            if not evt_id:
+                self._send_json({"ok": False, "error": "Missing event id"}, 400)
+                return
+            success = df.archive_atomic_event(evt_id)
+            self._send_json({"ok": success, "message": "Đã lưu trữ sự kiện (Inbox Zero)!" if success else "Lưu trữ thất bại"})
+            return
+
+        elif path_clean in ["/api/events/convert_to_task", "/api/data_factory/event/convert_to_task"]:
+            from heo_harness.core.event_store import get_event_store
+            es = get_event_store()
+            evt_id = data.get("id") or data.get("event_id")
+            title = data.get("title")
+            owner = data.get("owner", "Sếp Cơ La & Trợ Lý")
+            priority = data.get("priority", "P2")
+            res = es.convert_event_to_task(evt_id, title=title, owner=owner, priority=priority, store=store)
+            self._send_json(res, 200 if res.get("ok") else 400)
+            return
+
+        elif path_clean in ["/api/events/convert_to_opp", "/api/data_factory/event/convert_to_opp"]:
+            from heo_harness.core.event_store import get_event_store
+            es = get_event_store()
+            evt_id = data.get("id") or data.get("event_id")
+            title = data.get("title")
+            try:
+                val = float(data.get("value", 0.0))
+            except Exception:
+                val = 0.0
+            res = es.convert_event_to_opportunity(evt_id, custom_title=title, estimated_value=val)
+            self._send_json(res, 200 if res.get("ok") else 400)
+            return
+
+        elif path_clean in ["/api/events/accept_action", "/api/data_factory/event/accept_action"]:
+            from heo_harness.core.event_store import get_event_store
+            es = get_event_store()
+            evt_id = data.get("id") or data.get("event_id")
+            reply_text = data.get("reply_text") or data.get("action", "")
+            evt = es.get_event_by_id(evt_id)
+            if not evt:
+                self._send_json({"ok": False, "error": f"Không tìm thấy sự kiện {evt_id}"}, 404)
+                return
+            with es._get_conn() as conn:
+                conn.execute("UPDATE atomic_events SET status = 'RESOLVED', action_suggested = ? WHERE id = ?", (f"[ĐÃ DUYỆT]: {reply_text}", evt_id))
+                conn.commit()
+            if store and hasattr(store, "add_audit"):
+                store.add_audit("owner", "event.accept_action", evt_id, f"Duyệt hành động: {reply_text}", "RESOLVED")
+            self._send_json({"ok": True, "event_id": evt_id, "message": "Đã duyệt và thực thi hành động đề xuất!"})
+            return
+
+
+        elif path_clean in ["/api/data_factory/contacts/merge", "/api/contacts/merge"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            primary_id = data.get("primary_id")
+            secondary_id = data.get("secondary_id")
+            if not primary_id or not secondary_id:
+                self._send_json({"ok": False, "error": "Missing primary_id or secondary_id"}, 400)
+                return
+            success = df.merge_contacts(primary_id, secondary_id)
+            self._send_json({"ok": success, "message": "Đã hợp nhất định danh liên hệ thành công!" if success else "Lỗi hợp nhất"})
+            return
+
+        elif path_clean in ["/api/data_factory/process_message", "/api/data_factory/message"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            content = data.get("content", "")
+            ch = data.get("channel", "web_console")
+            s_id = data.get("sender_id", "unknown")
+            s_name = data.get("sender_name", "Khách")
+            g_id = data.get("group_id")
+            g_name = data.get("group_name", "1-1")
+            res = df.process_incoming_message(content, ch, s_id, s_name, g_id, g_name)
+            self._send_json({"ok": True, "result": res})
+            return
+
+        elif path_clean in ["/api/contacts/update_autonomy", "/api/data_factory/update_autonomy"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            cid = data.get("contact_id") or data.get("id")
+            try:
+                autonomy = int(data.get("autonomy_level", 1))
+            except Exception:
+                autonomy = 1
+            if not cid:
+                self._send_json({"ok": False, "error": "Missing contact_id"}, 400)
+                return
+            ok = df.update_contact_autonomy(cid, autonomy)
+            self._send_json({"ok": ok, "message": f"Đã cập nhật mức tự trị Cấp {autonomy} cho liên hệ!" if ok else "Cập nhật thất bại"})
+            return
+
+        elif path_clean in ["/api/contacts/generate_summary", "/api/data_factory/generate_summary"]:
+            from heo_harness.core.data_factory import get_data_factory
+            df = get_data_factory()
+            cid = data.get("contact_id") or data.get("id")
+            if not cid:
+                self._send_json({"ok": False, "error": "Missing contact_id"}, 400)
+                return
+            res = df.generate_contact_summary(cid)
+        # ================= COMMERCIAL WORKBENCH & COPILOT =================
+        elif path_clean in ["/api/commercial/generate_copilot", "/api/commercial_generate_copilot"]:
+            from heo_harness.core.commercial_workbench import get_commercial_workbench
+            wb = get_commercial_workbench()
+            deal_id = data.get("deal_id")
+            language = data.get("language", "vi")
+            if not deal_id:
+                self._send_json({"ok": False, "error": "Missing deal_id"}, 400)
+                return
+            res = wb.generate_ai_quotation(deal_id, language=language)
+            self._send_json(res)
+            return
+
+        elif path_clean in ["/api/commercial/save_document", "/api/commercial_save_document"]:
+            from heo_harness.core.commercial_workbench import get_commercial_workbench
+            wb = get_commercial_workbench()
+            doc_data = data.get("document", data)
+            ok = wb.save_document(doc_data)
+            self._send_json({"ok": ok, "message": "Đã lưu tài liệu thương mại thành công!"})
+            return
+
+        elif path_clean in ["/api/commercial/send_or_approve", "/api/commercial_send_or_approve"]:
+            from heo_harness.core.commercial_workbench import get_commercial_workbench
+            wb = get_commercial_workbench()
+            doc_id = data.get("id")
+            action = data.get("action", "approve_and_send")
+            if not doc_id:
+                self._send_json({"ok": False, "error": "Missing document id"}, 400)
+                return
+            res = wb.send_or_approve_document(doc_id, action=action)
+            self._send_json(res)
+            return
+
+        elif path_clean in ["/api/commercial/matchmaker/action", "/api/matchmaker/action"]:
+            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
+            mm = get_supply_demand_matchmaker()
+            match_id = data.get("match_id")
+            action_type = data.get("action_type")
+            notes = data.get("notes", "")
+            if not match_id or not action_type:
+                self._send_json({"ok": False, "error": "Thiếu match_id hoặc action_type"}, 400)
+                return
+            res = mm.execute_next_action(match_id, action_type, notes=notes)
+            self._send_json(res)
+            return
+
+        elif path_clean in ["/api/care_quality/resolve_promise", "/api/broken_promises/resolve"]:
+            from heo_harness.core.people_review import get_people_review_engine
+            pr = get_people_review_engine()
+            promise_id = data.get("promise_id")
+            action = data.get("action", "RESOLVED")
+            note = data.get("note", "")
+            if not promise_id:
+                self._send_json({"ok": False, "error": "Thiếu promise_id"}, 400)
+                return
+            res = pr.resolve_broken_promise(promise_id, action=action, note=note)
+            self._send_json(res)
+            return
+
+        elif path_clean in ["/api/care_quality/remind_promise", "/api/broken_promises/remind"]:
+            from heo_harness.core.people_review import get_people_review_engine
+            pr = get_people_review_engine()
+            promise_id = data.get("promise_id")
+            note = data.get("note", "")
+            if not promise_id:
+                self._send_json({"ok": False, "error": "Thiếu promise_id"}, 400)
+                return
+            res = pr.remind_broken_promise(promise_id, note=note)
+            self._send_json(res)
+            return
+
+        elif path_clean in ["/api/people_review/coaching", "/api/people/coaching"]:
+            from heo_harness.core.people_review import get_people_review_engine
+            pr = get_people_review_engine()
+            person_id = data.get("person_id")
+            coaching_note = data.get("note") or data.get("coaching_note", "")
+            if not person_id or not coaching_note:
+                self._send_json({"ok": False, "error": "Thiếu person_id hoặc nội dung coaching"}, 400)
+                return
+            res = pr.submit_coaching_note(person_id, coaching_note)
+            self._send_json(res)
+            return
+
         if path_clean == "/api/chat":
             user_msg = (data.get("message") or data.get("prompt") or data.get("content") or "").strip()
             if not user_msg:
                 self._send_json({"ok": False, "error": "Tin nhắn không được để trống"}, 400)
                 return
+
+            # Tự động kích hoạt Conversation Data Factory trích xuất Sự kiện nguyên tử & Cơ hội
+            try:
+                from heo_harness.core.data_factory import get_data_factory
+                df = get_data_factory()
+                c_channel = str(data.get("channel", "web_console")).lower()
+                c_sender = data.get("person_id") or data.get("sender_id") or "Anh Cơ La"
+                c_sender_name = data.get("sender_name") or "Anh Cơ La (Ryan)"
+                c_group = data.get("group_id") or "Direct"
+                df.process_incoming_message(
+                    content=user_msg,
+                    channel=c_channel,
+                    sender_id=c_sender,
+                    sender_name=c_sender_name,
+                    group_id=c_group,
+                    group_name=c_group
+                )
+            except Exception:
+                pass
 
             if store and hasattr(store, "is_bot_enabled") and not store.is_bot_enabled():
                 status_msg = store.get_config().get("bot_status_message", "")
@@ -834,7 +1571,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             msg_lower = user_msg.lower()
             attachment = None
 
-            def _call_agy(prompt_text: str, timeout: int = 60) -> str:
+            def _call_agy(prompt_text: str, timeout: int = 18) -> str:
                 """Gọi agy CLI --print với prompt, truyền đúng model và effort cấu hình."""
                 agy_bin = shutil.which("agy") or os.path.expanduser("~/.local/bin/agy")
                 if not os.path.isfile(agy_bin):
@@ -1837,6 +2574,21 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json({"ok": ok, "message": msg, "accounts": accs}, 200 if ok else 400)
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        elif path_clean in ["/api/rbac/switch", "/api/rbac_switch"]:
+            target_role = data.get("role") or data.get("role_tier") or data.get("id") or "owner"
+            if store and hasattr(store, "switch_rbac_role"):
+                ok, msg, accs = store.switch_rbac_role(target_role)
+                self._send_json({
+                    "ok": ok,
+                    "message": msg,
+                    "accounts": accs,
+                    "active_role_tier": accs.get("active_role_tier"),
+                    "active_rbac_policy": accs.get("active_rbac_policy")
+                }, 200 if ok else 400)
+            else:
+                self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
 
         elif path_clean in ["/api/accounts/add", "/api/accounts_add"]:
             acc_type = data.get("type", "boss")

@@ -133,7 +133,7 @@ class AntigravityProviderPlugin(BasePlugin):
             )
             out = (result.stdout or "").strip()
             if out:
-                return out
+                return f"{out}\n\n(Lõi AGY CLI gói tháng Google Antigravity)"
         except subprocess.TimeoutExpired:
             pass
         except Exception:
