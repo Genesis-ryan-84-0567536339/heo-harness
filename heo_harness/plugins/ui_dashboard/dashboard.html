@@ -1727,8 +1727,8 @@ function renderActiveHub() {
       break;
 
     case 'workbench':
-      titleEl.textContent = 'Sàn Phát Hiện & Ghép Nối Cung — Cầu Mậu Dịch (Supply-Demand Arbitrage Desk)';
-      subEl.textContent = 'Quét tín hiệu đa kênh/group, phát hiện bên Cần & bên Có, tự động chấm thang điểm cơ hội (A+/A/B) & hỗ trợ Owner ra quyết định Next Action';
+      titleEl.textContent = 'Cung ↔ Cầu (Thương Mại & Mậu Dịch)';
+      subEl.textContent = 'Sàn phát hiện & ghép nối Cung — Cầu: Quét tín hiệu đa kênh, tự động chấm điểm cơ hội (A+/A/B) và tính chênh lệch Arbitrage Spread';
       container.innerHTML = renderCommercialWorkbenchHub();
       setTimeout(initCommercialWorkbenchUI, 60);
       break;
@@ -11532,41 +11532,53 @@ let matchmakerState = {
 
 function renderCommercialWorkbenchHub() {
   return `
+    <div class="hub-header" style="margin-bottom:20px">
+      <div class="hub-header-top">
+        <div>
+          <h1 class="hub-title">Cung ↔ Cầu (Thương Mại &amp; Mậu Dịch)</h1>
+          <p class="hub-desc">Sàn phát hiện &amp; ghép nối Cung — Cầu: Quét tín hiệu đa kênh Zalo &amp; WhatsApp, tự động chấm điểm cơ hội (A+/A/B) và tính chênh lệch Arbitrage Spread.</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn primary sm" onclick="fetchMatchmakerData()"><i class="ph ph-arrows-clockwise"></i> Quét Lại Dữ Liệu</button>
+        </div>
+      </div>
+    </div>
+
     <div style="display:flex;flex-direction:column;gap:20px;margin-bottom:30px">
       
       <!-- 1. COMMAND KPI METRICS BAR (4 KHỐI CHỈ SỐ MẬU DỊCH) -->
       <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:16px" id="mm-kpi-bar">
         
-        <div class="card" style="padding:16px;background:rgba(15,23,42,0.92);border:1px solid rgba(56,189,248,0.25);border-left:4px solid #38bdf8;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
+        <div class="card" style="padding:16px;background:var(--color-surface,#121622);border:1px solid var(--color-border,#23293d);border-left:4px solid #38bdf8;border-radius:10px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase">🔵 Nguồn CẦU Đang Mở (Demands)</span>
+            <span style="font-size:11px;font-weight:700;color:var(--color-neutral-400,#94a3b8);text-transform:uppercase">🔵 Nguồn CẦU Đang Mở (Demands)</span>
             <span class="badge" style="background:rgba(56,189,248,0.15);color:#38bdf8;font-size:10px" id="mm-kpi-demands-badge">Đang Quét</span>
           </div>
-          <div style="font-size:24px;font-weight:800;color:#f8fafc;margin:6px 0 2px 0" id="mm-kpi-total-demands">--</div>
-          <div style="font-size:11.5px;color:#94a3b8" id="mm-kpi-demands-budget">Tổng ngân sách: -- ₫</div>
+          <div style="font-size:24px;font-weight:800;color:var(--color-text,#f8fafc);margin:6px 0 2px 0" id="mm-kpi-total-demands">--</div>
+          <div style="font-size:11.5px;color:var(--color-neutral-400,#94a3b8)" id="mm-kpi-demands-budget">Tổng ngân sách: -- ₫</div>
         </div>
 
-        <div class="card" style="padding:16px;background:rgba(15,23,42,0.92);border:1px solid rgba(52,211,153,0.25);border-left:4px solid #34d399;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
+        <div class="card" style="padding:16px;background:var(--color-surface,#121622);border:1px solid var(--color-border,#23293d);border-left:4px solid #34d399;border-radius:10px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase">🟢 Nguồn CUNG Sẵn Có (Supplies)</span>
+            <span style="font-size:11px;font-weight:700;color:var(--color-neutral-400,#94a3b8);text-transform:uppercase">🟢 Nguồn CUNG Sẵn Có (Supplies)</span>
             <span class="badge" style="background:rgba(52,211,153,0.15);color:#34d399;font-size:10px" id="mm-kpi-supplies-badge">Kho & Năng Lực</span>
           </div>
-          <div style="font-size:24px;font-weight:800;color:#f8fafc;margin:6px 0 2px 0" id="mm-kpi-total-supplies">--</div>
-          <div style="font-size:11.5px;color:#94a3b8">Đối tác & Nội bộ sẵn sàng</div>
+          <div style="font-size:24px;font-weight:800;color:var(--color-text,#f8fafc);margin:6px 0 2px 0" id="mm-kpi-total-supplies">--</div>
+          <div style="font-size:11.5px;color:var(--color-neutral-400,#94a3b8)">Đối tác & Nội bộ sẵn sàng</div>
         </div>
 
-        <div class="card" style="padding:16px;background:rgba(15,23,42,0.92);border:1px solid rgba(192,132,252,0.25);border-left:4px solid #c084fc;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
+        <div class="card" style="padding:16px;background:var(--color-surface,#121622);border:1px solid var(--color-border,#23293d);border-left:4px solid #c084fc;border-radius:10px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase">🎯 Cơ Hội Đã Ráp Nối (Matches)</span>
+            <span style="font-size:11px;font-weight:700;color:var(--color-neutral-400,#94a3b8);text-transform:uppercase">🎯 Cơ Hội Đã Ráp Nối (Matches)</span>
             <span class="badge" style="background:rgba(192,132,252,0.15);color:#c084fc;font-size:10px" id="mm-kpi-matches-badge">Đã Chấm Điểm</span>
           </div>
-          <div style="font-size:24px;font-weight:800;color:#f8fafc;margin:6px 0 2px 0" id="mm-kpi-total-matches">--</div>
-          <div style="font-size:11.5px;color:#94a3b8" id="mm-kpi-avg-rating">Điểm trung bình: -- / 100đ</div>
+          <div style="font-size:24px;font-weight:800;color:var(--color-text,#f8fafc);margin:6px 0 2px 0" id="mm-kpi-total-matches">--</div>
+          <div style="font-size:11.5px;color:var(--color-neutral-400,#94a3b8)" id="mm-kpi-avg-rating">Điểm trung bình: -- / 100đ</div>
         </div>
 
-        <div class="card" style="padding:16px;background:rgba(15,23,42,0.92);border:1px solid rgba(251,191,36,0.25);border-left:4px solid #fbbf24;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
+        <div class="card" style="padding:16px;background:var(--color-surface,#121622);border:1px solid var(--color-border,#23293d);border-left:4px solid #fbbf24;border-radius:10px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase">💎 Chênh Lệch / Lợi Nhuận Gộp</span>
+            <span style="font-size:11px;font-weight:700;color:var(--color-neutral-400,#94a3b8);text-transform:uppercase">💎 Chênh Lệch / Lợi Nhuận Gộp</span>
             <span class="badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;font-size:10px">Arbitrage Spread</span>
           </div>
           <div style="font-size:24px;font-weight:800;color:#fbbf24;margin:6px 0 2px 0" id="mm-kpi-arbitrage-val">-- ₫</div>
