@@ -1640,8 +1640,8 @@ function renderActiveHub() {
       break;
 
     case 'directory':
-      titleEl.textContent = 'Danh Bạ & Nhóm Thực Tế (Directory 360)';
-      subEl.textContent = `Quản lý ${state.groups.length} nhóm trực chiến và ${state.people.length} nhân sự, đối tác liên hệ (Clean Slate)`;
+      titleEl.textContent = 'Nhóm & Con người';
+      subEl.textContent = 'Danh sách nhóm tách theo từng kênh, và danh sách con người lọc được theo mức liên quan với Sếp, độ nhiệt, giá trị và mức ưu tiên';
       container.innerHTML = renderDirectoryHub();
       break;
 
@@ -3055,8 +3055,8 @@ function renderDirectoryHub() {
     <div class="hub-header">
       <div class="hub-header-top">
         <div>
-          <h1 class="hub-title">Danh Bạ & Nhóm Thực Tế (Directory 360)</h1>
-          <p class="hub-desc">Quản lý các nhóm làm việc trực chiến và danh bạ nhân sự, đối tác liên hệ.</p>
+          <h1 class="hub-title">Nhóm &amp; Con người</h1>
+          <p class="hub-desc">Danh sách nhóm tách theo từng kênh, và danh sách con người lọc được theo mức liên quan với Sếp, độ nhiệt, giá trị và mức ưu tiên — từ đó gán agent trực tương ứng.</p>
         </div>
         <div>
           <button class="btn primary sm" onclick="openNewGroupModal()">+ Khởi Tạo Nhóm Mới</button>
@@ -3066,10 +3066,10 @@ function renderDirectoryHub() {
       <!-- Subnav Pills -->
       <div class="hub-subnav">
         <button class="hub-subnav-btn ${currentSub === 'groups' ? 'active' : ''}" onclick="switchSubtab('directory', 'groups')">
-          ◉ Group 360 (Nhóm & Ban) (${state.groups.length})
+          <i class="ph ph-chats-circle"></i> Nhóm theo kênh (${state.groups.length})
         </button>
         <button class="hub-subnav-btn ${currentSub === 'people' ? 'active' : ''}" onclick="switchSubtab('directory', 'people')">
-          ◎ Person 360 (Nhân Sự & Đối Tác) (${state.people.length})
+          <i class="ph ph-users"></i> Danh sách con người (${state.people.length})
         </button>
       </div>
     </div>
@@ -3441,8 +3441,8 @@ function renderGroup360View() {
     <div class="card">
       <div class="card-header" style="flex-wrap:wrap;gap:10px">
         <div>
-          <div class="card-title">◉ Danh Sách Nhóm Thực Tế & Quản Lý Trực Tuyến Đa Kênh</div>
-          <div class="text-sm muted" style="margin-top:2px">Tự động nhận diện khi được thêm vào nhóm Zalo / WhatsApp, kéo thành viên & quản lý trạng thái tham gia/đã rời</div>
+          <div class="card-title">Danh Sách Nhóm Theo Kênh Kết Nối</div>
+          <div class="text-sm muted" style="margin-top:2px">Phân tách theo kênh Zalo &amp; WhatsApp, cấu hình quyền nghe, tự động phản hồi và gán Agent trực chiến.</div>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="btn primary sm" onclick="triggerSyncRealGroups()" id="btn-sync-groups" style="font-weight:700">
@@ -3539,7 +3539,7 @@ function renderGroup360View() {
                       </div>
                     </td>
                     <td style="text-align:center">
-                      <label class="switch-toggle" title="${g.reply_non_owners && !isLeft ? 'Đang BẬT: Heo tự động trả lời thành viên khi được tag @' : 'Mặc định TẮT: Chỉ phản hồi duy nhất khi Sếp gọi'}">
+                      <label class="switch-toggle" title="${g.reply_non_owners && !isLeft ? 'Đang BẬT: Agent tự động trả lời thành viên khi được tag @' : 'Mặc định TẮT: Chỉ phản hồi duy nhất khi Sếp gọi'}">
                         <input type="checkbox" ${g.reply_non_owners && !isLeft ? 'checked' : ''} ${isLeft ? 'disabled' : ''} onchange="toggleGroupReplyNonOwners('${g.id}', this.checked)">
                         <span class="switch-slider"></span>
                       </label>
@@ -3647,7 +3647,7 @@ function renderPerson360View() {
                   <td>${getPersonToneBadge(p.persona_style || 'inherit')}</td>
                   <td style="font-family:var(--mono);font-size:11px" class="muted">${escapeHtml(p.phone || p.uid || p.email || '')}</td>
                   <td style="text-align:center">
-                    <label class="switch-toggle" title="${isOwner ? 'Chủ nhân tối cao luôn được phản hồi' : (canReply ? 'Đang BẬT: Bé Heo được phép phản hồi nhân sự này' : 'Mặc định TẮT (Chặn): Bé Heo không trả lời người này')}">
+                    <label class="switch-toggle" title="${isOwner ? 'Chủ nhân tối cao luôn được phản hồi' : (canReply ? 'Đang BẬT: Agent được phép phản hồi nhân sự này' : 'Mặc định TẮT (Chặn): Agent không trả lời người này')}">
                       <input type="checkbox" ${canReply ? 'checked' : ''} ${isOwner ? 'disabled' : ''} onchange="togglePersonReply('${p.id}', this.checked)">
                       <span class="switch-slider"></span>
                     </label>
@@ -3725,7 +3725,7 @@ function viewGroupMembers(gid) {
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:12px">
-        <div style="display:flex;flex-direction:column;align-items:center" title="${isBoss ? 'Chủ nhân tối cao luôn được phản hồi' : (canReply ? 'Đang BẬT: Bé Heo phản hồi thành viên này khi được gọi' : 'Đang TẮT (Chặn): Không phản hồi thành viên này')}">
+        <div style="display:flex;flex-direction:column;align-items:center" title="${isBoss ? 'Chủ nhân tối cao luôn được phản hồi' : (canReply ? 'Đang BẬT: Agent phản hồi thành viên này khi được gọi' : 'Đang TẮT (Chặn): Không phản hồi thành viên này')}">
           <label class="switch-toggle">
             <input type="checkbox" ${canReply ? 'checked' : ''} ${isBoss ? 'disabled' : ''} onchange="toggleMemberReply('${g.id}', '${m.id}', this.checked)">
             <span class="switch-slider"></span>
