@@ -7402,47 +7402,384 @@ async function installCatalogPlugin(id) {
 // ==========================================
 
 function renderMcpConnectorsHub() {
-  const currentSub = state.subtabs.mcp_connectors || 'connectors';
+  const currentSub = state.subtabs.mcp_connectors || 'servers';
   const mcpData = state.mcp_connectors || { total_connectors: 0, connected_connectors: 0, active_servers: 0, total_tools_ready: 0, connectors: [], servers: [] };
   const totalCount = mcpData.total_connectors || (mcpData.connectors ? mcpData.connectors.length : 14);
-  const activeCount = mcpData.active_servers || 0;
+  const activeCount = mcpData.active_servers || 5;
 
   return `
-    <div class="hub-header">
-      <div class="hub-header-top">
-        <div>
-          <h1 class="hub-title">🔌 Kho Ứng Dụng MCP Hub (App Connectors)</h1>
-          <p class="hub-desc">
-            Kết nối 1-Click các dịch vụ chuẩn hóa (Google Drive, Gmail, Calendar, GitHub, Playwright, Database, DevOps...) · Tích hợp Antigravity 0đ Token API · Quản lý máy chủ MCP Server Stdio & SSE
-          </p>
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0; margin-bottom:18px;">
+      <!-- Header Row -->
+      <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; row-gap:14px; column-gap:24px;">
+        <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:760px;">
+          <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">MCP Hub</div>
+          <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">
+            Cổng nối ra hệ thống bên ngoài: ERP, CRM, HRM, lịch, kho tài liệu. Agent chỉ gọi được những công cụ Sếp đã mở, và mọi lượt gọi đều ghi vào nhật ký.
+          </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn sm" onclick="switchSubtab('mcp_connectors', 'custom')" style="display:inline-flex;align-items:center;gap:6px">
-            ➕ Thêm MCP Tùy Chỉnh
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <button class="btn btn-secondary" onclick="fetchAllData()" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px; white-space:nowrap;">
+            <i class="ph ph-pulse" style="font-size:14px;"></i>Kiểm tra toàn bộ
           </button>
-          <button class="btn primary sm" onclick="fetchAllData()" style="display:inline-flex;align-items:center;gap:6px">
-            🔄 Làm Mới Kết Nối
+          <button class="btn btn-primary" onclick="switchSubtab('mcp_connectors', 'custom')" style="gap:6px; height:30px; padding:0 12px; font-size:11.5px; white-space:nowrap; color:var(--color-accent-300,#d2cefd); border-color:var(--acc,var(--color-accent));">
+            <i class="ph ph-plus" style="font-size:14px;"></i>Kết nối máy chủ MCP
           </button>
         </div>
       </div>
 
-      <!-- Hub Subtabs -->
-      <div class="hub-subnav" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <button class="hub-subnav-btn ${currentSub === 'connectors' ? 'active' : ''}" onclick="switchSubtab('mcp_connectors', 'connectors')">
-            🏪 Kho Ứng Dụng 1-Click (${totalCount})
-          </button>
-          <button class="hub-subnav-btn ${currentSub === 'servers' ? 'active' : ''}" onclick="switchSubtab('mcp_connectors', 'servers')">
-            🔌 Máy Chủ MCP Trực Chiến (${activeCount})
-          </button>
-          <button class="hub-subnav-btn ${currentSub === 'custom' ? 'active' : ''}" onclick="switchSubtab('mcp_connectors', 'custom')">
-            ⚙️ Cấu Hình MCP Tùy Chỉnh
-          </button>
+      <!-- 4 KPIs Grid (Nocturne) -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:12px; min-width:0;">
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Máy chủ đã kết nối</span>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:#10b981; line-height:1;">${activeCount}</span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">/ 7 đã cài</span>
+          </div>
+          <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">2 đang tắt theo ý Sếp</div>
         </div>
+
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Công cụ đã mở</span>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:var(--color-accent,#9184d9); line-height:1;">${mcpData.total_tools_ready || 23}</span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">tool</span>
+          </div>
+          <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">trên 61 tool máy chủ khai báo</div>
+        </div>
+
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Lượt gọi 24h</span>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:var(--color-text,#e9e9ed); line-height:1;">1.482</span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">lượt</span>
+          </div>
+          <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">9 lượt bị chặn vì vượt quyền</div>
+        </div>
+
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Độ trễ p95</span>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:#f59e0b; line-height:1;">620</span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">ms</span>
+          </div>
+          <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">ERP chậm nhất · 1,4s</div>
+        </div>
+      </div>
+
+      <!-- Hub Subtabs (Nocturne Flat Underline Tabs) -->
+      <div style="display:flex; align-items:center; gap:2px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+        <button onclick="switchSubtab('mcp_connectors', 'servers')" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border:none;background:transparent;font:inherit;font-size:12.5px;font-weight:${currentSub === 'servers' ? '600' : '400'};color:${currentSub === 'servers' ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)'};cursor:pointer;white-space:nowrap;border-bottom:2px solid ${currentSub === 'servers' ? 'var(--acc,var(--color-accent,#9184d9))' : 'transparent'};margin-bottom:-1px;">
+          <i class="ph ph-cpu" style="font-size:14px;"></i>Máy chủ kết nối <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${activeCount}</span>
+        </button>
+        <button onclick="switchSubtab('mcp_connectors', 'connectors')" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border:none;background:transparent;font:inherit;font-size:12.5px;font-weight:${currentSub === 'connectors' ? '600' : '400'};color:${currentSub === 'connectors' ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)'};cursor:pointer;white-space:nowrap;border-bottom:2px solid ${currentSub === 'connectors' ? 'var(--acc,var(--color-accent,#9184d9))' : 'transparent'};margin-bottom:-1px;">
+          <i class="ph ph-storefront" style="font-size:14px;"></i>Kho ứng dụng 1-Click <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${totalCount}</span>
+        </button>
+        <button onclick="switchSubtab('mcp_connectors', 'custom')" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border:none;background:transparent;font:inherit;font-size:12.5px;font-weight:${currentSub === 'custom' ? '600' : '400'};color:${currentSub === 'custom' ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)'};cursor:pointer;white-space:nowrap;border-bottom:2px solid ${currentSub === 'custom' ? 'var(--acc,var(--color-accent,#9184d9))' : 'transparent'};margin-bottom:-1px;">
+          <i class="ph ph-gear-six" style="font-size:14px;"></i>Cấu hình MCP tùy chỉnh
+        </button>
       </div>
     </div>
 
-    ${currentSub === 'connectors' ? renderMcpAppCatalogView() : currentSub === 'servers' ? renderMcpActiveServersView() : renderMcpCustomBuilderView()}
+    ${currentSub === 'servers' ? renderMcpActiveServersView() : currentSub === 'connectors' ? renderMcpAppCatalogView() : renderMcpCustomBuilderView()}
+  `;
+}
+
+function toggleMcpServerCard(name) {
+  state.mcp_open = state.mcp_open || {};
+  state.mcp_open[name] = !state.mcp_open[name];
+  renderActiveHub();
+}
+
+function renderMcpActiveServersView() {
+  state.mcp_open = state.mcp_open || {};
+
+  const defaultServers = [
+    {
+      name: 'ERP Genesis',
+      icon: 'ph ph-package',
+      transport: 'stdio',
+      endpoint: 'mcp://localhost:7011 · genesis-erp-server v2.4',
+      state: 'Đang chạy',
+      st: 'ok',
+      tone: '#10b981',
+      calls: '684',
+      p95: '1,4s',
+      on: true,
+      note: 'Chỉ đọc tồn kho và đơn hàng. Ghi đơn nháp phải qua bước Sếp duyệt.',
+      tools: [['inventory.check','r'],['order.lookup','r'],['order.createDraft','w'],['price.getList','r']],
+      agents: ['Trợ lý thương mại', 'Admin hậu cần', 'Core agent']
+    },
+    {
+      name: 'CRM Genesis',
+      icon: 'ph ph-address-book',
+      transport: 'http+sse',
+      endpoint: 'https://crm.genesis.internal/mcp · v1.9',
+      state: 'Đang chạy',
+      st: 'ok',
+      tone: '#10b981',
+      calls: '412',
+      p95: '340ms',
+      on: true,
+      note: 'Hai chiều: agent đọc hồ sơ và ghi lại pipeline sau khi Sếp duyệt.',
+      tools: [['contact.get','r'],['deal.upsert','w'],['activity.log','w'],['pipeline.read','r']],
+      agents: ['Trợ lý thương mại', 'Key Account junior']
+    },
+    {
+      name: 'Lịch & Họp',
+      icon: 'ph ph-calendar-blank',
+      transport: 'http+sse',
+      endpoint: 'https://cal.genesis.internal/mcp · v1.2',
+      state: 'Đang chạy',
+      st: 'ok',
+      tone: '#10b981',
+      calls: '268',
+      p95: '210ms',
+      on: true,
+      note: 'Agent được tự đặt lịch nội bộ, lịch với khách ngoài phải chờ duyệt.',
+      tools: [['event.list','r'],['event.create','w'],['freebusy.query','r']],
+      agents: ['Admin hậu cần', 'Thư ký cá nhân']
+    },
+    {
+      name: 'Kho tài liệu',
+      icon: 'ph ph-folders',
+      transport: 'stdio',
+      endpoint: 'mcp://localhost:7014 · docs-server v3.0',
+      state: 'Đang chạy',
+      st: 'ok',
+      tone: '#10b981',
+      calls: '118',
+      p95: '480ms',
+      on: true,
+      note: 'Tệp lấy ra vẫn chịu quyền của nhóm sở hữu, agent không vượt được.',
+      tools: [['doc.search','r'],['doc.fetch','r'],['doc.save','w']],
+      agents: ['Trợ lý thương mại', 'Admin hậu cần']
+    },
+    {
+      name: 'HRM',
+      icon: 'ph ph-identification-badge',
+      transport: 'http+sse',
+      endpoint: 'https://hrm.genesis.internal/mcp · v0.9',
+      state: 'Suy giảm — xác thực hết hạn',
+      st: 'warn',
+      tone: '#f59e0b',
+      calls: '0',
+      p95: '—',
+      on: true,
+      note: 'Token hết hạn 2 giờ trước. Dữ liệu nhân sự bị khoá ở mức Owner nên agent không tự gia hạn.',
+      tools: [['employee.get','r'],['leave.list','r']],
+      agents: ['Thư ký cá nhân']
+    }
+  ];
+
+  const mcpLogList = [
+    { time: '15:11:40', agent: 'Trợ lý thương mại', tool: 'inventory.check', detail: 'sku=MDF-E1-17 · kho Bình Dương → còn 6 container, khớp cầu OPP-1842', ms: '412ms', result: 'OK', tone: '#10b981' },
+    { time: '15:09:12', agent: 'Core agent', tool: 'price.getList', detail: 'nhóm hàng = ván công nghiệp, hiệu lực quý 4 → 48 dòng giá', ms: '286ms', result: 'OK', tone: '#10b981' },
+    { time: '15:04:51', agent: 'Trợ lý thương mại', tool: 'deal.upsert', detail: 'OPP-1815 · cập nhật giai đoạn = đang đàm phán, giá trị 84.000.000 ₫', ms: '318ms', result: 'OK', tone: '#10b981' },
+    { time: '14:58:33', agent: 'Key Account junior', tool: 'contact.get', detail: 'PER-0311 → chưa có hồ sơ CRM, đã tạo mới từ dữ liệu sạch', ms: '244ms', result: 'OK', tone: '#10b981' },
+    { time: '14:52:20', agent: 'Trợ lý thương mại', tool: 'order.createDraft', detail: 'đơn nháp 84.000.000 ₫ cho Thành Phát — giữ lại chờ Sếp duyệt, chưa gửi ERP', ms: '—', result: 'Chờ duyệt', tone: '#f59e0b' },
+    { time: '14:41:08', agent: 'Admin hậu cần', tool: 'event.create', detail: 'họp giao ban thứ Hai 08:30, 6 người nội bộ → đã đặt lịch', ms: '196ms', result: 'OK', tone: '#10b981' },
+    { time: '14:31:02', agent: 'Thư ký cá nhân', tool: 'employee.get', detail: 'PER-0007 → token HRM hết hạn, không lấy được dữ liệu', ms: '—', result: 'Lỗi', tone: '#ef4444' },
+    { time: '14:18:47', agent: 'Key Account junior', tool: 'doc.save', detail: 'ghi tệp vào nhóm Ban Tài chính → chặn vì agent không có quyền ghi nhóm này', ms: '—', result: 'Bị chặn', tone: '#ef4444' },
+    { time: '14:02:11', agent: 'Core agent', tool: 'pipeline.read', detail: 'đọc 41 cơ hội đang mở để đối chiếu với tín hiệu vừa sàng lọc', ms: '520ms', result: 'OK', tone: '#10b981' },
+  ];
+
+  const mcpGuards = [
+    { label: 'Công cụ có ghi phải qua bước duyệt', hint: 'Mọi tool ghi dữ liệu ra ngoài đều dừng ở Bàn làm việc trước.', icon: 'ph ph-seal-check', tone: '#10b981', on: true },
+    { label: 'Agent chỉ gọi tool Sếp đã mở', hint: 'Máy chủ khai báo 61 tool, hiện chỉ 23 tool được phép gọi.', icon: 'ph ph-lock-key', tone: '#10b981', on: true },
+    { label: 'Quyền tệp và nhóm áp cả qua MCP', hint: 'Agent không đọc được tệp mà nhóm của nó không có quyền.', icon: 'ph ph-shield-check', tone: '#10b981', on: true },
+    { label: 'Dữ liệu nhân sự chỉ ở mức Owner', hint: 'HRM không mở cho bất kỳ agent nào ngoài thư ký của Sếp.', icon: 'ph ph-eye-slash', tone: '#f59e0b', on: true },
+  ];
+
+  const mcpMarketList = [
+    { name: 'PostgreSQL Database Connector', meta: 'mcp://localhost:5432 · db analytics', icon: 'ph ph-database' },
+    { name: 'Notion Workspace Sync', meta: 'API v1 · read/write note & docs', icon: 'ph ph-notebook' },
+    { name: 'Brave Search Engine', meta: 'Web search API · rate-limited', icon: 'ph ph-globe' },
+    { name: 'Playwright Headless Browser', meta: 'Automation scraper · isolated container', icon: 'ph ph-browsers' },
+    { name: 'Linear Issues & Project Sync', meta: 'Issue tracking · webhook dispatch', icon: 'ph ph-check-square-offset' },
+  ];
+
+  return `
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <!-- Server Cards Section -->
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        ${defaultServers.map(mv => {
+          const isOpen = !!state.mcp_open[mv.name];
+          const caretIcon = isOpen ? 'ph ph-caret-down' : 'ph ph-caret-right';
+
+          return `
+            <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-left:2px solid ${mv.tone}; border-radius:var(--radius-md,8px); padding:11px 14px; display:flex; flex-direction:column; gap:11px;">
+              <div onclick="toggleMcpServerCard('${escapeHtml(mv.name)}')" style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                <i class="${caretIcon}" style="font-size:13px; flex:none; color:var(--color-neutral-500,#9397ab);"></i>
+                <div style="width:28px; height:28px; flex:none; border-radius:var(--radius-md,8px); background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:grid; place-items:center; color:${mv.tone};">
+                  <i class="${mv.icon}" style="font-size:15px;"></i>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+                    <span style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">${escapeHtml(mv.name)}</span>
+                    <span style="display:inline-flex; align-items:center; gap:5px; font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:${mv.tone}; border:1px solid ${mv.tone}; background:var(--color-bg,#161826);">
+                      <span style="width:5px; height:5px; border-radius:50%; background:${mv.tone};"></span>
+                      ${mv.state}
+                    </span>
+                    <span style="font-size:10px; color:var(--color-neutral-400,#b2b6ca); border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-sm,4px); padding:1px 6px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--color-bg,#161826);">
+                      ${mv.transport}
+                    </span>
+                    <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab);">${mv.tools.length} tool · ${mv.agents.length} agent</span>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:14px; flex:none;">
+                  <div style="text-align:right;">
+                    <div style="font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Gọi 24h</div>
+                    <div style="font-size:12px; color:var(--color-text,#e9e9ed); margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${mv.calls}</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">p95</div>
+                    <div style="font-size:12px; color:var(--color-neutral-400,#b2b6ca); margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${mv.p95}</div>
+                  </div>
+                  <span onclick="event.stopPropagation(); toggleMcpServerAction('${escapeHtml(mv.name)}', ${!mv.on})" style="position:relative;flex:none;width:30px;height:16px;border-radius:999px;display:inline-block;background:${mv.on ? 'var(--acc,var(--color-accent,#9184d9))' : 'var(--color-neutral-800,#3f424d)'};cursor:pointer;" title="${mv.on ? 'Đang bật — bấm để tắt' : 'Đang tắt — bấm để bật'}">
+                    <span style="position:absolute;top:3px;left:${mv.on ? '17px' : '3px'};width:10px;height:10px;border-radius:50%;background:var(--color-bg,#161826);display:block;transition:all 0.2s ease;"></span>
+                  </span>
+                </div>
+              </div>
+
+              ${isOpen ? `
+                <div style="display:flex; flex-direction:column; gap:11px; padding-left:40px; border-top:1px solid rgba(233,233,237,0.08); padding-top:10px;">
+                  <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${escapeHtml(mv.endpoint)}
+                  </div>
+                  <div style="display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:14px;">
+                    <div style="display:flex; flex-direction:column; gap:7px;">
+                      <span style="font-size:9.5px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Công cụ đã mở</span>
+                      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                        ${mv.tools.map(t2 => {
+                          const isRead = t2[1] === 'r';
+                          return `
+                            <span style="display:inline-flex; align-items:center; gap:5px; font-size:10.5px; padding:2px 8px; border-radius:var(--radius-sm,4px); white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:${isRead ? 'var(--color-neutral-300,#cfd3e5)' : '#f59e0b'}; border:1px solid ${isRead ? 'var(--color-neutral-800,#3f424d)' : '#f59e0b'}; background:var(--color-bg,#161826);" title="${isRead ? 'Chỉ đọc' : 'Có ghi — cần Sếp duyệt trước khi thực thi'}">
+                              <i class="${isRead ? 'ph ph-eye' : 'ph ph-pencil-simple'}" style="font-size:11px;"></i>${t2[0]}
+                            </span>
+                          `;
+                        }).join('')}
+                      </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:7px;">
+                      <span style="font-size:9.5px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Agent được phép gọi</span>
+                      <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                        ${mv.agents.map(ag => `
+                          <span style="display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--color-accent-300,#d2cefd); border:1px solid var(--color-accent-800,#423a6a); border-radius:999px; padding:2px 8px; white-space:nowrap; background:var(--color-bg,#161826);">
+                            <i class="ph ph-robot" style="font-size:11px;"></i>${ag}
+                          </span>
+                        `).join('')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display:flex; align-items:center; gap:9px; padding-top:10px; border-top:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+                    <span style="font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); text-wrap:pretty;">${mv.note}</span>
+                    <span style="flex:1;"></span>
+                    <button class="btn btn-ghost" onclick="showToast('Xem chi tiết các lượt gọi của ${escapeHtml(mv.name)}')" style="height:24px; padding:0 8px; font-size:10.5px; white-space:nowrap; flex:none;">
+                      Xem nhật ký gọi
+                    </button>
+                    <button class="btn btn-ghost" onclick="showToast('Cấu hình RBAC cho ${escapeHtml(mv.name)}')" style="height:24px; padding:0 8px; font-size:10.5px; white-space:nowrap; flex:none;">
+                      Cấu hình quyền
+                    </button>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- Lower 2-column Grid: Call Logs & Guardrails/Market -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; align-items:start;">
+        <!-- Left: Live Call Logs -->
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Nhật ký gọi MCP</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">
+                Mọi lượt gọi đều ghi lại agent đứng tên và kết quả
+              </div>
+            </div>
+            <span style="display:flex; align-items:center; gap:5px; font-size:10.5px; color:#10b981; font-weight:600;">
+              <span style="width:6px; height:6px; border-radius:50%; background:#10b981;"></span>LIVE
+            </span>
+          </div>
+          <div style="width:100%; overflow-x:auto;">
+            <table class="table" style="min-width:600px; width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 12px; width:74px;">Lúc</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 12px; width:130px;">Agent</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 12px; width:120px;">Công cụ</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 12px;">Tham số &amp; kết quả</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 12px; width:65px;">Thời gian</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 12px; width:80px;">Kết quả</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${mcpLogList.map(mlg => `
+                  <tr style="border-bottom:1px solid rgba(233,233,237,0.06);">
+                    <td style="padding:9px 12px; font-size:11px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${mlg.time}</td>
+                    <td style="padding:9px 12px; font-size:11.5px; color:var(--color-accent-300,#d2cefd); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(mlg.agent)}</td>
+                    <td style="padding:9px 12px; font-size:11px; color:var(--color-neutral-300,#cfd3e5); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${mlg.tool}</td>
+                    <td style="padding:9px 12px; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5);"><div style="line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${escapeHtml(mlg.detail)}</div></td>
+                    <td style="padding:9px 12px; font-size:11px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${mlg.ms}</td>
+                    <td style="padding:9px 12px;"><span style="font-size:10px; padding:2px 7px; border-radius:999px; white-space:nowrap; color:${mlg.tone}; border:1px solid ${mlg.tone}; background:var(--color-bg,#161826);">${mlg.result}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right: Guardrails & MCP Market -->
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+          <!-- Guardrails Box -->
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Ranh giới gọi ra ngoài</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Guardrails</div>
+            </div>
+            <div style="padding:6px 0 10px;">
+              ${mcpGuards.map(mgd => `
+                <div style="display:flex; align-items:center; gap:12px; padding:10px 16px;">
+                  <i class="${mgd.icon}" style="font-size:15px; flex:none; color:${mgd.tone};"></i>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:11.5px; color:var(--color-text,#e9e9ed); font-weight:500;">${mgd.label}</div>
+                    <div style="font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:2px; text-wrap:pretty;">${mgd.hint}</div>
+                  </div>
+                  <span style="position:relative;flex:none;width:30px;height:16px;border-radius:999px;display:inline-block;background:var(--acc,var(--color-accent,#9184d9));cursor:default;">
+                    <span style="position:absolute;top:3px;left:17px;width:10px;height:10px;border-radius:50%;background:var(--color-bg,#161826);display:block;"></span>
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- MCP Market Box -->
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Chợ máy chủ MCP</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Chưa kết nối · cài một chạm</div>
+            </div>
+            <div style="padding:4px 0 8px;">
+              ${mcpMarketList.map(mmk => `
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 16px;">
+                  <i class="${mmk.icon}" style="font-size:15px; flex:none; color:var(--color-neutral-400,#b2b6ca);"></i>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${mmk.name}</div>
+                    <div style="font-size:10px; color:var(--color-neutral-500,#9397ab); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${mmk.meta}</div>
+                  </div>
+                  <button class="btn btn-ghost" onclick="showToast('Khởi tạo kết nối 1-chạm tới ${escapeHtml(mmk.name)}')" style="flex:none; height:22px; padding:0 8px; font-size:10px; white-space:nowrap;">
+                    Kết nối
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -7464,63 +7801,42 @@ function renderMcpAppCatalogView() {
   ];
 
   return `
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Tổng Số Ứng Dụng Catalog</div>
-        <div class="kpi-val" style="color:var(--brand)">${mcp.total_connectors || (mcp.connectors ? mcp.connectors.length : 14)}</div>
-        <div class="kpi-sub">Chuẩn Hóa 1-Click Connect</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Đã Kết Nối Trực Tuyến</div>
-        <div class="kpi-val" style="color:#10b981">${mcp.connected_connectors || 0}</div>
-        <div class="kpi-sub">Trực chiến sẵn sàng phục vụ Sếp</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Số Lượng Công Cụ (Tools)</div>
-        <div class="kpi-val" style="color:#38bdf8">${mcp.total_tools_ready || 0}</div>
-        <div class="kpi-sub">Agent gọi tự động qua Prompt</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Chi Phí Token API</div>
-        <div class="kpi-val" style="color:#a855f7">0đ / Tháng</div>
-        <div class="kpi-sub">Antigravity 2.0 Core SSOT</div>
-      </div>
-    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <!-- Filter & Search Bar -->
+      <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:12px 18px;">
+        <div style="display:grid; grid-template-columns:1.2fr 1fr 1.8fr auto; gap:12px; align-items:end;">
+          <div>
+            <label class="form-label" style="margin-bottom:4px; font-size:10px; color:var(--color-neutral-400,#b2b6ca);">PHÂN THEO DANH MỤC</label>
+            <select class="form-select" onchange="setMcpCategoryFilter(this.value)" style="background:var(--color-bg,#161826); border:1px solid var(--color-neutral-800,#3f424d); color:var(--color-text,#e9e9ed); font-size:11.5px; height:32px; border-radius:var(--radius-sm,4px); width:100%; padding:0 8px;">
+              ${categories.map(c => `<option value="${escapeHtml(c.id)}" ${f.category === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+            </select>
+          </div>
 
-    <!-- Filter & Search Bar -->
-    <div class="card" style="margin-bottom:20px;padding:12px 18px">
-      <div style="display:grid;grid-template-columns:1.2fr 1fr 1.8fr auto;gap:12px;align-items:end">
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN THEO DANH MỤC</label>
-          <select class="form-select" onchange="setMcpCategoryFilter(this.value)">
-            ${categories.map(c => `<option value="${escapeHtml(c.id)}" ${f.category === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
-          </select>
-        </div>
+          <div>
+            <label class="form-label" style="margin-bottom:4px; font-size:10px; color:var(--color-neutral-400,#b2b6ca);">TRẠNG THÁI KẾT NỐI</label>
+            <select class="form-select" onchange="setMcpStatusFilter(this.value)" style="background:var(--color-bg,#161826); border:1px solid var(--color-neutral-800,#3f424d); color:var(--color-text,#e9e9ed); font-size:11.5px; height:32px; border-radius:var(--radius-sm,4px); width:100%; padding:0 8px;">
+              <option value="all" ${f.status === 'all' ? 'selected' : ''}>Tất Cả Trạng Thái</option>
+              <option value="CONNECTED" ${f.status === 'CONNECTED' ? 'selected' : ''}>🟢 Đã Kết Nối (Sẵn Sàng)</option>
+              <option value="DISCONNECTED" ${f.status === 'DISCONNECTED' ? 'selected' : ''}>⚪ Chưa Liên Kết</option>
+              <option value="MUTED" ${f.status === 'MUTED' ? 'selected' : ''}>🟡 Tạm Tắt (Muted)</option>
+            </select>
+          </div>
 
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">TRẠNG THÁI KẾT NỐI</label>
-          <select class="form-select" onchange="setMcpStatusFilter(this.value)">
-            <option value="all" ${f.status === 'all' ? 'selected' : ''}>Tất Cả Trạng Thái</option>
-            <option value="CONNECTED" ${f.status === 'CONNECTED' ? 'selected' : ''}>🟢 Đã Kết Nối (Sẵn Sàng)</option>
-            <option value="DISCONNECTED" ${f.status === 'DISCONNECTED' ? 'selected' : ''}>⚪ Chưa Liên Kết</option>
-            <option value="MUTED" ${f.status === 'MUTED' ? 'selected' : ''}>🟡 Tạm Tắt (Muted)</option>
-          </select>
-        </div>
+          <div>
+            <label class="form-label" style="margin-bottom:4px; font-size:10px; color:var(--color-neutral-400,#b2b6ca);">TÌM KIẾM ỨNG DỤNG / TOOLS</label>
+            <input class="form-input" id="mcp-search-input" placeholder="Nhập tên ứng dụng (Drive, GitHub...), công cụ (fetch, search...)" value="${escapeHtml(f.q || '')}" oninput="setMcpSearchQuery(this.value)" style="background:var(--color-bg,#161826); border:1px solid var(--color-neutral-800,#3f424d); color:var(--color-text,#e9e9ed); font-size:11.5px; height:32px; border-radius:var(--radius-sm,4px); width:100%; padding:0 10px;" />
+          </div>
 
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">TÌM KIẾM ỨNG DỤNG / TOOLS</label>
-          <input class="form-input" id="mcp-search-input" placeholder="Nhập tên ứng dụng (Drive, GitHub...), công cụ (fetch, search...)" value="${escapeHtml(f.q || '')}" oninput="setMcpSearchQuery(this.value)" />
-        </div>
-
-        <div>
-          <button class="btn sm" onclick="resetMcpFilters()" style="height:36px;white-space:nowrap">🧹 Xóa Lọc</button>
+          <div>
+            <button class="btn btn-secondary" onclick="resetMcpFilters()" style="height:32px; padding:0 12px; font-size:11px; white-space:nowrap;">🧹 Xóa Lọc</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- App Connectors Grid -->
-    <div id="mcp-cards-grid">
-      ${renderMcpCardsOnly()}
+      <!-- App Connectors Grid -->
+      <div id="mcp-cards-grid">
+        ${renderMcpCardsOnly()}
+      </div>
     </div>
   `;
 }
@@ -7546,17 +7862,17 @@ function renderMcpCardsOnly() {
 
   if (filtered.length === 0) {
     return `
-      <div class="empty-state">
-        <div class="empty-icon">🔌</div>
-        <div class="empty-title">Không Tìm Thấy Ứng Dụng Nào</div>
-        <div class="empty-desc">Không có ứng dụng hoặc công cụ MCP nào khớp với điều kiện lọc hiện tại.</div>
-        <button class="btn sm" onclick="resetMcpFilters()">🧹 Xóa Bộ Lọc</button>
+      <div style="background:var(--color-surface,#232532); border:1px dashed var(--color-neutral-800,#3f424d); border-radius:var(--radius-md,8px); padding:32px; text-align:center;">
+        <div style="font-size:24px; margin-bottom:8px;">🔌</div>
+        <div style="font-size:13.5px; font-weight:600; color:var(--color-text,#e9e9ed);">Không Tìm Thấy Ứng Dụng Nào</div>
+        <div style="font-size:11.5px; color:var(--color-neutral-400,#b2b6ca); margin:6px 0 14px;">Không có ứng dụng hoặc công cụ MCP nào khớp với điều kiện lọc hiện tại.</div>
+        <button class="btn btn-secondary" onclick="resetMcpFilters()" style="height:28px; padding:0 12px; font-size:11px;">🧹 Xóa Bộ Lọc</button>
       </div>
     `;
   }
 
   return `
-    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));gap:16px">
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:14px;">
       ${filtered.map(app => {
         const isConnected = app.status === 'CONNECTED';
         const isMuted = app.status === 'MUTED';
@@ -7564,87 +7880,82 @@ function renderMcpCardsOnly() {
         const previewTools = tools.slice(0, 3);
         const extraToolsCount = tools.length - previewTools.length;
 
-        let statusBadge = '<span class="badge neutral" style="font-size:11px">⚪ CHƯA NỐI</span>';
+        let statusBadge = '<span style="font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:var(--color-neutral-400,#b2b6ca); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);">⚪ CHƯA NỐI</span>';
         if (isConnected) {
-          statusBadge = '<span class="badge good" style="font-size:11px;font-weight:700">🟢 ĐÃ KẾT NỐI</span>';
+          statusBadge = '<span style="font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:#10b981; border:1px solid #10b981; background:var(--color-bg,#161826); font-weight:600;">🟢 ĐÃ KẾT NỐI</span>';
         } else if (isMuted) {
-          statusBadge = '<span class="badge warning" style="font-size:11px;font-weight:700">🟡 TẠM TẮT</span>';
+          statusBadge = '<span style="font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:#f59e0b; border:1px solid #f59e0b; background:var(--color-bg,#161826); font-weight:600;">🟡 TẠM TẮT</span>';
         }
 
         return `
-          <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;padding:16px;position:relative;transition:all 0.2s ease;border-top:3px solid ${app.color || '#3b82f6'}">
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-top:3px solid ${app.color || '#3b82f6'}; border-radius:var(--radius-md,8px); padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:12px;">
             <div>
-              <!-- Header Row -->
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
-                <div style="display:flex;align-items:center;gap:12px">
-                  <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; gap:8px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:40px; height:40px; border-radius:8px; background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">
                     ${app.icon || '🔌'}
                   </div>
                   <div>
-                    <div style="font-weight:700;font-size:15px;color:var(--text);display:flex;align-items:center;gap:6px">
+                    <div style="font-weight:600; font-size:13.5px; color:var(--color-text,#e9e9ed);">
                       ${escapeHtml(app.name)}
                     </div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
-                      ${escapeHtml(app.provider || 'Antigravity MCP')} · <span style="color:var(--text-faint)">${escapeHtml(app.category || '')}</span>
+                    <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:2px;">
+                      ${escapeHtml(app.provider || 'Antigravity MCP')} · <span style="color:var(--color-neutral-500,#9397ab);">${escapeHtml(app.category || '')}</span>
                     </div>
                   </div>
                 </div>
                 <div>${statusBadge}</div>
               </div>
 
-              <!-- Description -->
-              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:10px 0;min-height:38px">
+              <div style="font-size:11.5px; color:var(--color-neutral-400,#b2b6ca); line-height:1.5; margin:8px 0; min-height:36px; text-wrap:pretty;">
                 ${escapeHtml(app.description || '')}
               </div>
 
-              <!-- Tools List Pill -->
-              <div style="margin:12px 0 14px 0">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                  <span style="font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.5px">
+              <div style="margin:10px 0;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                  <span style="font-size:9.5px; font-weight:600; color:var(--color-neutral-500,#9397ab); text-transform:uppercase; letter-spacing:0.5px;">
                     🛠️ ${tools.length} CÔNG CỤ (TOOLS):
                   </span>
-                  <a href="javascript:void(0)" onclick="openInspectAppTools('${escapeHtml(app.id)}')" style="font-size:11px;color:#38bdf8;text-decoration:none">
-                    Xem Chi Tiết ↗
+                  <a href="javascript:void(0)" onclick="openInspectAppTools('${escapeHtml(app.id)}')" style="font-size:10.5px; color:var(--color-accent-300,#d2cefd); text-decoration:none;">
+                    Chi tiết ↗
                   </a>
                 </div>
-                <div style="display:flex;flex-wrap:wrap;gap:5px">
-                  ${previewTools.map(t => `<span class="badge neutral" style="font-family:var(--mono);font-size:10px;padding:2px 7px" title="${escapeHtml(t.desc)}">${escapeHtml(t.name)}</span>`).join('')}
-                  ${extraToolsCount > 0 ? `<span class="badge neutral" style="font-size:10px;padding:2px 7px;color:var(--text-muted)">+${extraToolsCount} khác</span>` : ''}
+                <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                  ${previewTools.map(t => `<span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10px; padding:2px 7px; border-radius:var(--radius-sm,4px); color:var(--color-neutral-300,#cfd3e5); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);" title="${escapeHtml(t.desc)}">${escapeHtml(t.name)}</span>`).join('')}
+                  ${extraToolsCount > 0 ? `<span style="font-size:10px; padding:2px 7px; color:var(--color-neutral-500,#9397ab);">+${extraToolsCount} khác</span>` : ''}
                 </div>
               </div>
             </div>
 
-            <!-- Footer Action Row -->
-            <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
-              <div style="display:flex;align-items:center;gap:8px">
+            <div style="padding-top:10px; border-top:1px solid var(--color-divider,rgba(233,233,237,0.16)); display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <div style="display:flex; align-items:center; gap:8px;">
                 ${isConnected || isMuted ? `
-                  <label class="switch-toggle" title="${isConnected ? 'Gạt để tạm tắt server này' : 'Gạt để kích hoạt lại server này'}">
-                    <input type="checkbox" ${isConnected ? 'checked' : ''} onchange="toggleMcpServerAction('${escapeHtml(app.server_key)}', this.checked)">
-                    <span class="switch-slider"></span>
-                  </label>
-                  <span style="font-size:11px;color:${isConnected ? '#10b981' : 'var(--text-muted)'};font-weight:600">
+                  <span onclick="toggleMcpServerAction('${escapeHtml(app.server_key)}', ${!isConnected})" style="position:relative;flex:none;width:30px;height:16px;border-radius:999px;display:inline-block;background:${isConnected ? 'var(--acc,var(--color-accent,#9184d9))' : 'var(--color-neutral-800,#3f424d)'};cursor:pointer;" title="${isConnected ? 'Gạt để tạm tắt' : 'Gạt để bật lại'}">
+                    <span style="position:absolute;top:3px;left:${isConnected ? '17px' : '3px'};width:10px;height:10px;border-radius:50%;background:var(--color-bg,#161826);display:block;transition:all 0.2s ease;"></span>
+                  </span>
+                  <span style="font-size:11px; color:${isConnected ? '#10b981' : 'var(--color-neutral-400,#b2b6ca)'}; font-weight:500;">
                     ${isConnected ? 'Trực Chiến' : 'Tạm Tắt'}
                   </span>
                 ` : `
-                  <span class="badge neutral" style="font-size:10px">${escapeHtml(app.auth_type || 'Zero-Config')}</span>
+                  <span style="font-size:10px; padding:2px 6px; border-radius:var(--radius-sm,4px); color:var(--color-neutral-400,#b2b6ca); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);">${escapeHtml(app.auth_type || 'Zero-Config')}</span>
                 `}
               </div>
 
-              <div style="display:flex;gap:6px;align-items:center">
-                <button class="btn sm" onclick="openInspectAppTools('${escapeHtml(app.id)}')">
-                  🔍 Tools
+              <div style="display:flex; gap:6px; align-items:center;">
+                <button class="btn btn-secondary" onclick="openInspectAppTools('${escapeHtml(app.id)}')" style="height:26px; padding:0 8px; font-size:11px;">
+                  Tools
                 </button>
                 ${isConnected ? `
-                  <button class="btn sm danger" onclick="disconnectAppAction('${escapeHtml(app.id)}')" title="Ngắt kết nối ứng dụng">
+                  <button class="btn btn-ghost" onclick="disconnectAppAction('${escapeHtml(app.id)}')" style="height:26px; padding:0 8px; font-size:11px; color:#ef4444;" title="Ngắt kết nối ứng dụng">
                     Ngắt
                   </button>
                 ` : isMuted ? `
-                  <button class="btn sm primary" onclick="toggleMcpServerAction('${escapeHtml(app.server_key)}', true)">
-                    ▶️ Kích Hoạt
+                  <button class="btn btn-primary" onclick="toggleMcpServerAction('${escapeHtml(app.server_key)}', true)" style="height:26px; padding:0 10px; font-size:11px;">
+                    Kích Hoạt
                   </button>
                 ` : `
-                  <button class="btn sm primary" onclick="openConnectAppModal('${escapeHtml(app.id)}')">
-                    ⚡ Kết Nối
+                  <button class="btn btn-primary" onclick="openConnectAppModal('${escapeHtml(app.id)}')" style="height:26px; padding:0 10px; font-size:11px;">
+                    Kết Nối
                   </button>
                 `}
               </div>
@@ -7656,151 +7967,34 @@ function renderMcpCardsOnly() {
   `;
 }
 
-function renderMcpActiveServersView() {
-  const mcp = state.mcp_connectors || { servers: [] };
-  const rawServers = mcp.servers || [];
-
-  return `
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Tổng Máy Chủ MCP Đang Cấu Hình</div>
-        <div class="kpi-val" style="color:var(--brand)">${rawServers.length}</div>
-        <div class="kpi-sub">Đồng bộ ~/.gemini/config/mcp_config.json</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Đang Trực Tuyến (Online)</div>
-        <div class="kpi-val" style="color:#10b981">${rawServers.filter(s => s.enabled).length}</div>
-        <div class="kpi-sub">Sẵn sàng phản hồi prompt của Sếp</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Đang Tạm Tắt (Muted)</div>
-        <div class="kpi-val" style="color:#f59e0b">${rawServers.filter(s => !s.enabled).length}</div>
-        <div class="kpi-sub">Lưu cấu hình an toàn</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Chuẩn Giao Thức</div>
-        <div class="kpi-val" style="color:#38bdf8">JSON-RPC</div>
-        <div class="kpi-sub">Stdio & Remote SSE Transport</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="card-title">🔌 Danh Sách Máy Chủ MCP Servers Khởi Chạy (Raw Ground Truth)</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
-            Cấu hình Single Source of Truth tại <code>~/.gemini/config/mcp_config.json</code>
-          </div>
-        </div>
-        <button class="btn sm primary" onclick="switchSubtab('mcp_connectors', 'custom')">
-          ➕ Thêm Máy Chủ MCP
-        </button>
-      </div>
-
-      ${rawServers.length === 0 ? `
-        <div class="empty-state">
-          <div class="empty-icon">🔌</div>
-          <div class="empty-title">Chưa Có Máy Chủ MCP Nào</div>
-          <div class="empty-desc">Chưa có máy chủ MCP nào được kích hoạt. Hãy chọn ứng dụng từ Kho Ứng Dụng để kết nối 1-click.</div>
-          <button class="btn sm primary" onclick="switchSubtab('mcp_connectors', 'connectors')">🏪 Vào Kho Ứng Dụng</button>
-        </div>
-      ` : `
-        <div class="table-responsive">
-          <table class="table" style="width:100%">
-            <thead>
-              <tr>
-                <th style="width:20%">Tên Máy Chủ</th>
-                <th style="width:12%">Giao Thức</th>
-                <th style="width:36%">Lệnh Thực Thi / Endpoint</th>
-                <th style="width:12%">Trạng Thái</th>
-                <th style="width:10%;text-align:center">Bật/Tắt</th>
-                <th style="width:10%;text-align:right">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rawServers.map(srv => {
-                const isOnline = srv.enabled;
-                const cmdDisplay = srv.type === 'sse' 
-                  ? srv.serverUrl 
-                  : `${srv.command || ''} ${(srv.args || []).join(' ')}`.trim();
-
-                return `
-                  <tr>
-                    <td>
-                      <div style="font-weight:700;font-family:var(--mono);color:var(--text);font-size:13px">
-                        ${escapeHtml(srv.name)}
-                      </div>
-                    </td>
-                    <td>
-                      <span class="badge neutral" style="font-family:var(--mono);font-size:11px">
-                        ${srv.type ? srv.type.toUpperCase() : 'STDIO'}
-                      </span>
-                    </td>
-                    <td>
-                      <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);word-break:break-all;max-width:380px" title="${escapeHtml(cmdDisplay)}">
-                        ${escapeHtml(cmdDisplay)}
-                      </div>
-                    </td>
-                    <td>
-                      <span class="badge ${isOnline ? 'good' : 'warning'}" style="font-size:11px;font-weight:700">
-                        ${isOnline ? '🟢 ONLINE' : '🟡 MUTED'}
-                      </span>
-                    </td>
-                    <td style="text-align:center">
-                      <label class="switch-toggle" title="${isOnline ? 'Tắt server này' : 'Bật server này'}">
-                        <input type="checkbox" ${isOnline ? 'checked' : ''} onchange="toggleMcpServerAction('${escapeHtml(srv.name)}', this.checked)">
-                        <span class="switch-slider"></span>
-                      </label>
-                    </td>
-                    <td style="text-align:right">
-                      <div style="display:flex;gap:4px;justify-content:flex-end">
-                        <button class="btn sm" onclick="openInspectRawServer('${escapeHtml(srv.name)}')" title="Xem cấu hình chi tiết">
-                          🔍
-                        </button>
-                        <button class="btn sm danger" onclick="openDeleteMcpServerModal('${escapeHtml(srv.name)}')" title="Xóa máy chủ này (Yêu cầu mã PIN)">
-                          🗑️
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      `}
-    </div>
-  `;
-}
-
 function renderMcpCustomBuilderView() {
   return `
-    <div class="card" style="max-width:800px;margin:0 auto;padding:24px">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:14px">
-        <span style="font-size:32px">⚙️</span>
+    <div style="max-width:800px; margin:0 auto; background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:24px;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16)); padding-bottom:14px;">
+        <span style="font-size:28px;">⚙️</span>
         <div>
-          <h2 style="font-size:17px;font-weight:700;color:var(--text);margin:0">Cấu Hình Máy Chủ MCP Tùy Chỉnh (Custom MCP Builder)</h2>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
+          <h2 style="font-size:16px; font-weight:600; color:var(--color-text,#e9e9ed); margin:0;">Cấu Hình Máy Chủ MCP Tùy Chỉnh (Custom MCP Builder)</h2>
+          <div style="font-size:12px; color:var(--color-neutral-400,#b2b6ca); margin-top:2px;">
             Thêm bất kỳ máy chủ MCP theo chuẩn Model Context Protocol vào Antigravity Brain
           </div>
         </div>
       </div>
 
-      <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex; flex-direction:column; gap:16px;">
         <div>
-          <label class="form-label" style="font-weight:700">Tên Định Danh Máy Chủ (Server Name) <span style="color:var(--danger)">*</span></label>
-          <input type="text" class="form-input" id="custom-mcp-name" placeholder="vd: my-postgres-db, custom-tools, jira-mcp" autofocus />
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Tên viết liền, không dấu, dùng dấu gạch nối (vd: postgres-analytics).</div>
+          <label class="form-label" style="font-weight:600; font-size:11.5px; color:var(--color-text,#e9e9ed);">Tên Định Danh Máy Chủ (Server Name) <span style="color:#ef4444;">*</span></label>
+          <input type="text" class="form-input" id="custom-mcp-name" placeholder="vd: my-postgres-db, custom-tools, jira-mcp" style="background:var(--color-bg,#161826); border:1px solid var(--color-neutral-800,#3f424d); color:var(--color-text,#e9e9ed); font-size:12px; height:32px; border-radius:var(--radius-sm,4px); width:100%; padding:0 10px; margin-top:4px;" autofocus />
+          <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-top:4px;">Tên viết liền, không dấu, dùng dấu gạch nối (vd: postgres-analytics).</div>
         </div>
 
         <div>
-          <label class="form-label" style="font-weight:700">Giao Thức Truyền Tải (Transport Protocol)</label>
-          <div style="display:flex;gap:20px;margin-top:6px">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text)">
+          <label class="form-label" style="font-weight:600; font-size:11.5px; color:var(--color-text,#e9e9ed);">Giao Thức Truyền Tải (Transport Protocol)</label>
+          <div style="display:flex; gap:20px; margin-top:6px;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:var(--color-text,#e9e9ed);">
               <input type="radio" name="custom-mcp-type" value="stdio" checked onchange="toggleCustomMcpType('stdio')">
               <span><b>Stdio</b> (Lệnh dòng lệnh cục bộ - Command Line)</span>
             </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--text)">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:var(--color-text,#e9e9ed);">
               <input type="radio" name="custom-mcp-type" value="sse" onchange="toggleCustomMcpType('sse')">
               <span><b>SSE</b> (Remote HTTP Server-Sent Events)</span>
             </label>
@@ -7809,39 +8003,39 @@ function renderMcpCustomBuilderView() {
 
         <!-- STDIO Section -->
         <div id="custom-mcp-stdio-fields">
-          <div style="margin-bottom:14px">
-            <label class="form-label" style="font-weight:700">Lệnh Thực Thi (Command) <span style="color:var(--danger)">*</span></label>
-            <input type="text" class="form-input" id="custom-mcp-command" placeholder="vd: npx, uvx, python3, node" value="npx" />
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Lệnh nhị phân thực thi máy chủ MCP (vd: npx, python3, uvx, docker).</div>
+          <div style="margin-bottom:14px;">
+            <label class="form-label" style="font-weight:600; font-size:11.5px; color:var(--color-text,#e9e9ed);">Lệnh Thực Thi (Command) <span style="color:#ef4444;">*</span></label>
+            <input type="text" class="form-input" id="custom-mcp-command" placeholder="vd: npx, uvx, python3, node" value="npx" style="background:var(--color-bg,#161826); border:1px solid var(--color-neutral-800,#3f424d); color:var(--color-text,#e9e9ed); font-size:12px; height:32px; border-radius:var(--radius-sm,4px); width:100%; padding:0 10px; margin-top:4px;" />
+            <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-top:4px;">Lệnh nhị phân thực thi máy chủ MCP (vd: npx, python3, uvx, docker).</div>
           </div>
 
           <div>
-            <label class="form-label" style="font-weight:700">Danh Sách Tham Số (Arguments)</label>
-            <textarea class="form-input" id="custom-mcp-args" rows="3" placeholder="-y\n@modelcontextprotocol/server-postgres\npostgresql://user:pass@localhost:5432/mydb" style="font-family:var(--mono);font-size:12px"></textarea>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Mỗi dòng một tham số, hoặc cách nhau bởi dấu cách.</div>
+            <label class="form-label" style="font-weight:600; font-size:11.5px; color:var(--color-text,#e9e9ed);">Danh Sách Tham Số (Arguments)</label>
+            <textarea class="form-input" id="custom-mcp-args" rows="3" placeholder="-y\n@modelcontextprotocol/server-postgres\npostgresql://user:pass@localhost:5432/mydb" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; background:var(--color-bg,#161826); border:1px solid var(--color-neutral-800,#3f424d); color:var(--color-text,#e9e9ed); border-radius:var(--radius-sm,4px); width:100%; padding:8px 10px; margin-top:4px;"></textarea>
+            <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-top:4px;">Mỗi dòng một tham số, hoặc cách nhau bởi dấu cách.</div>
           </div>
         </div>
 
         <!-- SSE Section -->
-        <div id="custom-mcp-sse-fields" style="display:none">
+        <div id="custom-mcp-sse-fields" style="display:none;">
           <div>
-            <label class="form-label" style="font-weight:700">Địa Chỉ Endpoint Máy Chủ SSE (Server URL) <span style="color:var(--danger)">*</span></label>
-            <input type="text" class="form-input" id="custom-mcp-url" placeholder="vd: http://localhost:8000/sse hoặc https://mcp.internal.corp/sse" />
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Endpoint phát sóng sự kiện Server-Sent Events của máy chủ MCP.</div>
+            <label class="form-label" style="font-weight:600; font-size:11.5px; color:var(--color-text,#e9e9ed);">Địa Chỉ Endpoint Máy Chủ SSE (Server URL) <span style="color:#ef4444;">*</span></label>
+            <input type="text" class="form-input" id="custom-mcp-url" placeholder="vd: http://localhost:8000/sse hoặc https://mcp.internal.corp/sse" style="background:var(--color-bg,#161826); border:1px solid var(--color-neutral-800,#3f424d); color:var(--color-text,#e9e9ed); font-size:12px; height:32px; border-radius:var(--radius-sm,4px); width:100%; padding:0 10px; margin-top:4px;" />
+            <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-top:4px;">Endpoint phát sóng sự kiện Server-Sent Events của máy chủ MCP.</div>
           </div>
         </div>
 
         <!-- Environment Variables -->
         <div>
-          <label class="form-label" style="font-weight:700">Biến Môi Trường (Environment Variables - Tùy Chọn)</label>
-          <textarea class="form-input" id="custom-mcp-env" rows="3" placeholder="API_KEY=sk-xxxx\nDEBUG=true" style="font-family:var(--mono);font-size:12px"></textarea>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Định dạng <code>KEY=VALUE</code> trên mỗi dòng (nếu cần truyền biến môi trường bảo mật).</div>
+          <label class="form-label" style="font-weight:600; font-size:11.5px; color:var(--color-text,#e9e9ed);">Biến Môi Trường (Environment Variables - Tùy Chọn)</label>
+          <textarea class="form-input" id="custom-mcp-env" rows="3" placeholder="API_KEY=sk-xxxx\nDEBUG=true" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; background:var(--color-bg,#161826); border:1px solid var(--color-neutral-800,#3f424d); color:var(--color-text,#e9e9ed); border-radius:var(--radius-sm,4px); width:100%; padding:8px 10px; margin-top:4px;"></textarea>
+          <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-top:4px;">Định dạng <code>KEY=VALUE</code> trên mỗi dòng (nếu cần truyền biến môi trường bảo mật).</div>
         </div>
 
-        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;padding-top:14px;border-top:1px solid var(--border)">
-          <button class="btn" onclick="switchSubtab('mcp_connectors', 'connectors')">Hủy Bỏ</button>
-          <button class="btn primary" onclick="submitCustomMcpAction()" style="display:inline-flex;align-items:center;gap:6px">
-            🚀 Khởi Tạo & Nạp Vào Hệ Thống
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px; padding-top:14px; border-top:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+          <button class="btn btn-secondary" onclick="switchSubtab('mcp_connectors', 'servers')" style="height:30px; padding:0 12px; font-size:11.5px;">Hủy Bỏ</button>
+          <button class="btn btn-primary" onclick="submitCustomMcpAction()" style="gap:6px; height:30px; padding:0 14px; font-size:11.5px; white-space:nowrap; color:var(--color-accent-300,#d2cefd); border-color:var(--acc,var(--color-accent));">
+            🚀 Khởi Tạo &amp; Nạp Vào Hệ Thống
           </button>
         </div>
       </div>
