@@ -120,6 +120,18 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.do_GET()
 
+    def _get_early_warning_engine(self):
+        store = self.plugin_ref.ctx.inject("data_store") if self.plugin_ref else None
+        d = store.data_dir if store and hasattr(store, "data_dir") else None
+        from heo_harness.core.early_warning import EarlyWarningEngine
+        return EarlyWarningEngine(data_dir=d)
+
+    def _get_relationship_engine(self):
+        store = self.plugin_ref.ctx.inject("data_store") if self.plugin_ref else None
+        d = store.data_dir if store and hasattr(store, "data_dir") else None
+        from heo_harness.core.relationship_map import RelationshipIntelligenceEngine
+        return RelationshipIntelligenceEngine(data_dir=d)
+
     def do_GET(self):
         path_clean = self.path.split("?")[0]
         plugin = self.plugin_ref
@@ -713,10 +725,24 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
 
         # ================= RELATIONSHIP GRAPH & LIVING PROFILES =================
         elif path_clean in ["/api/relationship/graph", "/api/relationship_graph"]:
-            from heo_harness.core.data_factory import get_data_factory
-            df = get_data_factory()
-            graph = df.get_relationship_graph()
+            rel = self._get_relationship_engine()
+            graph = rel.get_relationship_graph()
             self._send_json(graph)
+
+        elif path_clean in ["/api/relationship_graph/analytics", "/api/relationship/analytics"]:
+            rel = self._get_relationship_engine()
+            analytics = rel.get_relationship_analytics()
+            self._send_json(analytics)
+
+        elif path_clean in ["/api/opportunity_board/stages", "/api/opportunity/board", "/api/opportunity_board"]:
+            rel = self._get_relationship_engine()
+            board = rel.get_opportunity_board()
+            self._send_json(board)
+
+        elif path_clean in ["/api/care_quality/analytics", "/api/care_quality/report"]:
+            rel = self._get_relationship_engine()
+            care = rel.get_care_quality_analytics()
+            self._send_json(care)
 
         elif path_clean in ["/api/contacts/detail", "/api/data_factory/contact_detail"]:
             from heo_harness.core.data_factory import get_data_factory
@@ -843,6 +869,49 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             status = query_params.get("status", ["ALL"])[0]
             promises = pr.get_broken_promises(status=status)
             self._send_json({"ok": True, "broken_promises": promises, "count": len(promises)})
+
+        # ================= SPEC-42: EARLY WARNING, IDENTITY RESOLUTION & LIVING PROFILES =================
+        elif path_clean in ["/api/early_warning/alerts", "/api/alerts/list"]:
+            ew = self._get_early_warning_engine()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            status = query_params.get("status", ["ACTIVE"])[0]
+            severity = query_params.get("severity", [None])[0]
+            atype = query_params.get("type", [None])[0]
+            limit = int(query_params.get("limit", [50])[0])
+            alerts = ew.get_alerts(status=status, severity=severity, alert_type=atype, limit=limit)
+            self._send_json({"ok": True, "alerts": alerts, "count": len(alerts)})
+
+        elif path_clean in ["/api/early_warning/summary", "/api/alerts/summary"]:
+            ew = self._get_early_warning_engine()
+            summary = ew.get_alert_summary()
+            self._send_json(summary)
+
+        elif path_clean in ["/api/identity/suggestions", "/api/identity_resolution/suggestions"]:
+            ew = self._get_early_warning_engine()
+            suggestions = ew.get_identity_suggestions()
+            self._send_json({"ok": True, "suggestions": suggestions, "count": len(suggestions)})
+
+        elif path_clean in ["/api/identity/history", "/api/identity_resolution/history"]:
+            ew = self._get_early_warning_engine()
+            history = ew.get_identity_history()
+            self._send_json({"ok": True, "history": history, "count": len(history)})
+
+        elif path_clean in ["/api/living_profile/detail", "/api/living_profile"]:
+            ew = self._get_early_warning_engine()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            cid = query_params.get("id", [None])[0] or query_params.get("contact_id", [None])[0]
+            if not cid:
+                self._send_json({"ok": False, "error": "Thiếu tham số contact id"}, 400)
+                return
+            profile = ew.get_living_profile(cid)
+            self._send_json(profile)
+
+        elif path_clean in ["/api/brain_search"]:
+            ew = self._get_early_warning_engine()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            q = query_params.get("q", [""])[0] or query_params.get("query", [""])[0]
+            res = ew.brain_search(q)
+            self._send_json(res)
 
         else:
             self._send_json({"error": "Endpoint not found"}, 404)
@@ -1029,15 +1098,15 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
 
         # ================= DATA FACTORY & OPPORTUNITY KANBAN =================
         elif path_clean in ["/api/data_factory/opportunity/update_stage", "/api/opportunity/update_stage"]:
-            from heo_harness.core.data_factory import get_data_factory
-            df = get_data_factory()
             opp_id = data.get("opp_id")
             new_stage = data.get("stage")
+            reason = data.get("reason", "")
             if not opp_id or not new_stage:
                 self._send_json({"ok": False, "error": "Missing opp_id or stage"}, 400)
                 return
-            success = df.update_opportunity_stage(opp_id, new_stage)
-            self._send_json({"ok": success, "message": f"Đã chuyển cơ hội sang {new_stage}" if success else "Cập nhật thất bại"})
+            rel = self._get_relationship_engine()
+            res = rel.transition_opportunity_stage(opp_id, new_stage, reason=reason)
+            self._send_json(res)
             return
 
         elif path_clean in ["/api/data_factory/opportunity/create", "/api/opportunity/create"]:
@@ -2625,6 +2694,133 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json(res)
             else:
                 self._send_json({"ok": False, "error": "DataStore unavailable"}, 500)
+
+        # ================= SPEC-42: EARLY WARNING, IDENTITY RESOLUTION & LIVING PROFILES =================
+        elif path_clean in ["/api/early_warning/action", "/api/alerts/action"]:
+            ew = self._get_early_warning_engine()
+            alr_id = data.get("id") or data.get("alert_id")
+            action_type = (data.get("action") or "acknowledge").lower()
+            user_name = active_prof.get("name", "Anh Cơ La (Ryan)")
+
+            if action_type == "scan":
+                new_alerts = ew.scan_and_generate_alerts()
+                self._send_json({"ok": True, "message": f"Đã quét radar: sinh {len(new_alerts)} cảnh báo mới", "alerts": new_alerts})
+                return
+
+            if not alr_id:
+                self._send_json({"ok": False, "error": "Thiếu alert_id"}, 400)
+                return
+
+            if action_type == "acknowledge":
+                ok = ew.acknowledge_alert(alr_id, user=user_name)
+                self._send_json({"ok": ok, "message": f"Đã tiếp nhận cảnh báo {alr_id}"})
+            elif action_type == "resolve":
+                taken = data.get("action_taken", "Đã xử lý dứt điểm bởi điều hành")
+                ok = ew.resolve_alert(alr_id, action_taken=taken, user=user_name)
+                self._send_json({"ok": ok, "message": f"Đã giải quyết cảnh báo {alr_id}"})
+            elif action_type == "dismiss":
+                reason = data.get("reason", "Bỏ qua bởi người điều hành")
+                ok = ew.dismiss_alert(alr_id, reason=reason, user=user_name)
+                self._send_json({"ok": ok, "message": f"Đã bỏ qua cảnh báo {alr_id}"})
+            else:
+                self._send_json({"ok": False, "error": f"Hành động không hợp lệ: {action_type}"}, 400)
+
+        elif path_clean in ["/api/identity/merge", "/api/identity_resolution/merge"]:
+            if active_role in [ROLE_AGENT, ROLE_AUDITOR]:
+                self._send_json({"ok": False, "error": "Chỉ Quản lý hoặc Chủ nhân mới có quyền gộp danh tính", "restricted": True}, 403)
+                return
+            ew = self._get_early_warning_engine()
+            p_id = data.get("primary_id")
+            s_id = data.get("secondary_id")
+            if not p_id or not s_id:
+                self._send_json({"ok": False, "error": "Cần cung cấp primary_id và secondary_id"}, 400)
+                return
+            res = ew.merge_identities(p_id, s_id, user=active_prof.get("name", "Anh Cơ La (Ryan)"))
+            self._send_json(res)
+
+        elif path_clean in ["/api/identity/split", "/api/identity_resolution/split"]:
+            if active_role in [ROLE_AGENT, ROLE_AUDITOR]:
+                self._send_json({"ok": False, "error": "Chỉ Quản lý hoặc Chủ nhân mới có quyền tách danh tính", "restricted": True}, 403)
+                return
+            ew = self._get_early_warning_engine()
+            h_id = data.get("history_id")
+            if not h_id:
+                self._send_json({"ok": False, "error": "Thiếu history_id"}, 400)
+                return
+            res = ew.split_identity(h_id, user=active_prof.get("name", "Anh Cơ La (Ryan)"))
+            self._send_json(res)
+
+        elif path_clean in ["/api/living_profile/save_notes"]:
+            ew = self._get_early_warning_engine()
+            cid = data.get("id") or data.get("contact_id")
+            notes = data.get("notes", "")
+            if not cid:
+                self._send_json({"ok": False, "error": "Thiếu contact_id"}, 400)
+                return
+            ok = ew.update_notes(cid, notes, user=active_prof.get("name", "Anh Cơ La (Ryan)"))
+            self._send_json({"ok": ok, "message": "Đã lưu ghi chú tay của chủ nhân"})
+
+        elif path_clean in ["/api/living_profile/update_autonomy"]:
+            if active_role not in [ROLE_OWNER, ROLE_MANAGER]:
+                self._send_json({"ok": False, "error": "Chỉ Quản trị viên cấp cao mới có quyền điều chỉnh Mức Tự Trị", "restricted": True}, 403)
+                return
+            ew = self._get_early_warning_engine()
+            cid = data.get("id") or data.get("contact_id")
+            lvl = int(data.get("autonomy_level", 2))
+            ok = ew.update_autonomy(cid, lvl)
+            self._send_json({"ok": ok, "message": f"Đã cập nhật mức tự trị lên Cấp {lvl}/6"})
+
+        elif path_clean in ["/api/brain_search"]:
+            ew = self._get_early_warning_engine()
+            q = data.get("q") or data.get("query", "")
+            res = ew.brain_search(q)
+            self._send_json(res)
+
+        # ================= SPEC-43: RELATIONSHIP GRAPH & OPPORTUNITY BOARD =================
+        elif path_clean in ["/api/relationship_graph/edge", "/api/relationship/edge"]:
+            if active_role == ROLE_AUDITOR:
+                self._send_json({"ok": False, "error": "Vai trò Kiểm Toán (Auditor) chỉ có quyền xem, không được chỉnh sửa mạng lưới quan hệ", "restricted": True}, 403)
+                return
+            rel = self._get_relationship_engine()
+            from_node = data.get("from_node") or data.get("from")
+            to_node = data.get("to_node") or data.get("to")
+            if not from_node or not to_node:
+                self._send_json({"ok": False, "error": "Missing from_node or to_node"}, 400)
+                return
+            edge_type = data.get("edge_type", "collaboration")
+            weight = float(data.get("weight", 1.0))
+            last_topic = data.get("last_topic", "")
+            relationship_stage = data.get("relationship_stage", "warm")
+            ball_owner = data.get("ball_owner", "THEM")
+            res = rel.upsert_edge(from_node, to_node, edge_type, weight, last_topic, relationship_stage, ball_owner)
+            self._send_json(res)
+
+        elif path_clean in ["/api/relationship_graph/edge/delete", "/api/relationship/edge/delete"]:
+            if active_role == ROLE_AUDITOR:
+                self._send_json({"ok": False, "error": "Vai trò Kiểm Toán (Auditor) chỉ có quyền xem, không được xóa liên kết quan hệ", "restricted": True}, 403)
+                return
+            rel = self._get_relationship_engine()
+            edge_id = data.get("edge_id") or data.get("id")
+            if not edge_id:
+                self._send_json({"ok": False, "error": "Missing edge_id"}, 400)
+                return
+            ok = rel.delete_edge(edge_id)
+            self._send_json({"ok": ok, "message": "Đã xóa liên kết quan hệ" if ok else "Không tìm thấy liên kết"})
+
+        elif path_clean in ["/api/opportunity_board/transition", "/api/opportunity/transition"]:
+            if active_role == ROLE_AUDITOR:
+                self._send_json({"ok": False, "error": "Vai trò Kiểm Toán (Auditor) chỉ có quyền xem, không được chuyển trạng thái cơ hội", "restricted": True}, 403)
+                return
+            rel = self._get_relationship_engine()
+            opp_id = data.get("opp_id") or data.get("id")
+            new_stage = data.get("stage") or data.get("new_stage")
+            reason = data.get("reason", "")
+            if not opp_id or not new_stage:
+                self._send_json({"ok": False, "error": "Missing opp_id or stage"}, 400)
+                return
+            user = active_prof.get("name", "Anh Cơ La (Ryan)")
+            res = rel.transition_opportunity_stage(opp_id, new_stage, reason=reason, changed_by=user)
+            self._send_json(res)
 
         else:
             self._send_json({"error": "Endpoint not found"}, 404)
