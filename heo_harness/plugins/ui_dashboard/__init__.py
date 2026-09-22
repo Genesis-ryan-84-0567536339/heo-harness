@@ -146,6 +146,13 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
         from heo_harness.core.commercial_workbench import SupplyDemandMatchmakerEngine
         return SupplyDemandMatchmakerEngine.get_instance(db_path=db_p) if db_p else SupplyDemandMatchmakerEngine.get_instance()
 
+    def _get_channel_radar(self):
+        store = self.plugin_ref.ctx.inject("data_store") if self.plugin_ref else None
+        d = store.data_dir if store and hasattr(store, "data_dir") else None
+        db_p = os.path.join(d, "heo.db") if d else None
+        from heo_harness.core.channel_radar import ChannelRadarEngine
+        return ChannelRadarEngine.get_instance(db_path=db_p) if db_p else ChannelRadarEngine.get_instance()
+
     def do_GET(self):
         path_clean = self.path.split("?")[0]
         plugin = self.plugin_ref
@@ -824,6 +831,40 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             supplies = mm.get_all_supplies(category=category)
             self._send_json({"ok": True, "supplies": supplies, "count": len(supplies)})
 
+        # ================= MULTI-CHANNEL RADAR (SPEC-04) =================
+        elif path_clean in ["/api/radar/channels", "/api/radar_channels"]:
+            radar = self._get_channel_radar()
+            channels = radar.get_channels_status()
+            self._send_json({"ok": True, "channels": channels, "count": len(channels)})
+
+        elif path_clean in ["/api/radar/logs", "/api/radar_logs"]:
+            radar = self._get_channel_radar()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            channel = query_params.get("channel", ["ALL"])[0]
+            limit = int(query_params.get("limit", [50])[0])
+            logs = radar.get_recent_logs(limit=limit, channel=channel)
+            self._send_json({"ok": True, "logs": logs, "count": len(logs)})
+
+        elif path_clean in ["/api/radar/webhook/facebook"]:
+            radar = self._get_channel_radar()
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            mode = query_params.get("hub.mode", [""])[0]
+            token = query_params.get("hub.verify_token", [""])[0]
+            challenge = query_params.get("hub.challenge", [""])[0]
+            verified_challenge = radar.verify_facebook_webhook(mode, token, challenge)
+            if verified_challenge:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(verified_challenge.encode("utf-8"))
+            else:
+                self.send_response(403)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(b"Forbidden")
+            return
+
+
 
         # ================= PEOPLE REVIEW & CARE QUALITY (SPEC-22, 23 & SPEC-36 RBAC) =================
         elif path_clean in ["/api/people_review/summary", "/api/care_quality/summary"]:
@@ -1306,6 +1347,47 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             res = mm.execute_next_action(match_id, action_type, notes=notes)
             self._send_json(res)
             return
+
+        # ================= MULTI-CHANNEL RADAR (SPEC-04) =================
+        elif path_clean in ["/api/radar/webhook/telegram"]:
+            radar = self._get_channel_radar()
+            res = radar.ingest_telegram_update(data)
+            self._send_json(res)
+            return
+
+        elif path_clean in ["/api/radar/webhook/facebook"]:
+            radar = self._get_channel_radar()
+            res = radar.ingest_facebook_entry(data)
+            self._send_json(res)
+            return
+
+        elif path_clean in ["/api/radar/webhook/generic"]:
+            radar = self._get_channel_radar()
+            res = radar.ingest_generic_webhook(data)
+            self._send_json(res)
+            return
+
+        elif path_clean in ["/api/radar/channel/configure"]:
+            radar = self._get_channel_radar()
+            channel = data.get("channel")
+            updates = data.get("updates", data)
+            if not channel:
+                self._send_json({"ok": False, "error": "Missing channel"}, 400)
+                return
+            ok = radar.configure_channel(channel, updates)
+            self._send_json({"ok": ok, "message": "Đã cập nhật cấu hình kênh Radar thành công"})
+            return
+
+        elif path_clean in ["/api/radar/simulate"]:
+            radar = self._get_channel_radar()
+            channel = data.get("channel", "telegram")
+            sender_name = data.get("sender_name", "Đối Tác Thử Nghiệm")
+            text = data.get("text", "Xin chào, tôi cần báo giá dịch vụ")
+            group_name = data.get("group_name", "Group Thử Nghiệm")
+            res = radar.simulate_inbound_ping(channel, sender_name, text, group_name)
+            self._send_json(res)
+            return
+
 
         elif path_clean in ["/api/care_quality/resolve_promise", "/api/broken_promises/resolve"]:
             from heo_harness.core.people_review import get_people_review_engine

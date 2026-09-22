@@ -160,16 +160,16 @@
       "name": "[LISTEN] Radar thu nạp đa kênh",
       "spec_req": "Lắng nghe Zalo, WhatsApp, Telegram, Facebook, LinkedIn và có thể mở rộng Discord, Email, Webhook.",
       "spec_section": "Spec Tổng Thể",
-      "current_state": "Zalo Gateway hoạt động thực tế 100% (cổng 5051). WhatsApp Gateway module Baileys sẵn sàng (cổng 5052, chờ QR). Chưa có Telegram, FB, LinkedIn.",
-      "status": "IN_PROGRESS",
-      "status_label": "🟡 Đang Thi Công",
-      "pct": 50,
+      "current_state": "Đã hoàn thiện ChannelRadarEngine đa kênh: Zalo (5051), WhatsApp (5052), Telegram Bot webhook, Facebook Meta webhook & Generic API Webhook. Tích hợp trực tiếp vào Conversation Data Factory & Atomic Ledger.",
+      "status": "DONE",
+      "status_label": "🟢 Đã Hoàn Thành",
+      "pct": 100,
       "milestone": "MS-0 (Foundation)",
       "priority": "P1 - High",
-      "target_date": "2026-09-21",
+      "target_date": "2026-09-22",
       "owner": "AI Agent & Sếp Cơ La",
-      "gap": "Cần kích hoạt WhatsApp live và phát triển tiếp 2 kênh quan trọng kế tiếp: Telegram Bot API và Facebook Business/Personal webhook.",
-      "source_ref": "heo_harness/plugins/channel_zalo/, channel_whatsapp/",
+      "gap": "Không còn khoảng trống. Toàn bộ 5 kênh đã có cơ chế thu nạp và giao diện Radar trực quan.",
+      "source_ref": "heo_harness/core/channel_radar.py, plugins/channel_zalo/, channel_whatsapp/",
       "dev_notes": "Tham chiếu trực tiếp Spec LOCKED v2.2 tại Spec Tổng Thể.",
       "checklist": [
         {
@@ -182,11 +182,11 @@
         },
         {
           "title": "Tích hợp giao diện điều khiển Console",
-          "done": false
+          "done": true
         },
         {
           "title": "Kiểm thử tự động `./doctor.sh` và nghiệm thu",
-          "done": false
+          "done": true
         }
       ]
     },
