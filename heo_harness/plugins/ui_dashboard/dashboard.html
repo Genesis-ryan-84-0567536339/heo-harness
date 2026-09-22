@@ -1646,8 +1646,8 @@ function renderActiveHub() {
       break;
 
     case 'chat_intelligence':
-      titleEl.textContent = 'Khai Thác Chat Big Data';
-      subEl.textContent = 'Bóc tách thông minh chỉ đạo Sếp, nhiệm vụ, lịch họp, sự cố và tri thức từ hội thoại Zalo & WhatsApp';
+      titleEl.textContent = 'Kho hội thoại & Trí tuệ (Knowledge & Search)';
+      subEl.textContent = 'Tìm theo ý định, người, ngành hàng, khoảng giá, thời gian và thái độ — bóc tách mẫu hành vi và chỉ đạo thực thi từ Big Data hội thoại';
       container.innerHTML = renderChatIntelligenceHub();
       break;
 
@@ -4295,62 +4295,62 @@ function renderChatIntelligenceHub() {
     <div class="hub-header">
       <div class="hub-header-top">
         <div>
-          <h1 class="hub-title">Khai Thác Chat Big Data & Bóc Tách Tri Thức (Chat Intelligence)</h1>
+          <h1 class="hub-title">Kho hội thoại &amp; Trí tuệ (Knowledge &amp; Search)</h1>
           <p class="hub-desc">
-            Bóc tách tự động hội thoại thực tế từ Zalo & WhatsApp. Phân loại Mệnh lệnh Sếp, Giao việc, Lịch họp, Tư vấn, Sự cố và chuyển đổi 1-click sang Task & Calendar.
+            Tìm theo ý định, người, ngành hàng, khoảng giá, thời gian và thái độ — không chỉ theo chữ. Khai thác Big Data thực dụng để tìm ra mẫu hành vi và chỉ đạo thực thi.
           </p>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <button class="btn sm" onclick="resetChatIntelFilters()">🧹 Xóa Bộ Lọc</button>
-          <button class="btn primary sm" onclick="fetchAllData()">🔄 Làm Mới Dữ Liệu</button>
+          <button class="btn btn-secondary sm" onclick="resetChatIntelFilters()"><i class="ph ph-arrow-counter-clockwise"></i> Xóa Bộ Lọc</button>
+          <button class="btn btn-primary sm" onclick="fetchAllData()"><i class="ph ph-arrows-clockwise"></i> Làm Mới Dữ Liệu</button>
         </div>
       </div>
     </div>
 
     <!-- KPI Summary Row -->
-    <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:14px;margin-bottom:20px">
-      <div class="card card-pad" style="border-left:3px solid var(--brand);cursor:pointer" onclick="setChatIntelCategory('all')">
-        <div class="text-sm muted" style="font-size:11px">TỔNG TIN BÓC TÁCH</div>
-        <div style="font-size:24px;font-weight:800;color:var(--text);margin:4px 0">${stats.total || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">💬 Zalo: ${stats.channels?.zalo || 0} · 📱 WA: ${stats.channels?.whatsapp || 0}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px;margin-bottom:16px">
+      <div class="card card-pad" style="border-left:3px solid var(--acc, #9184d9);cursor:pointer;background:var(--color-surface, var(--bg-card))" onclick="setChatIntelCategory('all')">
+        <div class="text-sm muted" style="font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase">TỔNG TIN BÓC TÁCH</div>
+        <div style="font-size:22px;font-weight:700;color:var(--color-text, var(--text));margin:4px 0">${stats.total || 0}</div>
+        <div style="font-size:11px;color:var(--color-neutral-400, var(--text-sec))">💬 Zalo: ${stats.channels?.zalo || 0} · 📱 WA: ${stats.channels?.whatsapp || 0}</div>
       </div>
 
-      <div class="card card-pad" style="border-left:3px solid #eab308;cursor:pointer" onclick="setChatIntelCategory('DIRECTIVE')">
-        <div class="text-sm muted" style="font-size:11px">👑 CHỈ ĐẠO CỦA SẾP</div>
-        <div style="font-size:24px;font-weight:800;color:#eab308;margin:4px 0">${stats.directives || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Chỉ thị tối cao</div>
+      <div class="card card-pad" style="border-left:3px solid var(--color-warning, #eab308);cursor:pointer;background:var(--color-surface, var(--bg-card))" onclick="setChatIntelCategory('DIRECTIVE')">
+        <div class="text-sm muted" style="font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase">👑 CHỈ ĐẠO CỦA SẾP</div>
+        <div style="font-size:22px;font-weight:700;color:#eab308;margin:4px 0">${stats.directives || 0}</div>
+        <div style="font-size:11px;color:var(--color-neutral-400, var(--text-sec))">Chỉ thị tối cao</div>
       </div>
 
-      <div class="card card-pad" style="border-left:3px solid #06b6d4;cursor:pointer" onclick="setChatIntelCategory('TASK')">
-        <div class="text-sm muted" style="font-size:11px">📋 YÊU CẦU / GIAO VIỆC</div>
-        <div style="font-size:24px;font-weight:800;color:#06b6d4;margin:4px 0">${stats.tasks || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Tiềm năng tạo Task</div>
+      <div class="card card-pad" style="border-left:3px solid var(--color-info, #06b6d4);cursor:pointer;background:var(--color-surface, var(--bg-card))" onclick="setChatIntelCategory('TASK')">
+        <div class="text-sm muted" style="font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase">📋 YÊU CẦU / GIAO VIỆC</div>
+        <div style="font-size:22px;font-weight:700;color:#06b6d4;margin:4px 0">${stats.tasks || 0}</div>
+        <div style="font-size:11px;color:var(--color-neutral-400, var(--text-sec))">Tiềm năng tạo Task</div>
       </div>
 
-      <div class="card card-pad" style="border-left:3px solid #c084fc;cursor:pointer" onclick="setChatIntelCategory('EVENT')">
-        <div class="text-sm muted" style="font-size:11px">📅 LỊCH HẸN / HỌP</div>
-        <div style="font-size:24px;font-weight:800;color:#c084fc;margin:4px 0">${stats.events || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Tiềm năng lên Calendar</div>
+      <div class="card card-pad" style="border-left:3px solid var(--color-accent-300, #c084fc);cursor:pointer;background:var(--color-surface, var(--bg-card))" onclick="setChatIntelCategory('EVENT')">
+        <div class="text-sm muted" style="font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase">📅 LỊCH HẸN / HỌP</div>
+        <div style="font-size:22px;font-weight:700;color:#c084fc;margin:4px 0">${stats.events || 0}</div>
+        <div style="font-size:11px;color:var(--color-neutral-400, var(--text-sec))">Tiềm năng lên Calendar</div>
       </div>
 
-      <div class="card card-pad" style="border-left:3px solid #fb923c;cursor:pointer" onclick="setChatIntelCategory('INQUIRY')">
-        <div class="text-sm muted" style="font-size:11px">💡 HỎI ĐÁP / TƯ VẤN</div>
-        <div style="font-size:24px;font-weight:800;color:#fb923c;margin:4px 0">${stats.inquiries || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Câu hỏi từ nhóm/đối tác</div>
+      <div class="card card-pad" style="border-left:3px solid #fb923c;cursor:pointer;background:var(--color-surface, var(--bg-card))" onclick="setChatIntelCategory('INQUIRY')">
+        <div class="text-sm muted" style="font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase">💡 HỎI ĐÁP / TƯ VẤN</div>
+        <div style="font-size:22px;font-weight:700;color:#fb923c;margin:4px 0">${stats.inquiries || 0}</div>
+        <div style="font-size:11px;color:var(--color-neutral-400, var(--text-sec))">Câu hỏi đối tác/nhóm</div>
       </div>
 
-      <div class="card card-pad" style="border-left:3px solid #ef4444;cursor:pointer" onclick="setChatIntelCategory('ALERT')">
-        <div class="text-sm muted" style="font-size:11px">🚨 CẢNH BÁO / SỰ CỐ</div>
-        <div style="font-size:24px;font-weight:800;color:#ef4444;margin:4px 0">${stats.alerts || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Cần xử lý khẩn cấp</div>
+      <div class="card card-pad" style="border-left:3px solid var(--color-danger, #ef4444);cursor:pointer;background:var(--color-surface, var(--bg-card))" onclick="setChatIntelCategory('ALERT')">
+        <div class="text-sm muted" style="font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase">🚨 CẢNH BÁO / SỰ CỐ</div>
+        <div style="font-size:22px;font-weight:700;color:#ef4444;margin:4px 0">${stats.alerts || 0}</div>
+        <div style="font-size:11px;color:var(--color-neutral-400, var(--text-sec))">Cần xử lý khẩn cấp</div>
       </div>
     </div>
 
     <!-- Multi-faceted Filter Bar -->
-    <div class="card" style="margin-bottom:20px;padding:14px 18px">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)) 240px;gap:12px;align-items:end">
+    <div class="card" style="margin-bottom:18px;padding:14px 18px;background:var(--color-surface, var(--bg-card));border:1px solid var(--color-border, var(--border));border-radius:var(--radius-md, 8px)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)) 220px;gap:12px;align-items:end">
         <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">KÊNH HỘI THOẠI</label>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-neutral-400, var(--text-muted))">KÊNH HỘI THOẠI</label>
           <select class="form-select" onchange="setChatIntelChannel(this.value)">
             <option value="all" ${f.channel === 'all' ? 'selected' : ''}>Tất Cả Kênh (Zalo + WA)</option>
             <option value="zalo" ${f.channel === 'zalo' ? 'selected' : ''}>💬 Kênh Zalo (${stats.channels?.zalo || 0})</option>
@@ -4359,20 +4359,20 @@ function renderChatIntelligenceHub() {
         </div>
 
         <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN LOẠI TRÍ TUỆ (NLP)</label>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-neutral-400, var(--text-muted))">PHÂN LOẠI TRÍ TUỆ (NLP)</label>
           <select class="form-select" onchange="setChatIntelCategory(this.value)">
             <option value="all" ${f.category === 'all' ? 'selected' : ''}>Tất Cả Phân Loại (${ci.messages?.length || 0})</option>
             <option value="DIRECTIVE" ${f.category === 'DIRECTIVE' ? 'selected' : ''}>👑 Chỉ Đạo Sếp (${stats.directives || 0})</option>
             <option value="TASK" ${f.category === 'TASK' ? 'selected' : ''}>📋 Yêu Cầu / Giao Việc (${stats.tasks || 0})</option>
             <option value="EVENT" ${f.category === 'EVENT' ? 'selected' : ''}>📅 Lịch Hẹn / Họp (${stats.events || 0})</option>
             <option value="INQUIRY" ${f.category === 'INQUIRY' ? 'selected' : ''}>💡 Hỏi Đáp / Tư Vấn (${stats.inquiries || 0})</option>
-            <option value="ALERT" ${f.category === 'ALERT' ? 'selected' : ''}>🚨 Cảnh Báo / Sự CỐ (${stats.alerts || 0})</option>
+            <option value="ALERT" ${f.category === 'ALERT' ? 'selected' : ''}>🚨 Cảnh Báo / Sự Cố (${stats.alerts || 0})</option>
             <option value="GENERAL" ${f.category === 'GENERAL' ? 'selected' : ''}>💬 Hội Thoại Xã Giao (${stats.general || 0})</option>
           </select>
         </div>
 
         <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">MỨC ĐỘ ƯU TIÊN</label>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-neutral-400, var(--text-muted))">MỨC ĐỘ ƯU TIÊN</label>
           <select class="form-select" onchange="setChatIntelPriority(this.value)">
             <option value="all" ${f.priority === 'all' ? 'selected' : ''}>Tất Cả Mức Độ</option>
             <option value="P1" ${f.priority === 'P1' ? 'selected' : ''}>🔴 P1 - Khẩn cấp / Trọng yếu</option>
@@ -4382,16 +4382,16 @@ function renderChatIntelligenceHub() {
         </div>
 
         <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN THEO NHÓM</label>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-neutral-400, var(--text-muted))">PHÂN THEO NHÓM</label>
           <select class="form-select" onchange="setChatIntelGroup(this.value)">
-            <option value="all" ${f.group === 'all' ? 'selected' : ''}>Tất Cả Nhóm & 1-1</option>
+            <option value="all" ${f.group === 'all' ? 'selected' : ''}>Tất Cả Nhóm &amp; 1-1</option>
             <option value="1-1" ${f.group === '1-1' ? 'selected' : ''}>👤 Hội thoại 1-1 Cá nhân</option>
             ${allGroups.map(g => `<option value="${g.id}" ${f.group === g.id ? 'selected' : ''}>🏢 ${escapeHtml(g.name)} (${(g.channel || 'zalo').toUpperCase()})</option>`).join('')}
           </select>
         </div>
 
         <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">NGƯỜI GỬI / TÁC GIẢ</label>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-neutral-400, var(--text-muted))">NGƯỜI GỬI / TÁC GIẢ</label>
           <select class="form-select" onchange="setChatIntelPerson(this.value)">
             <option value="all" ${f.person === 'all' ? 'selected' : ''}>Tất Cả Người Gửi</option>
             ${allSenders.map(s => `<option value="${s}" ${f.person === s ? 'selected' : ''}>👤 ${escapeHtml(s)} (${stats.senders[s]})</option>`).join('')}
@@ -4399,7 +4399,7 @@ function renderChatIntelligenceHub() {
         </div>
 
         <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">Ý ĐỊNH (INTENT SPEC-24)</label>
+          <label class="form-label" style="margin-bottom:4px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-neutral-400, var(--text-muted))">Ý ĐỊNH (SPEC F2.8)</label>
           <select class="form-select" onchange="setChatIntelIntent(this.value)">
             <option value="all" ${(f.intent || 'all') === 'all' ? 'selected' : ''}>Tất Cả Ý Định</option>
             <option value="PRICE_ASK" ${f.intent === 'PRICE_ASK' ? 'selected' : ''}>💰 Hỏi Giá / Chi Phí</option>
@@ -4410,35 +4410,46 @@ function renderChatIntelligenceHub() {
         </div>
 
         <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">TÌM KIẾM NỘI DUNG</label>
-          <input class="form-input" placeholder="Nhập từ khóa cần tìm..." value="${escapeHtml(f.q || '')}" oninput="setChatIntelSearch(this.value)" />
+          <label class="form-label" style="margin-bottom:4px;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-neutral-400, var(--text-muted))">TÌM KIẾM NỘI DUNG</label>
+          <input class="form-input" placeholder="Nhập từ khóa hoặc ý định..." value="${escapeHtml(f.q || '')}" oninput="setChatIntelSearch(this.value)" />
         </div>
 
         <div style="display:flex;align-items:flex-end">
-          <button class="btn sm ${f.only_silent ? 'danger' : 'subtle'}" style="width:100%;height:32px" onclick="toggleChatIntelSilent()">
-            <i class="ph ph-snowflake"></i> ${f.only_silent ? 'Đang Lọc Khách Im Lặng' : '⚠️ Lọc Khách Bỏ Rơi (>3d)'}
+          <button class="btn sm ${f.only_silent ? 'danger' : 'secondary'}" style="width:100%;height:32px" onclick="toggleChatIntelSilent()">
+            <i class="ph ph-snowflake"></i> ${f.only_silent ? 'Đang Lọc Khách Im Lặng' : '⚠️ Khách Bỏ Rơi (>3d)'}
           </button>
         </div>
+      </div>
+
+      <!-- Quick query suggestions per Spec F2.8 & Nocturne tokens -->
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--color-divider, rgba(233,233,237,0.08))">
+        <span style="font-size:10.5px;color:var(--color-neutral-500, var(--text-muted));font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Mẫu truy vấn nhanh:</span>
+        <button class="btn btn-ghost sm" style="height:24px;padding:0 9px;font-size:11px" onclick="setChatIntelCategory('DIRECTIVE')">👑 Chỉ đạo của Sếp</button>
+        <button class="btn btn-ghost sm" style="height:24px;padding:0 9px;font-size:11px" onclick="setChatIntelIntent('PRICE_ASK')">💰 Hỏi giá / Chi phí</button>
+        <button class="btn btn-ghost sm" style="height:24px;padding:0 9px;font-size:11px" onclick="setChatIntelCategory('EVENT')">📅 Lịch hẹn &amp; Họp</button>
+        <button class="btn btn-ghost sm" style="height:24px;padding:0 9px;font-size:11px" onclick="setChatIntelPriority('P1')">🔴 Việc khẩn cấp (P1)</button>
+        <button class="btn btn-ghost sm" style="height:24px;padding:0 9px;font-size:11px" onclick="toggleChatIntelSilent()">❄️ Khách im lặng (&gt;3d)</button>
       </div>
     </div>
 
     <!-- Classified Message Feed -->
-    <div class="card">
+    <div class="card" style="background:var(--color-surface, var(--bg-card));border:1px solid var(--color-border, var(--border));border-radius:var(--radius-md, 8px)">
       <div class="card-header" style="justify-content:space-between">
-        <div class="card-title">
+        <div class="card-title" style="font-size:13.5px;font-weight:600;color:var(--color-text, var(--text));display:flex;align-items:center;gap:8px">
+          <i class="ph ph-chat-centered-text" style="color:var(--acc, #9184d9)"></i>
           Danh Sách Hội Thoại Đã Bóc Tách (${filteredMsgs.length} / ${ci.messages?.length || 0} tin nhắn)
         </div>
-        <div style="font-size:12px;color:var(--text-muted)">
-          Tự động phân loại bằng NLP Rules & 0đ Token API
+        <div style="font-size:11.5px;color:var(--color-neutral-400, var(--text-muted))">
+          Tự động phân loại bằng NLP Rules &amp; 0đ Token API
         </div>
       </div>
 
       ${filteredMsgs.length === 0 ? `
-        <div style="text-align:center;padding:48px 20px;color:var(--text-muted)">
+        <div style="text-align:center;padding:48px 20px;color:var(--color-neutral-400, var(--text-muted))">
           <div style="font-size:36px;margin-bottom:10px">🔍</div>
-          <div style="font-weight:700;font-size:14px;color:var(--text)">Không tìm thấy tin nhắn nào phù hợp với bộ lọc</div>
+          <div style="font-weight:600;font-size:14px;color:var(--color-text, var(--text))">Không tìm thấy tin nhắn nào phù hợp với bộ lọc</div>
           <div style="font-size:12px;margin-top:4px">Thử bấm "🧹 Xóa Bộ Lọc" để xem toàn bộ tin nhắn đã thu thập.</div>
-          <button class="btn sm" style="margin-top:14px" onclick="resetChatIntelFilters()">🧹 Xóa Bộ Lọc</button>
+          <button class="btn btn-secondary sm" style="margin-top:14px" onclick="resetChatIntelFilters()"><i class="ph ph-arrow-counter-clockwise"></i> Xóa Bộ Lọc</button>
         </div>
       ` : `
         <div style="display:flex;flex-direction:column;gap:12px;padding:16px">
@@ -4467,49 +4478,49 @@ function renderChatIntelligenceCard(m, idx) {
   const chBadge = getChannelBadge(m.channel);
   const grpText = m.group_name ? `🏢 ${escapeHtml(m.group_name)}` : (m.group_id ? `🏢 GID: ${escapeHtml(m.group_id)}` : `👤 Trò chuyện 1-1`);
 
-  let borderColor = 'var(--border)';
+  let borderColor = 'var(--color-border, var(--border))';
   if (isDirect) borderColor = 'rgba(234,179,8,0.4)';
   else if (isAlert) borderColor = 'rgba(239,68,68,0.4)';
   else if (isTask) borderColor = 'rgba(6,182,212,0.4)';
   else if (isEvent) borderColor = 'rgba(168,85,247,0.4)';
 
   return `
-    <div style="background:var(--bg-body);border:1px solid ${borderColor};border-radius:8px;padding:14px 16px;position:relative">
+    <div style="background:var(--color-surface, var(--bg-body));border:1px solid ${borderColor};border-radius:var(--radius-md, 8px);padding:14px 16px;position:relative">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           ${chBadge}
           ${catBadge}
           ${priBadge}
-          <span style="font-size:11px;color:var(--brand);font-weight:600;background:rgba(16,185,129,0.08);padding:2px 8px;border-radius:4px;border:1px solid rgba(16,185,129,0.2)">
+          <span style="font-size:11px;color:var(--brand, #3b82f6);font-weight:600;background:rgba(16,185,129,0.08);padding:2px 8px;border-radius:4px;border:1px solid rgba(16,185,129,0.2)">
             ${grpText}
           </span>
-          <span style="font-size:12px;font-weight:700;color:var(--text)">
+          <span style="font-size:12px;font-weight:700;color:var(--color-text, var(--text))">
             ${isOutgoing ? '📤' : '📥'} ${escapeHtml(m.sender_name || 'Khách')}
           </span>
         </div>
-        <div style="font-size:11px;color:var(--text-faint);font-family:var(--mono)">
+        <div style="font-size:11px;color:var(--color-neutral-400, var(--text-faint));font-family:ui-monospace,SFMono-Regular,Menlo,monospace">
           ⏰ ${escapeHtml(m.time_str || '')}
         </div>
       </div>
 
-      <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap;background:var(--bg-card);padding:10px 12px;border-radius:6px;border:1px solid var(--border-subtle);margin-bottom:12px;max-height:220px;overflow-y:auto">
+      <div style="font-size:13px;color:var(--color-text, var(--text));line-height:1.6;white-space:pre-wrap;background:var(--color-bg, var(--bg-card));padding:10px 12px;border-radius:6px;border:1px solid var(--color-divider, var(--border-subtle));margin-bottom:12px;max-height:220px;overflow-y:auto">
         ${escapeHtml(m.content || '')}
       </div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:6px;border-top:1px dashed var(--border-subtle)">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:8px;border-top:1px dashed var(--color-divider, var(--border-subtle))">
         <div style="display:flex;align-items:center;gap:6px">
-          <span class="text-sm muted" style="font-size:11px">Hành động 1-Click:</span>
-          <button class="btn sm" style="background:rgba(6,182,212,0.12);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);font-weight:600" onclick="convertChatToWorkModal('${escapeHtml(m.id || '')}', ${idx})">
+          <span class="text-sm muted" style="font-size:11px;color:var(--color-neutral-400, var(--text-muted))">Hành động 1-Click:</span>
+          <button class="btn btn-secondary sm" style="height:26px;font-size:11px;color:#06b6d4;border-color:rgba(6,182,212,0.3)" onclick="convertChatToWorkModal('${escapeHtml(m.id || '')}', ${idx})">
             📋 ➔ Tạo Việc (Task)
           </button>
-          <button class="btn sm" style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-weight:600" onclick="convertChatToCalendarModal('${escapeHtml(m.id || '')}', ${idx})">
+          <button class="btn btn-secondary sm" style="height:26px;font-size:11px;color:#c084fc;border-color:rgba(168,85,247,0.3)" onclick="convertChatToCalendarModal('${escapeHtml(m.id || '')}', ${idx})">
             📅 ➔ Lên Lịch (Calendar)
           </button>
-          <button class="btn sm" style="background:rgba(234,179,8,0.12);color:#eab308;border:1px solid rgba(234,179,8,0.3);font-weight:600" onclick="analyzeChatAI(${idx})">
+          <button class="btn btn-secondary sm" style="height:26px;font-size:11px;color:#eab308;border-color:rgba(234,179,8,0.3)" onclick="analyzeChatAI(${idx})">
             🤖 Phân Tích AI
           </button>
         </div>
-        <div style="font-size:10px;color:var(--text-faint);font-family:var(--mono)">
+        <div style="font-size:10px;color:var(--color-neutral-500, var(--text-faint));font-family:ui-monospace,SFMono-Regular,Menlo,monospace">
           ID: ${escapeHtml(m.id || '')}
         </div>
       </div>
