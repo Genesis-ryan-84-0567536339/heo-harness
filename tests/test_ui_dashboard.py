@@ -52,13 +52,13 @@ class TestUIDashboardPlugin(unittest.TestCase):
         return f"http://127.0.0.1:{self.test_port}{path}"
 
     def test_01_index_html_rendered(self):
-        """Kiểm tra máy chủ trả về giao diện HTML V6 Executive UI."""
+        """Kiểm tra máy chủ trả về giao diện HTML Gen-Harness Console."""
         req = urllib.request.Request(self._get_url("/"))
         with urllib.request.urlopen(req, timeout=3) as res:
             self.assertEqual(res.status, 200)
             content = res.read().decode("utf-8")
-            self.assertIn("HEO OS", content)
-            self.assertIn("Executive Intelligence", content)
+            self.assertIn("GEN-HARNESS", content)
+            self.assertIn("Genesis Harness OS", content)
             self.assertIn("Anh Cơ La (Ryan)", content)
 
     def test_02_system_status_api(self):
