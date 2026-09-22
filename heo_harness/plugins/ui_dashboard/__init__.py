@@ -132,6 +132,20 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
         from heo_harness.core.relationship_map import RelationshipIntelligenceEngine
         return RelationshipIntelligenceEngine(data_dir=d)
 
+    def _get_commercial_workbench(self):
+        store = self.plugin_ref.ctx.inject("data_store") if self.plugin_ref else None
+        d = store.data_dir if store and hasattr(store, "data_dir") else None
+        db_p = os.path.join(d, "heo.db") if d else None
+        from heo_harness.core.commercial_workbench import CommercialWorkbenchEngine
+        return CommercialWorkbenchEngine.get_instance(db_path=db_p) if db_p else CommercialWorkbenchEngine.get_instance()
+
+    def _get_supply_demand_matchmaker(self):
+        store = self.plugin_ref.ctx.inject("data_store") if self.plugin_ref else None
+        d = store.data_dir if store and hasattr(store, "data_dir") else None
+        db_p = os.path.join(d, "heo.db") if d else None
+        from heo_harness.core.commercial_workbench import SupplyDemandMatchmakerEngine
+        return SupplyDemandMatchmakerEngine.get_instance(db_path=db_p) if db_p else SupplyDemandMatchmakerEngine.get_instance()
+
     def do_GET(self):
         path_clean = self.path.split("?")[0]
         plugin = self.plugin_ref
@@ -755,16 +769,14 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 detail = df.get_contact_detail(cid)
         # ================= COMMERCIAL WORKBENCH & COPILOT & DCI =================
         elif path_clean in ["/api/commercial/documents", "/api/commercial_documents"]:
-            from heo_harness.core.commercial_workbench import get_commercial_workbench
-            wb = get_commercial_workbench()
+            wb = self._get_commercial_workbench()
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             status = query_params.get("status", [None])[0]
             docs = wb.get_documents(status=status)
             self._send_json({"ok": True, "documents": docs, "count": len(docs)})
 
         elif path_clean in ["/api/commercial/document_detail", "/api/commercial_document_detail"]:
-            from heo_harness.core.commercial_workbench import get_commercial_workbench
-            wb = get_commercial_workbench()
+            wb = self._get_commercial_workbench()
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             doc_id = query_params.get("id", [""])[0]
             if not doc_id:
@@ -774,26 +786,22 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
                 self._send_json(detail)
 
         elif path_clean in ["/api/commercial/catalog", "/api/commercial_catalog"]:
-            from heo_harness.core.commercial_workbench import get_commercial_workbench
-            wb = get_commercial_workbench()
+            wb = self._get_commercial_workbench()
             catalog = wb.get_service_catalog()
             self._send_json({"ok": True, "catalog": catalog, "count": len(catalog)})
 
         elif path_clean in ["/api/system/dci", "/api/data_confidence_index"]:
-            from heo_harness.core.commercial_workbench import get_commercial_workbench
-            wb = get_commercial_workbench()
+            wb = self._get_commercial_workbench()
             dci = wb.calculate_data_confidence_index()
             self._send_json(dci)
 
         # ================= SÀN RÁP NỐI CUNG - CẦU THƯƠNG MẠI (MATCHMAKER) =================
         elif path_clean in ["/api/commercial/matchmaker/summary", "/api/matchmaker/summary"]:
-            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
-            mm = get_supply_demand_matchmaker()
+            mm = self._get_supply_demand_matchmaker()
             self._send_json(mm.get_summary())
 
         elif path_clean in ["/api/commercial/matchmaker/matches", "/api/matchmaker/matches"]:
-            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
-            mm = get_supply_demand_matchmaker()
+            mm = self._get_supply_demand_matchmaker()
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             tier = query_params.get("tier", ["ALL"])[0]
             category = query_params.get("category", ["ALL"])[0]
@@ -802,20 +810,20 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             self._send_json({"ok": True, "matches": matches, "count": len(matches)})
 
         elif path_clean in ["/api/commercial/matchmaker/demands", "/api/matchmaker/demands"]:
-            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
-            mm = get_supply_demand_matchmaker()
+            mm = self._get_supply_demand_matchmaker()
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             category = query_params.get("category", ["ALL"])[0]
             demands = mm.get_all_demands(category=category)
             self._send_json({"ok": True, "demands": demands, "count": len(demands)})
 
+
         elif path_clean in ["/api/commercial/matchmaker/supplies", "/api/matchmaker/supplies"]:
-            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
-            mm = get_supply_demand_matchmaker()
+            mm = self._get_supply_demand_matchmaker()
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             category = query_params.get("category", ["ALL"])[0]
             supplies = mm.get_all_supplies(category=category)
             self._send_json({"ok": True, "supplies": supplies, "count": len(supplies)})
+
 
         # ================= PEOPLE REVIEW & CARE QUALITY (SPEC-22, 23 & SPEC-36 RBAC) =================
         elif path_clean in ["/api/people_review/summary", "/api/care_quality/summary"]:
@@ -1259,8 +1267,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             res = df.generate_contact_summary(cid)
         # ================= COMMERCIAL WORKBENCH & COPILOT =================
         elif path_clean in ["/api/commercial/generate_copilot", "/api/commercial_generate_copilot"]:
-            from heo_harness.core.commercial_workbench import get_commercial_workbench
-            wb = get_commercial_workbench()
+            wb = self._get_commercial_workbench()
             deal_id = data.get("deal_id")
             language = data.get("language", "vi")
             if not deal_id:
@@ -1271,16 +1278,14 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path_clean in ["/api/commercial/save_document", "/api/commercial_save_document"]:
-            from heo_harness.core.commercial_workbench import get_commercial_workbench
-            wb = get_commercial_workbench()
+            wb = self._get_commercial_workbench()
             doc_data = data.get("document", data)
             ok = wb.save_document(doc_data)
             self._send_json({"ok": ok, "message": "Đã lưu tài liệu thương mại thành công!"})
             return
 
         elif path_clean in ["/api/commercial/send_or_approve", "/api/commercial_send_or_approve"]:
-            from heo_harness.core.commercial_workbench import get_commercial_workbench
-            wb = get_commercial_workbench()
+            wb = self._get_commercial_workbench()
             doc_id = data.get("id")
             action = data.get("action", "approve_and_send")
             if not doc_id:
@@ -1291,8 +1296,7 @@ class DashboardHTTPHandler(BaseHTTPRequestHandler):
             return
 
         elif path_clean in ["/api/commercial/matchmaker/action", "/api/matchmaker/action"]:
-            from heo_harness.core.commercial_workbench import get_supply_demand_matchmaker
-            mm = get_supply_demand_matchmaker()
+            mm = self._get_supply_demand_matchmaker()
             match_id = data.get("match_id")
             action_type = data.get("action_type")
             notes = data.get("notes", "")

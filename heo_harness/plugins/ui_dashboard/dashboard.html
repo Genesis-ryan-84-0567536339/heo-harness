@@ -8957,6 +8957,9 @@ function renderOpportunitiesHub() {
                       <button class="btn sm" style="padding:3px 7px;font-size:10.5px;background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)" onclick="quickMatchOpportunity('${o.id}')" title="Tự động ráp khớp với catalog dịch vụ công ty">
                         <i class="ph ph-arrows-merge"></i> Ráp Khớp
                       </button>
+                      <button class="btn sm" style="padding:3px 7px;font-size:10.5px;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3)" onclick="openAIQuotationModal('${o.id}')" title="Tự động sinh Báo Giá Thông Minh AI (SPEC-44 Autonomy 4-5)">
+                        <i class="ph ph-file-text"></i> Báo Giá
+                      </button>
                       <select style="background:var(--color-surface);color:var(--color-text);font-size:10.5px;border:1px solid var(--color-divider);padding:2px 4px;border-radius:4px;max-width:90px" onchange="moveOpportunityStage('${o.id}', this.value)">
                         ${stages.map(s => `<option value="${s.key}" ${(s.alias.includes(o.stage) || s.key === o.stage) ? 'selected' : ''}>➔ ${s.label.split(' ')[1]}</option>`).join('')}
                       </select>
@@ -11478,6 +11481,9 @@ function renderCommercialWorkbenchHub() {
           <button class="btn sm" id="tab-btn-supplies" onclick="switchMatchmakerTab('supplies')" style="font-size:12px;font-weight:700;padding:6px 14px">
             <i class="ph ph-package"></i> Kho Nguồn CUNG (<span id="count-tab-supplies">0</span>)
           </button>
+          <button class="btn sm" id="tab-btn-quotations" onclick="switchMatchmakerTab('quotations')" style="font-size:12px;font-weight:700;padding:6px 14px">
+            <i class="ph ph-file-text"></i> Bàn Soạn Thảo Báo Giá AI (Copilot)
+          </button>
         </div>
 
         <!-- Bộ Lọc Nhanh Hạng & Ngành Hàng -->
@@ -11580,10 +11586,12 @@ function switchMatchmakerTab(tab) {
   const btnM = document.getElementById('tab-btn-matches');
   const btnD = document.getElementById('tab-btn-demands');
   const btnS = document.getElementById('tab-btn-supplies');
+  const btnQ = document.getElementById('tab-btn-quotations');
 
   if (btnM) btnM.className = tab === 'matches' ? 'btn sm primary' : 'btn sm';
   if (btnD) btnD.className = tab === 'demands' ? 'btn sm primary' : 'btn sm';
   if (btnS) btnS.className = tab === 'supplies' ? 'btn sm primary' : 'btn sm';
+  if (btnQ) btnQ.className = tab === 'quotations' ? 'btn sm primary' : 'btn sm';
 
   renderMatchmakerActiveTab();
 }
@@ -11606,6 +11614,187 @@ function renderMatchmakerActiveTab() {
     renderMatchmakerDemandsList(container);
   } else if (matchmakerState.activeTab === 'supplies') {
     renderMatchmakerSuppliesList(container);
+  } else if (matchmakerState.activeTab === 'quotations') {
+    renderCommercialQuotationsList(container);
+  }
+}
+
+async function renderCommercialQuotationsList(container) {
+  container.innerHTML = `
+    <div style="padding:40px;text-align:center;color:var(--color-neutral-400)">
+      <i class="ph ph-spinner ph-spin" style="font-size:32px;color:#38bdf8;margin-bottom:12px;display:block"></i>
+      Đang tải danh sách Báo Giá Thương Mại & Mức Tự Trị...
+    </div>
+  `;
+
+  try {
+    const res = await fetch('/api/commercial/documents').then(r => r.json());
+    const docs = res.documents || [];
+
+    if (docs.length === 0) {
+      container.innerHTML = `
+        <div class="card" style="padding:40px;text-align:center;color:#94a3b8">
+          <i class="ph ph-file-dashed" style="font-size:36px;color:#64748b;margin-bottom:12px;display:block"></i>
+          Chưa có bản báo giá nào trong hệ thống. Hãy vào Kanban Cơ Hội và bấm <b>Báo Giá</b> trên thẻ khách hàng để tạo tự động!
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="card" style="padding:0;overflow:hidden;background:rgba(15,23,42,0.95);border:1px solid rgba(255,255,255,0.12);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.4)">
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.02)">
+          <div>
+            <span style="font-weight:700;font-size:14px;color:#f8fafc"><i class="ph ph-file-text" style="color:#10b981;margin-right:6px"></i> Kho Báo Giá & Hợp Đồng Thương Mại AI</span>
+            <span style="font-size:12px;color:#94a3b8;margin-left:8px">(SPEC-44: Commercial Copilot Level 4-5)</span>
+          </div>
+          <span class="badge primary sm">${docs.length} Tài liệu</span>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left">
+            <thead>
+              <tr style="background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(255,255,255,0.15);color:#94a3b8;text-transform:uppercase;font-size:10.5px;letter-spacing:0.5px">
+                <th style="padding:12px 14px">MÃ BÁO GIÁ</th>
+                <th style="padding:12px 14px">KHÁCH HÀNG / DOANH NGHIỆP</th>
+                <th style="padding:12px 14px">TIÊU ĐỀ HẠNG MỤC</th>
+                <th style="padding:12px 14px;text-align:right">TỔNG GIÁ TRỊ</th>
+                <th style="padding:12px 14px;text-align:center">TRẠNG THÁI</th>
+                <th style="padding:12px 14px;text-align:center">MỨC TỰ TRỊ</th>
+                <th style="padding:12px 14px;text-align:center">THAO TÁC</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${docs.map(d => {
+                const isSent = d.status === 'SENT' || d.status === 'ACCEPTED';
+                const statusBadge = isSent 
+                  ? `<span class="badge success sm"><i class="ph ph-check-circle"></i> ${escapeHtml(d.status)}</span>`
+                  : `<span class="badge warning sm"><i class="ph ph-clock"></i> NHÁP (DRAFT)</span>`;
+                const autonomyBadge = isSent
+                  ? `<span style="font-size:11px;font-weight:700;color:#10b981">Cấp 5 (Tự Trị)</span>`
+                  : `<span style="font-size:11px;font-weight:700;color:#f59e0b">Cấp 4 (Người Duyệt)</span>`;
+                return `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding:12px 14px;font-family:var(--mono);font-weight:700;color:#38bdf8">${escapeHtml(d.id)}</td>
+                    <td style="padding:12px 14px">
+                      <div style="font-weight:700;color:#f8fafc">${escapeHtml(d.contact_name || 'Khách Hàng')}</div>
+                      <div style="font-size:11px;color:#94a3b8">${escapeHtml(d.company || 'Doanh Nghiệp')}</div>
+                    </td>
+                    <td style="padding:12px 14px;color:#cbd5e1;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                      ${escapeHtml(d.title || 'Báo giá')}
+                    </td>
+                    <td style="padding:12px 14px;text-align:right;font-weight:800;color:#10b981;font-size:13px">
+                      ${(d.total_amount || 0).toLocaleString('vi-VN')} ₫
+                    </td>
+                    <td style="padding:12px 14px;text-align:center">
+                      ${statusBadge}
+                    </td>
+                    <td style="padding:12px 14px;text-align:center">
+                      ${autonomyBadge}
+                    </td>
+                    <td style="padding:12px 14px;text-align:center">
+                      <div style="display:flex;gap:6px;justify-content:center">
+                        <button class="btn sm" onclick="viewQuotationDetail('${d.id}')" style="padding:3px 8px;font-size:11px">
+                          <i class="ph ph-eye"></i> Xem
+                        </button>
+                        ${!isSent ? `
+                          <button class="btn sm primary" onclick="sendQuotationDirect('${d.id}')" style="padding:3px 8px;font-size:11px;background:#10b981;border-color:#10b981">
+                            <i class="ph ph-paper-plane-tilt"></i> Gửi
+                          </button>
+                        ` : ''}
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = `<div class="card" style="padding:20px;color:#ef4444">Lỗi tải danh sách báo giá: ${e.message}</div>`;
+  }
+}
+
+async function viewQuotationDetail(docId) {
+  try {
+    const res = await fetch('/api/commercial/document_detail?id=' + encodeURIComponent(docId)).then(r => r.json());
+    if (!res.ok || !res.document) {
+      showToast('Không tìm thấy thông tin báo giá: ' + (res.error || ''));
+      return;
+    }
+    const doc = res.document;
+    activeGeneratedQuotation = doc;
+    openModal(`Chi Tiết Báo Giá: ${doc.id}`, `
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;background:rgba(255,255,255,0.03);padding:12px;border-radius:8px">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#f8fafc">${escapeHtml(doc.title)}</div>
+            <div style="font-size:12px;color:#94a3b8">Khách: <b>${escapeHtml(doc.contact_name)}</b> (${escapeHtml(doc.company || 'N/A')})</div>
+          </div>
+          <div style="text-align:right">
+            <span class="badge ${doc.status === 'SENT' ? 'success' : 'warning'} sm">${doc.status}</span>
+            <div style="font-size:14px;font-weight:800;color:#10b981;margin-top:4px">${(doc.total_amount || 0).toLocaleString('vi-VN')} ₫</div>
+          </div>
+        </div>
+        <div style="border:1px solid var(--color-divider);border-radius:8px;overflow:hidden">
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <thead>
+              <tr style="background:rgba(255,255,255,0.05);color:#94a3b8">
+                <th style="padding:6px 10px;text-align:left">Hạng Mục</th>
+                <th style="padding:6px 10px;text-align:right">Đơn Giá</th>
+                <th style="padding:6px 10px;text-align:center">SL</th>
+                <th style="padding:6px 10px;text-align:right">Thành Tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(doc.items || []).map(it => `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+                  <td style="padding:6px 10px;color:#f8fafc">${escapeHtml(it.name)}</td>
+                  <td style="padding:6px 10px;text-align:right">${(it.unit_price || 0).toLocaleString('vi-VN')} ₫</td>
+                  <td style="padding:6px 10px;text-align:center">${it.quantity || 1}</td>
+                  <td style="padding:6px 10px;text-align:right;color:#10b981;font-weight:700">${(it.total || 0).toLocaleString('vi-VN')} ₫</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+          <button class="btn sm" onclick="closeModal()">Đóng</button>
+          ${doc.status !== 'SENT' ? `
+            <button class="btn sm primary" onclick="sendQuotationDirect('${doc.id}')" style="background:#10b981;border-color:#10b981">
+              <i class="ph ph-paper-plane-tilt"></i> Phê Duyệt & Gửi Khách (Cấp 5)
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `);
+  } catch (e) {
+    showToast('Lỗi: ' + e.message);
+  }
+}
+
+async function sendQuotationDirect(docId) {
+  showToast('Đang gửi và phê duyệt báo giá...');
+  try {
+    const res = await fetch('/api/commercial/send_or_approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: docId, action: 'approve_and_send' })
+    }).then(r => r.json());
+
+    if (res.ok) {
+      showToast('✓ ' + (res.message || 'Đã gửi thành công!'));
+      closeModal();
+      if (matchmakerState.activeTab === 'quotations') {
+        renderMatchmakerActiveTab();
+      }
+    } else {
+      showToast('Lỗi: ' + (res.error || 'Thao tác thất bại'));
+    }
+  } catch (e) {
+    showToast('Lỗi gửi: ' + e.message);
   }
 }
 
@@ -13399,6 +13588,176 @@ function openAddRelationshipEdgeModal() {
       showToast('Lỗi kết nối máy chủ');
     }
   }, false, 'Tạo Liên Kết');
+}
+
+
+// =============================================================================
+// SPEC-44: COMMERCIAL COPILOT & AI QUOTATION STUDIO (AUTONOMY LEVEL 4-5)
+// =============================================================================
+
+let activeGeneratedQuotation = null;
+
+async function openAIQuotationModal(dealId) {
+  openModal('✨ Commercial Copilot — Soạn Báo Giá AI Thông Minh', `
+    <div style="padding:16px;text-align:center;color:var(--color-neutral-400)">
+      <i class="ph ph-spinner ph-spin" style="font-size:28px;color:#38bdf8;margin-bottom:8px;display:block"></i>
+      Đang liên kết hồ sơ sống, catalog dịch vụ và tính toán chiết khấu tự động...
+    </div>
+  `);
+
+  try {
+    const res = await fetch('/api/commercial/generate_copilot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deal_id: dealId, language: 'vi' })
+    }).then(r => r.json());
+
+    if (!res.ok || !res.document) {
+      showToast('Lỗi sinh báo giá: ' + (res.error || 'Không rõ lỗi'));
+      closeModal();
+      return;
+    }
+
+    const doc = res.document;
+    activeGeneratedQuotation = doc;
+
+    const modalBody = `
+      <div style="display:flex;flex-direction:column;gap:14px">
+        
+        <!-- Header Phiếu Báo Giá -->
+        <div style="background:rgba(255,255,255,0.03);padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#f8fafc">${escapeHtml(doc.title || 'Báo Giá Thương Mại')}</div>
+            <div style="font-size:12px;color:var(--color-neutral-300);margin-top:3px">
+              Khách hàng: <b>${escapeHtml(doc.contact_name)}</b> (${escapeHtml(doc.company || 'Doanh Nghiệp')}) · Kênh: <span style="text-transform:uppercase">${escapeHtml(doc.channel || 'Zalo')}</span>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <span class="badge primary sm" style="font-family:var(--mono)">${doc.id}</span>
+            <div style="font-size:11px;color:#34d399;margin-top:4px">
+              Mức Tự Trị: <b>Cấp 4-5</b> (Có Thẩm Định)
+            </div>
+          </div>
+        </div>
+
+        <!-- Bảng Hạng Mục Dịch Vụ & Sản Phẩm -->
+        <div style="border:1px solid var(--color-divider);border-radius:8px;overflow:hidden">
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <thead>
+              <tr style="background:rgba(255,255,255,0.05);color:var(--color-neutral-400);border-bottom:1px solid var(--color-divider)">
+                <th style="padding:8px 10px;text-align:left">Mã</th>
+                <th style="padding:8px 10px;text-align:left">Hạng Mục / Dịch Vụ</th>
+                <th style="padding:8px 10px;text-align:center">ĐVT</th>
+                <th style="padding:8px 10px;text-align:right">Đơn Giá</th>
+                <th style="padding:8px 10px;text-align:center">SL</th>
+                <th style="padding:8px 10px;text-align:right">Thành Tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(doc.items || []).map(it => `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+                  <td style="padding:8px 10px;font-family:var(--mono);color:#94a3b8">${it.code}</td>
+                  <td style="padding:8px 10px;color:var(--color-text);font-weight:600">${escapeHtml(it.name)}</td>
+                  <td style="padding:8px 10px;text-align:center;color:#94a3b8">${it.unit}</td>
+                  <td style="padding:8px 10px;text-align:right;color:#cbd5e1">${(it.unit_price || 0).toLocaleString('vi-VN')} ₫</td>
+                  <td style="padding:8px 10px;text-align:center">${it.quantity || 1}</td>
+                  <td style="padding:8px 10px;text-align:right;font-weight:700;color:#10b981">${(it.total || 0).toLocaleString('vi-VN')} ₫</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tổng Kết Tài Chính & Điều Khoản -->
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px">
+          <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:11.5px;color:var(--color-neutral-300);line-height:1.5">
+            <div style="font-weight:700;color:#cbd5e1;margin-bottom:4px">Điều Khoản Thanh Toán & Giao Hàng:</div>
+            <div>• Đợt 1: Tạm ứng 50% ngay khi ký hợp đồng</div>
+            <div>• Đợt 2: Thanh toán 50% sau khi bàn giao nghiệm thu</div>
+            <div>• Thời gian triển khai: 10 - 15 ngày làm việc</div>
+            <div style="margin-top:6px;color:#a5b4fc">💡 Lý do chiết khấu: Khách hàng thân thiết có Heat Score cao</div>
+          </div>
+
+          <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:6px;font-size:12px">
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:#94a3b8">Tạm tính:</span>
+              <span style="font-weight:600">${(doc.subtotal || 0).toLocaleString('vi-VN')} ₫</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;color:#f59e0b">
+              <span>Chiết khấu (${doc.discount_percent || 0}%):</span>
+              <span>- ${(doc.discount_amount || 0).toLocaleString('vi-VN')} ₫</span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:#94a3b8">Thuế VAT (8%):</span>
+              <span>+ ${(doc.tax_amount || 0).toLocaleString('vi-VN')} ₫</span>
+            </div>
+            <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:#10b981">
+              <span>TỔNG CỘNG:</span>
+              <span>${(doc.total_amount || 0).toLocaleString('vi-VN')} ₫</span>
+            </div>
+            <div style="font-size:10.5px;color:#38bdf8;text-align:right">
+              Biên lợi nhuận gộp ước tính: <b>${doc.gross_profit_margin || 65}%</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hộp Hành Động Phân Cấp Tự Trị (SPEC-44) -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:10px;border-top:1px solid var(--color-divider);flex-wrap:wrap;gap:8px">
+          <div style="font-size:11px;color:var(--color-neutral-400)">
+            Chọn hành động phù hợp theo mức tự trị tổ chức
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn sm" onclick="saveActiveQuotationDraft(false)" style="background:rgba(255,255,255,0.06)">
+              <i class="ph ph-floppy-disk"></i> Lưu Nháp (Cấp 4)
+            </button>
+            <button class="btn sm primary" onclick="saveActiveQuotationDraft(true)" style="background:#10b981;border-color:#10b981">
+              <i class="ph ph-paper-plane-tilt"></i> Phê Duyệt & Gửi Khách (Cấp 5)
+            </button>
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    openModal('✨ Commercial Copilot — Soạn Báo Giá AI Thông Minh', modalBody);
+  } catch (e) {
+    showToast('Lỗi kết nối máy chủ: ' + e.message);
+    closeModal();
+  }
+}
+
+async function saveActiveQuotationDraft(autoApprove) {
+  if (!activeGeneratedQuotation) {
+    showToast('Không có dữ liệu báo giá');
+    return;
+  }
+  showToast(autoApprove ? 'Đang duyệt và gửi báo giá...' : 'Đang lưu bản nháp vào Kho Tài Liệu...');
+  try {
+    const res = await fetch('/api/commercial/save_document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ document: activeGeneratedQuotation })
+    }).then(r => r.json());
+
+    if (res.ok) {
+      if (autoApprove) {
+        await fetch('/api/commercial/send_or_approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: activeGeneratedQuotation.id, action: 'approve_and_send' })
+        });
+        showToast('✓ Đã phê duyệt và chuyển trạng thái báo giá sang ĐÃ GỬI (Cấp 5)!');
+      } else {
+        showToast('✓ Đã lưu bản nháp báo giá chờ Sếp duyệt (Cấp 4)!');
+      }
+      closeModal();
+      await fetchAllData();
+    } else {
+      showToast('Lỗi: ' + (res.error || 'Không thể lưu tài liệu'));
+    }
+  } catch(e) {
+    showToast('Lỗi kết nối: ' + e.message);
+  }
 }
 
 </script>

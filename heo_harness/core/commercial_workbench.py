@@ -24,7 +24,7 @@ class CommercialWorkbenchEngine:
 
     @classmethod
     def get_instance(cls, db_path: str = DB_PATH):
-        if cls._instance is None:
+        if cls._instance is None or (db_path and cls._instance.db_path != db_path):
             cls._instance = cls(db_path)
         return cls._instance
 
@@ -61,7 +61,31 @@ class CommercialWorkbenchEngine:
                 sent_at TEXT,
                 created_at TEXT,
                 updated_at TEXT
-            );
+            )
+            """)
+
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS atomic_events (
+                id TEXT PRIMARY KEY,
+                event_type TEXT,
+                channel TEXT,
+                sender_id TEXT,
+                sender_name TEXT,
+                group_id TEXT,
+                group_name TEXT,
+                content TEXT,
+                extracted_entities TEXT,
+                intent TEXT,
+                sentiment TEXT,
+                meaning_summary TEXT,
+                action_suggested TEXT,
+                priority TEXT,
+                status TEXT,
+                heat_score REAL,
+                timestamp REAL,
+                created_at TEXT,
+                archived INTEGER DEFAULT 0
+            )
             """)
             conn.commit()
 
@@ -542,7 +566,7 @@ class SupplyDemandMatchmakerEngine:
 
     @classmethod
     def get_instance(cls, db_path: str = DB_PATH):
-        if cls._instance is None:
+        if cls._instance is None or (db_path and cls._instance.db_path != db_path):
             cls._instance = cls(db_path)
         return cls._instance
 

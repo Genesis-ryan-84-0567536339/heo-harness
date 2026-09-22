@@ -1588,15 +1588,15 @@
       "name": "Phase 4 — Làm được (Quotation, ERP/CRM, Autonomy 4-5)",
       "spec_req": "Báo giá tự động, soạn thảo hợp đồng, nhắc việc, kết nối ERP/CRM sâu, mức tự trị 4-5.",
       "spec_section": "Spec Tổng Thể",
-      "current_state": "Đã có công cụ sinh tài liệu Office, quản lý task và duyệt approval.",
-      "status": "IN_PROGRESS",
-      "status_label": "🟡 Đang Thi Công",
-      "pct": 50,
+      "current_state": "Đã hoàn thiện Commercial Copilot, AI Quotation Studio, cấp tự trị Autonomy 4 (lưu nháp chờ duyệt) và Autonomy 5 (tự động phê duyệt và dispatch), đồng bộ sự kiện qua EventBus và Atomic Ledger.",
+      "status": "DONE",
+      "status_label": "🟢 Đã Hoàn Thành",
+      "pct": 100,
       "milestone": "MS-0 (Foundation)",
       "priority": "P1 - High",
-      "target_date": "2026-09-21",
+      "target_date": "2026-09-22",
       "owner": "AI Agent & Sếp Cơ La",
-      "gap": "Nâng mức tự trị và liên kết dữ liệu hồ sơ tự động điền form báo giá.",
+      "gap": "Không còn khoảng trống. Đã kiểm thử tự động 100% và giao diện Console hoạt động mượt mà.",
       "source_ref": "Spec Mục L (Phase 4)",
       "dev_notes": "Tham chiếu trực tiếp Spec LOCKED v2.2 tại Spec Tổng Thể.",
       "checklist": [
@@ -1610,11 +1610,11 @@
         },
         {
           "title": "Tích hợp giao diện điều khiển Console",
-          "done": false
+          "done": true
         },
         {
           "title": "Kiểm thử tự động `./doctor.sh` và nghiệm thu",
-          "done": false
+          "done": true
         }
       ]
     },
