@@ -6129,7 +6129,11 @@ function renderQuotaView() {
         <button class="btn sm" onclick="checkQuotaNow()">Làm Mới Quota</button>
       </div>
       <div style="padding:18px;display:grid;grid-template-columns:repeat(3, 1fr);gap:16px">
-        ${Object.keys(q).map(k => {
+        ${Object.keys(q).length === 0 ? `
+          <div style="grid-column: 1 / -1; text-align:center; padding:32px; color:var(--text-muted)">
+            Chưa có số liệu hạn ngạch — bấm "Kiểm Tra Quota Ngay" để đồng bộ dữ liệu
+          </div>
+        ` : Object.keys(q).map(k => {
           const item = q[k];
           return `
             <div style="background:var(--bg-body);border:1px solid var(--border);border-radius:8px;padding:14px">
@@ -7000,7 +7004,7 @@ function renderAuditsView() {
             </tr>
           </thead>
           <tbody>
-            ${state.audits.map(a => `
+            ${(state.audits && state.audits.length > 0) ? state.audits.map(a => `
               <tr>
                 <td style="font-family:var(--mono)">${a.time}</td>
                 <td><span class="badge good">${a.actor}</span></td>
@@ -7009,7 +7013,13 @@ function renderAuditsView() {
                 <td class="muted">${a.reason}</td>
                 <td><span class="badge good">${a.result}</span></td>
               </tr>
-            `).join('')}
+            `).join('') : `
+              <tr>
+                <td colspan="6" style="text-align:center; padding:32px; color:var(--muted)">
+                  Chưa có bản ghi nhật ký kiểm toán trong sổ cái
+                </td>
+              </tr>
+            `}
           </tbody>
         </table>
       </div>
@@ -7023,18 +7033,18 @@ function renderInfraView() {
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label">Dung Lượng Ổ Đĩa</div>
-        <div class="kpi-val" style="color:var(--brand)">${m.disk ? m.disk.percent : 12}%</div>
-        <div class="kpi-sub">Dùng ${m.disk ? m.disk.used_gb : 21}GB / ${m.disk ? m.disk.total_gb : 182}GB</div>
+        <div class="kpi-val" style="color:var(--brand)">${m.disk && m.disk.percent != null ? m.disk.percent + '%' : '—'}</div>
+        <div class="kpi-sub">${m.disk && m.disk.used_gb != null ? 'Dùng ' + m.disk.used_gb + 'GB / ' + m.disk.total_gb + 'GB' : 'Chờ telemetry hệ thống'}</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Sử Dụng RAM</div>
-        <div class="kpi-val" style="color:#38bdf8">${m.ram ? m.ram.percent : 20}%</div>
-        <div class="kpi-sub">Bộ nhớ hệ thống Fedora</div>
+        <div class="kpi-val" style="color:#38bdf8">${m.ram && m.ram.percent != null ? m.ram.percent + '%' : '—'}</div>
+        <div class="kpi-sub">${m.ram ? 'Bộ nhớ hệ thống Linux' : 'Chờ telemetry hệ thống'}</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Mức Tiêu Thụ CPU</div>
-        <div class="kpi-val" style="color:var(--p2)">${m.cpu ? m.cpu.percent : 12}%</div>
-        <div class="kpi-sub">Xử lý tác vụ nền</div>
+        <div class="kpi-val" style="color:var(--p2)">${m.cpu && m.cpu.percent != null ? m.cpu.percent + '%' : '—'}</div>
+        <div class="kpi-sub">${m.cpu ? 'Xử lý tác vụ nền' : 'Chờ telemetry hệ thống'}</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Core Chassis</div>
