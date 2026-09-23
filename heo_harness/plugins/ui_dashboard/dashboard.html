@@ -7313,8 +7313,8 @@ function renderModulesHub() {
   const extCount = extPlugins.length || 4;
   const enabledExtCount = extPlugins.filter(p => p.enabled).length;
   const disabledExtCount = extCount - enabledExtCount;
-  const degradedCount = state.plugins.filter(p => p.circuit_breaker && p.circuit_breaker.status && !p.circuit_breaker.status.includes('CLOSED')).length;
-  const isolatedCount = state.plugins.filter(p => p.circuit_breaker && p.circuit_breaker.status && p.circuit_breaker.status.includes('OPEN') && !p.circuit_breaker.status.includes('HALF')).length;
+  const degradedCount = state.plugins.filter(p => p.enabled && p.circuit_breaker && (p.circuit_breaker.circuit_open || (!p.circuit_breaker.status?.includes('HEALTHY') && !p.circuit_breaker.status?.includes('CLOSED')))).length;
+  const isolatedCount = state.plugins.filter(p => p.circuit_breaker && (p.circuit_breaker.circuit_open || p.circuit_breaker.status === 'CIRCUIT_TRIPPED')).length;
 
   return `
     <div style="display:flex; flex-direction:column; gap:16px; min-width:0; margin-bottom:18px;">
@@ -7469,10 +7469,10 @@ function renderInstalledPluginsView() {
                 const layer = layerMap[p.id] || p.category || 'plugin';
                 const cb = p.circuit_breaker || {};
                 const cbStatus = cb.status || 'CLOSED (HEALTHY)';
-                const breakerText = cbStatus.includes('CLOSED') ? 'đóng' : cbStatus.includes('HALF') ? 'nửa mở' : 'mở';
+                const isHealthy = p.enabled && (cbStatus.includes('HEALTHY') || cbStatus.includes('CLOSED') || !cb.circuit_open);
+                const isDegraded = p.enabled && !isHealthy;
+                const breakerText = (!p.enabled) ? 'đóng' : isHealthy ? 'đóng' : cbStatus.includes('HALF') ? 'nửa mở' : 'mở';
                 const breakerTone = breakerText === 'đóng' ? 'var(--color-neutral-400,#b2b6ca)' : breakerText === 'nửa mở' ? '#f59e0b' : '#ef4444';
-                const isHealthy = p.enabled && cbStatus.includes('CLOSED');
-                const isDegraded = p.enabled && !cbStatus.includes('CLOSED');
                 const stateTone = isHealthy ? '#10b981' : isDegraded ? '#f59e0b' : 'var(--color-neutral-500,#9397ab)';
                 const stateText = isHealthy ? 'Khoẻ mạnh' : isDegraded ? 'Suy giảm' : 'Đang tắt';
                 const sourceText = isCore ? 'DSH · dựng sẵn' : 'Chợ tiện ích';
