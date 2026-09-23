@@ -149,81 +149,185 @@
 
     .nav-hub-list {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
-      padding: 6px 10px 14px;
+      padding: 2px 9px 12px;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 1px;
     }
-    .nav-section-label {
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: 0.16em;
+    .nav-domain-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      margin-bottom: 12px;
+    }
+    .nav-domain-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 8px 7px;
+      user-select: none;
+    }
+    .nav-domain-title {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--color-neutral-500);
-      padding: 10px 8px 4px;
+      white-space: nowrap;
+    }
+    .nav-domain-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, #2f3242, transparent);
+    }
+    .nav-domain-count {
+      flex: none;
+      font-size: 9px;
+      color: var(--color-neutral-500, #9397ab);
+      font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    }
+
+    .nav-group-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
     }
 
     .nav-hub-item {
+      position: relative;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 7px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      color: var(--color-neutral-400);
-      font-weight: 500;
-      font-size: 12.5px;
-      border: 1px solid transparent;
-      background: transparent;
+      gap: 10px;
       width: 100%;
+      height: 32px;
+      padding: 0 9px 0 12px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--color-neutral-400, #b2b6ca);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 400;
+      cursor: pointer;
       text-align: left;
-      transition: all 0.14s ease;
+      transition: background 0.12s ease, color 0.12s ease;
       font-family: inherit;
     }
     .nav-hub-item:hover {
-      background: var(--color-neutral-900);
-      color: var(--color-text);
+      background: #1d2031;
+      color: var(--color-text, #e9e9ed);
     }
     .nav-hub-item.active {
-      background: rgba(145, 132, 217, 0.12);
-      color: var(--color-accent);
-      border-color: transparent;
-      font-weight: 600;
+      background: #232639;
+      color: var(--color-text, #e9e9ed);
+      font-weight: 500;
     }
-    .nav-hub-left {
+    .nav-hub-item.parent-on {
+      color: var(--color-text, #e9e9ed);
+      font-weight: 500;
+    }
+    .nav-active-bar {
+      position: absolute;
+      left: 0;
+      top: 7px;
+      bottom: 7px;
+      width: 2px;
+      border-radius: 0 2px 2px 0;
+      background: transparent;
+      transition: background 0.12s ease;
+    }
+    .nav-hub-item.active .nav-active-bar,
+    .nav-hub-item.parent-on .nav-active-bar {
+      background: var(--color-accent, #9184d9);
+    }
+
+    .nav-group-children {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      margin: 1px 0 4px;
+      padding-left: 19px;
+      border-left: 1px solid #2a2d3c;
+      margin-left: 16px;
+    }
+    .nav-hub-child {
       display: flex;
       align-items: center;
       gap: 9px;
-      min-width: 0;
+      width: 100%;
+      height: 29px;
+      padding: 0 9px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--color-neutral-400, #b2b6ca);
+      font: inherit;
+      font-size: 11.5px;
+      font-weight: 400;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s ease, color 0.12s ease;
     }
-    .nav-hub-left i {
-      font-size: 15px;
-      opacity: 0.85;
-      flex-shrink: 0;
+    .nav-hub-child:hover {
+      background: #1d2031;
+      color: var(--color-text, #e9e9ed);
     }
-    .nav-hub-item.active .nav-hub-left i {
-      opacity: 1;
-      color: var(--color-accent);
+    .nav-hub-child.active {
+      background: #232639;
+      color: var(--color-text, #e9e9ed);
+      font-weight: 500;
     }
-    .nav-hub-left span {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .nav-dot {
+      width: 5px;
+      height: 5px;
+      flex: none;
+      border-radius: 50%;
+      background: var(--color-neutral-500, #9397ab);
+      transition: background 0.12s ease;
+    }
+    .nav-hub-child.active .nav-dot {
+      background: var(--color-accent, #9184d9);
     }
 
     .nav-badge {
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 999px;
+      flex: none;
+      font-size: 9.5px;
       font-weight: 600;
-      font-family: var(--mono);
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace);
       letter-spacing: 0.02em;
     }
-    .nav-badge.danger { background: var(--status-bad-bg); color: var(--status-bad); border: 1px solid rgba(248, 113, 113, 0.3); }
-    .nav-badge.neutral { background: var(--color-neutral-800); color: var(--color-neutral-400); }
-    .nav-badge.live { background: var(--status-ok-bg); color: var(--status-ok); border: 1px solid rgba(52, 211, 153, 0.3); font-size: 9.5px; }
-    .nav-badge.good { background: rgba(145, 132, 217, 0.15); color: var(--color-accent); border: 1px solid rgba(145, 132, 217, 0.3); }
+    .nav-badge.danger {
+      background: rgba(248, 113, 113, 0.16);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+    .nav-badge.warn {
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+    .nav-badge.ok {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+    .nav-badge.neutral {
+      background: var(--color-neutral-800, #2b2e3d);
+      color: var(--color-neutral-400, #b2b6ca);
+    }
+    .nav-badge.live {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+    .nav-badge.good {
+      background: rgba(145, 132, 217, 0.15);
+      color: var(--color-accent, #9184d9);
+      border: 1px solid rgba(145, 132, 217, 0.3);
+    }
 
     .sidebar-footer {
       padding: 11px 12px;
@@ -813,220 +917,30 @@
 <body>
 
 <div id="app">
-  <!-- SIDEBAR (4 Semantic Groups) -->
-  <aside id="sidebar">
-    <div class="brand-header">
-      <div class="brand-logo"><i class="ph ph-radar"></i></div>
-      <div>
-        <div class="brand-title">GEN‑HARNESS</div>
-        <div class="brand-sub">Genesis Harness OS · v2.2</div>
+  <!-- SIDEBAR (2 Hierarchical Domains per Mockup) -->
+  <aside id="sidebar" style="background:#131524; border-right:1px solid var(--color-divider,rgba(233,233,237,0.16)); display:flex; flex-direction:column; min-height:0; position:sticky; top:0; height:100vh;">
+    <div class="brand-header" style="display:flex; align-items:center; gap:10px; padding:17px 15px 15px;">
+      <div class="brand-logo" style="width:30px; height:30px; flex:none; border-radius:var(--radius-md,8px); border:1px solid var(--color-accent,#9184d9); display:grid; place-items:center; color:var(--color-accent,#9184d9); font-size:15px; box-shadow:0 0 18px -6px var(--color-accent,#9184d9);"><i class="ph ph-radar"></i></div>
+      <div style="min-width:0;">
+        <div class="brand-title" style="font-size:12.5px; font-weight:600; letter-spacing:0.13em; color:var(--color-text,#e9e9ed); white-space:nowrap;">GEN‑HARNESS</div>
+        <div class="brand-sub" style="font-size:9.5px; letter-spacing:0.14em; color:var(--color-neutral-500,#9397ab); text-transform:uppercase; margin-top:1px; white-space:nowrap;">Genesis Harness OS · v2.2</div>
       </div>
     </div>
 
-    <nav class="nav-hub-list">
-      <!-- ═══ 1. NHÌN (2 màn) ═══ -->
-      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#34d399">
-        <i class="ph-fill ph-eye" style="font-size:11px"></i>
-        <span>NHÌN</span>
-        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
-        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">2 màn</span>
-      </div>
-      <button class="nav-hub-item active" data-hub="command" onclick="switchHub('command')">
-        <div class="nav-hub-left">
-          <i class="ph ph-gauge"></i>
-          <span>Tổng quan điều hành</span>
-        </div>
-        <span class="nav-badge danger" id="badge-attention">9</span>
-      </button>
-      <button class="nav-hub-item" data-hub="opportunities" onclick="switchHub('opportunities')">
-        <div class="nav-hub-left">
-          <i class="ph ph-tray"></i>
-          <span>Hộp thư ý nghĩa</span>
-        </div>
-        <span class="nav-badge warm" id="badge-opportunities" style="background:rgba(251,191,36,0.15);color:#fbbf24">28</span>
-      </button>
+    <div style="height:1px; background:linear-gradient(90deg,transparent,#2f3242 22%,#2f3242 78%,transparent); margin-bottom:6px;"></div>
 
-      <!-- ═══ 2. HIỂU (4 màn) ═══ -->
-      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#38bdf8;margin-top:6px">
-        <i class="ph-fill ph-compass" style="font-size:11px"></i>
-        <span>HIỂU</span>
-        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
-        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">4 màn</span>
-      </div>
-      <button class="nav-hub-item" data-hub="directory" onclick="switchHub('directory')">
-        <div class="nav-hub-left">
-          <i class="ph ph-address-book"></i>
-          <span>Nhóm & Con người</span>
-        </div>
-        <span class="nav-badge neutral" id="badge-groups">0</span>
-      </button>
-      <button class="nav-hub-item" data-hub="relationship_radar" onclick="switchHub('relationship_radar')">
-        <div class="nav-hub-left">
-          <i class="ph ph-graph"></i>
-          <span>Bản đồ quan hệ & 360</span>
-        </div>
-        <span class="nav-badge live" id="badge-relationship-radar">Radar</span>
-      </button>
-      <button class="nav-hub-item" data-hub="workbench" onclick="switchHub('workbench')">
-        <div class="nav-hub-left">
-          <i class="ph ph-arrows-left-right"></i>
-          <span>Cung ↔ Cầu</span>
-        </div>
-        <span class="nav-badge good" style="background:rgba(52,211,153,0.15);color:#34d399">27</span>
-      </button>
-      <button class="nav-hub-item" data-hub="chat_intelligence" onclick="switchHub('chat_intelligence')">
-        <div class="nav-hub-left">
-          <i class="ph ph-brain"></i>
-          <span>Kho hội thoại & Trí tuệ</span>
-        </div>
-        <span class="nav-badge good" id="badge-chat-intel">0</span>
-      </button>
-
-      <!-- ═══ 3. QUẢN (3 màn) ═══ -->
-      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#fbbf24;margin-top:6px">
-        <i class="ph-fill ph-chart-polar" style="font-size:11px"></i>
-        <span>QUẢN</span>
-        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
-        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">3 màn</span>
-      </div>
-      <button class="nav-hub-item" data-hub="work" onclick="switchHub('work')">
-        <div class="nav-hub-left">
-          <i class="ph ph-target"></i>
-          <span>Bảng cơ hội & Tiến độ</span>
-        </div>
-        <span class="nav-badge good" id="badge-works" style="background:rgba(52,211,153,0.15);color:#34d399">41</span>
-      </button>
-      <button class="nav-hub-item" data-hub="people_review" onclick="switchHub('people_review')">
-        <div class="nav-hub-left">
-          <i class="ph ph-users-three"></i>
-          <span>Đánh giá con người</span>
-        </div>
-        <span class="nav-badge danger" id="badge-broken-promises" style="background:rgba(239,68,68,0.2);color:#f43f5e;font-size:10px;font-weight:700">3 Cảnh Báo</span>
-      </button>
-      <button class="nav-hub-item" data-hub="intelligence" onclick="switchHub('intelligence')">
-        <div class="nav-hub-left">
-          <i class="ph ph-heartbeat"></i>
-          <span>Chất lượng chăm sóc</span>
-        </div>
-      </button>
-
-      <!-- ═══ 4. LÀM (3 màn) ═══ -->
-      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#f472b6;margin-top:6px">
-        <i class="ph-fill ph-briefcase" style="font-size:11px"></i>
-        <span>LÀM</span>
-        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
-        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">3 màn</span>
-      </div>
-      <button class="nav-hub-item" data-hub="workbench_action" onclick="switchHub('workbench_action')">
-        <div class="nav-hub-left">
-          <i class="ph ph-pen-nib"></i>
-          <span>Bàn làm việc (Soạn & Duyệt)</span>
-        </div>
-        <span class="nav-badge warm" style="background:rgba(251,191,36,0.15);color:#fbbf24">6</span>
-      </button>
-      <button class="nav-hub-item" data-hub="approvals" onclick="switchHub('approvals')">
-        <div class="nav-hub-left">
-          <i class="ph ph-seal-check"></i>
-          <span>Phê duyệt chiến lược</span>
-        </div>
-        <span class="nav-badge danger" id="badge-approvals">0</span>
-      </button>
-      <button class="nav-hub-item" data-hub="media_vault" onclick="switchHub('media_vault')">
-        <div class="nav-hub-left">
-          <i class="ph ph-folders"></i>
-          <span>Kho tư liệu & Media</span>
-        </div>
-        <span class="nav-badge neutral" id="badge-media-vault">0</span>
-      </button>
-
-      <!-- ═══ 5. MÁY (9 màn) ═══ -->
-      <div class="nav-section-label" style="display:flex;align-items:center;gap:6px;color:#a78bfa;margin-top:6px">
-        <i class="ph-fill ph-cpu" style="font-size:11px"></i>
-        <span>MÁY</span>
-        <span style="flex:1;height:1px;background:linear-gradient(90deg,var(--color-divider),transparent);margin-left:4px"></span>
-        <span style="font-size:9px;color:var(--color-neutral-500);font-family:var(--mono)">9 màn</span>
-      </div>
-      <button class="nav-hub-item" data-hub="data_factory" onclick="switchHub('data_factory')">
-        <div class="nav-hub-left">
-          <i class="ph ph-database"></i>
-          <span>Tầng dữ liệu (Data Factory)</span>
-        </div>
-        <span class="nav-badge neutral" id="badge-data-factory">0</span>
-      </button>
-      <button class="nav-hub-item" data-hub="assistant" onclick="switchHub('assistant')">
-        <div class="nav-hub-left">
-          <i class="ph ph-user-focus"></i>
-          <span>Danh tính Agent & Quota</span>
-        </div>
-        <span class="nav-badge live">0 ₫</span>
-      </button>
-      <button class="nav-hub-item" data-hub="ai_brain" onclick="switchHub('ai_brain')">
-        <div class="nav-hub-left">
-          <i class="ph ph-atom"></i>
-          <span>Bộ não AI & Đổi Model</span>
-        </div>
-        <span class="nav-badge neutral">AI</span>
-      </button>
-      <button class="nav-hub-item" data-hub="mcp_connectors" onclick="switchHub('mcp_connectors')">
-        <div class="nav-hub-left">
-          <i class="ph ph-plugs-connected"></i>
-          <span>Kho ứng dụng MCP Hub</span>
-        </div>
-        <span class="nav-badge good" id="badge-mcp-count">48 App</span>
-      </button>
-      <button class="nav-hub-item" data-hub="modules" onclick="switchHub('modules')">
-        <div class="nav-hub-left">
-          <i class="ph ph-puzzle-piece"></i>
-          <span>Khung gầm & Plugin DSH</span>
-        </div>
-        <span class="nav-badge good" id="badge-modules-count">11</span>
-      </button>
-      <button class="nav-hub-item" data-hub="zalo" onclick="switchHub('zalo')">
-        <div class="nav-hub-left">
-          <i class="ph ph-chats-circle"></i>
-          <span>Kênh Zalo Gateway</span>
-        </div>
-        <span class="nav-badge" id="badge-zalo-status" style="background:var(--status-warn-bg);color:var(--status-warn)">QR</span>
-      </button>
-      <button class="nav-hub-item" data-hub="whatsapp" onclick="switchHub('whatsapp')">
-        <div class="nav-hub-left">
-          <i class="ph ph-device-mobile"></i>
-          <span>Kênh WhatsApp Gateway</span>
-        </div>
-        <span class="nav-badge" id="badge-whatsapp-status" style="background:var(--status-warn-bg);color:var(--status-warn)">QR</span>
-      </button>
-      <button class="nav-hub-item" data-hub="system_logs" onclick="switchHub('system_logs')">
-        <div class="nav-hub-left">
-          <i class="ph ph-sliders-horizontal"></i>
-          <span>Điều khiển hệ thống & Logs</span>
-        </div>
-        <span class="nav-badge live">LIVE</span>
-      </button>
-      <button class="nav-hub-item" data-hub="security_pin" onclick="switchHub('security_pin')">
-        <div class="nav-hub-left">
-          <i class="ph ph-shield-check"></i>
-          <span>An ninh & Mã PIN Admin</span>
-        </div>
-      </button>
-      <a href="/builder" target="_blank" class="nav-hub-item" style="text-decoration: none; color: inherit; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 6px;">
-        <div class="nav-hub-left">
-          <i class="ph ph-hammer" style="color: #818cf8;"></i>
-          <span style="color: #a5b4fc; font-weight: 600;">🛠️ Builder & Kế Hoạch</span>
-        </div>
-        <span class="nav-badge" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.35); font-size: 10px;">SSOT</span>
-      </a>
+    <nav id="sidebar-nav" class="nav-hub-list" style="flex:1; min-height:0; overflow-y:auto; padding:2px 9px 12px;">
+      <!-- Dynamic render of 2 Domains per Gen-Harness Console.dc.html -->
     </nav>
 
     <!-- Sidebar Footer -->
-    <div class="sidebar-footer">
-      <div class="user-info" onclick="openAccountSwitcherModal()" style="cursor:pointer" title="Bấm để Chuyển đổi Profile">
-        <div class="user-avatar" id="sidebar-user-avatar">CL</div>
-        <div style="min-width:0">
-          <div class="user-name" id="sidebar-user-name">Anh Cơ La (Ryan)</div>
-          <div class="user-role" id="sidebar-user-role">Tác quyền duy nhất · Owner</div>
-        </div>
+    <div class="sidebar-footer" style="border-top:1px solid var(--color-divider,rgba(233,233,237,0.16)); padding:10px 11px; display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openAccountSwitcherModal()" title="Bấm để Chuyển đổi Profile">
+      <div class="user-avatar" id="sidebar-user-avatar" style="width:29px; height:29px; flex:none; border-radius:50%; background:var(--color-accent-900,#2b2741); border:1px solid var(--color-accent-800,#423a6a); display:grid; place-items:center; font-size:10.5px; font-weight:600; color:var(--color-accent-300,#d2cefd);">CL</div>
+      <div style="flex:1; min-width:0;">
+        <div class="user-name" id="sidebar-user-name" style="font-size:11.5px; font-weight:600; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Anh Cơ La (Ryan)</div>
+        <div class="user-role" id="sidebar-user-role" style="font-size:9.5px; color:var(--color-neutral-500,#9397ab);">Owner · thấy toàn cảnh</div>
       </div>
-      <button class="btn sm" onclick="openQuickConfigModal()" title="Cấu hình nhanh"><i class="ph ph-gear"></i></button>
+      <i class="ph ph-caret-up-down" style="font-size:14px; color:var(--color-neutral-700,#595d6c);"></i>
     </div>
   </aside>
 
@@ -1119,6 +1033,15 @@ const $$ = document.querySelectorAll.bind(document);
 
 let state = {
   activeHub: 'command',
+  activeNavKey: 'overview',
+  navOpen: {
+    'Hàng đợi & Hành động': true,
+    'Bản đồ quan hệ': false,
+    'Cơ hội & Thị trường': false,
+    'Con người & Chất lượng': false,
+    'Tầng dữ liệu': false,
+    'Agent & Model': false
+  },
   subtabs: {
     work: 'opp_board',
     directory: 'zalo',       // Default to Zalo Gateway & QR
@@ -1359,9 +1282,14 @@ function updateBadges() {
     mcpBadge.className = `nav-badge ${conn > 0 ? 'good' : 'neutral'}`;
   }
 
-  $('#badge-works').textContent = state.works.length || 0;
+  const worksBadge = $('#badge-works');
+  if (worksBadge) worksBadge.textContent = state.works.length || 0;
   const pendingAppr = state.approvals.filter(a => a.status === 'PENDING').length;
-  $('#badge-approvals').textContent = pendingAppr || 0;
+  const apprBadge = $('#badge-approvals');
+  if (apprBadge) apprBadge.textContent = pendingAppr || 0;
+
+  renderSidebarNav();
+  updateHeaderPills();
 
   // Cập nhật số lượng nhóm thực tế
   const groupBadge = $('#badge-groups');
@@ -1590,8 +1518,334 @@ async function toggleMasterBot() {
 }
 
 // ==========================================
-// ROUTING & HUB SWITCHING
+// ROUTING & HUB SWITCHING (2-Domain Nocturne Hierarchy)
 // ==========================================
+
+const NAV = [
+  { domain: 'business', label: 'Kinh doanh', crumb: 'KINH DOANH', icon: 'ph-fill ph-briefcase', tone: '#34d399', groups: [
+    { key: 'overview', icon: 'ph ph-gauge', name: 'Tổng quan điều hành', en: 'Command Overview — màn hình 10 phút' },
+    { name: 'Hàng đợi & Hành động', icon: 'ph ph-tray', children: [
+      { key: 'inbox', icon: 'ph ph-tray', name: 'Hộp thư ý nghĩa', en: 'Inbox of Meaning' },
+      { key: 'workbench', icon: 'ph ph-pen-nib', name: 'Bàn làm việc', en: 'Workbench — soạn & duyệt' },
+    ]},
+    { key: 'directory', icon: 'ph ph-address-book', name: 'Nhóm & Con người', en: 'Groups by channel · people filters' },
+    { key: 'graph', icon: 'ph ph-graph', name: 'Bản đồ quan hệ', en: 'Relationship Map', children: [
+      { key: 'profile', icon: 'ph ph-identification-card', name: 'Hồ sơ sống', en: 'Living Profile — bấm một node để mở' },
+      { key: 'notebook', icon: 'ph ph-notebook', name: 'Sổ tay nhận thức', en: 'Assistant notebook per ID' },
+    ]},
+    { name: 'Cơ hội & Thị trường', icon: 'ph ph-target', children: [
+      { key: 'opportunity', icon: 'ph ph-target', name: 'Bảng cơ hội', en: 'Opportunity Board' },
+      { key: 'supply', icon: 'ph ph-arrows-left-right', name: 'Cung ↔ Cầu', en: 'Supply & Demand' },
+      { key: 'search', icon: 'ph ph-brain', name: 'Kho hội thoại', en: 'Knowledge & Search' },
+    ]},
+    { name: 'Con người & Chất lượng', icon: 'ph ph-users-three', children: [
+      { key: 'people', icon: 'ph ph-users-three', name: 'Đánh giá con người', en: 'People Review' },
+      { key: 'care', icon: 'ph ph-heartbeat', name: 'Chất lượng chăm sóc', en: 'Care Quality' },
+    ]},
+  ]},
+  { domain: 'tech', label: 'Kỹ thuật · Backend', crumb: 'KỸ THUẬT', icon: 'ph-fill ph-cpu', tone: '#b5abfc', groups: [
+    { name: 'Tầng dữ liệu', icon: 'ph ph-database', children: [
+      { key: 'raw', icon: 'ph ph-database', name: 'Kho dữ liệu thô', en: 'Raw Lake — bridge gom về' },
+      { key: 'rules', icon: 'ph ph-funnel', name: 'Quy tắc sàng lọc', en: 'Refinery Rules' },
+      { key: 'clean', icon: 'ph ph-check-circle', name: 'Kho sạch SSOT', en: 'Clean store & working memory' },
+      { key: 'identity', icon: 'ph ph-git-merge', name: 'Hợp nhất danh tính', en: 'Identity Resolution' },
+    ]},
+    { name: 'Agent & Model', icon: 'ph ph-robot', children: [
+      { key: 'agents', icon: 'ph ph-user-focus', name: 'Danh tính Agent', en: 'Agent Identity' },
+      { key: 'api', icon: 'ph ph-plugs', name: 'API & Model', en: 'AI agent API settings' },
+      { key: 'mcp', icon: 'ph ph-plugs-connected', name: 'MCP Hub', en: 'External MCP servers' },
+    ]},
+    { key: 'plugins', icon: 'ph ph-puzzle-piece', name: 'Plugin & Tiện ích', en: 'DSH base plugins & external add-ons' },
+    { key: 'system', icon: 'ph ph-sliders-horizontal', name: 'Điều khiển hệ thống', en: 'System Control — kênh, quyền, nhật ký' },
+  ]},
+];
+
+const TITLES = {
+  overview: ['Tổng quan điều hành', 'Command Overview · hôm nay có gì đang xảy ra', 'NHÌN'],
+  inbox: ['Hộp thư ý nghĩa', 'Inbox of Meaning · cái gì quan trọng nhất lúc này', 'NHÌN'],
+  raw: ['Kho dữ liệu thô', 'Raw Lake · mọi bridge gom hết về đây trước khi phân loại', 'DỮ LIỆU'],
+  rules: ['Quy tắc sàng lọc', 'Refinery Rules · Sếp định nghĩa cách core agent đánh giá', 'DỮ LIỆU'],
+  clean: ['Kho sạch & Trí nhớ', 'Clean SSOT · dữ liệu đã phân loại và trí nhớ tạm theo ID', 'DỮ LIỆU'],
+  notebook: ['Sổ tay nhận thức', 'AI-trợ lý tự ghi nhận thức lũy tiến cho từng ID người và ID nhóm', 'DỮ LIỆU'],
+  directory: ['Nhóm & Con người', 'Danh sách nhóm theo kênh và con người có bộ lọc', 'HIỂU'],
+  supply: ['Cung ↔ Cầu', 'Ai cần mua, ai cần bán, ghép được với ai', 'HIỂU'],
+  api: ['API & Model', 'Khoá API, endpoint và tham số cho từng agent', 'MÁY'],
+  mcp: ['MCP Hub', 'Máy chủ MCP bên ngoài mà agent được phép gọi', 'MÁY'],
+  plugins: ['Plugin & Tiện ích', 'Plugin nền DSH và plugin cài thêm từ bên ngoài', 'MÁY'],
+  graph: ['Bản đồ quan hệ', 'Relationship Map · ai đang liên quan', 'HIỂU'],
+  profile: ['Hồ sơ sống', 'Living Profile · vì sao hệ thống nghĩ vậy', 'HIỂU'],
+  identity: ['Hợp nhất danh tính', 'Identity Resolution · một người, nhiều kênh', 'HIỂU'],
+  search: ['Kho hội thoại', 'Knowledge & Search · tìm mẫu, không chỉ tìm câu', 'HIỂU'],
+  opportunity: ['Bảng cơ hội', 'Opportunity Board · pipeline sống từ chat', 'QUẢN'],
+  people: ['Đánh giá con người', 'People Review · điểm số có chứng cứ', 'QUẢN'],
+  care: ['Chất lượng chăm sóc', 'Care Quality · cách chăm, không chỉ số lần nhắn', 'QUẢN'],
+  workbench: ['Bàn làm việc', 'Workbench · soạn, duyệt, hành động', 'LÀM'],
+  agents: ['Danh tính Agent', 'Agent Identity · danh tính do Sếp định nghĩa', 'MÁY'],
+  system: ['Điều khiển hệ thống', 'System Control · kênh, quyền hạn, nhật ký', 'MÁY'],
+};
+
+const NAV_MAP = {
+  overview: { hub: 'command' },
+  inbox: { hub: 'opportunities' },
+  workbench: { hub: 'workbench_action' },
+  directory: { hub: 'directory' },
+  graph: { hub: 'relationship_radar', subtab: 'graph' },
+  // TODO: tách màn riêng khi có ticket sau
+  profile: { hub: 'relationship_radar', subtab: 'profiles' },
+  // TODO: tách màn riêng khi có ticket sau
+  notebook: { hub: 'relationship_radar', subtab: 'notes' },
+  opportunity: { hub: 'work' },
+  supply: { hub: 'workbench' },
+  search: { hub: 'chat_intelligence' },
+  people: { hub: 'people_review' },
+  care: { hub: 'intelligence' },
+  // TODO: tách màn riêng khi có ticket sau
+  raw: { hub: 'data_factory', subtab: 'raw' },
+  // TODO: tách màn riêng khi có ticket sau
+  rules: { hub: 'data_factory', subtab: 'rules' },
+  // TODO: tách màn riêng khi có ticket sau
+  clean: { hub: 'data_factory', subtab: 'clean' },
+  // TODO: tách màn riêng khi có ticket sau
+  identity: { hub: 'data_factory', subtab: 'identity' },
+  agents: { hub: 'assistant', subtab: 'identity' },
+  // TODO: tách màn riêng khi có ticket sau
+  api: { hub: 'assistant', subtab: 'quota' },
+  mcp: { hub: 'mcp_connectors' },
+  plugins: { hub: 'modules' },
+  system: { hub: 'governance' }
+};
+
+const HUB_TO_NAV_KEY = {
+  command: 'overview',
+  opportunities: 'inbox',
+  workbench_action: 'workbench',
+  directory: 'directory',
+  relationship_radar: 'graph',
+  work: 'opportunity',
+  workbench: 'supply',
+  chat_intelligence: 'search',
+  people_review: 'people',
+  intelligence: 'care',
+  data_factory: 'raw',
+  assistant: 'agents',
+  mcp_connectors: 'mcp',
+  modules: 'plugins',
+  governance: 'system',
+  approvals: 'system',
+  system_logs: 'system',
+  ai_brain: 'api',
+  security_pin: 'system',
+  zalo: 'system',
+  whatsapp: 'system',
+  media_vault: 'inbox'
+};
+
+function getNavBadge(key) {
+  switch (key) {
+    case 'overview':
+      const p1 = (state.attention && state.attention.filter(a => a.band === 'P1').length) || (state.opportunities && state.opportunities.filter(x => x.priority === 'P1').length) || 9;
+      return { text: String(p1), tone: 'danger' };
+    case 'inbox':
+      const opp = (state.opportunities && state.opportunities.length) || 28;
+      return { text: String(opp), tone: 'warn' };
+    case 'workbench':
+      return { text: '6', tone: 'warn' };
+    case 'opportunity':
+      const worksCount = (state.works && state.works.length) || 41;
+      return { text: String(worksCount), tone: 'ok' };
+    case 'supply':
+      return { text: '27', tone: 'ok' };
+    case 'raw':
+      return { text: '18k', tone: 'warn' };
+    case 'identity':
+      return { text: '12', tone: 'warn' };
+    case 'mcp':
+      const mcpCount = (state.mcp_connectors?.connected_connectors) || (state.mcp_servers && state.mcp_servers.length) || 7;
+      return { text: String(mcpCount), tone: 'ok' };
+    case 'plugins':
+      const plugCount = (state.plugins && state.plugins.length) || 11;
+      return { text: String(plugCount), tone: 'ok' };
+    default:
+      return null;
+  }
+}
+
+function toggleNavGroup(name) {
+  state.navOpen[name] = !state.navOpen[name];
+  renderSidebarNav();
+}
+
+function switchNav(navKey) {
+  const target = NAV_MAP[navKey];
+  if (!target) return;
+  state.activeNavKey = navKey;
+
+  // Auto-expand parent group
+  NAV.forEach(dm => dm.groups.forEach(g => {
+    if (g.children && g.children.some(c => c.key === navKey)) {
+      state.navOpen[g.name] = true;
+    }
+  }));
+
+  if (target.subtab) {
+    state.subtabs[target.hub] = target.subtab;
+  }
+  switchHub(target.hub, target.subtab);
+}
+
+function updateHeaderBreadcrumb() {
+  const s = state.activeNavKey || 'overview';
+  const t = TITLES[s] || TITLES.overview;
+  let crumbDomain = '', crumbGroup = '';
+
+  NAV.forEach(dm => dm.groups.forEach(g => {
+    if (g.key === s) {
+      crumbDomain = dm.crumb;
+      crumbGroup = '';
+    }
+    if (g.children && g.children.some(c => c.key === s)) {
+      crumbDomain = dm.crumb;
+      crumbGroup = g.name;
+    }
+  }));
+
+  const phaseLabel = crumbDomain || t[2] || 'KINH DOANH';
+  const pageTitle = t[0];
+  const pageSub = !crumbGroup ? t[1] : '';
+
+  const phaseTag = $('#topbar-phase-tag');
+  if (phaseTag) phaseTag.textContent = phaseLabel;
+
+  const crumbGroupWrap = $('#topbar-crumb-group-wrap');
+  const crumbGroupEl = $('#topbar-crumb-group');
+  if (crumbGroupWrap && crumbGroupEl) {
+    if (crumbGroup) {
+      crumbGroupEl.textContent = crumbGroup;
+      crumbGroupWrap.style.display = 'inline-flex';
+    } else {
+      crumbGroupWrap.style.display = 'none';
+    }
+  }
+
+  const titleEl = $('#top-title');
+  if (titleEl) titleEl.textContent = pageTitle;
+
+  const subEl = $('#top-subtitle');
+  if (subEl) {
+    if (pageSub) {
+      subEl.textContent = pageSub;
+      subEl.style.display = 'block';
+    } else {
+      subEl.style.display = 'none';
+    }
+  }
+}
+
+function updateHeaderPills() {
+  const channelText = $('#topbar-channels-text');
+  if (channelText) {
+    const groupCount = (state.groups && state.groups.length) || 42;
+    channelText.textContent = `4 kênh · ${groupCount} nhóm`;
+  }
+  const autoText = $('#topbar-autonomy-text');
+  if (autoText) {
+    const lvl = state.autonomy_level ?? 4;
+    autoText.textContent = `tự trị ${lvl}`;
+  }
+  const dciText = $('#topbar-dci-text');
+  if (dciText) {
+    const dci = state.dci_score ?? 78;
+    dciText.textContent = `${dci}%`;
+  }
+}
+
+function showSavedViewsModal() {
+  showToast("📌 Tính năng Lưu & Đánh dấu góc nhìn đang được kích hoạt theo dõi.");
+}
+
+function renderSidebarNav() {
+  const navContainer = $('#sidebar-nav');
+  if (!navContainer) return;
+
+  const currentNav = state.activeNavKey || 'overview';
+
+  let html = '';
+  NAV.forEach((dm) => {
+    const screenCount = dm.groups.reduce((n, g) => n + (g.children ? g.children.length : 1), 0);
+    html += `
+      <div class="nav-domain-section">
+        <div class="nav-domain-header">
+          <i class="${dm.icon}" style="font-size:12px; flex:none; color:${dm.tone};"></i>
+          <span class="nav-domain-title" style="color:${dm.tone};">${dm.label}</span>
+          <span class="nav-domain-line"></span>
+          <span class="nav-domain-count">${screenCount} màn</span>
+        </div>
+    `;
+
+    dm.groups.forEach(g => {
+      const kids = g.children || null;
+      const activeKid = kids ? kids.some(c => c.key === currentNav) : false;
+      const selfActive = g.key === currentNav;
+      const on = selfActive || activeKid;
+      const label = g.name;
+      const isOpen = kids ? (state.navOpen[label] ?? (activeKid || selfActive)) : false;
+
+      const badge = g.key ? getNavBadge(g.key) : null;
+      const badgeHtml = badge ? `<span class="nav-badge ${badge.tone}">${badge.text}</span>` : '';
+      const caretHtml = kids ? `<i class="${isOpen ? 'ph ph-caret-down' : 'ph ph-caret-right'}" style="font-size:12px; flex:none; color:var(--color-neutral-500,#595d6c); cursor:pointer;" onclick="event.stopPropagation(); toggleNavGroup('${label}');"></i>` : '';
+
+      const hubAttr = g.key ? (NAV_MAP[g.key]?.hub || g.key) : (kids ? (NAV_MAP[kids[0].key]?.hub || '') : '');
+      const rbacAttr = g.key === 'system' ? 'data-hub="security_pin"' : `data-hub="${hubAttr}"`;
+
+      const clickHandler = g.key
+        ? `switchNav('${g.key}')`
+        : `toggleNavGroup('${label}')`;
+
+      html += `
+        <div class="nav-group-wrapper">
+          <button class="nav-hub-item ${selfActive ? 'active' : ''} ${activeKid ? 'parent-on' : ''}" ${rbacAttr} data-nav="${g.key || ''}" onclick="${clickHandler}" title="${g.name}${g.en ? ' — ' + g.en : ''}">
+            <span class="nav-active-bar"></span>
+            <i class="${g.icon}" style="font-size:16px; flex:none; width:16px;"></i>
+            <span style="flex:1; min-width:0; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${g.name}</span>
+            ${badgeHtml}
+            ${caretHtml}
+          </button>
+      `;
+
+      if (kids && isOpen) {
+        html += `<div class="nav-group-children">`;
+        kids.forEach(c2 => {
+          const kon = c2.key === currentNav;
+          const cBadge = getNavBadge(c2.key);
+          const cBadgeHtml = cBadge ? `<span class="nav-badge ${cBadge.tone}">${cBadge.text}</span>` : '';
+          const cHub = NAV_MAP[c2.key]?.hub || c2.key;
+          const cRbac = c2.key === 'people' ? 'data-hub="people_review"' : `data-hub="${cHub}"`;
+
+          html += `
+            <button class="nav-hub-item nav-hub-child ${kon ? 'active' : ''}" ${cRbac} data-nav="${c2.key}" onclick="switchNav('${c2.key}')" title="${c2.name}${c2.en ? ' — ' + c2.en : ''}">
+              <span class="nav-dot"></span>
+              <span style="flex:1; min-width:0; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c2.name}</span>
+              ${cBadgeHtml}
+            </button>
+          `;
+        });
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  navContainer.innerHTML = html;
+
+  // Re-run applyRbacRestrictions to keep permissions active
+  if (state.accounts && state.accounts.active_role) {
+    applyRbacRestrictions(state.accounts.active_role, state.accounts.active_rbac_policy);
+  }
+}
+
 function switchHub(hubKey, subtabKey = null) {
   let effectiveHub = hubKey;
   let effectiveSubtab = subtabKey;
@@ -1614,17 +1868,44 @@ function switchHub(hubKey, subtabKey = null) {
   }
 
   state.activeHub = effectiveHub;
+  state.current_hub = effectiveHub;
   if (effectiveSubtab) {
     state.subtabs[effectiveHub] = effectiveSubtab;
   }
-  
-  // Highlight đúng mục menu đang chọn
-  $$('.nav-hub-item').forEach(el => {
-    const dataHub = el.getAttribute('data-hub');
-    const isActive = dataHub === hubKey || (dataHub === effectiveHub && !['approvals', 'system_logs', 'ai_brain', 'security_pin', 'workbench_action'].includes(hubKey));
-    el.classList.toggle('active', isActive);
-  });
 
+  // Reverse mapping to activeNavKey if not already set or mismatched
+  let matchedKey = null;
+  for (const [k, v] of Object.entries(NAV_MAP)) {
+    if (v.hub === effectiveHub && effectiveSubtab && v.subtab === effectiveSubtab) {
+      matchedKey = k;
+      break;
+    }
+  }
+  if (!matchedKey) {
+    for (const [k, v] of Object.entries(NAV_MAP)) {
+      if (v.hub === effectiveHub && !v.subtab) {
+        matchedKey = k;
+        break;
+      }
+    }
+  }
+  if (!matchedKey) {
+    matchedKey = HUB_TO_NAV_KEY[effectiveHub] || HUB_TO_NAV_KEY[hubKey] || 'overview';
+  }
+  state.activeNavKey = matchedKey;
+
+  // Ensure parent group is open
+  NAV.forEach(dm => dm.groups.forEach(g => {
+    if (g.children && g.children.some(c => c.key === state.activeNavKey)) {
+      state.navOpen[g.name] = true;
+    }
+    if (g.key === state.activeNavKey && g.children) {
+      state.navOpen[g.name] = true;
+    }
+  }));
+
+  renderSidebarNav();
+  updateHeaderBreadcrumb();
   renderActiveHub();
 
   if (effectiveHub === 'zalo') {
@@ -9415,6 +9696,9 @@ async function completeOnboardingAction() {
 // INITIAL LOAD & BACKGROUND LOG STREAMING
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
+  renderSidebarNav();
+  updateHeaderBreadcrumb();
+  updateHeaderPills();
   fetchAllData(true);
   loadAgentIdentities();
   startZaloQrPolling();
