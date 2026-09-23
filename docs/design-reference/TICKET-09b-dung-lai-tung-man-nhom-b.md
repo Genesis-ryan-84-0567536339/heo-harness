@@ -41,11 +41,11 @@ Với MỖI khối:
    buộc trong ticket này.
 4. **Tự kiểm tra bằng ảnh chụp thật** trước khi coi màn đó xong:
    ```
-   pkill -f "heo_harness.app" 2>/dev/null; sleep 1
-   cd <thư mục hiện tại> && HARNESS_PORT=5099 PYTHONPATH="$PWD" nohup python3 -m heo_harness.app > /tmp/preview.log 2>&1 &
+   fuser -k 5299/tcp 2>/dev/null; sleep 1
+   cd <thư mục hiện tại> && HARNESS_PORT=5299 PYTHONPATH="$PWD" nohup python3 -m heo_harness.app > /tmp/preview-09b.log 2>&1 &
    sleep 5
    google-chrome --headless --disable-gpu --no-sandbox --window-size=1600,1000 \
-     --screenshot=/tmp/screen_<ten_hub>.png "http://127.0.0.1:5099/#/<hub>"
+     --screenshot=/tmp/screen_<ten_hub>.png "http://127.0.0.1:5299/#/<hub>"
    ```
    So khớp từng thành phần vừa dựng với HTML mockup gốc — xác nhận đủ thành phần, đúng bố cục trước
    khi qua màn tiếp theo.
