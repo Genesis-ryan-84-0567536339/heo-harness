@@ -2062,8 +2062,8 @@ function renderActiveHub() {
 
     case 'workbench_action':
       titleEl.textContent = 'Bàn làm việc (Soạn & Duyệt)';
-      subEl.textContent = 'Bàn làm việc điều hành tập trung · Soạn thảo & Duyệt tác vụ (sẽ triển khai ở ticket sau)';
-      container.innerHTML = renderWorkbenchActionPlaceholder();
+      subEl.textContent = 'Bàn làm việc điều hành tập trung · Soạn thảo & Duyệt tác vụ · Tự trị mức 4';
+      container.innerHTML = renderWorkbenchActionHub();
       break;
 
     case 'people_review':
@@ -2079,29 +2079,323 @@ function renderActiveHub() {
   updateHeaderBreadcrumb();
 }
 
-function renderWorkbenchActionPlaceholder() {
+// ══════════════════════════════════════════════════════════
+// WORKBENCH ACTION HUB — Spec F2 mục 10 / Mockup lines 1852-1951 (isWorkbench)
+// Bàn làm việc điều hành tập trung: Soạn & Duyệt tác vụ
+// ══════════════════════════════════════════════════════════
+const workbenchState = {
+  activeDraftId: 'ACT-0231',
+  sideActions: [
+    { id: 'crm', label: 'Ghi vào CRM và cập nhật pipeline', icon: 'ph ph-database', tone: 'oklch(0.76 0.12 162)', on: true },
+    { id: 'task', label: 'Tạo việc theo dõi hạn giao 03/10', icon: 'ph ph-check-square-offset', tone: 'oklch(0.76 0.12 162)', on: true },
+    { id: 'remind', label: 'Đặt nhắc follow sau 48 giờ', icon: 'ph ph-bell-ringing', tone: 'oklch(0.76 0.12 162)', on: true },
+    { id: 'sample', label: 'Gửi kèm bảng so sánh giấy C300', icon: 'ph ph-paperclip', tone: 'oklch(0.84 0.13 84)', on: false },
+    { id: 'erp', label: 'Tạo đơn nháp trong ERP', icon: 'ph ph-package', tone: 'var(--color-neutral-400,#b2b6ca)', on: false }
+  ]
+};
+
+const workbenchDrafts = [
+  {
+    id: 'ACT-0231',
+    kind: 'Báo giá',
+    title: 'Báo giá hợp đồng in ấn quý 4 cho Thành Phát',
+    agent: 'Trợ lý thương mại',
+    age: '47 phút',
+    kindTone: 'oklch(0.76 0.12 162)',
+    subject: 'Báo giá hợp đồng in ấn quý 4',
+    subtitle: 'ACT-0231 · Agent Trợ lý thương mại soạn · 47 phút trước',
+    recipient: 'Kính gửi anh Nguyễn Văn Bảo — Công ty in Thành Phát,',
+    body: [
+      'Cảm ơn anh đã kiên nhẫn chờ phản hồi. Em xin lỗi về việc chậm trả lời ba tin nhắn gần nhất của anh.',
+      'Về đơn in catalogue 5.000 bản giấy C300 quý 4, bên em xác nhận mức giá 84.000.000 ₫, đã bao gồm VAT và giao tận xưởng.',
+      'Mốc giao: 12 ngày kể từ ngày anh xác nhận, tức ngày 03/10/2026 nếu chốt trong hôm nay. Bên em cam kết mốc này bằng văn bản trong hợp đồng.',
+      'Về mức giá Minh Long anh nhắc tới, em xin giải thích: phần chênh 4% nằm ở loại giấy và bảo hành màu, em có thể gửi mẫu so sánh để anh tự đánh giá.',
+      'Nếu anh cần gấp hơn 12 ngày, em xin phép trao đổi lại với xưởng và trả lời anh trong hôm nay.'
+    ],
+    closing: 'Trân trọng,<br>Ban Tài chính — Genesis',
+    sources: [
+      { label: 'Hồ sơ Thành Phát · 214 sự kiện', icon: 'ph ph-identification-card' },
+      { label: 'Biểu giá quý 4', icon: 'ph ph-table' },
+      { label: 'Tồn kho ERP 21/09', icon: 'ph ph-package' },
+      { label: '3 báo giá đối chiếu', icon: 'ph ph-scales' },
+      { label: 'Ghi chú tay của Sếp', icon: 'ph ph-note-pencil' }
+    ],
+    amountNote: 'Khoản 84 triệu ₫ vượt ngưỡng 50 triệu ₫ — hệ thống không được tự gửi',
+    context: [
+      { key: 'đối tượng', value: 'Công ty in Thành Phát · Nguyễn Văn Bảo', tone: 'var(--color-text,#e9e9ed)' },
+      { key: 'độ nóng', value: '87 — ba tin chưa trả lời', tone: 'oklch(0.76 0.15 24)' },
+      { key: 'rủi ro churn', value: '81 — mẫu giống 4 ca đã mất', tone: 'oklch(0.76 0.15 24)' },
+      { key: 'giai đoạn', value: 'Đang đàm phán · vòng hai', tone: 'var(--color-neutral-300,#cfd3e5)' },
+      { key: 'phong cách', value: 'Ngắn, trực tiếp, không vòng vo', tone: 'var(--color-neutral-300,#cfd3e5)' },
+      { key: 'ghi chú Sếp', value: 'Đừng để junior follow khách này', tone: 'oklch(0.84 0.13 84)' }
+    ]
+  },
+  {
+    id: 'ACT-0232',
+    kind: 'Tin nhắn',
+    title: 'Trả lời anh Bảo về tiến độ, xin lỗi vì chậm phản hồi',
+    agent: 'Trợ lý thương mại',
+    age: '12 phút',
+    kindTone: 'var(--color-neutral-400,#b2b6ca)',
+    subject: 'Tin nhắn giải trình tiến độ giao nhận catalogue',
+    subtitle: 'ACT-0232 · Agent Trợ lý thương mại soạn · 12 phút trước',
+    recipient: 'Dạ em chào anh Bảo,',
+    body: [
+      'Em đã kiểm tra lại tiến độ đóng gói của lô hàng mẫu, sáng mai bên vận chuyển sẽ giao trực tiếp tới văn phòng anh.',
+      'Em thành thật xin lỗi vì chiều nay bận họp đột xuất nên chưa phản hồi tin nhắn của anh kịp thời ạ.'
+    ],
+    closing: 'Bé Heo — Trợ lý điều hành',
+    sources: [
+      { label: 'Nhật ký chat Zalo cá nhân', icon: 'ph ph-chats-circle' },
+      { label: 'Lịch xuất kho 23/09', icon: 'ph ph-package' }
+    ],
+    amountNote: 'Tin nhắn chăm sóc đối tác — Tự trị mức 4',
+    context: [
+      { key: 'đối tượng', value: 'Nguyễn Văn Bảo · Khách hàng VIP', tone: 'var(--color-text,#e9e9ed)' },
+      { key: 'kênh', value: 'Zalo 1-1 Cá nhân', tone: 'var(--color-neutral-300,#cfd3e5)' }
+    ]
+  },
+  {
+    id: 'ACT-0233',
+    kind: 'Tin nhắn',
+    title: 'Chào hỏi Xưởng gỗ Bình Dương về đơn 3 container MDF',
+    agent: 'Key Account junior',
+    age: '18 phút',
+    kindTone: 'var(--color-neutral-400,#b2b6ca)',
+    subject: 'Báo giá & Chào mẫu 3 container MDF',
+    subtitle: 'ACT-0233 · Key Account junior soạn · 18 phút trước',
+    recipient: 'Kính gửi Ban Quản lý Xưởng gỗ Bình Dương,',
+    body: [
+      'Bên em ghi nhận nhu cầu 3 container MDF phủ Melamine 17mm loại E1 chống ẩm.',
+      'Hiện nguồn hàng sẵn tại kho Cát Lái, sẵn sàng bàn giao chứng chỉ CO/CQ và tiến hành giao đợt 1 ngay trong tuần.'
+    ],
+    closing: 'Đội ngũ Thương mại — Genesis',
+    sources: [
+      { label: 'Tín hiệu Group Ngành gỗ', icon: 'ph ph-broadcast' },
+      { label: 'Kho Cát Lái ERP', icon: 'ph ph-warehouse' }
+    ],
+    amountNote: 'Cần Sếp duyệt trước khi gửi vào group',
+    context: [
+      { key: 'đối tượng', value: 'Xưởng gỗ Bình Dương', tone: 'var(--color-text,#e9e9ed)' },
+      { key: 'giá trị ước tính', value: '420.000.000 ₫', tone: 'oklch(0.76 0.12 162)' }
+    ]
+  },
+  {
+    id: 'ACT-0234',
+    kind: 'Hợp đồng',
+    title: 'Biên bản đàm phán tuyến lạnh An Khang vòng ba',
+    agent: 'Admin hậu cần',
+    age: '2 giờ',
+    kindTone: 'oklch(0.84 0.13 84)',
+    subject: 'Biên bản đàm phán cước vận tải lạnh An Khang',
+    subtitle: 'ACT-0234 · Admin hậu cần soạn · 2 giờ trước',
+    recipient: 'Kính gửi Đại diện Công ty Logistics An Khang,',
+    body: [
+      'Căn cứ phiên đàm phán ngày 22/09/2026, Genesis thống nhất áp dụng biểu cước ưu đãi cho chặng TP.HCM - Đà Nẵng container 40RF.',
+      'Các điều khoản phạt vi phạm nhiệt độ bảo quản dưới -18°C được quy định chi tiết tại Phụ lục II đính kèm.'
+    ],
+    closing: 'Ban Pháp chế & Hậu cần Genesis',
+    sources: [
+      { label: 'Biên bản họp đàm phán 22/09', icon: 'ph ph-file-text' },
+      { label: 'Hợp đồng khung 2026', icon: 'ph ph-scales' }
+    ],
+    amountNote: 'Hợp đồng thương mại bắt buộc chữ ký số của Sếp',
+    context: [
+      { key: 'đối tác', value: 'Logistics An Khang', tone: 'var(--color-text,#e9e9ed)' },
+      { key: 'trạng thái', value: 'Chờ duyệt pháp lý', tone: 'oklch(0.84 0.13 84)' }
+    ]
+  },
+  {
+    id: 'ACT-0235',
+    kind: 'Nhắc việc',
+    title: 'Nhắc Phạm Anh Tú cập nhật mốc giao đã hứa',
+    agent: 'Thư ký cá nhân',
+    age: '3 giờ',
+    kindTone: 'var(--color-neutral-400,#b2b6ca)',
+    subject: 'Nhắc nhở cập nhật mốc cam kết giao hàng',
+    subtitle: 'ACT-0235 · Thư ký cá nhân soạn · 3 giờ trước',
+    recipient: 'Anh Phạm Anh Tú thân mến,',
+    body: [
+      'Radar lời hứa phát hiện anh có cam kết mốc giao hàng cho khách hàng Thành Phát lúc 14:00 hôm nay nhưng chưa cập nhật tiến độ trên hệ thống.',
+      'Vui lòng xác nhận trạng thái đơn để đội ngũ CSKH kịp thời thông tin cho khách.'
+    ],
+    closing: 'Bé Heo — Thư ký điều hành',
+    sources: [
+      { label: 'Radar lời hứa trễ hạn', icon: 'ph ph-warning-octagon' }
+    ],
+    amountNote: 'Thông báo nội bộ tự động',
+    context: [
+      { key: 'nhân sự', value: 'Phạm Anh Tú · Quản lý kho', tone: 'var(--color-text,#e9e9ed)' },
+      { key: 'mức độ', value: 'Nhắc nhở lần 1', tone: 'oklch(0.84 0.13 84)' }
+    ]
+  },
+  {
+    id: 'ACT-0236',
+    kind: 'Báo cáo',
+    title: 'Tổng hợp tuần 38 cho họp giao ban thứ Hai',
+    agent: 'Admin hậu cần',
+    age: '5 giờ',
+    kindTone: 'var(--color-neutral-400,#b2b6ca)',
+    subject: 'Báo cáo tổng hợp điều hành tuần 38',
+    subtitle: 'ACT-0236 · Admin hậu cần soạn · 5 giờ trước',
+    recipient: 'Kính gửi Sếp Ryan và Ban Giám Đốc,',
+    body: [
+      'Báo cáo tóm tắt 10 chỉ số trọng yếu: Doanh số đạt 92% kế hoạch, tỷ lệ chốt deal đạt 68%, 2 vi phạm cam kết đã được xử lý triệt để.',
+      'Kiến nghị trọng tâm tuần tới: Tăng cường rà soát tín hiệu cung cầu ngành gỗ và vật tư bao bì.'
+    ],
+    closing: 'Văn phòng Điều hành Genesis',
+    sources: [
+      { label: 'Dữ liệu SQLite Heo-Harness', icon: 'ph ph-database' },
+      { label: 'Tổng hợp báo cáo tuần 38', icon: 'ph ph-chart-line' }
+    ],
+    amountNote: 'Báo cáo nội bộ điều hành',
+    context: [
+      { key: 'phân loại', value: 'Executive Briefing', tone: 'oklch(0.76 0.12 162)' }
+    ]
+  }
+];
+
+function renderWorkbenchActionHub() {
+  const activeId = workbenchState.activeDraftId || 'ACT-0231';
+  const activeDraft = workbenchDrafts.find(d => d.id === activeId) || workbenchDrafts[0];
+
   return `
-    <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
-      <div class="card card-pad" style="text-align:center;padding:64px 24px;background:var(--color-surface,#121622);border:1px solid var(--color-border,#23293d);border-radius:12px;max-width:720px;margin:32px auto">
-        <div style="width:56px;height:56px;border-radius:14px;background:rgba(244,114,182,0.12);border:1px solid rgba(244,114,182,0.3);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px">
-          <i class="ph ph-pen-nib" style="font-size:28px;color:#f472b6"></i>
-        </div>
-        <h2 style="font-size:18px;font-weight:700;color:var(--color-text,#e9e9ed);margin-bottom:8px">Bàn làm việc (Soạn & Duyệt)</h2>
-        <p style="font-size:13px;color:var(--color-neutral-400,#b2b6ca);line-height:1.6;margin-bottom:16px">
-          Không gian tập trung dành cho Sếp và Agent để soạn thảo công văn, rà soát văn bản và xử lý tác vụ theo thời gian thực.
-        </p>
-        <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:6px;font-size:12px;color:#fbbf24;margin-bottom:24px">
-          <i class="ph ph-hourglass-high"></i>
-          <span>Màn hình thuộc nhóm <b>LÀM</b> (sẽ triển khai ở ticket sau)</span>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(288px,1fr)); gap:16px; align-items:start;">
+      <!-- Cột 1: Chờ Sếp duyệt -->
+      <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+        <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+          <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Chờ Sếp duyệt</div>
+          <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">${workbenchDrafts.length} bản nháp · tự trị mức 4</div>
         </div>
         <div>
-          <button class="btn primary sm" onclick="switchHub('command')">
-            <i class="ph ph-arrow-left"></i> Quay lại Tổng quan điều hành
-          </button>
+          ${workbenchDrafts.map(df => {
+            const isActive = (df.id === activeId);
+            return `
+              <div onclick="selectWorkbenchDraft('${df.id}')"
+                   style="padding:11px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16)); cursor:pointer; border-left:2px solid ${isActive ? 'var(--color-accent,#9184d9)' : 'transparent'}; background:${isActive ? 'var(--color-neutral-900,#292b31)' : 'transparent'};"
+                   onmouseover="if (!${isActive}) this.style.background='var(--color-neutral-900,#292b31)'"
+                   onmouseout="if (!${isActive}) this.style.background='transparent'">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:10.5px; border-radius:4px; padding:2px 7px; color:${df.kindTone}; border:1px solid ${df.kindTone}; background:transparent;">${escapeHtml(df.kind)}</span>
+                  <span style="flex:1; min-width:0; font-size:10px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${df.id}</span>
+                </div>
+                <div style="font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); margin-top:6px; line-height:1.45; text-wrap:pretty;">${escapeHtml(df.title)}</div>
+                <div style="display:flex; align-items:center; gap:7px; margin-top:6px;">
+                  <i class="ph ph-robot" style="font-size:12px; flex:none; color:var(--color-accent-300,#d2cefd);"></i>
+                  <span style="flex:1; min-width:0; font-size:10px; color:var(--color-neutral-500,#9397ab); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(df.agent)}</span>
+                  <span style="flex:none; font-size:10px; color:var(--color-neutral-500,#9397ab);">${df.age}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Cột 2: Nội dung bản nháp được chọn -->
+      <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+          <div style="min-width:0;">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">${escapeHtml(activeDraft.subject)}</div>
+            <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(activeDraft.subtitle)}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex:none;">
+            <button class="btn btn-secondary" onclick="showToast('Đã dịch sang tiếng Anh', 'info')" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;"><i class="ph ph-translate" style="font-size:14px;"></i>Dịch</button>
+            <button class="btn btn-secondary" onclick="showToast('Đang yêu cầu Agent soạn lại...', 'info')" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;"><i class="ph ph-arrow-counter-clockwise" style="font-size:14px;"></i>Soạn lại</button>
+          </div>
+        </div>
+        <div style="padding:16px; background:var(--color-bg,#161826); display:flex; flex-direction:column; gap:12px;">
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-md,8px); padding:16px 18px; display:flex; flex-direction:column; gap:11px;">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">${escapeHtml(activeDraft.recipient)}</div>
+            ${activeDraft.body.map(db => `
+              <div style="font-size:12.5px; color:var(--color-neutral-300,#cfd3e5); line-height:1.65; text-wrap:pretty;">${escapeHtml(db)}</div>
+            `).join('')}
+            <div style="font-size:12.5px; color:var(--color-neutral-300,#cfd3e5); line-height:1.65;">${activeDraft.closing}</div>
+          </div>
+          <div style="display:flex; align-items:flex-start; gap:9px; padding:11px 13px; border:1px solid var(--color-accent-800,#423a6a); border-radius:var(--radius-sm,4px); background:var(--color-accent-900,#2b2741);">
+            <i class="ph ph-database" style="font-size:15px; flex:none; color:var(--color-accent-300,#d2cefd); margin-top:1px;"></i>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--color-accent-300,#d2cefd);">Dữ liệu agent đã dùng — không có chỗ nào bịa</div>
+              <div style="display:flex; flex-wrap:wrap; gap:7px; margin-top:8px;">
+                ${activeDraft.sources.map(ds => `
+                  <span style="display:flex; align-items:center; gap:5px; font-size:10.5px; color:var(--color-neutral-300,#cfd3e5); border:1px solid var(--color-neutral-800,#3f424d); border-radius:999px; padding:2px 9px; background:var(--color-bg,#161826);"><i class="${ds.icon}" style="font-size:12px;"></i>${escapeHtml(ds.label)}</span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 16px; border-top:1px solid var(--color-divider,rgba(233,233,237,0.16)); display:flex; align-items:center; gap:9px;">
+          <button class="btn btn-primary" onclick="handleApproveWorkbenchDraft('${activeDraft.id}')" style="gap:6px; height:32px; padding:0 14px; font-size:12px; color:var(--color-accent-300,#d2cefd); border-color:var(--color-accent);"><i class="ph ph-paper-plane-tilt" style="font-size:14px;"></i>Duyệt và gửi qua Zalo</button>
+          <button class="btn btn-secondary" onclick="showToast('Chế độ sửa nhanh trực tiếp đã kích hoạt', 'info')" style="gap:6px; height:32px; padding:0 12px; font-size:12px;"><i class="ph ph-pencil-simple" style="font-size:14px;"></i>Sửa rồi gửi</button>
+          <button class="btn btn-secondary" onclick="handleCancelWorkbenchDraft('${activeDraft.id}')" style="gap:6px; height:32px; padding:0 12px; font-size:12px;"><i class="ph ph-x" style="font-size:14px;"></i>Hủy bản nháp</button>
+          <span style="flex:1;"></span>
+          <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab);">${escapeHtml(activeDraft.amountNote)}</span>
+        </div>
+      </div>
+
+      <!-- Cột 3: Ngữ cảnh đối tượng + Tạo kèm theo -->
+      <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Ngữ cảnh đối tượng</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Kéo từ hồ sơ sống</div>
+          </div>
+          <div style="padding:6px 0 10px;">
+            ${activeDraft.context.map(wc => `
+              <div style="display:flex; align-items:center; gap:11px; padding:7px 16px;">
+                <span style="width:88px; flex:none; font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(wc.key)}</span>
+                <span style="flex:1; min-width:0; font-size:11.5px; color:${wc.tone};">${escapeHtml(wc.value)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Tạo kèm theo</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Hành động đi cùng khi duyệt</div>
+          </div>
+          <div style="padding:8px 0 12px;">
+            ${workbenchState.sideActions.map(wa => `
+              <div style="display:flex; align-items:center; gap:11px; padding:8px 16px; cursor:pointer;" onclick="toggleWbSideAction('${wa.id}')">
+                <i class="${wa.icon}" style="font-size:15px; flex:none; color:${wa.tone};"></i>
+                <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); text-wrap:pretty;">${escapeHtml(wa.label)}</span>
+                <span style="position:relative; flex:none; width:30px; height:16px; border-radius:999px; display:block; background:${wa.on ? 'var(--color-accent,#9184d9)' : 'var(--color-neutral-800,#3f424d)'}; transition:background .15s ease;">
+                  <span style="position:absolute; top:3px; left:${wa.on ? '17px' : '3px'}; width:10px; height:10px; border-radius:50%; background:var(--color-bg,#161826); display:block; transition:left .15s ease;"></span>
+                </span>
+              </div>
+            `).join('')}
+          </div>
         </div>
       </div>
     </div>
   `;
+}
+
+function selectWorkbenchDraft(draftId) {
+  workbenchState.activeDraftId = draftId;
+  const container = document.getElementById('hub-content-container');
+  if (container && state.current_hub === 'workbench_action') {
+    container.innerHTML = renderWorkbenchActionHub();
+  }
+}
+
+function toggleWbSideAction(actionId) {
+  const item = workbenchState.sideActions.find(a => a.id === actionId);
+  if (item) {
+    item.on = !item.on;
+    const container = document.getElementById('hub-content-container');
+    if (container && state.current_hub === 'workbench_action') {
+      container.innerHTML = renderWorkbenchActionHub();
+    }
+  }
+}
+
+function handleApproveWorkbenchDraft(draftId) {
+  showToast(`Sếp đã duyệt thành công bản nháp ${draftId}! Lệnh gửi đã kích hoạt.`, 'success');
+}
+
+function handleCancelWorkbenchDraft(draftId) {
+  showToast(`Đã huỷ bản nháp ${draftId}.`, 'info');
 }
 
 // ==========================================
