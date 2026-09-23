@@ -12229,10 +12229,146 @@ function renderRefineryRulesView() {
   `;
 }
 
+function renderCleanStoreView() {
+  // Không có API backend thật cho: cleanRows, memory, agentParams
+  // Hiển thị mảng rỗng [] kèm thông báo rỗng trung thực (empty-state)
+  const cleanRows = [];
+  const memory = [];
+  const agentParams = [];
+
+  return `
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0; margin-bottom:18px;">
+      <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:760px;">
+        <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">Kho sạch &amp; Trí nhớ</div>
+        <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">Dữ liệu đã được core agent phân loại, gắn về ID nhóm và ID người. Agent trực kênh chỉ đọc từ đây cộng với trí nhớ tạm để quyết định nội dung phản hồi, rồi ghi kết quả trở lại.</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:16px; align-items:start;">
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Bản ghi sạch theo ID</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">${cleanRows.length} bản ghi · bấm một dòng để xem trí nhớ tạm</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:10.5px; padding:2px 8px; border-radius:999px; color:var(--color-neutral-400,#b2b6ca); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);">Tất cả kênh</span>
+            </div>
+          </div>
+          <div style="width:100%; overflow-x:auto;">
+            <table class="table" style="min-width:920px; width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:106px;">ID nhóm</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:100px;">ID người</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:136px;">Sự kiện</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; min-width:280px;">Kết luận đã chốt</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:70px;">Điểm</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:84px;">Chu kỳ</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:80px;">Thô</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${cleanRows.length === 0 ? `
+                  <tr>
+                    <td colspan="7" style="text-align:center; padding:48px 16px; color:var(--color-neutral-400,#b2b6ca);">
+                      <i class="ph ph-check-circle" style="font-size:32px; opacity:0.4; display:block; margin:0 auto 10px;"></i>
+                      <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed); margin-bottom:4px;">Chưa có dữ liệu thật — chờ nối API kho sạch SSOT (Clean Store)</div>
+                      <div style="font-size:11.5px; color:var(--color-neutral-500,#9397ab); max-width:440px; margin:0 auto; line-height:1.5;">Hệ thống chưa có bảng/API riêng cho kho sạch đã gán nhãn và gắn ID nhóm/người chuẩn hoá. Khi backend hoàn thiện, các bản ghi đã chốt kết luận sẽ hiển thị tại đây.</div>
+                    </td>
+                  </tr>
+                ` : cleanRows.map(cr2 => `
+                  <tr style="${cr2.rowStyle || ''}">
+                    <td style="padding:10px 14px; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${escapeHtml(cr2.gid || '')}</td>
+                    <td style="padding:10px 14px; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${escapeHtml(cr2.pid || '')}</td>
+                    <td style="padding:10px 14px;"><span style="${cr2.evStyle || ''}">${escapeHtml(cr2.event || '')}</span></td>
+                    <td style="padding:10px 14px; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); min-width:280px;"><div style="line-height:1.5; text-wrap:pretty; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${escapeHtml(cr2.conclusion || '')}</div></td>
+                    <td style="padding:10px 14px; font-size:11px; color:${cr2.tone || 'var(--color-text,#e9e9ed)'}; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(cr2.score || '')}</td>
+                    <td style="padding:10px 14px; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(cr2.cycle || '')}</td>
+                    <td style="padding:10px 14px;"><button class="btn btn-ghost" onclick="showToast('Tính năng này chưa nối API thật, sẽ triển khai ở ticket sau.')" style="height:22px; padding:0 7px; font-size:10px;">Xem thô</button></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--acc,#9184d9); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i class="ph ph-brain" style="font-size:15px; color:var(--color-accent-300,#d2cefd);"></i>
+                <span style="flex:1; font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Trí nhớ tạm</span>
+                <span style="font-size:10px; color:var(--color-accent-300,#d2cefd); border:1px solid var(--color-accent-800,#423a6a); border-radius:999px; padding:2px 8px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">0 / 4.000 token</span>
+              </div>
+              <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-top:5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">—</div>
+            </div>
+            <div style="padding:13px 16px; display:flex; flex-direction:column; gap:13px;">
+              ${memory.length === 0 ? `
+                <div style="padding:24px 12px; text-align:center; color:var(--color-neutral-400,#b2b6ca);">
+                  <i class="ph ph-brain" style="font-size:24px; opacity:0.4; display:block; margin:0 auto 6px;"></i>
+                  <div style="font-size:12px; font-weight:500; color:var(--color-text,#e9e9ed);">Chưa có dữ liệu thật — chờ nối API trí nhớ tạm (Working Memory)</div>
+                  <div style="font-size:11px; color:var(--color-neutral-500,#9397ab); margin-top:2px;">Chưa có bộ nhớ đệm ngữ cảnh ngắn hạn cho đối tượng được chọn.</div>
+                </div>
+              ` : memory.map(mm => `
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:9.5px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:${mm.tone || 'var(--color-accent-300,#d2cefd)'};">${escapeHtml(mm.title || '')}</span>
+                    <span style="flex:1; height:1px; background:linear-gradient(90deg,var(--color-divider,rgba(233,233,237,0.16)),transparent);"></span>
+                    <span style="flex:none; font-size:9.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(mm.age || '')}</span>
+                  </div>
+                  ${(mm.lines || []).map(ml => `
+                    <div style="display:flex; align-items:flex-start; gap:8px;">
+                      <span style="width:4px; height:4px; flex:none; border-radius:50%; background:${mm.tone || 'var(--acc,#9184d9)'}; margin-top:6px;"></span>
+                      <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); line-height:1.55; text-wrap:pretty;">${escapeHtml(ml)}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              `).join('')}
+              <div style="display:flex; align-items:center; gap:8px; padding-top:4px;">
+                <button class="btn btn-secondary" onclick="showToast('Tính năng này chưa nối API thật, sẽ triển khai ở ticket sau.')" style="gap:5px; height:27px; padding:0 10px; font-size:11px;"><i class="ph ph-clock-counter-clockwise" style="font-size:12px;"></i>Lịch sử nén</button>
+                <button class="btn btn-ghost" onclick="showToast('Tính năng này chưa nối API thật, sẽ triển khai ở ticket sau.')" style="gap:5px; height:27px; padding:0 9px; font-size:11px;"><i class="ph ph-pencil-simple" style="font-size:12px;"></i>Sếp ghim thêm</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Tham số agent đang dùng</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Đầu vào quyết định nội dung phản hồi</div>
+            </div>
+            <div style="padding:10px 16px;">
+              ${agentParams.length === 0 ? `
+                <div style="padding:20px 12px; text-align:center; color:var(--color-neutral-400,#b2b6ca);">
+                  <i class="ph ph-sliders-horizontal" style="font-size:24px; opacity:0.4; display:block; margin:0 auto 6px;"></i>
+                  <div style="font-size:12px; font-weight:500; color:var(--color-text,#e9e9ed);">Chưa có dữ liệu thật — chờ nối API tham số agent</div>
+                  <div style="font-size:11px; color:var(--color-neutral-500,#9397ab); margin-top:2px;">Runtime agent parameters chưa có endpoint backend.</div>
+                </div>
+              ` : `
+                <div style="padding:6px 0 10px;">
+                  ${agentParams.map(ap => `
+                    <div style="display:flex; align-items:center; gap:11px; padding:8px 16px;">
+                      <i class="${ap.icon || 'ph ph-circle'}" style="font-size:14px; flex:none; color:${ap.tone || 'var(--color-accent-300,#d2cefd)'};"></i>
+                      <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5);">${escapeHtml(ap.label || '')}</span>
+                      <span style="flex:none; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${escapeHtml(ap.value || '')}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderDataFactoryHub() {
   const currentSub = state.subtabs.data_factory || 'raw';
   if (currentSub === 'rules') {
     return renderRefineryRulesView();
+  }
+  if (currentSub === 'clean') {
+    return renderCleanStoreView();
   }
   const stats = state.df_stats || {};
   const events = state.df_events || [];
