@@ -3623,19 +3623,19 @@ function renderWhatsAppGatewayView() {
         <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--color-divider,rgba(233,233,237,0.16));border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-sm,4px);overflow:hidden;margin-top:18px">
           <div style="background:var(--color-surface,#232532);padding:9px 12px">
             <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Tin 24h</div>
-            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.whatsapp && state.whatsapp.messages_today) || (msgs.length > 0 ? msgs.length : (isConn ? '96' : '—'))}</div>
+            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.whatsapp && state.whatsapp.messages_today !== undefined) ? state.whatsapp.messages_today : (msgs.length > 0 ? msgs.length : (isConn ? '0' : '—'))}</div>
           </div>
           <div style="background:var(--color-surface,#232532);padding:9px 12px">
             <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Được tag</div>
-            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.whatsapp && state.whatsapp.tagged_count) || (isConn ? '9' : '—')}</div>
+            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.whatsapp && state.whatsapp.tagged_count !== undefined) ? state.whatsapp.tagged_count : (isConn ? (msgs.filter(m => m.is_mentioned || m.tagged).length || '0') : '—')}</div>
           </div>
           <div style="background:var(--color-surface,#232532);padding:9px 12px">
             <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Độ trễ</div>
-            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${isConn ? '0,51s' : '—'}</div>
+            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.whatsapp && state.whatsapp.latency) || '—'}</div>
           </div>
           <div style="background:var(--color-surface,#232532);padding:9px 12px">
             <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Thời gian trực</div>
-            <div style="font-size:13px;color:${isConn ? 'var(--color-good,#4ade80)' : 'var(--color-neutral-400,#b2b6ca)'};margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${isConn ? '99,5%' : '—'}</div>
+            <div style="font-size:13px;color:${isConn ? 'var(--color-good,#4ade80)' : 'var(--color-neutral-400,#b2b6ca)'};margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${isConn ? 'Trực chiến' : '—'}</div>
           </div>
         </div>
       </div>
@@ -3817,19 +3817,19 @@ function renderZaloGatewayView() {
         <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--color-divider,rgba(233,233,237,0.16));border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-sm,4px);overflow:hidden;margin-top:18px">
           <div style="background:var(--color-surface,#232532);padding:9px 12px">
             <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Tin 24h</div>
-            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.zalo && state.zalo.messages_today) || (zmsgs.length > 0 ? zmsgs.length : (isConn ? '1.244' : '—'))}</div>
+            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.zalo && state.zalo.messages_today !== undefined) ? state.zalo.messages_today : (zmsgs.length > 0 ? zmsgs.length : (isConn ? '0' : '—'))}</div>
           </div>
           <div style="background:var(--color-surface,#232532);padding:9px 12px">
             <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Được tag</div>
-            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.zalo && state.zalo.tagged_count) || (isConn ? '31' : '—')}</div>
+            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.zalo && state.zalo.tagged_count !== undefined) ? state.zalo.tagged_count : (isConn ? (zmsgs.filter(m => m.is_mentioned || m.tagged).length || '0') : '—')}</div>
           </div>
           <div style="background:var(--color-surface,#232532);padding:9px 12px">
             <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Độ trễ</div>
-            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${isConn ? '0,42s' : '—'}</div>
+            <div style="font-size:13px;color:var(--color-text,#e9e9ed);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${(state.zalo && state.zalo.latency) || '—'}</div>
           </div>
           <div style="background:var(--color-surface,#232532);padding:9px 12px">
             <div style="font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab)">Thời gian trực</div>
-            <div style="font-size:13px;color:${isConn ? 'var(--color-good,#4ade80)' : 'var(--color-neutral-400,#b2b6ca)'};margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${isConn ? '99,9%' : '—'}</div>
+            <div style="font-size:13px;color:${isConn ? 'var(--color-good,#4ade80)' : 'var(--color-neutral-400,#b2b6ca)'};margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${isConn ? 'Trực chiến' : '—'}</div>
           </div>
         </div>
       </div>
