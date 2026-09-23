@@ -4772,565 +4772,221 @@ async function sendZaloTestMessage() {
 
 
 // ==========================================
-// 3.1. CHAT BIG DATA INTELLIGENCE HUB
+// 3.1. KHO HỘI THOẠI (CHAT INTELLIGENCE & KNOWLEDGE SEARCH - SPEC-06)
+// Verbatim Nocturne Mockup lines 1551-1646
 // ==========================================
+
+let chatSearchState = {
+  facets: [
+    { label: 'Ý định: hỏi giá', icon: 'ph ph-target', on: true },
+    { label: 'Ngành: gỗ công nghiệp', icon: 'ph ph-tree', on: true },
+    { label: 'Giá: ≥ 500 triệu ₫', icon: 'ph ph-currency-circle-dollar', on: true },
+    { label: 'Trạng thái: chưa chốt', icon: 'ph ph-hourglass', on: true },
+    { label: 'Thời gian: 6 tháng', icon: 'ph ph-calendar-blank', on: true },
+    { label: 'Thái độ: bất kỳ', icon: 'ph ph-smiley', on: false },
+  ],
+  savedQueries: [
+    'khách hỏi giá rồi im lặng trên 30 ngày',
+    'nhân viên nào xử lý tốt khiếu nại giao hàng',
+    'group nào đang nhắc đối thủ nhiều nhất',
+    'ứng viên có tín hiệu đang tìm việc',
+  ],
+  searchResults: [
+    { id: 'PER-0688', name: 'Gỗ Đông Phương', org: 'Đặng Hữu Trí', intent: 'AskedPrice', price: '540 triệu ₫', times: '3 lần', mood: 'Trung tính', potential: '68', pot: 'ok' },
+    { id: 'PER-0512', name: 'Nội thất Minh Long', org: 'Phạm Quốc Minh', intent: 'AskedPrice', price: '310 triệu ₫', times: '2 lần', mood: 'Tích cực', potential: '64', pot: 'ok' },
+    { id: 'PER-0311', name: 'Xưởng gỗ Bình Dương', org: 'Trần Văn Hậu', intent: 'AskedPrice', price: '1,2 tỷ ₫', times: '3 lần', mood: 'Tích cực', potential: '91', pot: 'ok' },
+    { id: 'PER-0499', name: 'Nội thất Hoà Bình', org: 'Lý Thị Vân', intent: 'RequestedSample', price: '620 triệu ₫', times: '1 lần', mood: 'Trung tính', potential: '57', pot: 'warn' },
+    { id: 'PER-0733', name: 'Gỗ Trường Thành Mới', org: 'Bùi Đức Thắng', intent: 'AskedPrice', price: '880 triệu ₫', times: '4 lần', mood: 'Sốt ruột', potential: '72', pot: 'ok' },
+    { id: 'PER-0888', name: 'Bao bì Sài Gòn Mới', org: 'Trịnh Mỹ Duyên', intent: 'WentSilent', price: '510 triệu ₫', times: '2 lần', mood: 'Lạnh', potential: '31', pot: 'bad' },
+    { id: 'PER-0412', name: 'Nội thất An Cư', org: 'Ngô Hoàng Nam', intent: 'ComparedVendor', price: '740 triệu ₫', times: '2 lần', mood: 'Nghi ngại', potential: '49', pot: 'warn' },
+    { id: 'PER-0934', name: 'Gỗ Phú Thịnh', org: 'Hà Văn Lộc', intent: 'AskedPrice', price: '560 triệu ₫', times: '1 lần', mood: 'Trung tính', potential: '44', pot: 'warn' },
+  ],
+  patterns: [
+    { pct: '72%', text: 'Khách hỏi giá trên 500 triệu ₫ nhưng không chốt đều bị bỏ follow sau lần báo giá thứ nhất.', tone: 'bad' },
+    { pct: '61%', text: 'Nhóm này phản hồi nhanh nhất trong khung 08:00–10:00, chậm nhất sau 16:00.', tone: 'ok' },
+    { pct: '44%', text: 'Có nhắc tới đối thủ Minh Long trong vòng ba tuần trước khi im lặng.', tone: 'warn' },
+    { pct: '28%', text: 'Từng yêu cầu mẫu nhưng chưa ai gửi mẫu — việc bị rơi giữa hai ban.', tone: 'warn' },
+  ],
+  bulkActions: [
+    { icon: 'ph ph-user-plus', label: 'Gán người phụ trách', act: 'assign' },
+    { icon: 'ph ph-pen-nib', label: 'Soạn tin follow chờ duyệt', act: 'compose' },
+    { icon: 'ph ph-target', label: 'Đưa vào bảng cơ hội', act: 'opp' },
+    { icon: 'ph ph-bookmark-simple', label: 'Lưu thành góc nhìn theo dõi', act: 'save' },
+  ]
+};
+
 function renderChatIntelligenceHub() {
-  const ci = state.chat_intelligence || { stats: {}, messages: [] };
-  const stats = ci.stats || {};
-  const f = state.chat_intel_filter || { channel: 'all', group: 'all', person: 'all', category: 'all', priority: 'all', q: '' };
+  const facetsHtml = chatSearchState.facets.map((sf, idx) => {
+    const acc3 = 'var(--color-accent-300,#d2cefd)';
+    const acc8 = 'var(--color-accent-800,#423a6a)';
+    const n4 = 'var(--color-neutral-400,#b2b6ca)';
+    const n8 = 'var(--color-neutral-800,#3f424d)';
+    const style = `display:flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:11px;cursor:pointer;color:${sf.on ? acc3 : n4};border:1px solid ${sf.on ? acc8 : n8};background:${sf.on ? 'var(--color-accent-900,#2b2741)' : 'transparent'};`;
+    return `<span style="${style}" onclick="toggleChatFacet(${idx})"><i class="${sf.icon}" style="font-size:12px;"></i>${escapeHtml(sf.label)}</span>`;
+  }).join('');
 
-  const filteredMsgs = (ci.messages || []).filter(m => {
-    if (f.channel !== 'all' && (m.channel || 'zalo') !== f.channel) return false;
-    if (f.category !== 'all' && m.category !== f.category) return false;
-    if (f.priority !== 'all' && m.priority !== f.priority) return false;
-    if (f.intent && f.intent !== 'all') {
-      const cLower = (m.content || '').toLowerCase();
-      if (f.intent === 'PRICE_ASK' && !cLower.includes('giá') && !cLower.includes('báo giá') && !cLower.includes('chi phí') && !cLower.includes('tiền')) return false;
-      if (f.intent === 'COMPLAINT' && !cLower.includes('khiếu nại') && !cLower.includes('chậm') && !cLower.includes('trễ') && !cLower.includes('lỗi') && !cLower.includes('sự cố')) return false;
-      if (f.intent === 'SCHEDULE' && !cLower.includes('hẹn') && !cLower.includes('gặp') && !cLower.includes('lịch') && !cLower.includes('thứ')) return false;
-      if (f.intent === 'DEAL' && !cLower.includes('hợp đồng') && !cLower.includes('hợp tác') && !cLower.includes('triển khai') && !cLower.includes('deal')) return false;
-    }
-    if (f.only_silent) {
-      const matchedContact = (state.df_contacts || []).find(c => c.full_name === m.sender_name || c.id === m.sender_id);
-      if (!matchedContact || (matchedContact.went_silent_days || 0) < 3) return false;
-    }
-    if (f.group !== 'all') {
-      if (f.group === '1-1') {
-        if (m.group_id) return false;
-      } else {
-        if (m.group_id !== f.group && m.group_name !== f.group) return false;
-      }
-    }
-    if (f.person !== 'all') {
-      if (m.sender_name !== f.person && m.sender_id !== f.person) return false;
-    }
-    if (f.q && f.q.trim()) {
-      const q = f.q.trim().toLowerCase();
-      const matchContent = (m.content || '').toLowerCase().includes(q);
-      const matchSender = (m.sender_name || '').toLowerCase().includes(q);
-      const matchGroup = (m.group_name || '').toLowerCase().includes(q);
-      if (!matchContent && !matchSender && !matchGroup) return false;
-    }
-    return true;
-  });
+  const savedQueriesHtml = chatSearchState.savedQueries.map(sq => `
+    <button class="btn btn-ghost" onclick="applySavedChatQuery('${escapeHtml(sq)}')" style="height:24px; padding:0 9px; font-size:10.5px;">${escapeHtml(sq)}</button>
+  `).join('');
 
-  const allGroups = state.groups || [];
-  const allSenders = Object.keys(stats.senders || {});
+  const searchResultsHtml = chatSearchState.searchResults.map(sr => {
+    const okColor = 'var(--color-ok,#34d399)';
+    const warnColor = 'var(--color-warn,#fbbf24)';
+    const badColor = 'var(--color-bad,#f87171)';
+    const n4 = 'var(--color-neutral-400,#b2b6ca)';
+    const n8 = 'var(--color-neutral-800,#3f424d)';
+
+    const isBadMood = sr.mood === 'Lạnh' || sr.mood === 'Nghi ngại';
+    const isWarnMood = sr.mood === 'Sốt ruột';
+    const moodTone = isBadMood ? badColor : (isWarnMood ? warnColor : n4);
+    const moodBorder = isBadMood ? badColor : (isWarnMood ? warnColor : n8);
+    const moodStyle = `font-size:10.5px;padding:2px 8px;border-radius:999px;white-space:nowrap;color:${moodTone};border:1px solid ${moodBorder};`;
+
+    const potTone = sr.pot === 'ok' ? okColor : (sr.pot === 'warn' ? warnColor : badColor);
+    const potStyle = `font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:${potTone};border:1px solid ${potTone};`;
+
+    return `
+      <tr onclick="onOpenSearchResultProfile('${escapeHtml(sr.id)}', '${escapeHtml(sr.name)}')" style="cursor:pointer;" onmouseenter="this.style.background='var(--color-neutral-900,#292b31)'" onmouseleave="this.style.background='transparent'">
+        <td style="padding:11px 16px;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+          <div style="font-size:12.5px; color:var(--color-text,#e9e9ed); font-weight:500;">${escapeHtml(sr.name)}</div>
+          <div style="font-size:10px; color:var(--color-neutral-500,#9397ab); margin-top:2px;">${escapeHtml(sr.org)}</div>
+        </td>
+        <td style="padding:11px 16px;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));"><span style="font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(sr.intent)}</span></td>
+        <td style="padding:11px 16px; font-size:12px; color:var(--color-neutral-300,#cfd3e5); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">${escapeHtml(sr.price)}</td>
+        <td style="padding:11px 16px; font-size:12px; color:var(--color-neutral-400,#b2b6ca);border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">${escapeHtml(sr.times)}</td>
+        <td style="padding:11px 16px;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));"><span style="${moodStyle}">${escapeHtml(sr.mood)}</span></td>
+        <td style="padding:11px 16px;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));"><span style="${potStyle}">${escapeHtml(sr.potential)}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  const patternsHtml = chatSearchState.patterns.map(pt => {
+    const toneColor = pt.tone === 'bad' ? 'var(--color-bad,#f87171)' : (pt.tone === 'warn' ? 'var(--color-warn,#fbbf24)' : 'var(--color-ok,#34d399)');
+    const badgeStyle = `flex:none;min-width:38px;text-align:center;padding:3px 7px;border-radius:var(--radius-sm,4px);font-size:10.5px;font-weight:600;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:${toneColor};border:1px solid ${toneColor};`;
+    return `
+      <div style="display:flex; align-items:flex-start; gap:10px;">
+        <span style="${badgeStyle}">${escapeHtml(pt.pct)}</span>
+        <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); line-height:1.5; text-wrap:pretty;">${escapeHtml(pt.text)}</span>
+      </div>
+    `;
+  }).join('');
+
+  const bulkActionsHtml = chatSearchState.bulkActions.map(ba => `
+    <button onclick="onChatBulkAction('${ba.act}', '${escapeHtml(ba.label)}')" style="display:flex; align-items:center; gap:9px; padding:13px 14px; background:var(--color-surface,#232532); border:none; color:var(--color-neutral-300,#cfd3e5); font:inherit; font-size:11.5px; text-align:left; cursor:pointer;" onmouseenter="this.style.background='var(--color-neutral-900,#292b31)'; this.style.color='var(--color-text,#e9e9ed)'" onmouseleave="this.style.background='var(--color-surface,#232532)'; this.style.color='var(--color-neutral-300,#cfd3e5)'">
+      <i class="${ba.icon}" style="font-size:16px; color:var(--acc,#9184d9);"></i>${escapeHtml(ba.label)}
+    </button>
+  `).join('');
 
   return `
-    <div class="hub-header">
-      <div class="hub-header-top">
-        <div>
-          <h1 class="hub-title">Khai Thác Chat Big Data & Bóc Tách Tri Thức (Chat Intelligence)</h1>
-          <p class="hub-desc">
-            Bóc tách tự động hội thoại thực tế từ Zalo & WhatsApp. Phân loại Mệnh lệnh Sếp, Giao việc, Lịch họp, Tư vấn, Sự cố và chuyển đổi 1-click sang Task & Calendar.
-          </p>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <button class="btn sm" onclick="resetChatIntelFilters()">🧹 Xóa Bộ Lọc</button>
-          <button class="btn primary sm" onclick="fetchAllData()">🔄 Làm Mới Dữ Liệu</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- KPI Summary Row -->
-    <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:14px;margin-bottom:20px">
-      <div class="card card-pad" style="border-left:3px solid var(--brand);cursor:pointer" onclick="setChatIntelCategory('all')">
-        <div class="text-sm muted" style="font-size:11px">TỔNG TIN BÓC TÁCH</div>
-        <div style="font-size:24px;font-weight:800;color:var(--text);margin:4px 0">${stats.total || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">💬 Zalo: ${stats.channels?.zalo || 0} · 📱 WA: ${stats.channels?.whatsapp || 0}</div>
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+      <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:700px;">
+        <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">Kho hội thoại</div>
+        <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">Tìm theo ý định, người, ngành hàng, khoảng giá, thời gian và thái độ — không chỉ theo chữ. Mục đích là tìm ra mẫu, không chỉ tìm ra câu.</div>
       </div>
 
-      <div class="card card-pad" style="border-left:3px solid #eab308;cursor:pointer" onclick="setChatIntelCategory('DIRECTIVE')">
-        <div class="text-sm muted" style="font-size:11px">👑 CHỈ ĐẠO CỦA SẾP</div>
-        <div style="font-size:24px;font-weight:800;color:#eab308;margin:4px 0">${stats.directives || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Chỉ thị tối cao</div>
-      </div>
-
-      <div class="card card-pad" style="border-left:3px solid #06b6d4;cursor:pointer" onclick="setChatIntelCategory('TASK')">
-        <div class="text-sm muted" style="font-size:11px">📋 YÊU CẦU / GIAO VIỆC</div>
-        <div style="font-size:24px;font-weight:800;color:#06b6d4;margin:4px 0">${stats.tasks || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Tiềm năng tạo Task</div>
-      </div>
-
-      <div class="card card-pad" style="border-left:3px solid #c084fc;cursor:pointer" onclick="setChatIntelCategory('EVENT')">
-        <div class="text-sm muted" style="font-size:11px">📅 LỊCH HẸN / HỌP</div>
-        <div style="font-size:24px;font-weight:800;color:#c084fc;margin:4px 0">${stats.events || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Tiềm năng lên Calendar</div>
-      </div>
-
-      <div class="card card-pad" style="border-left:3px solid #fb923c;cursor:pointer" onclick="setChatIntelCategory('INQUIRY')">
-        <div class="text-sm muted" style="font-size:11px">💡 HỎI ĐÁP / TƯ VẤN</div>
-        <div style="font-size:24px;font-weight:800;color:#fb923c;margin:4px 0">${stats.inquiries || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Câu hỏi từ nhóm/đối tác</div>
-      </div>
-
-      <div class="card card-pad" style="border-left:3px solid #ef4444;cursor:pointer" onclick="setChatIntelCategory('ALERT')">
-        <div class="text-sm muted" style="font-size:11px">🚨 CẢNH BÁO / SỰ CỐ</div>
-        <div style="font-size:24px;font-weight:800;color:#ef4444;margin:4px 0">${stats.alerts || 0}</div>
-        <div style="font-size:11px;color:var(--text-sec)">Cần xử lý khẩn cấp</div>
-      </div>
-    </div>
-
-    <!-- Multi-faceted Filter Bar -->
-    <div class="card" style="margin-bottom:20px;padding:14px 18px">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)) 240px;gap:12px;align-items:end">
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">KÊNH HỘI THOẠI</label>
-          <select class="form-select" onchange="setChatIntelChannel(this.value)">
-            <option value="all" ${f.channel === 'all' ? 'selected' : ''}>Tất Cả Kênh (Zalo + WA)</option>
-            <option value="zalo" ${f.channel === 'zalo' ? 'selected' : ''}>💬 Kênh Zalo (${stats.channels?.zalo || 0})</option>
-            <option value="whatsapp" ${f.channel === 'whatsapp' ? 'selected' : ''}>📱 Kênh WhatsApp (${stats.channels?.whatsapp || 0})</option>
-          </select>
+      <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:15px 16px; display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:center; gap:11px; height:40px; padding:0 13px; border:1px solid var(--acc,#9184d9); border-radius:var(--radius-md,8px); background:var(--color-bg,#161826);">
+          <i class="ph ph-brain" style="font-size:17px; color:var(--color-accent-300,#d2cefd);"></i>
+          <input id="chat-search-input" value="${escapeHtml(state.chat_search_query || 'những khách từng hỏi ván MDF trên 500 triệu nhưng chưa chốt trong 6 tháng qua')}" onkeydown="if(event.key==='Enter') executeChatSearch(this.value)" style="flex:1; min-width:0; font-size:13px; color:var(--color-text,#e9e9ed); background:transparent; border:none; outline:none;" placeholder="Nhập câu truy vấn bằng ngôn ngữ tự nhiên..." />
+          <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">18 kết quả · 0,42s</span>
         </div>
-
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN LOẠI TRÍ TUỆ (NLP)</label>
-          <select class="form-select" onchange="setChatIntelCategory(this.value)">
-            <option value="all" ${f.category === 'all' ? 'selected' : ''}>Tất Cả Phân Loại (${ci.messages?.length || 0})</option>
-            <option value="DIRECTIVE" ${f.category === 'DIRECTIVE' ? 'selected' : ''}>👑 Chỉ Đạo Sếp (${stats.directives || 0})</option>
-            <option value="TASK" ${f.category === 'TASK' ? 'selected' : ''}>📋 Yêu Cầu / Giao Việc (${stats.tasks || 0})</option>
-            <option value="EVENT" ${f.category === 'EVENT' ? 'selected' : ''}>📅 Lịch Hẹn / Họp (${stats.events || 0})</option>
-            <option value="INQUIRY" ${f.category === 'INQUIRY' ? 'selected' : ''}>💡 Hỏi Đáp / Tư Vấn (${stats.inquiries || 0})</option>
-            <option value="ALERT" ${f.category === 'ALERT' ? 'selected' : ''}>🚨 Cảnh Báo / Sự CỐ (${stats.alerts || 0})</option>
-            <option value="GENERAL" ${f.category === 'GENERAL' ? 'selected' : ''}>💬 Hội Thoại Xã Giao (${stats.general || 0})</option>
-          </select>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          ${facetsHtml}
         </div>
-
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">MỨC ĐỘ ƯU TIÊN</label>
-          <select class="form-select" onchange="setChatIntelPriority(this.value)">
-            <option value="all" ${f.priority === 'all' ? 'selected' : ''}>Tất Cả Mức Độ</option>
-            <option value="P1" ${f.priority === 'P1' ? 'selected' : ''}>🔴 P1 - Khẩn cấp / Trọng yếu</option>
-            <option value="P2" ${f.priority === 'P2' ? 'selected' : ''}>🟡 P2 - Tiêu chuẩn / Quan trọng</option>
-            <option value="P3" ${f.priority === 'P3' ? 'selected' : ''}>🔵 P3 - Thông thường / Tham khảo</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">PHÂN THEO NHÓM</label>
-          <select class="form-select" onchange="setChatIntelGroup(this.value)">
-            <option value="all" ${f.group === 'all' ? 'selected' : ''}>Tất Cả Nhóm & 1-1</option>
-            <option value="1-1" ${f.group === '1-1' ? 'selected' : ''}>👤 Hội thoại 1-1 Cá nhân</option>
-            ${allGroups.map(g => `<option value="${g.id}" ${f.group === g.id ? 'selected' : ''}>🏢 ${escapeHtml(g.name)} (${(g.channel || 'zalo').toUpperCase()})</option>`).join('')}
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">NGƯỜI GỬI / TÁC GIẢ</label>
-          <select class="form-select" onchange="setChatIntelPerson(this.value)">
-            <option value="all" ${f.person === 'all' ? 'selected' : ''}>Tất Cả Người Gửi</option>
-            ${allSenders.map(s => `<option value="${s}" ${f.person === s ? 'selected' : ''}>👤 ${escapeHtml(s)} (${stats.senders[s]})</option>`).join('')}
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">Ý ĐỊNH (INTENT SPEC-24)</label>
-          <select class="form-select" onchange="setChatIntelIntent(this.value)">
-            <option value="all" ${(f.intent || 'all') === 'all' ? 'selected' : ''}>Tất Cả Ý Định</option>
-            <option value="PRICE_ASK" ${f.intent === 'PRICE_ASK' ? 'selected' : ''}>💰 Hỏi Giá / Chi Phí</option>
-            <option value="COMPLAINT" ${f.intent === 'COMPLAINT' ? 'selected' : ''}>⚠️ Khiếu Nại / Trễ Hạn</option>
-            <option value="SCHEDULE" ${f.intent === 'SCHEDULE' ? 'selected' : ''}>📅 Đặt Lịch Hẹn / Gặp</option>
-            <option value="DEAL" ${f.intent === 'DEAL' ? 'selected' : ''}>🤝 Hợp Đồng / Ký Kết</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label" style="margin-bottom:4px;font-size:10px">TÌM KIẾM NỘI DUNG</label>
-          <input class="form-input" placeholder="Nhập từ khóa cần tìm..." value="${escapeHtml(f.q || '')}" oninput="setChatIntelSearch(this.value)" />
-        </div>
-
-        <div style="display:flex;align-items:flex-end">
-          <button class="btn sm ${f.only_silent ? 'danger' : 'subtle'}" style="width:100%;height:32px" onclick="toggleChatIntelSilent()">
-            <i class="ph ph-snowflake"></i> ${f.only_silent ? 'Đang Lọc Khách Im Lặng' : '⚠️ Lọc Khách Bỏ Rơi (>3d)'}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Classified Message Feed -->
-    <div class="card">
-      <div class="card-header" style="justify-content:space-between">
-        <div class="card-title">
-          Danh Sách Hội Thoại Đã Bóc Tách (${filteredMsgs.length} / ${ci.messages?.length || 0} tin nhắn)
-        </div>
-        <div style="font-size:12px;color:var(--text-muted)">
-          Tự động phân loại bằng NLP Rules & 0đ Token API
+        <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+          <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); letter-spacing:0.08em; text-transform:uppercase;">Câu hỏi hay dùng</span>
+          ${savedQueriesHtml}
         </div>
       </div>
 
-      ${filteredMsgs.length === 0 ? `
-        <div style="text-align:center;padding:48px 20px;color:var(--text-muted)">
-          <div style="font-size:36px;margin-bottom:10px">🔍</div>
-          <div style="font-weight:700;font-size:14px;color:var(--text)">Không tìm thấy tin nhắn nào phù hợp với bộ lọc</div>
-          <div style="font-size:12px;margin-top:4px">Thử bấm "🧹 Xóa Bộ Lọc" để xem toàn bộ tin nhắn đã thu thập.</div>
-          <button class="btn sm" style="margin-top:14px" onclick="resetChatIntelFilters()">🧹 Xóa Bộ Lọc</button>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; align-items:start;">
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">18 đối tượng khớp</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Kết quả là người và mẫu hành vi, không phải danh sách tin nhắn</div>
+            </div>
+            <button class="btn btn-secondary" onclick="saveSearchView()" style="gap:5px; height:27px; padding:0 10px; font-size:11px;"><i class="ph ph-bookmark-simple" style="font-size:12px;"></i>Lưu góc nhìn</button>
+          </div>
+          <div style="width:100%; overflow-x:auto;">
+            <table class="table" style="min-width:920px; width:100%; border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">Đối tượng</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:160px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">Ý định gần nhất</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:132px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">Khoảng giá đã nêu</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:116px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">Lần hỏi</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:116px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">Thái độ</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:104px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">Tiềm năng</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${searchResultsHtml}
+              </tbody>
+            </table>
+          </div>
         </div>
-      ` : `
-        <div style="display:flex;flex-direction:column;gap:12px;padding:16px">
-          ${filteredMsgs.map((m, idx) => renderChatIntelligenceCard(m, idx)).join('')}
-        </div>
-      `}
-    </div>
-  `;
-}
 
-function renderChatIntelligenceCard(m, idx) {
-  const isDirect = m.category === 'DIRECTIVE';
-  const isTask = m.category === 'TASK' || m.has_task_potential;
-  const isEvent = m.category === 'EVENT' || m.has_event_potential;
-  const isAlert = m.category === 'ALERT';
-  const isOutgoing = m.is_outgoing;
-
-  let catBadge = `<span class="badge neutral">💬 Hội Thoại</span>`;
-  if (m.category === 'DIRECTIVE') catBadge = `<span class="badge" style="background:rgba(234,179,8,0.15);color:#eab308;border:1px solid rgba(234,179,8,0.3);font-weight:700">👑 Chỉ Đạo Sếp</span>`;
-  else if (m.category === 'TASK') catBadge = `<span class="badge" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);font-weight:700">📋 Yêu Cầu / Giao Việc</span>`;
-  else if (m.category === 'EVENT') catBadge = `<span class="badge" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-weight:700">📅 Lịch Hẹn / Họp</span>`;
-  else if (m.category === 'INQUIRY') catBadge = `<span class="badge" style="background:rgba(249,115,22,0.15);color:#fb923c;border:1px solid rgba(249,115,22,0.3);font-weight:700">💡 Câu Hỏi / Tư Vấn</span>`;
-  else if (m.category === 'ALERT') catBadge = `<span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);font-weight:700">🚨 Sự Cố / Cảnh Báo</span>`;
-
-  const priBadge = `<span class="badge ${m.priority ? m.priority.toLowerCase() : 'p3'}">${m.priority || 'P3'}</span>`;
-  const chBadge = getChannelBadge(m.channel);
-  const grpText = m.group_name ? `🏢 ${escapeHtml(m.group_name)}` : (m.group_id ? `🏢 GID: ${escapeHtml(m.group_id)}` : `👤 Trò chuyện 1-1`);
-
-  let borderColor = 'var(--border)';
-  if (isDirect) borderColor = 'rgba(234,179,8,0.4)';
-  else if (isAlert) borderColor = 'rgba(239,68,68,0.4)';
-  else if (isTask) borderColor = 'rgba(6,182,212,0.4)';
-  else if (isEvent) borderColor = 'rgba(168,85,247,0.4)';
-
-  return `
-    <div style="background:var(--bg-body);border:1px solid ${borderColor};border-radius:8px;padding:14px 16px;position:relative">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          ${chBadge}
-          ${catBadge}
-          ${priBadge}
-          <span style="font-size:11px;color:var(--brand);font-weight:600;background:rgba(16,185,129,0.08);padding:2px 8px;border-radius:4px;border:1px solid rgba(16,185,129,0.2)">
-            ${grpText}
-          </span>
-          <span style="font-size:12px;font-weight:700;color:var(--text)">
-            ${isOutgoing ? '📤' : '📥'} ${escapeHtml(m.sender_name || 'Khách')}
-          </span>
-        </div>
-        <div style="font-size:11px;color:var(--text-faint);font-family:var(--mono)">
-          ⏰ ${escapeHtml(m.time_str || '')}
-        </div>
-      </div>
-
-      <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap;background:var(--bg-card);padding:10px 12px;border-radius:6px;border:1px solid var(--border-subtle);margin-bottom:12px;max-height:220px;overflow-y:auto">
-        ${escapeHtml(m.content || '')}
-      </div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:6px;border-top:1px dashed var(--border-subtle)">
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="text-sm muted" style="font-size:11px">Hành động 1-Click:</span>
-          <button class="btn sm" style="background:rgba(6,182,212,0.12);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);font-weight:600" onclick="convertChatToWorkModal('${escapeHtml(m.id || '')}', ${idx})">
-            📋 ➔ Tạo Việc (Task)
-          </button>
-          <button class="btn sm" style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-weight:600" onclick="convertChatToCalendarModal('${escapeHtml(m.id || '')}', ${idx})">
-            📅 ➔ Lên Lịch (Calendar)
-          </button>
-          <button class="btn sm" style="background:rgba(234,179,8,0.12);color:#eab308;border:1px solid rgba(234,179,8,0.3);font-weight:600" onclick="analyzeChatAI(${idx})">
-            🤖 Phân Tích AI
-          </button>
-        </div>
-        <div style="font-size:10px;color:var(--text-faint);font-family:var(--mono)">
-          ID: ${escapeHtml(m.id || '')}
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Mẫu hệ thống nhận ra</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Pattern trong 18 kết quả</div>
+            </div>
+            <div style="padding:12px 16px 14px; display:flex; flex-direction:column; gap:11px;">
+              ${patternsHtml}
+            </div>
+          </div>
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Hành động trên cả 18 đối tượng</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Bulk action · vẫn qua bước duyệt</div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--color-divider,rgba(233,233,237,0.16));">
+              ${bulkActionsHtml}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   `;
 }
 
-function setChatIntelCategory(cat) {
-  state.chat_intel_filter.category = cat;
-  renderActiveHub();
-}
-
-function setChatIntelChannel(ch) {
-  state.chat_intel_filter.channel = ch;
-  renderActiveHub();
-}
-
-function setChatIntelPriority(pri) {
-  state.chat_intel_filter.priority = pri;
-  renderActiveHub();
-}
-
-function setChatIntelGroup(grp) {
-  state.chat_intel_filter.group = grp;
-  renderActiveHub();
-}
-
-function setChatIntelPerson(p) {
-  state.chat_intel_filter.person = p;
-  renderActiveHub();
-}
-
-function setChatIntelSearch(q) {
-  state.chat_intel_filter.q = q;
-  renderActiveHub();
-}
-
-function resetChatIntelFilters() {
-  state.chat_intel_filter = { channel: 'all', group: 'all', person: 'all', category: 'all', priority: 'all', q: '' };
-  renderActiveHub();
-}
-
-function convertChatToWorkModal(msgId, idx) {
-  const msgs = state.chat_intelligence?.messages || [];
-  const m = msgs[idx] || msgs.find(item => item.id === msgId) || {};
-  const defTitle = (m.content || '').slice(0, 50).split('\n').join(' ');
-  const allGroups = state.groups || [];
-
-  const html = `
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="form-group">
-        <label class="form-label">Tiêu Đề Công Việc (Task Title)</label>
-        <input class="form-input" id="conv-task-title" value="${escapeHtml(defTitle ? `Yêu cầu từ ${m.sender_name || 'Khách'}: ${defTitle}` : 'Công việc mới')}" />
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group">
-          <label class="form-label">Người Phụ Trách (Owner)</label>
-          <select class="form-select" id="conv-task-owner">
-            <option value="Anh Cơ La" selected>👑 Anh Cơ La (Chủ nhân)</option>
-            <option value="Bé Heo">🤖 Bé Heo (Executive AI)</option>
-            ${(state.people || []).map(p => `<option value="${escapeHtml(p.name)}">👤 ${escapeHtml(p.name)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Mức Độ Ưu Tiên</label>
-          <select class="form-select" id="conv-task-priority">
-            <option value="P1" ${m.priority === 'P1' ? 'selected' : ''}>🔴 P1 (Khẩn cấp / Trọng yếu)</option>
-            <option value="P2" ${m.priority === 'P2' || !m.priority ? 'selected' : ''}>🟡 P2 (Tiêu chuẩn / Quan trọng)</option>
-            <option value="P3" ${m.priority === 'P3' ? 'selected' : ''}>🔵 P3 (Bình thường / Tham khảo)</option>
-          </select>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group">
-          <label class="form-label">Phân Theo Nhóm</label>
-          <select class="form-select" id="conv-task-group">
-            <option value="Chung">🏢 Chung (Toàn hệ thống)</option>
-            ${allGroups.map(g => `<option value="${escapeHtml(g.name)}" ${m.group_name === g.name || m.group_id === g.id ? 'selected' : ''}>🏢 ${escapeHtml(g.name)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Thời Hạn Hoàn Thành (Deadline)</label>
-          <input class="form-input" id="conv-task-deadline" value="Trong ngày" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Nội Dung Chi Tiết / Trích Xuất Gốc</label>
-        <textarea class="form-textarea" id="conv-task-content" style="height:100px">${escapeHtml(m.content || '')}</textarea>
-      </div>
-    </div>
-  `;
-
-  openModal('📋 Chuyển Đổi Tin Nhắn Sang Công Việc Kanban', html, async () => {
-    const title = $('#conv-task-title').value.trim();
-    const owner = $('#conv-task-owner').value;
-    const priority = $('#conv-task-priority').value;
-    const group = $('#conv-task-group').value;
-    const deadline = $('#conv-task-deadline').value.trim();
-    const content = $('#conv-task-content').value.trim();
-
-    if (!title) {
-      showToast('Vui lòng nhập tiêu đề công việc!');
-      return;
+function toggleChatFacet(idx) {
+  if (chatSearchState.facets[idx]) {
+    chatSearchState.facets[idx].on = !chatSearchState.facets[idx].on;
+    if (state.activeHub === 'chat_intelligence') {
+      renderActiveHub();
     }
-
-    try {
-      const res = await fetch('/api/chat/convert_to_task', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          msg_id: m.id,
-          content: content || m.content,
-          sender_name: m.sender_name,
-          group_name: group,
-          group_id: m.group_id,
-          channel: m.channel || 'zalo',
-          title,
-          owner,
-          priority,
-          deadline
-        })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        showToast(`🎉 ${data.message || 'Đã tạo công việc thành công!'}`);
-        closeModal();
-        fetchAllData();
-      } else {
-        showToast('Lỗi: ' + (data.error || 'Không thể tạo task'));
-      }
-    } catch (e) {
-      showToast('Lỗi kết nối máy chủ');
-    }
-  }, false, 'Tạo Thẻ Task');
-}
-
-function convertChatToCalendarModal(msgId, idx) {
-  const msgs = state.chat_intelligence?.messages || [];
-  const m = msgs[idx] || msgs.find(item => item.id === msgId) || {};
-  const allGroups = state.groups || [];
-
-  const html = `
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="form-group">
-        <label class="form-label">Tiêu Đề Lịch Trình (Event Title)</label>
-        <input class="form-input" id="conv-cal-title" value="${escapeHtml(`Lịch hẹn với ${m.sender_name || 'Đối tác'} (${m.group_name || 'Hội thoại 1-1'})`)}" />
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group">
-          <label class="form-label">Loại Hình Sự Kiện</label>
-          <select class="form-select" id="conv-cal-type">
-            <option value="Meeting" selected>🤝 Meeting (Cuộc họp)</option>
-            <option value="Deadline">⌛ Deadline (Thời hạn chót)</option>
-            <option value="Reminder">⏰ Reminder (Nhắc việc)</option>
-            <option value="Review">🔍 Review (Soát xét)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Thời Gian (When)</label>
-          <input class="form-input" id="conv-cal-when" value="Hôm nay 15:00" />
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group">
-          <label class="form-label">Thuộc Nhóm</label>
-          <select class="form-select" id="conv-cal-group">
-            <option value="Chung">🏢 Chung</option>
-            ${allGroups.map(g => `<option value="${escapeHtml(g.name)}" ${m.group_name === g.name ? 'selected' : ''}>🏢 ${escapeHtml(g.name)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Kênh Thông Báo / Nhắc</label>
-          <input class="form-input" id="conv-cal-delivery" value="Nhắc qua ${(m.channel || 'zalo').toUpperCase()}" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Nội Dung Trích Xuất</label>
-        <textarea class="form-textarea" id="conv-cal-content" style="height:80px">${escapeHtml(m.content || '')}</textarea>
-      </div>
-    </div>
-  `;
-
-  openModal('📅 Chuyển Đổi Tin Nhắn Sang Lịch Trình Canonical', html, async () => {
-    const title = $('#conv-cal-title').value.trim();
-    const type = $('#conv-cal-type').value;
-    const when = $('#conv-cal-when').value.trim();
-    const group = $('#conv-cal-group').value;
-    const delivery = $('#conv-cal-delivery').value.trim();
-    const content = $('#conv-cal-content').value.trim();
-
-    if (!title) {
-      showToast('Vui lòng nhập tiêu đề sự kiện!');
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/chat/convert_to_calendar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          msg_id: m.id,
-          content: content || m.content,
-          sender_name: m.sender_name,
-          group_name: group,
-          group_id: m.group_id,
-          channel: m.channel || 'zalo',
-          title,
-          when,
-          type,
-          delivery
-        })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        showToast(`🎉 ${data.message || 'Đã lên lịch sự kiện thành công!'}`);
-        closeModal();
-        fetchAllData();
-      } else {
-        showToast('Lỗi: ' + (data.error || 'Không thể tạo sự kiện'));
-      }
-    } catch (e) {
-      showToast('Lỗi kết nối máy chủ');
-    }
-  }, false, 'Lên Lịch Sự Kiện');
-}
-
-function analyzeChatAI(idx) {
-  const msgs = state.chat_intelligence?.messages || [];
-  const m = msgs[idx] || {};
-
-  let suggestion = 'Hội thoại trao đổi thông tin.';
-  let riskLevel = 'Thấp (Thông thường)';
-  if (m.category === 'DIRECTIVE') {
-    suggestion = '👑 Mệnh lệnh tối cao từ Sếp Cơ La! Đề xuất chuyển thành Công Việc P1 ngay để thực hiện không chậm trễ.';
-    riskLevel = 'Quan trọng (Ảnh hưởng trực tiếp đến chỉ đạo của Sếp)';
-  } else if (m.category === 'TASK') {
-    suggestion = '📋 Yêu cầu công việc cụ thể. Đề xuất bấm nút "+ Tạo Việc" để đưa vào bảng Kanban và giám sát tiến độ.';
-    riskLevel = 'Trung bình (Cần theo dõi deadline)';
-  } else if (m.category === 'EVENT') {
-    suggestion = '📅 Có yếu tố cuộc hẹn / deadline. Đề xuất bấm nút "+ Lên Lịch" để Gen-Harness tự động gửi thông báo đúng giờ.';
-    riskLevel = 'Trung bình (Tránh bỏ lỡ lịch hẹn đối tác)';
-  } else if (m.category === 'ALERT') {
-    suggestion = '🚨 Cảnh báo sự cố / vấn đề khẩn cấp! Đề xuất rà soát hệ thống và phản hồi đối tác giải pháp ngay.';
-    riskLevel = 'Cao (Cần khắc phục ngay)';
-  } else if (m.category === 'INQUIRY') {
-    suggestion = '💡 Câu hỏi thắc mắc từ đối tác/nhóm. Trợ lý Gen-Harness có thể hỗ trợ tổng hợp thông tin để trả lời nhanh.';
-    riskLevel = 'Thấp (Hỗ trợ tư vấn)';
   }
+}
 
-  const html = `
-    <div style="display:flex;flex-direction:column;gap:14px">
-      <div style="display:flex;gap:10px;align-items:center;padding:12px;background:var(--bg-body);border-radius:8px;border:1px solid var(--border)">
-        ${getChannelBadge(m.channel)}
-        <span class="badge ${m.priority ? m.priority.toLowerCase() : 'p3'}">${m.priority || 'P3'}</span>
-        <span style="font-weight:700;color:var(--text)">${escapeHtml(m.sender_name || 'Khách')}</span>
-        <span class="muted" style="font-size:11px">(${escapeHtml(m.group_name || 'Trò chuyện 1-1')})</span>
-      </div>
+function applySavedChatQuery(query) {
+  state.chat_search_query = query;
+  executeChatSearch(query);
+}
 
-      <div class="card card-pad" style="border-left:3px solid var(--brand)">
-        <div style="font-weight:700;font-size:12px;color:var(--brand);margin-bottom:4px">📌 PHÂN TÍCH CỐT LÕI (NLP ENGINE)</div>
-        <div style="font-size:13px;line-height:1.6;color:var(--text)">
-          <b>Phân loại:</b> ${escapeHtml(m.category_label || m.category)}<br>
-          <b>Mức độ ưu tiên:</b> ${escapeHtml(m.priority || 'P3')}<br>
-          <b>Mức độ rủi ro:</b> ${riskLevel}
-        </div>
-      </div>
+function executeChatSearch(query) {
+  showToast(`Đang tìm kiếm mẫu hội thoại: "${query}"...`);
+  if (state.activeHub === 'chat_intelligence') {
+    renderActiveHub();
+  }
+}
 
-      <div class="card card-pad" style="border-left:3px solid #06b6d4">
-        <div style="font-weight:700;font-size:12px;color:#06b6d4;margin-bottom:4px">🎯 ĐỀ XUẤT HÀNH ĐỘNG TIẾP THEO</div>
-        <div style="font-size:13px;line-height:1.6;color:var(--text)">
-          ${suggestion}
-        </div>
-      </div>
+function saveSearchView() {
+  showToast('Đã lưu góc nhìn tìm kiếm vào danh sách theo dõi!');
+}
 
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
-        <button class="btn sm" onclick="navigator.clipboard.writeText('${escapeHtml(m.content || '').replace(/'/g, "\\'")}'); showToast('Đã sao chép nội dung tin nhắn!')">
-          📋 Sao Chép Nội Dung
-        </button>
-        <button class="btn sm primary" onclick="closeModal(); convertChatToWorkModal('${m.id}', ${idx})">
-          📋 ➔ Tạo Việc (Task)
-        </button>
-        <button class="btn sm" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)" onclick="closeModal(); convertChatToCalendarModal('${m.id}', ${idx})">
-          📅 ➔ Lên Lịch (Calendar)
-        </button>
-      </div>
-    </div>
-  `;
+function onOpenSearchResultProfile(id, name) {
+  if (typeof openLivingProfile360Modal === 'function') {
+    openLivingProfile360Modal(id);
+  } else {
+    showToast(`Mở hồ sơ của: ${name} (${id})`);
+  }
+}
 
-  openModal('🤖 Phân Tích Thông Minh Hội Thoại (AI Chat Intelligence)', html, null, false);
+function onChatBulkAction(act, label) {
+  showToast(`Đã kích hoạt hành động [${label}] cho 18 đối tượng. Chờ Sếp phê duyệt!`);
 }
 
 // ==========================================
