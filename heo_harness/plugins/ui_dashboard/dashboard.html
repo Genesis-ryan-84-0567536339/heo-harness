@@ -1933,6 +1933,27 @@ function switchHub(hubKey, subtabKey = null) {
 
 function switchSubtab(hubKey, subtabKey) {
   state.subtabs[hubKey] = subtabKey;
+
+  // Keep breadcrumb/title in sync with the nav key that maps to this hub+subtab
+  let matchedKey = null;
+  for (const [k, v] of Object.entries(NAV_MAP)) {
+    if (v.hub === hubKey && subtabKey && v.subtab === subtabKey) {
+      matchedKey = k;
+      break;
+    }
+  }
+  if (!matchedKey) {
+    for (const [k, v] of Object.entries(NAV_MAP)) {
+      if (v.hub === hubKey && !v.subtab) {
+        matchedKey = k;
+        break;
+      }
+    }
+  }
+  if (matchedKey) {
+    state.activeNavKey = matchedKey;
+  }
+
   renderActiveHub();
 }
 
