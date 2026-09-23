@@ -422,6 +422,34 @@
       font-size: 11px;
       border-radius: var(--radius-sm);
     }
+    .btn.btn-primary, .btn-primary {
+      color: #d2cefd;
+      border-color: var(--color-accent);
+      background: rgba(145, 132, 217, 0.08);
+      font-weight: 600;
+    }
+    .btn.btn-primary:hover, .btn-primary:hover {
+      background: rgba(145, 132, 217, 0.18);
+      border-color: var(--color-accent-hover);
+    }
+    .btn.btn-secondary, .btn-secondary {
+      color: var(--color-text);
+      border-color: var(--color-divider);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .btn.btn-secondary:hover, .btn-secondary:hover {
+      background: rgba(233, 233, 237, 0.07);
+      border-color: var(--border-hover);
+    }
+    .btn.btn-ghost, .btn-ghost {
+      border-color: transparent;
+      background: transparent;
+      color: var(--color-neutral-400);
+    }
+    .btn.btn-ghost:hover, .btn-ghost:hover {
+      background: rgba(233, 233, 237, 0.07);
+      color: var(--color-text);
+    }
 
     /* ==========================================================================
        CONTENT VIEW & CARDS
@@ -1706,8 +1734,8 @@ function renderActiveHub() {
       break;
 
     case 'opportunities':
-      titleEl.textContent = 'Inbox Ý Nghĩa & Bảng Cơ Hội (Opportunities)';
-      subEl.textContent = 'Trích xuất thẻ ý nghĩa (Meaning Cards), đề xuất hành động & Kanban Cơ hội 7 cột chuẩn SSOT';
+      titleEl.textContent = 'Hộp Thư Ý Nghĩa (Inbox of Meaning)';
+      subEl.textContent = 'Hàng đợi đơn vị ý nghĩa đã cấu trúc: cơ hội, cảnh báo, hỏi giá, việc cần duyệt & chứng cứ gốc · NHÌN';
       container.innerHTML = renderOpportunitiesHub();
       break;
 
@@ -9682,18 +9710,893 @@ async function saveAgentEdit(agentId) {
 }
 
 // ==========================================
-// MILESTONE 3: INBOX OF MEANING & OPPORTUNITIES HUB (SPEC E3, C2)
+// MILESTONE 3: INBOX OF MEANING & OPPORTUNITIES HUB (SPEC E3, F2.2, F2.5)
 // ==========================================
-// MILESTONE 3: OPPORTUNITY KANBAN 7 CỘT & INBOX OF MEANING (SPEC F2.5, F2.2)
-// ==========================================
-let currentMeaningFilter = 'ALL';
 let currentOppChannelFilter = 'ALL';
 let currentOppHeatFilter = 'ALL';
 
+// TODO: Đấu nối API khi backend triển khai (/api/meaning/inbox)
+const CANONICAL_MEANING_ITEMS = [
+  {
+    kind: 'Cơ hội',
+    kindKey: 'opp',
+    id: 'OPP-1842',
+    source: 'Group Ngành gỗ Miền Nam · 412 thành viên',
+    sender: 'Vũ Minh Tuấn (Chủ xưởng Bình Dương)',
+    ch: 'zalo',
+    age: '18 phút',
+    title: 'Xưởng gỗ Bình Dương cần 3 container ván MDF loại E1, giao trong tháng 10',
+    summary: 'Người hỏi là chủ xưởng, đã từng hỏi giá hai lần trong sáu tháng qua nhưng chưa chốt. Lần này nêu rõ số lượng, quy cách và mốc giao, kèm ngân sách khoảng 1,2 tỷ ₫.',
+    evidence: '"Bên nào có sẵn MDF E1 17mm khổ 1220x2440 cho em 3 cont trong tháng 10 không ạ, ngân sách tầm 1.2 tỷ, ưu tiên giao tận xưởng Bình Dương."',
+    score: '91',
+    scoreLabel: 'độ nóng',
+    confidence: 'cao',
+    tone: 'var(--status-ok, #34d399)',
+    action: 'Nhận và ráp khớp nhà cung cấp',
+    actionIcon: 'ph ph-target',
+    primaryAction: 'match_opp',
+    entities: {
+      budget: '1.200.000.000 ₫ (1.2 tỷ)',
+      product: 'Ván MDF E1 17mm (khổ 1220x2440)',
+      quantity: '3 container',
+      deadline: 'Tháng 10/2026',
+      location: 'Xưởng Bình Dương'
+    },
+    reasoning: {
+      heat: 91,
+      heatFactors: [
+        'Nêu rõ quy cách kỹ thuật chi tiết: MDF E1 17mm (1220x2440)',
+        'Ngân sách thực tế xác định: ~1.2 tỷ ₫',
+        'Mốc thời gian giao hàng gấp trong tháng 10',
+        'Lịch sử tương tác: Đã từng hỏi giá 2 lần trong 6 tháng qua'
+      ],
+      sentiment: 'Tích cực · Sẵn sàng xuống tiền nếu có hàng đúng tiến độ',
+      modelNote: 'Ý định mua buôn thực chất. Xác suất ký hợp đồng dự kiến 75% nếu ráp khớp ngay với kho Tân Uyên/Bình Dương.'
+    }
+  },
+  {
+    kind: 'Cảnh báo',
+    kindKey: 'alert',
+    id: 'ALR-0233',
+    source: 'Nhóm Đối tác in ấn Thành Phát',
+    sender: 'Trần Văn Phát (Giám đốc Thành Phát)',
+    ch: 'zalo',
+    age: '2 giờ 14 phút',
+    title: 'Khách nhắn ba lần chưa ai trả lời, thái độ đã chuyển sang gay gắt',
+    summary: 'Sau khi nhận báo giá ngày 18/09, khách hỏi lại ba lần về tiến độ mà không ai phản hồi. Mẫu hành vi này trong sáu tháng qua dẫn tới mất khách trong 4 trên 5 trường hợp.',
+    evidence: '"Anh hỏi ba lần rồi mà không ai trả lời. Nếu bên mình không làm được thì nói thẳng để anh tìm chỗ khác nhé."',
+    score: '87',
+    scoreLabel: 'rủi ro mất khách',
+    confidence: 'cao',
+    tone: 'var(--status-bad, #ef4444)',
+    action: 'Mở hồ sơ và gán người xử lý',
+    actionIcon: 'ph ph-identification-card',
+    primaryAction: 'assign_urgent',
+    entities: {
+      client: 'Đối tác in ấn Thành Phát',
+      incident: 'Khách gửi 3 tin hỏi liên tiếp không có nhân viên trực',
+      delayTime: '134 phút không phản hồi',
+      riskTier: 'Cực kỳ nguy cấp (Churn Risk Level 4)'
+    },
+    reasoning: {
+      heat: 87,
+      heatFactors: [
+        '3 tin nhắn liên tiếp chưa được trả lời trong luồng hội thoại',
+        'Cụm từ báo động: "nói thẳng để anh tìm chỗ khác", "hỏi ba lần rồi"',
+        'Thời gian chờ đợi vượt ngưỡng SLA 30 phút (> 134 phút)',
+        'Mô hình hành vi: 4/5 trường hợp tương tự dẫn tới mất khách'
+      ],
+      sentiment: 'Gay gắt · Thất vọng · Chuẩn bị chuyển sang đối thủ',
+      modelNote: 'Hệ thống kích hoạt rào chắn can thiệp khẩn cấp. Khuyến nghị Sếp hoặc Quản lý cấp cao trực tiếp gọi điện xin lỗi trong 15 phút.'
+    }
+  },
+  {
+    kind: 'Chờ duyệt',
+    kindKey: 'approve',
+    id: 'ACT-0231',
+    source: 'Agent Trợ lý thương mại · tự trị mức 4',
+    sender: 'Agent Trợ lý AI (Lõi Gen-Harness)',
+    ch: 'agent',
+    age: '47 phút',
+    title: 'Bản nháp báo giá 84.000.000 ₫ cho hợp đồng in ấn quý 4 đã soạn xong',
+    summary: 'Agent đã đối chiếu ba báo giá và chọn Thành Phát vì thấp nhất. Khoản này vượt ngưỡng 50 triệu ₫ nên hệ thống dừng lại chờ Sếp duyệt, không tự gửi.',
+    evidence: 'Nguồn dữ liệu: báo giá Thành Phát 84 triệu, An Khang 91 triệu, Minh Long 88 triệu · biểu giá quý 4 · tồn kho ERP ngày 21/09.',
+    score: '—',
+    scoreLabel: 'chờ thẩm quyền',
+    confidence: 'cao',
+    tone: 'var(--status-warn, #fbbf24)',
+    action: 'Xem bản nháp và duyệt',
+    actionIcon: 'ph ph-seal-check',
+    primaryAction: 'approve_draft',
+    entities: {
+      draftValue: '84.000.000 ₫',
+      supplierSelected: 'Thành Phát (Tiết kiệm 7 triệu so với An Khang)',
+      thresholdRule: 'Vượt hạn mức tự trị 50 triệu ₫ theo SSOT Policy Gate Tầng 2',
+      quarter: 'Quý 4/2026'
+    },
+    reasoning: {
+      heat: 95,
+      heatFactors: [
+        'Quy tắc Tường Lửa Tầng 2: Giao dịch > 50.000.000 ₫ bắt buộc Sếp Cơ La phê duyệt',
+        'So sánh giá: Thành Phát 84tr < Minh Long 88tr < An Khang 91tr',
+        'Tồn kho và biểu giá quý 4 đã được đối chiếu chuẩn xác với ERP'
+      ],
+      sentiment: 'Khách quan · Thủ tục tuân thủ quy chuẩn SSOT',
+      modelNote: 'Đã hoàn tất kiểm tra chéo 3 bên. Phê duyệt này an toàn và tối ưu chi phí 7.7% cho doanh nghiệp.'
+    }
+  },
+  {
+    kind: 'Cần soạn',
+    kindKey: 'doc',
+    id: 'DOC-0104',
+    source: 'Kênh WhatsApp Khách Hàng VIP',
+    sender: 'Lê Hoàng Yến (An Khang Corp)',
+    ch: 'whatsapp',
+    age: '3 giờ 10 phút',
+    title: 'Soạn hợp đồng nguyên tắc phân phối nội thất văn phòng quý 4 cho An Khang Corp',
+    summary: 'Khách hàng đã đồng ý điều khoản chiết khấu 12% theo biên bản cuộc họp ngày 22/09. Cần xuất bản thảo hợp đồng để phòng Pháp chế và Sếp Cơ La ký số.',
+    evidence: '"Dạ vâng bên em chốt mức chiết khấu 12% như anh trao đổi hôm qua. Nhờ bên anh gửi dự thảo hợp đồng nguyên tắc sớm trong tuần để sếp em ký."',
+    score: '82',
+    scoreLabel: 'tiến độ HĐ',
+    confidence: 'cao',
+    tone: '#818cf8',
+    action: 'Soạn và xuất hợp đồng',
+    actionIcon: 'ph ph-file-text',
+    primaryAction: 'draft_contract',
+    entities: {
+      discount: '12% chiết khấu đại lý',
+      contractType: 'Hợp đồng nguyên tắc phân phối quý 4',
+      partner: 'An Khang Corp',
+      urgency: 'Trong tuần này'
+    },
+    reasoning: {
+      heat: 82,
+      heatFactors: [
+        'Khách hàng chính thức chốt mức chiết khấu 12% theo thỏa thuận',
+        'Thời hạn yêu cầu: Hoàn tất dự thảo trong tuần',
+        'Khách hàng VIP lâu năm, doanh thu ước tính ~450 triệu/quý'
+      ],
+      sentiment: 'Thân thiện · Cam kết cao · Tiến độ thuận lợi',
+      modelNote: 'Khuyến nghị khởi tạo ngay mẫu hợp đồng chuẩn từ Office Reporter để ban Pháp chế duyệt ký.'
+    }
+  },
+  {
+    kind: 'Cảnh báo',
+    kindKey: 'alert',
+    id: 'ALR-0234',
+    source: 'People Observation · Ban Tài chính',
+    sender: 'Hệ Thống Quan Sát Tương Tác Nhân Sự',
+    ch: 'agent',
+    age: '5 giờ',
+    title: 'Nguyễn Thu Hà phản hồi chậm bất thường ba ngày liên tiếp',
+    summary: 'Trung vị thời gian phản hồi tăng từ 12 phút lên 84 phút, đồng thời số khách đang phụ trách tăng từ 6 lên 11. Tín hiệu thiên về quá tải hơn là thờ ơ.',
+    evidence: '9 trên 14 tin nhắn của khách trong ba ngày qua được trả lời sau hơn 60 phút, tập trung vào khung 14:00–17:00.',
+    score: '62',
+    scoreLabel: 'điểm chăm sóc',
+    confidence: 'trung bình',
+    tone: 'var(--status-warn, #fbbf24)',
+    action: 'Xem chứng cứ và đề xuất coaching',
+    actionIcon: 'ph ph-chalkboard-teacher',
+    primaryAction: 'view_coaching',
+    entities: {
+      employee: 'Nguyễn Thu Hà (Ban Tài chính - Dịch vụ khách hàng)',
+      medianLatencyBefore: '12 phút',
+      medianLatencyNow: '84 phút',
+      workloadIncrease: 'Từ 6 lên 11 đối tác phụ trách đồng thời (+83%)'
+    },
+    reasoning: {
+      heat: 62,
+      heatFactors: [
+        'Tải trọng công việc tăng đột biến trong tuần (11 tài khoản lớn)',
+        '9/14 tin nhắn bị trễ > 60 phút ở khung giờ cao điểm 14h-17h',
+        'Chỉ số hành vi: Quá tải vận hành cục bộ, không phải suy giảm thái độ'
+      ],
+      sentiment: 'Căng thẳng · Quá tải khối lượng công việc',
+      modelNote: 'Nên chia sẻ bớt 3 tài khoản khách phụ sang trợ lý để bảo đảm chất lượng phục vụ đồng đều.'
+    }
+  },
+  {
+    kind: 'Ứng viên',
+    kindKey: 'cand',
+    id: 'OPP-1839',
+    source: 'Group Nhân sự Logistics Miền Nam · 1.200 thành viên',
+    sender: 'Đoàn Quốc Bảo (Key Account Manager)',
+    ch: 'zalo',
+    age: '6 giờ',
+    title: 'Một người trong group khớp vị trí Key Account đang trống của Ban Kinh doanh',
+    summary: 'Người này trả lời câu hỏi nghiệp vụ trong group ba lần trong tuần, cách diễn đạt nhất quán và có dấu hiệu đang tìm việc. Chưa có tiếp xúc trực tiếp nào.',
+    evidence: '"Mình làm key account ngành lạnh 5 năm, đang tính đổi hướng sang gỗ nội thất, ai cần tư vấn tuyến Bình Dương thì inbox mình."',
+    score: '74',
+    scoreLabel: 'độ phù hợp',
+    confidence: 'thấp',
+    tone: 'var(--status-ok, #34d399)',
+    action: 'Mở hồ sơ ứng viên',
+    actionIcon: 'ph ph-user-focus',
+    primaryAction: 'view_candidate',
+    entities: {
+      roleMatch: 'Key Account Manager (Gỗ & Nội thất công nghiệp)',
+      experience: '5 năm kinh nghiệm ngành lạnh & chuỗi cung ứng',
+      geographicFocus: 'Khu vực Bình Dương',
+      sourceType: 'Tín hiệu ngầm từ cộng đồng Zalo chuyên ngành'
+    },
+    reasoning: {
+      heat: 74,
+      heatFactors: [
+        'Khớp hồ sơ năng lực 5 năm Key Account với JD đang tuyển',
+        'Địa bàn hoạt động Bình Dương trùng khớp địa bàn mở rộng của công ty',
+        'Tín hiệu chủ động tìm việc ("đang tính đổi hướng, ai cần thì inbox")'
+      ],
+      sentiment: 'Cởi mở · Tìm kiếm môi trường mới',
+      modelNote: 'Hệ thống phát hiện tín hiệu thụ động. Khuyến nghị gửi lời mời kết nối cá nhân từ Trưởng ban Kinh doanh.'
+    }
+  },
+  {
+    kind: 'Cơ hội',
+    kindKey: 'opp',
+    id: 'OPP-1845',
+    source: 'Kênh Zalo Đối Tác Long An',
+    sender: 'Võ Thành Đạt (Bao Bì Phúc Hưng)',
+    ch: 'zalo',
+    age: '1 ngày',
+    title: 'Doanh nghiệp bao bì Long An tìm đối tác cung cấp keo dán công nghiệp định kỳ',
+    summary: 'Doanh nghiệp đang mở rộng thêm 2 chuyền dán hộp carton, nhu cầu 4 tấn keo/tháng. Đang tìm nguồn cung ổn định giao hàng tận xưởng Bến Lức.',
+    evidence: '"Bên mình đang cần tìm nhà cung cấp keo dán công nghiệp thùng carton định kỳ 4 tấn/tháng, giao về Bến Lức. Bên bạn có bảng mẫu gửi mình test nhé."',
+    score: '88',
+    scoreLabel: 'độ nóng',
+    confidence: 'cao',
+    tone: 'var(--status-ok, #34d399)',
+    action: 'Soạn báo giá & gửi mẫu thử',
+    actionIcon: 'ph ph-file-text',
+    primaryAction: 'quote',
+    entities: {
+      volume: '4 tấn keo/tháng',
+      usage: 'Sản xuất thùng carton',
+      location: 'Bến Lức, Long An',
+      nextStep: 'Gửi mẫu thử nghiệm sản phẩm'
+    },
+    reasoning: {
+      heat: 88,
+      heatFactors: [
+        'Nhu cầu tiêu thụ định kỳ hàng tháng (doanh thu tái lặp)',
+        'Quy mô cụ thể: 4 tấn/tháng',
+        'Yêu cầu bước tiếp theo rõ ràng: Cung cấp mẫu thử kỹ thuật'
+      ],
+      sentiment: 'Nghiêm túc · Mong muốn hợp tác dài hạn',
+      modelNote: 'Khách hàng có dòng tiền tốt, đề xuất gửi bảng báo giá kèm chứng chỉ kiểm định chất lượng keo dán.'
+    }
+  },
+  {
+    kind: 'Chờ duyệt',
+    kindKey: 'approve',
+    id: 'ACT-0238',
+    source: 'Hệ thống Quản Trị Hợp Đồng & Thanh Toán',
+    sender: 'Ban Kế Toán',
+    ch: 'agent',
+    age: '1 ngày',
+    title: 'Kế hoạch tạm ứng giải ngân đợt 1 cho lô gỗ thông New Zealand nhập khẩu',
+    summary: 'Đề nghị chuyển tạm ứng 30% giá trị hợp đồng (135 triệu ₫) cho công ty Tân Cảng sau khi có vận đơn gốc. Hạn thanh toán đến ngày 25/09.',
+    evidence: 'Hồ sơ đi kèm: Hợp đồng ngoại thương số PO-NZ-2026/09, B/L gốc số MAEU90218, Giấy đề nghị thanh toán số 44/KT.',
+    score: '—',
+    scoreLabel: 'chờ thẩm quyền',
+    confidence: 'cao',
+    tone: 'var(--status-warn, #fbbf24)',
+    action: 'Duyệt chi tạm ứng',
+    actionIcon: 'ph ph-seal-check',
+    primaryAction: 'approve_draft',
+    entities: {
+      amount: '135.000.000 ₫ (30% giá trị PO)',
+      beneficiary: 'Công ty Cổ phần Vận Tải Tân Cảng',
+      dueDate: '25/09/2026',
+      documentCheck: 'Đã đủ chứng từ vận đơn và phiếu xuất kho'
+    },
+    reasoning: {
+      heat: 90,
+      heatFactors: [
+        'Chứng từ thanh toán đầy đủ theo quy định của ban Pháp chế',
+        'Khoản chi > 50 triệu yêu cầu chữ ký số của Tổng giám đốc',
+        'Đảm bảo giải phóng container đúng thời hạn tránh phí lưu bãi DEM/DET'
+      ],
+      sentiment: 'Chuẩn tắc quy trình kế toán',
+      modelNote: 'Hồ sơ đã được kế toán trưởng rà soát hợp lệ. Đề xuất Sếp ký duyệt trước 16h.'
+    }
+  },
+  {
+    kind: 'Cần soạn',
+    kindKey: 'doc',
+    id: 'DOC-0108',
+    source: 'Kênh WhatsApp Khách Hàng Doanh Nghiệp',
+    sender: 'Đỗ Thùy Trang (Tân Bình Garment)',
+    ch: 'whatsapp',
+    age: '1 ngày',
+    title: 'Biên bản nghiệm thu bàn giao lô hàng mẫu phụ liệu cho May Mặc Tân Bình',
+    summary: 'Khách hàng yêu cầu gửi trước bản PDF biên bản bàn giao và bảng tổng hợp lỗi kỹ thuật để hoàn tất hồ sơ quyết toán tuần này.',
+    evidence: '"Anh Cơ La cho em xin mẫu biên bản nghiệm thu đợt mẫu vừa rồi nhé, kèm danh mục chi tiết để bên em đối chiếu cho kế toán làm thủ tục."',
+    score: '79',
+    scoreLabel: 'tiến độ hồ sơ',
+    confidence: 'cao',
+    tone: '#818cf8',
+    action: 'Mở soạn thảo biên bản',
+    actionIcon: 'ph ph-file-text',
+    primaryAction: 'draft_contract',
+    entities: {
+      docName: 'Biên bản nghiệm thu lô hàng mẫu',
+      recipient: 'May Mặc Tân Bình',
+      purpose: 'Thủ tục quyết toán chi phí đợt 1'
+    },
+    reasoning: {
+      heat: 79,
+      heatFactors: [
+        'Khách hàng chủ động yêu cầu hồ sơ để quyết toán công nợ',
+        'Cần xuất bản PDF chuẩn chỉ từ module Office Reporter',
+        'Thời hạn xử lý: Hoàn thành trong ngày làm việc'
+      ],
+      sentiment: 'Tích cực · Sẵn sàng thanh toán',
+      modelNote: 'Nên dùng mẫu Biên bản nghiệm thu có sẵn trong heo-tool-office-reporter để bàn giao sớm.'
+    }
+  },
+  {
+    kind: 'Cảnh báo',
+    kindKey: 'alert',
+    id: 'ALR-0239',
+    source: 'Hệ thống Quản Trị Khách Hàng CRM',
+    sender: 'Bot Cảnh Báo Phản Hồi Chăm Sóc',
+    ch: 'agent',
+    age: '2 ngày',
+    title: 'Khách hàng VIP Nguyễn Lan Anh chưa được liên hệ sau báo giá 48h',
+    summary: 'Báo giá gói nội thất 180 triệu đã gửi từ 2 ngày trước nhưng chưa ghi nhận cuộc gọi hay tin nhắn follow-up nào từ đội ngũ tư vấn.',
+    evidence: 'Nhật ký CRM: Gửi báo giá lúc 10:15 ngày 21/09. Đến nay không có log tương tác. Tỷ lệ chốt giảm 40% nếu không follow-up trong 48h đầu.',
+    score: '75',
+    scoreLabel: 'rủi ro nguội deal',
+    confidence: 'cao',
+    tone: 'var(--status-bad, #ef4444)',
+    action: 'Nhắc nhân sự gọi điện ngay',
+    actionIcon: 'ph ph-phone-call',
+    primaryAction: 'assign_urgent',
+    entities: {
+      customer: 'Chị Nguyễn Lan Anh (Khách VIP Biệt Thự Thảo Điền)',
+      dealValue: '180.000.000 ₫',
+      idleDuration: '48 giờ không có tương tác nối tiếp',
+      slaWarning: 'Quá hạn cam kết follow-up trong 24h'
+    },
+    reasoning: {
+      heat: 75,
+      heatFactors: [
+        'Báo giá giá trị cao (> 100tr) bị gián đoạn chăm sóc quá 48h',
+        'Tỷ lệ nguội tín hiệu tăng gấp đôi sau ngày thứ hai',
+        'Khách hàng có lịch sử quyết định nhanh nếu được tư vấn tận tình'
+      ],
+      sentiment: 'Cần chú ý đặc biệt để bảo vệ doanh thu',
+      modelNote: 'Đề xuất giao việc khẩn cấp cho nhân viên phụ trách gọi điện tư vấn kỹ thuật trực tiếp.'
+    }
+  }
+];
+
+function getKindChipStyle(kind) {
+  let col = '#9184d9';
+  if (kind === 'Cơ hội') col = 'var(--status-ok, #34d399)';
+  else if (kind === 'Cảnh báo') col = 'var(--status-bad, #ef4444)';
+  else if (kind === 'Chờ duyệt') col = 'var(--status-warn, #fbbf24)';
+  else if (kind === 'Cần soạn') col = '#818cf8';
+  else if (kind === 'Ứng viên') col = '#38bdf8';
+  return `font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:999px; background:${col}18; color:${col}; border:1px solid ${col}44; white-space:nowrap;`;
+}
+
+function getConfStyle(conf) {
+  const isHigh = conf === 'cao';
+  const isMed = conf === 'trung bình';
+  const col = isHigh ? 'var(--status-ok, #34d399)' : isMed ? 'var(--status-warn, #fbbf24)' : 'var(--status-bad, #ef4444)';
+  return `font-size:10px; padding:2px 7px; border-radius:999px; white-space:nowrap; color:${col}; border:1px solid ${col};`;
+}
+
+function mapLiveEventToMeaningItem(e) {
+  let kind = 'Cơ hội';
+  let kindKey = 'opp';
+  let tone = 'var(--status-ok, #34d399)';
+  let scoreLabel = 'độ nóng';
+  let action = 'Nhận và xử lý cơ hội';
+  let actionIcon = 'ph ph-target';
+  let primaryAction = 'deal';
+
+  const type = (e.intent || e.event_type || '').toLowerCase();
+  if (type.includes('complain') || type.includes('khiếu nại') || e.priority === 'P0') {
+    kind = 'Cảnh báo';
+    kindKey = 'alert';
+    tone = 'var(--status-bad, #ef4444)';
+    scoreLabel = 'rủi ro mất khách';
+    action = 'Xử lý khiếu nại khẩn cấp';
+    actionIcon = 'ph ph-warning-circle';
+    primaryAction = 'assign_urgent';
+  } else if (type.includes('askedprice') || type.includes('hỏi giá')) {
+    kind = 'Cơ hội';
+    kindKey = 'opp';
+    tone = 'var(--status-ok, #34d399)';
+    scoreLabel = 'độ nóng';
+    action = 'Soạn báo giá & ráp khớp';
+    actionIcon = 'ph ph-file-text';
+    primaryAction = 'quote';
+  } else if (type.includes('document') || type.includes('tài liệu') || type.includes('hợp đồng')) {
+    kind = 'Cần soạn';
+    kindKey = 'doc';
+    tone = '#818cf8';
+    scoreLabel = 'tiến độ HĐ';
+    action = 'Mở soạn thảo văn bản';
+    actionIcon = 'ph ph-file-text';
+    primaryAction = 'draft_contract';
+  } else if (type.includes('approval') || type.includes('duyệt') || type.includes('actionpending')) {
+    kind = 'Chờ duyệt';
+    kindKey = 'approve';
+    tone = 'var(--status-warn, #fbbf24)';
+    scoreLabel = 'chờ thẩm quyền';
+    action = 'Xem và duyệt';
+    actionIcon = 'ph ph-seal-check';
+    primaryAction = 'approve_draft';
+  } else if (type.includes('candidate') || type.includes('ứng viên') || type.includes('tuyển') || type.includes('job')) {
+    kind = 'Ứng viên';
+    kindKey = 'cand';
+    tone = '#38bdf8';
+    scoreLabel = 'độ phù hợp';
+    action = 'Xem hồ sơ ứng viên';
+    actionIcon = 'ph ph-user-focus';
+    primaryAction = 'view_candidate';
+  }
+
+  const score = e.heat_score ? String(e.heat_score) : (e.priority === 'P0' ? '92' : e.priority === 'P1' ? '82' : '65');
+  const conf = (e.confidence && parseFloat(e.confidence) >= 0.85) ? 'cao' : (e.confidence && parseFloat(e.confidence) >= 0.6) ? 'trung bình' : 'cao';
+
+  let parsedEnt = {};
+  try { parsedEnt = typeof e.extracted_entities === 'string' ? JSON.parse(e.extracted_entities) : (e.extracted_entities || {}); } catch(err){}
+
+  return {
+    kind,
+    kindKey,
+    id: e.id || ('EVT-' + Math.random().toString(36).substr(2, 6).toUpperCase()),
+    source: (e.group_name && e.group_name !== '1-1') ? `Group ${e.group_name} · ${e.sender_name || 'Khách'}` : (e.sender_name || 'Khách'),
+    sender: e.sender_name || 'Đối tác',
+    ch: (e.channel || 'zalo').toLowerCase(),
+    age: 'Vừa xong',
+    title: e.meaning_summary || e.content?.slice(0, 80) || 'Đơn vị ý nghĩa từ hội thoại',
+    summary: (e.meaning_summary ? e.meaning_summary + '. ' : '') + (e.action_suggested ? `Hành động gợi ý: ${e.action_suggested}` : 'Bóc tách tự động bởi Data Factory.'),
+    evidence: e.content ? `"${e.content}"` : '—',
+    score,
+    scoreLabel,
+    confidence: conf,
+    tone,
+    action: e.action_suggested || action,
+    actionIcon,
+    primaryAction,
+    entities: parsedEnt,
+    rawEvent: e,
+    isLive: true,
+    reasoning: {
+      heat: parseInt(score, 10) || 75,
+      heatFactors: [
+        `Kênh tiếp nhận: ${(e.channel || 'Zalo').toUpperCase()}`,
+        `Mức độ ưu tiên: ${e.priority || 'P2'}`,
+        `Ý định phân tích: ${e.intent || e.event_type || 'Tổng quát'}`
+      ],
+      sentiment: (kindKey === 'alert' ? 'Tiêu cực / Cần can thiệp khẩn cấp' : 'Tích cực / Đang tương tác chủ động'),
+      modelNote: e.meaning_summary || 'Hệ thống đã nhận diện ý nghĩa từ luồng tin nhắn và phân loại vào hàng đợi xử lý.'
+    }
+  };
+}
+
+function getAllMeaningItems() {
+  if (!state.archivedMeaningIds) state.archivedMeaningIds = new Set();
+  const canonical = CANONICAL_MEANING_ITEMS.filter(it => !state.archivedMeaningIds.has(it.id));
+  const rawEvents = (state.df_events || []).filter(e => !e.archived && e.status !== 'ARCHIVED' && !state.archivedMeaningIds.has(e.id));
+  const liveItems = rawEvents.map(mapLiveEventToMeaningItem);
+  return [...liveItems, ...canonical];
+}
+
+function getMeaningTabCounts(items) {
+  return {
+    all: items.length,
+    opp: items.filter(x => x.kindKey === 'opp').length,
+    alert: items.filter(x => x.kindKey === 'alert').length,
+    approve: items.filter(x => x.kindKey === 'approve').length,
+    doc: items.filter(x => x.kindKey === 'doc').length,
+    cand: items.filter(x => x.kindKey === 'cand').length,
+  };
+}
+
+function renderMeaningCardsList() {
+  const container = $('#meaning-cards-container');
+  if (!container) return;
+  const currentTab = state.meaningInboxTab || 'all';
+  const query = (state.meaningSearchQuery || '').trim().toLowerCase();
+  let items = getAllMeaningItems();
+
+  if (currentTab !== 'all') {
+    items = items.filter(x => x.kindKey === currentTab);
+  }
+
+  if (query) {
+    items = items.filter(x =>
+      (x.title || '').toLowerCase().includes(query) ||
+      (x.summary || '').toLowerCase().includes(query) ||
+      (x.evidence || '').toLowerCase().includes(query) ||
+      (x.source || '').toLowerCase().includes(query) ||
+      (x.sender || '').toLowerCase().includes(query) ||
+      (x.id || '').toLowerCase().includes(query)
+    );
+  }
+
+  // Update tabs active state & counts
+  const allItems = getAllMeaningItems();
+  const counts = getMeaningTabCounts(allItems);
+  ['all', 'opp', 'alert', 'approve', 'doc', 'cand'].forEach(k => {
+    const btn = $(`#inbox-tab-${k}`);
+    if (btn) {
+      const isActive = k === currentTab;
+      btn.style.fontWeight = isActive ? '600' : '400';
+      btn.style.color = isActive ? 'var(--color-text, #e9e9ed)' : 'var(--color-neutral-400, #b2b6ca)';
+      btn.style.borderBottom = isActive ? '2px solid var(--color-accent, #9184d9)' : '2px solid transparent';
+      const cEl = btn.querySelector('.tab-count');
+      if (cEl) cEl.textContent = counts[k] || 0;
+    }
+  });
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div style="background:var(--color-surface,#232532);border:1px dashed var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);padding:48px 16px;text-align:center;color:var(--color-neutral-400,#b2b6ca)">
+        <i class="ph ph-check-circle" style="font-size:38px;color:var(--status-ok,#34d399);margin-bottom:10px;display:inline-block"></i>
+        <div style="font-size:15px;font-weight:600;color:var(--color-text,#e9e9ed);margin-bottom:4px">Đã Đạt Trạng Thái Inbox Zero!</div>
+        <div style="font-size:12px">Không còn đơn vị ý nghĩa nào đang chờ xử lý trong danh mục này.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = items.map(m => `
+    <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-left:3px solid ${m.tone}; border-radius:var(--radius-md,8px); padding:14px 16px; display:flex; flex-direction:column; gap:11px; margin-bottom:12px; box-shadow:0 2px 6px rgba(0,0,0,0.15); transition:border-color 0.2s ease;">
+      <div style="display:flex; align-items:flex-start; gap:16px;">
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+            <span style="${getKindChipStyle(m.kind)}">${escapeHtml(m.kind)}</span>
+            <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:var(--mono,monospace);">${escapeHtml(m.id)}</span>
+            <span style="width:3px; height:3px; border-radius:50%; background:var(--color-neutral-700,#595d6c);"></span>
+            <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--color-neutral-400,#b2b6ca);">
+              <i class="${m.chIcon || (m.ch === 'zalo' ? 'ph ph-chat-circle-dots' : m.ch === 'whatsapp' ? 'ph ph-whatsapp-logo' : m.ch === 'agent' ? 'ph ph-robot' : 'ph ph-device-mobile')}" style="font-size:13px; color:${m.chTone || (m.ch === 'zalo' ? '#0068ff' : m.ch === 'whatsapp' ? '#25d366' : 'var(--color-accent-300,#d2cefd)')};"></i>
+              ${escapeHtml(m.source)}
+            </span>
+            <span style="width:3px; height:3px; border-radius:50%; background:var(--color-neutral-700,#595d6c);"></span>
+            <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">${escapeHtml(m.age)}</span>
+          </div>
+          <div style="font-size:14px; font-weight:600; color:var(--color-text,#e9e9ed); margin-top:8px; text-wrap:pretty;">${escapeHtml(m.title)}</div>
+          <div style="font-size:12px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; line-height:1.55; text-wrap:pretty;">${escapeHtml(m.summary)}</div>
+        </div>
+        <div style="flex:none; width:130px; display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+          <div style="display:flex; align-items:baseline; gap:4px;">
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:${m.tone}; line-height:1; font-family:var(--mono,monospace);">${escapeHtml(m.score)}</span>
+            ${m.score !== '—' ? '<span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab);">/100</span>' : ''}
+          </div>
+          <span style="font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); text-align:right;">${escapeHtml(m.scoreLabel)}</span>
+          <span style="${getConfStyle(m.confidence)}">tin cậy ${escapeHtml(m.confidence)}</span>
+        </div>
+      </div>
+
+      <!-- Evidence quote block -->
+      <div style="display:flex; align-items:center; gap:9px; padding:9px 11px; border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-sm,4px); background:var(--color-bg,#161826);">
+        <i class="ph ph-quotes" style="font-size:14px; flex:none; color:var(--color-neutral-700,#595d6c);"></i>
+        <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); line-height:1.5; text-wrap:pretty;">${escapeHtml(m.evidence)}</span>
+        <button class="btn btn-ghost" style="flex:none; gap:5px; height:24px; padding:0 8px; font-size:10.5px;" onclick="openEvidenceDetailModal('${m.id}')">
+          Xem chứng cứ gốc<i class="ph ph-arrow-square-out" style="font-size:12px;"></i>
+        </button>
+      </div>
+
+      <!-- Action buttons bar -->
+      <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+        <button class="btn btn-primary" style="gap:6px; height:30px; padding:0 12px; font-size:11.5px; color:var(--color-accent-300,#d2cefd); border-color:var(--color-accent);" onclick="handleMeaningPrimaryAction('${m.id}')">
+          <i class="${m.actionIcon || 'ph ph-check'}" style="font-size:14px;"></i>${escapeHtml(m.action)}
+        </button>
+        <button class="btn btn-secondary" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;" onclick="assignMeaningToOther('${m.id}')">
+          <i class="ph ph-user-plus" style="font-size:14px;"></i>Giao cho người khác
+        </button>
+        <button class="btn btn-secondary" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;" onclick="purposefulSilenceMeaning('${m.id}')">
+          <i class="ph ph-moon" style="font-size:14px;"></i>Im lặng có chủ đích
+        </button>
+        ${m.kindKey === 'opp' ? `
+          <button class="btn btn-secondary" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px; color:#34d399; border-color:rgba(16,185,129,0.3);" onclick="quickCreateQuotationFromEvent('${m.id}', '${escapeHtml(m.sender || 'Khách')}', '${escapeHtml(m.evidence)}')">
+            <i class="ph ph-file-text"></i>Soạn Báo Giá
+          </button>
+        ` : ''}
+        ${m.kindKey === 'opp' || m.kindKey === 'alert' ? `
+          <button class="btn btn-secondary" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;" onclick="convertEventToTask('${m.id}', '${escapeHtml(m.title)}')">
+            <i class="ph ph-check-square"></i>Tạo Việc
+          </button>
+        ` : ''}
+        <span style="flex:1;"></span>
+        <button class="btn btn-ghost" style="gap:5px; height:26px; padding:0 9px; font-size:10.5px;" onclick="explainSystemReasoning('${m.id}')">
+          <i class="ph ph-question" style="font-size:13px;"></i>Vì sao hệ thống nghĩ vậy
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function switchMeaningTab(tabKey) {
+  state.meaningInboxTab = tabKey;
+  renderMeaningCardsList();
+}
+
+function handleMeaningSearch(query) {
+  state.meaningSearchQuery = query;
+  renderMeaningCardsList();
+}
+
+function openEvidenceDetailModal(id) {
+  const items = getAllMeaningItems();
+  const m = items.find(x => x.id === id);
+  if (!m) { showToast('Không tìm thấy thông tin chi tiết'); return; }
+
+  const ents = m.entities || {};
+  const entKeys = Object.keys(ents);
+
+  openModal(`🔍 Chứng Cứ Gốc & Bóc Tách Thực Thể — ${m.id}`, `
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <!-- Metadata Chips -->
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding-bottom:10px; border-bottom:1px solid var(--color-divider);">
+        <span style="${getKindChipStyle(m.kind)}">${escapeHtml(m.kind)}</span>
+        <span class="badge" style="font-family:var(--mono);">${escapeHtml(m.id)}</span>
+        <span class="badge" style="text-transform:uppercase;">Kênh: ${escapeHtml(m.ch)}</span>
+        <span class="badge" style="color:${m.tone};">Điểm: ${escapeHtml(m.score)}/100 (${escapeHtml(m.scoreLabel)})</span>
+        <span style="${getConfStyle(m.confidence)}">Mức tin cậy: ${escapeHtml(m.confidence)}</span>
+      </div>
+
+      <!-- Sender & Group Info -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; background:var(--color-bg); padding:10px 12px; border-radius:var(--radius-md); border:1px solid var(--color-divider);">
+        <div>
+          <div style="font-size:11px; color:var(--color-neutral-400);">Người phát tín hiệu:</div>
+          <div style="font-size:12.5px; font-weight:600; color:var(--color-text); margin-top:2px;">👤 ${escapeHtml(m.sender || 'Không xác định')}</div>
+        </div>
+        <div>
+          <div style="font-size:11px; color:var(--color-neutral-400);">Nguồn / Hội thoại:</div>
+          <div style="font-size:12.5px; font-weight:600; color:var(--color-text); margin-top:2px;">📡 ${escapeHtml(m.source)}</div>
+        </div>
+      </div>
+
+      <!-- Raw Evidence Quote -->
+      <div>
+        <div style="font-size:11.5px; font-weight:600; color:var(--color-neutral-300); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+          <i class="ph ph-quotes" style="color:var(--color-accent);"></i> Nội Dung Thông Điệp Gốc (Raw Evidence)
+        </div>
+        <div style="background:var(--color-bg); border:1px solid var(--color-divider); border-left:3px solid ${m.tone}; border-radius:var(--radius-sm); padding:12px 14px; font-size:13px; color:var(--color-text); line-height:1.6; font-style:italic;">
+          ${escapeHtml(m.evidence)}
+        </div>
+      </div>
+
+      <!-- Extracted Entities -->
+      <div>
+        <div style="font-size:11.5px; font-weight:600; color:var(--color-neutral-300); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+          <i class="ph ph-cpu" style="color:#38bdf8;"></i> Thực Thể Trích Xuất (Data Factory Named Entities)
+        </div>
+        ${entKeys.length > 0 ? `
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
+            ${entKeys.map(k => `
+              <div style="background:rgba(255,255,255,0.02); border:1px solid var(--color-divider); border-radius:4px; padding:8px 10px;">
+                <div style="font-size:10.5px; color:var(--color-neutral-400); text-transform:uppercase; font-weight:600;">${escapeHtml(k)}</div>
+                <div style="font-size:12px; font-weight:600; color:#38bdf8; margin-top:2px;">${escapeHtml(ents[k])}</div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="font-size:12px; color:var(--color-neutral-400); font-style:italic; padding:6px 0;">Đang dùng bóc tách ngữ nghĩa toàn văn tiêu chuẩn.</div>
+        `}
+      </div>
+
+      <!-- Summary & Proposed Action -->
+      <div style="background:rgba(145,132,217,0.06); border:1px solid rgba(145,132,217,0.2); border-radius:var(--radius-md); padding:10px 12px;">
+        <div style="font-size:11px; color:var(--color-accent-300); font-weight:600; margin-bottom:4px;">💡 Tóm Tắt Ý Nghĩa:</div>
+        <div style="font-size:12px; color:var(--color-text); line-height:1.5;">${escapeHtml(m.summary)}</div>
+        <div style="font-size:11px; color:#34d399; font-weight:600; margin-top:8px; margin-bottom:2px;">⚡ Hành Động Đề Xuất:</div>
+        <div style="font-size:12px; color:var(--color-text);">${escapeHtml(m.action)}</div>
+      </div>
+    </div>
+  `, null, false, 'Đóng');
+}
+
+function assignMeaningToOther(id) {
+  const items = getAllMeaningItems();
+  const m = items.find(x => x.id === id);
+  const currentTitle = m ? m.title : id;
+
+  openModal(`👤 Giao Cho Người Khác — ${id}`, `
+    <div style="font-size:12.5px; color:var(--color-neutral-300); margin-bottom:12px;">
+      Chuyển giao quyền phụ trách và theo dõi đơn vị ý nghĩa: <b>${escapeHtml(currentTitle)}</b>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Chọn Thành Viên Tiếp Nhận</label>
+      <select class="form-select" id="assign-member-select">
+        <option value="Sếp Ryan">👑 Sếp Ryan (Kiến trúc sư trưởng / Chỉ đạo)</option>
+        <option value="Trợ Lý AI (Antigravity Brain)">🤖 Trợ Lý AI (Google Antigravity CLI)</option>
+        <option value="Vũ Minh Tuấn">💼 Vũ Minh Tuấn (Trưởng ban Kinh doanh & Đối ngoại)</option>
+        <option value="Nguyễn Thu Hà">📊 Nguyễn Thu Hà (Ban Tài chính - Kế toán)</option>
+        <option value="Trần Văn Phát">⚙️ Trần Văn Phát (Quản lý dự án & Cung ứng)</option>
+        <option value="Ban Pháp Chế">⚖️ Ban Pháp Chế & Soạn Thảo Hợp Đồng</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Chỉ Đạo / Ghi Chú Giao Việc</label>
+      <textarea class="form-textarea" id="assign-member-note" style="height:80px;" placeholder="Ví dụ: Liên hệ khách trước 11h sáng để gửi báo giá ưu đãi và chốt lịch khảo sát..."></textarea>
+    </div>
+  `, async () => {
+    const member = $('#assign-member-select').value;
+    showToast(`✓ Đã giao ${id} cho ${member} thành công!`);
+    closeModal();
+  }, false, 'Xác Nhận Giao Việc');
+}
+
+function purposefulSilenceMeaning(id) {
+  openModal(`🌙 Im Lặng Có Chủ Đích (Strategic Silence) — ${id}`, `
+    <div style="font-size:12.5px; color:var(--color-neutral-300); margin-bottom:12px; line-height:1.5;">
+      <b>Chiến thuật Im Lặng Có Chủ Đích:</b> Hệ thống sẽ tạm hoãn thông báo và không tự động phản hồi cho đơn vị này để nhường quyền chủ động cho đối tác, kéo dài nhịp đàm phán hoặc tránh đáp ứng quá vội vã.
+    </div>
+    <div class="form-group">
+      <label class="form-label">Thời Hạn Giữ Im Lặng</label>
+      <select class="form-select" id="silence-duration-select">
+        <option value="4h">4 giờ (Chờ đối tác bổ sung thông tin hoặc hạ nhiệt)</option>
+        <option value="24h" selected>24 giờ (Giữ khoảng cách đàm phán trong 1 ngày làm việc)</option>
+        <option value="3d">3 ngày (Quan sát động thái thị trường & đối thủ)</option>
+        <option value="permanent">Đánh dấu Xong / Đạt Inbox Zero (Lưu trữ vĩnh viễn)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ghi Chú Chiến Lược (Tùy chọn)</label>
+      <input type="text" class="form-input" id="silence-note" placeholder="Ví dụ: Chờ khách hàng cân nhắc bảng giá đối chiếu trước khi liên hệ lại">
+    </div>
+  `, async () => {
+    const dur = $('#silence-duration-select').value;
+    if (!state.archivedMeaningIds) state.archivedMeaningIds = new Set();
+    state.archivedMeaningIds.add(id);
+
+    try {
+      await fetch('/api/data_factory/event/archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: id })
+      });
+    } catch(e) {}
+
+    closeModal();
+    showToast(`🌙 Đã kích hoạt Im Lặng Có Chủ Đích (${dur}) cho ${id}!`);
+    renderMeaningCardsList();
+    fetchAllData();
+  }, false, 'Kích Hoạt Im Lặng');
+}
+
+function explainSystemReasoning(id) {
+  const items = getAllMeaningItems();
+  const m = items.find(x => x.id === id);
+  if (!m) { showToast('Không tìm thấy thông tin'); return; }
+
+  const r = m.reasoning || {
+    heat: parseInt(m.score, 10) || 75,
+    heatFactors: ['Bóc tách tự động từ thông điệp hội thoại', 'Chỉ số phù hợp ngữ cảnh cao'],
+    sentiment: 'Khách quan',
+    modelNote: 'Đơn vị ý nghĩa được định danh tự động bởi Mô hình Lõi Gen-Harness OS.'
+  };
+
+  openModal(`🧠 Vì Sao Hệ Thống Nghĩ Vậy? — ${m.id}`, `
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <!-- Score & Confidence Overview -->
+      <div style="display:flex; justify-content:space-between; align-items:center; background:var(--color-bg); padding:12px 14px; border-radius:var(--radius-md); border:1px solid var(--color-divider); border-left:3px solid ${m.tone};">
+        <div>
+          <div style="font-size:11px; text-transform:uppercase; color:var(--color-neutral-400); font-weight:600;">Chỉ Số Đánh Giá</div>
+          <div style="font-size:22px; font-weight:700; color:${m.tone}; font-family:var(--mono); margin-top:2px;">
+            ${escapeHtml(m.score)} <span style="font-size:12px; color:var(--color-neutral-500); font-weight:400;">/ 100 (${escapeHtml(m.scoreLabel)})</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px; text-transform:uppercase; color:var(--color-neutral-400); font-weight:600;">Độ Tin Cậy Suy Luận</div>
+          <div style="margin-top:4px;"><span style="${getConfStyle(m.confidence)}">Mức ${escapeHtml(m.confidence)}</span></div>
+        </div>
+      </div>
+
+      <!-- Trigger Factors / Heat Factors -->
+      <div>
+        <div style="font-size:12px; font-weight:600; color:var(--color-text); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          <i class="ph ph-tree-structure" style="color:var(--color-accent);"></i> Các Yếu Tố Trọng Số Quyết Định (Decision Signals):
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${(r.heatFactors || []).map(f => `
+            <div style="display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--color-neutral-300); background:rgba(255,255,255,0.02); padding:8px 10px; border-radius:4px; border:1px solid var(--color-divider);">
+              <i class="ph ph-check-circle" style="color:${m.tone}; font-size:14px; flex:none; margin-top:2px;"></i>
+              <span>${escapeHtml(f)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Sentiment & Context Analysis -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div style="background:var(--color-bg); padding:10px 12px; border-radius:var(--radius-md); border:1px solid var(--color-divider);">
+          <div style="font-size:11px; color:var(--color-neutral-400);">Thái độ / Cảm xúc hội thoại:</div>
+          <div style="font-size:12px; font-weight:600; color:var(--color-text); margin-top:3px;">🎭 ${escapeHtml(r.sentiment || 'Trung tính')}</div>
+        </div>
+        <div style="background:var(--color-bg); padding:10px 12px; border-radius:var(--radius-md); border:1px solid var(--color-divider);">
+          <div style="font-size:11px; color:var(--color-neutral-400);">Khuyến nghị thuật toán:</div>
+          <div style="font-size:12px; font-weight:600; color:#38bdf8; margin-top:3px;">⚡ ${escapeHtml(m.action)}</div>
+        </div>
+      </div>
+
+      <!-- Model Inference Note -->
+      <div style="background:rgba(99,102,241,0.07); border:1px solid rgba(99,102,241,0.25); border-radius:var(--radius-md); padding:12px;">
+        <div style="font-size:11.5px; font-weight:600; color:#a5b4fc; display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+          <i class="ph ph-sparkle"></i> Nhận Định Từ Google Antigravity Brain (0đ Token API):
+        </div>
+        <div style="font-size:12px; color:var(--color-text); line-height:1.55;">
+          ${escapeHtml(r.modelNote || 'Đã đối chiếu các mẫu hội thoại và tính toán điểm số.')}
+        </div>
+      </div>
+    </div>
+  `, null, false, 'Đã Hiểu');
+}
+
+function handleMeaningPrimaryAction(id) {
+  const items = getAllMeaningItems();
+  const m = items.find(x => x.id === id);
+  if (!m) return;
+
+  if (m.primaryAction === 'match_opp') {
+    quickMatchOpportunity(m.id);
+  } else if (m.primaryAction === 'assign_urgent') {
+    assignMeaningToOther(m.id);
+  } else if (m.primaryAction === 'approve_draft') {
+    openModal(`✅ Thẩm Quyền Phê Duyệt — ${m.id}`, `
+      <div style="font-size:12.5px; color:var(--color-neutral-300); margin-bottom:12px;">
+        Sếp đang phê duyệt đơn vị: <b>${escapeHtml(m.title)}</b>
+      </div>
+      <div style="background:var(--color-bg); padding:10px 12px; border-radius:var(--radius-md); border:1px solid var(--color-divider); font-size:12px; line-height:1.5;">
+        ${escapeHtml(m.summary)}
+      </div>
+    `, async () => {
+      closeModal();
+      showToast(`✓ Đã phê duyệt thành công ${m.id}! Lệnh đã gửi đến hệ thống điều hành.`);
+      if (!state.archivedMeaningIds) state.archivedMeaningIds = new Set();
+      state.archivedMeaningIds.add(m.id);
+      renderMeaningCardsList();
+    }, false, 'Phê Duyệt');
+  } else if (m.primaryAction === 'draft_contract') {
+    quickCreateQuotationFromEvent(m.id, m.sender || 'Khách', m.title);
+  } else if (m.primaryAction === 'view_coaching') {
+    openModal(`📋 Hồ Sơ Coaching & Hỗ Trợ Nhân Sự — ${m.sender}`, `
+      <div style="font-size:12px; color:var(--color-neutral-300); line-height:1.5;">
+        <b>Tình trạng:</b> Nguyễn Thu Hà đang phụ trách đồng thời 11 tài khoản lớn.
+        <br><b>Đề xuất can thiệp:</b>
+        <ul style="margin:8px 0 0 16px;">
+          <li>Phân bổ 3 tài khoản mới sang trợ lý phụ tá</li>
+          <li>Thiết lập khung giờ không làm phiền 14h–16h để tập trung hoàn thiện báo cáo tài chính</li>
+        </ul>
+      </div>
+    `, null, false, 'Đóng');
+  } else if (m.primaryAction === 'view_candidate') {
+    openModal(`🎯 Hồ Sơ Ứng Viên Tiềm Năng — ${m.sender}`, `
+      <div style="font-size:12px; color:var(--color-neutral-300); line-height:1.5;">
+        <b>Tên:</b> ${escapeHtml(m.sender)}<br>
+        <b>Vị trí phù hợp:</b> Key Account Manager (Ban Kinh doanh)<br>
+        <b>Kinh nghiệm:</b> 5 năm chuỗi cung ứng & kinh doanh B2B<br>
+        <b>Địa bàn:</b> Bình Dương / TP.HCM<br>
+        <b>Tín hiệu:</b> Bày tỏ ý định tìm kiếm cơ hội mới trên group ngành gỗ.
+      </div>
+    `, () => {
+      closeModal();
+      showToast('✓ Đã lưu hồ sơ vào hàng đợi phỏng vấn HR!');
+    }, false, 'Lưu Hồ Sơ HR');
+  } else if (m.primaryAction === 'quote') {
+    quickCreateQuotationFromEvent(m.id, m.sender || 'Khách', m.evidence);
+  } else if (m.isLive && m.rawEvent) {
+    acceptSuggestedAction(m.rawEvent.id, m.action);
+  } else {
+    showToast(`✓ Đã kích hoạt: ${m.action}`);
+  }
+}
+
 function renderOpportunitiesHub() {
   const opps = state.df_opps || [];
-  const events = (state.df_events || []).filter(e => !e.archived && e.status !== 'ARCHIVED');
-  const currentSub = state.subtabs?.opportunities || 'kanban_opps';
+  const currentSub = state.subtabs?.opportunities || 'meaning_inbox';
+  const allMeaningItems = getAllMeaningItems();
+  const currentMeaningTab = state.meaningInboxTab || 'all';
+  const meaningCounts = getMeaningTabCounts(allMeaningItems);
 
   // 7 Cột Pipeline chuẩn hóa theo Spec LOCKED v2.2 (Mục F2.5)
   const stages = [
@@ -9732,87 +10635,130 @@ function renderOpportunitiesHub() {
     return val.toLocaleString('vi-VN') + ' ₫';
   };
 
+  // Schedule cards rendering for meaning inbox subtab
+  if (currentSub === 'meaning_inbox') {
+    setTimeout(renderMeaningCardsList, 25);
+  }
+
   return `
-    <div class="hub-header">
-      <div class="hub-header-top">
-        <div>
-          <h1 class="hub-title">Hộp Thư Ý Nghĩa & Bảng Cơ Hội (Inbox of Meaning & Opportunities)</h1>
-          <p class="hub-desc">Bóc tách ý định kinh doanh thực tế, đề xuất hành động và quy trình Kanban 7 cột chuẩn hóa từ hội thoại đa kênh Zalo & WhatsApp.</p>
+    <div class="hub-header" style="margin-bottom:16px;">
+      <div class="hub-header-top" style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; row-gap:14px; column-gap:24px;">
+        <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:720px;">
+          <h1 class="hub-title" style="font-size:20px; font-weight:600; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed); margin:0;">Hộp thư ý nghĩa</h1>
+          <p class="hub-desc" style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; line-height:1.5; text-wrap:pretty;">
+            Không phải tin nhắn thô. Mỗi dòng là một đơn vị ý nghĩa đã được cấu trúc: nguồn, đối tượng, điểm số, tóm tắt hai câu, hành động đề xuất và chứng cứ gốc.
+          </p>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn primary" onclick="openCreateOpportunityModal()"><i class="ph ph-plus"></i> Tạo Cơ Hội Mới</button>
-          <button class="btn" onclick="fetchAllData()"><i class="ph ph-arrows-clockwise"></i> Làm Mới</button>
-        </div>
-      </div>
-
-      <!-- Pipeline KPIs Ribbon -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:12px;margin-top:14px">
-        <div class="card card-pad" style="background:rgba(99, 102, 241, 0.08);border-color:rgba(99, 102, 241, 0.3)">
-          <div style="font-size:11px;color:var(--color-neutral-400);text-transform:uppercase;font-weight:600">Tổng Giá Trị Pipeline</div>
-          <div style="font-size:22px;font-weight:700;color:#818cf8;margin:2px 0">${formatMoney(totalPipelineValue)}</div>
-          <div style="font-size:11px;color:var(--color-neutral-300)">${filteredOpps.length} cơ hội đang vận hành</div>
-        </div>
-        <div class="card card-pad" style="background:rgba(16, 185, 129, 0.08);border-color:rgba(16, 185, 129, 0.3)">
-          <div style="font-size:11px;color:var(--color-neutral-400);text-transform:uppercase;font-weight:600">Doanh Số Đã Chốt (Won)</div>
-          <div style="font-size:22px;font-weight:700;color:#34d399;margin:2px 0">${formatMoney(wonValue)}</div>
-          <div style="font-size:11px;color:var(--color-neutral-300)">${wonOpps.length} hợp đồng thành công</div>
-        </div>
-        <div class="card card-pad" style="background:rgba(245, 158, 11, 0.08);border-color:rgba(245, 158, 11, 0.3)">
-          <div style="font-size:11px;color:var(--color-neutral-400);text-transform:uppercase;font-weight:600">Giá Trị Deal Trung Bình</div>
-          <div style="font-size:22px;font-weight:700;color:#fbbf24;margin:2px 0">${formatMoney(avgDealSize)}</div>
-          <div style="font-size:11px;color:var(--color-neutral-300)">Quy mô đơn hàng trung bình</div>
-        </div>
-        <div class="card card-pad" style="background:rgba(56, 189, 248, 0.08);border-color:rgba(56, 189, 248, 0.3)">
-          <div style="font-size:11px;color:var(--color-neutral-400);text-transform:uppercase;font-weight:600">Hộp Thư Ý Nghĩa Cần Xử Lý</div>
-          <div style="font-size:22px;font-weight:700;color:#38bdf8;margin:2px 0">${events.length} thẻ</div>
-          <div style="font-size:11px;color:var(--color-neutral-300)">Tín hiệu mới từ Zalo/WhatsApp</div>
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <div style="display:flex; align-items:center; gap:7px; height:30px; padding:0 11px; border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-md,8px); background:var(--color-bg,#161826); width:240px;">
+            <i class="ph ph-magnifying-glass" style="font-size:14px; color:var(--color-neutral-500,#9397ab);"></i>
+            <input
+              type="text"
+              id="meaning-search-input"
+              value="${escapeHtml(state.meaningSearchQuery || '')}"
+              placeholder="Lọc theo ý định, người, nhóm…"
+              style="background:transparent; border:none; outline:none; font-size:11.5px; color:var(--color-text,#e9e9ed); width:100%; font-family:inherit;"
+              oninput="handleMeaningSearch(this.value)"
+            >
+          </div>
+          <button class="btn btn-secondary" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;" onclick="openCreateOpportunityModal()">
+            <i class="ph ph-plus" style="font-size:14px;"></i>Tạo Cơ Hội
+          </button>
+          <button class="btn btn-secondary" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;" onclick="fetchAllData()">
+            <i class="ph ph-arrows-clockwise" style="font-size:14px;"></i>Làm Mới
+          </button>
         </div>
       </div>
 
-      <!-- Subnav Pills & Filters -->
-      <div class="hub-subnav" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <div style="display:flex;gap:8px">
+      <!-- Pipeline & Meaning KPIs Ribbon -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-top:14px;">
+        <div class="card card-pad" style="background:rgba(99, 102, 241, 0.08); border-color:rgba(99, 102, 241, 0.3);">
+          <div style="font-size:11px; color:var(--color-neutral-400); text-transform:uppercase; font-weight:600;">Tổng Giá Trị Pipeline</div>
+          <div style="font-size:22px; font-weight:700; color:#818cf8; margin:2px 0;">${formatMoney(totalPipelineValue)}</div>
+          <div style="font-size:11px; color:var(--color-neutral-300);">${filteredOpps.length} deal đang vận hành</div>
+        </div>
+        <div class="card card-pad" style="background:rgba(16, 185, 129, 0.08); border-color:rgba(16, 185, 129, 0.3);">
+          <div style="font-size:11px; color:var(--color-neutral-400); text-transform:uppercase; font-weight:600;">Doanh Số Đã Chốt (Won)</div>
+          <div style="font-size:22px; font-weight:700; color:#34d399; margin:2px 0;">${formatMoney(wonValue)}</div>
+          <div style="font-size:11px; color:var(--color-neutral-300);">${wonOpps.length} hợp đồng thành công</div>
+        </div>
+        <div class="card card-pad" style="background:rgba(56, 189, 248, 0.08); border-color:rgba(56, 189, 248, 0.3);">
+          <div style="font-size:11px; color:var(--color-neutral-400); text-transform:uppercase; font-weight:600;">Hộp Thư Ý Nghĩa Cần Xử Lý</div>
+          <div style="font-size:22px; font-weight:700; color:#38bdf8; margin:2px 0;">${allMeaningItems.length} thẻ</div>
+          <div style="font-size:11px; color:var(--color-neutral-300);">Đơn vị ý nghĩa thời gian thực</div>
+        </div>
+        <div class="card card-pad" style="background:rgba(245, 158, 11, 0.08); border-color:rgba(245, 158, 11, 0.3);">
+          <div style="font-size:11px; color:var(--color-neutral-400); text-transform:uppercase; font-weight:600;">Giá Trị Deal Trung Bình</div>
+          <div style="font-size:22px; font-weight:700; color:#fbbf24; margin:2px 0;">${formatMoney(avgDealSize)}</div>
+          <div style="font-size:11px; color:var(--color-neutral-300);">Quy mô đơn hàng bình quân</div>
+        </div>
+      </div>
+
+      <!-- Subnav Mode Switcher (Meaning Inbox vs Kanban Board) -->
+      <div class="hub-subnav" style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; gap:8px;">
+          <button class="hub-subnav-btn ${currentSub === 'meaning_inbox' ? 'active' : ''}" onclick="switchSubtab('opportunities', 'meaning_inbox')">
+            <i class="ph ph-tray"></i> Hộp Thư Ý Nghĩa (${allMeaningItems.length})
+          </button>
           <button class="hub-subnav-btn ${currentSub === 'kanban_opps' ? 'active' : ''}" onclick="switchSubtab('opportunities', 'kanban_opps')">
             <i class="ph ph-kanban"></i> Bảng Cơ Hội 7 Cột (${filteredOpps.length})
-          </button>
-          <button class="hub-subnav-btn ${currentSub === 'meaning_inbox' ? 'active' : ''}" onclick="switchSubtab('opportunities', 'meaning_inbox')">
-            <i class="ph ph-cards"></i> Hộp Thư Ý Nghĩa (Meaning Cards) (${events.length})
           </button>
         </div>
 
         ${currentSub === 'kanban_opps' ? `
-          <div style="display:flex;gap:8px;align-items:center">
-            <span style="font-size:11.5px;color:var(--color-neutral-400)">Kênh:</span>
-            <select style="background:var(--color-surface);color:var(--color-text);font-size:11.5px;border:1px solid var(--color-divider);padding:4px 8px;border-radius:4px" onchange="currentOppChannelFilter=this.value;renderContent()">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span style="font-size:11.5px; color:var(--color-neutral-400);">Kênh:</span>
+            <select style="background:var(--color-surface); color:var(--color-text); font-size:11.5px; border:1px solid var(--color-divider); padding:4px 8px; border-radius:4px;" onchange="currentOppChannelFilter=this.value; renderContent()">
               <option value="ALL" ${currentOppChannelFilter === 'ALL' ? 'selected' : ''}>Tất Cả Kênh</option>
               <option value="zalo" ${currentOppChannelFilter === 'zalo' ? 'selected' : ''}>Zalo</option>
               <option value="whatsapp" ${currentOppChannelFilter === 'whatsapp' ? 'selected' : ''}>WhatsApp</option>
               <option value="manual" ${currentOppChannelFilter === 'manual' ? 'selected' : ''}>Thủ công</option>
             </select>
-            <span style="font-size:11.5px;color:var(--color-neutral-400)">Độ Nóng:</span>
-            <select style="background:var(--color-surface);color:var(--color-text);font-size:11.5px;border:1px solid var(--color-divider);padding:4px 8px;border-radius:4px" onchange="currentOppHeatFilter=this.value;renderContent()">
+            <span style="font-size:11.5px; color:var(--color-neutral-400);">Độ Nóng:</span>
+            <select style="background:var(--color-surface); color:var(--color-text); font-size:11.5px; border:1px solid var(--color-divider); padding:4px 8px; border-radius:4px;" onchange="currentOppHeatFilter=this.value; renderContent()">
               <option value="ALL" ${currentOppHeatFilter === 'ALL' ? 'selected' : ''}>Tất Cả</option>
               <option value="HOT" ${currentOppHeatFilter === 'HOT' ? 'selected' : ''}>🔥 Nóng (>80°)</option>
               <option value="WARM" ${currentOppHeatFilter === 'WARM' ? 'selected' : ''}>☀️ Ấm (50-80°)</option>
               <option value="COLD" ${currentOppHeatFilter === 'COLD' ? 'selected' : ''}>❄️ Lạnh (<50°)</option>
             </select>
           </div>
-        ` : `
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <span style="font-size:11.5px;color:var(--color-neutral-400)">Lọc Ý Định:</span>
-            <button class="btn sm ${currentMeaningFilter === 'ALL' ? 'primary' : ''}" onclick="currentMeaningFilter='ALL';renderContent()">Tất Cả</button>
-            <button class="btn sm ${currentMeaningFilter === 'AskedPrice' ? 'primary' : ''}" onclick="currentMeaningFilter='AskedPrice';renderContent()">💰 Hỏi Giá</button>
-            <button class="btn sm ${currentMeaningFilter === 'Complained' ? 'primary' : ''}" onclick="currentMeaningFilter='Complained';renderContent()">⚠️ Khiếu Nại</button>
-            <button class="btn sm ${currentMeaningFilter === 'ScheduledMeeting' ? 'primary' : ''}" onclick="currentMeaningFilter='ScheduledMeeting';renderContent()">📅 Lịch Hẹn</button>
-            <button class="btn sm ${currentMeaningFilter === 'RequestedPartnership' ? 'primary' : ''}" onclick="currentMeaningFilter='RequestedPartnership';renderContent()">🤝 Hợp Tác</button>
-          </div>
-        `}
+        ` : ''}
       </div>
     </div>
 
-    ${currentSub === 'kanban_opps' ? `
-      <!-- KANBAN BOARD 7 CỘT CHUẨN HOÁ KÈM DRAG & DROP -->
-      <div style="display:flex;gap:14px;overflow-x:auto;padding-bottom:16px;min-height:580px;align-items:flex-start">
+    ${currentSub === 'meaning_inbox' ? `
+      <!-- ░░ INBOX OF MEANING CARDS VIEW ░░ -->
+      <div style="display:flex; flex-direction:column; gap:14px; min-width:0;">
+        <!-- Tabs Filter Row -->
+        <div style="display:flex; align-items:center; gap:2px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16)); overflow-x:auto;">
+          ${[
+            { key: 'all', label: 'Tất cả' },
+            { key: 'opp', label: 'Cơ hội' },
+            { key: 'alert', label: 'Cảnh báo' },
+            { key: 'approve', label: 'Chờ duyệt' },
+            { key: 'doc', label: 'Cần soạn' },
+            { key: 'cand', label: 'Ứng viên' }
+          ].map(t => {
+            const isActive = t.key === currentMeaningTab;
+            return `
+              <button
+                id="inbox-tab-${t.key}"
+                onclick="switchMeaningTab('${t.key}')"
+                style="height:34px; padding:0 14px; border:none; background:transparent; font:inherit; font-size:12.5px; font-weight:${isActive ? '600' : '400'}; color:${isActive ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)'}; cursor:pointer; border-bottom:2px solid ${isActive ? 'var(--color-accent,#9184d9)' : 'transparent'}; margin-bottom:-1px; white-space:nowrap; display:inline-flex; align-items:center; transition:color 0.15s ease;"
+              >
+                ${t.label}
+                <span class="tab-count" style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-left:7px; font-family:var(--mono,monospace);">${meaningCounts[t.key] || 0}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- Meaning Cards List Container -->
+        <div id="meaning-cards-container" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </div>
+    ` : `
+      <!-- ░░ KANBAN BOARD 7 CỘT CHUẨN HOÁ KÈM DRAG & DROP ░░ -->
+      <div style="display:flex; gap:14px; overflow-x:auto; padding-bottom:16px; min-height:580px; align-items:flex-start;">
         ${stages.map(st => {
           const colOpps = filteredOpps.filter(o => st.alias.includes(o.stage) || o.stage === st.key);
           const totalVal = colOpps.reduce((sum, o) => sum + (o.estimated_value || 0), 0);
@@ -9823,24 +10769,24 @@ function renderOpportunitiesHub() {
               ondragover="handleOppDragOver(event)"
               ondragleave="handleOppDragLeave(event)"
               ondrop="handleOppDrop(event, '${st.key}')"
-              style="min-width:300px;max-width:330px;flex:1;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-lg);display:flex;flex-direction:column;transition:border-color 0.2s ease, background 0.2s ease"
+              style="min-width:300px; max-width:330px; flex:1; background:var(--color-surface); border:1px solid var(--color-divider); border-radius:var(--radius-lg); display:flex; flex-direction:column; transition:border-color 0.2s ease, background 0.2s ease;"
             >
-              <div style="padding:12px 14px;border-bottom:1px solid var(--color-divider);display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.02);border-top:3px solid ${st.color};border-top-left-radius:var(--radius-lg);border-top-right-radius:var(--radius-lg)">
+              <div style="padding:12px 14px; border-bottom:1px solid var(--color-divider); display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.02); border-top:3px solid ${st.color}; border-top-left-radius:var(--radius-lg); border-top-right-radius:var(--radius-lg);">
                 <div>
-                  <div style="font-size:13px;font-weight:700;color:${st.color};display:flex;align-items:center;gap:6px">
+                  <div style="font-size:13px; font-weight:700; color:${st.color}; display:flex; align-items:center; gap:6px;">
                     ${st.label}
                   </div>
-                  <div style="font-size:10.5px;color:var(--color-neutral-400);margin-top:2px">
+                  <div style="font-size:10.5px; color:var(--color-neutral-400); margin-top:2px;">
                     ${colOpps.length} deal · ${formatMoney(totalVal)}
                   </div>
                 </div>
-                <span class="badge" style="background:rgba(255,255,255,0.08);color:var(--color-text);font-weight:700">${colOpps.length}</span>
+                <span class="badge" style="background:rgba(255,255,255,0.08); color:var(--color-text); font-weight:700;">${colOpps.length}</span>
               </div>
 
-              <div style="padding:10px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;min-height:480px">
+              <div style="padding:10px; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; min-height:480px;">
                 ${colOpps.length === 0 ? `
-                  <div style="text-align:center;padding:36px 12px;color:var(--color-neutral-500);font-size:12px;border:1px dashed rgba(255,255,255,0.06);border-radius:var(--radius-md)">
-                    <i class="ph ph-tray" style="font-size:24px;display:block;margin-bottom:6px;opacity:0.4"></i>
+                  <div style="text-align:center; padding:36px 12px; color:var(--color-neutral-500); font-size:12px; border:1px dashed rgba(255,255,255,0.06); border-radius:var(--radius-md);">
+                    <i class="ph ph-tray" style="font-size:24px; display:block; margin-bottom:6px; opacity:0.4;"></i>
                     Thả cơ hội vào đây
                   </div>
                 ` : colOpps.map(o => `
@@ -9849,54 +10795,54 @@ function renderOpportunitiesHub() {
                     id="opp-card-${o.id}"
                     draggable="true"
                     ondragstart="handleOppDragStart(event, '${o.id}')"
-                    style="background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:grab;transition:transform 0.15s ease, border-color 0.15s ease"
+                    style="background:var(--color-bg); border:1px solid var(--color-divider); border-radius:var(--radius-md); padding:12px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 6px rgba(0,0,0,0.2); cursor:grab; transition:transform 0.15s ease, border-color 0.15s ease;"
                     onmouseover="this.style.borderColor='rgba(99,102,241,0.5)'"
                     onmouseout="this.style.borderColor='var(--color-divider)'"
                   >
-                    <div style="display:flex;justify-content:space-between;align-items:center">
-                      <div style="display:flex;align-items:center;gap:6px">
-                        <span class="badge" style="font-size:9.5px;font-family:var(--mono);background:rgba(255,255,255,0.06);color:#c7d2fe">${o.id}</span>
-                        <span class="badge" style="font-size:9px;text-transform:uppercase;background:rgba(99,102,241,0.15);color:#818cf8">${o.channel || 'zalo'}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="badge" style="font-size:9.5px; font-family:var(--mono); background:rgba(255,255,255,0.06); color:#c7d2fe;">${o.id}</span>
+                        <span class="badge" style="font-size:9px; text-transform:uppercase; background:rgba(99,102,241,0.15); color:#818cf8;">${o.channel || 'zalo'}</span>
                       </div>
-                      <span class="badge live" style="font-size:9.5px;background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)">
+                      <span class="badge live" style="font-size:9.5px; background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.3);">
                         <i class="ph ph-fire"></i> ${o.heat_score || 60}°
                       </span>
                     </div>
 
-                    <div style="font-weight:600;font-size:13px;color:var(--color-text);line-height:1.35;cursor:pointer" onclick="openOpportunityDetailModal('${o.id}')">
+                    <div style="font-weight:600; font-size:13px; color:var(--color-text); line-height:1.35; cursor:pointer;" onclick="openOpportunityDetailModal('${o.id}')">
                       ${escapeHtml(o.title)}
                     </div>
 
-                    <div style="font-size:11.5px;color:var(--color-neutral-300);display:flex;align-items:center;gap:6px">
+                    <div style="font-size:11.5px; color:var(--color-neutral-300); display:flex; align-items:center; gap:6px;">
                       <i class="ph ph-user"></i> <b>${escapeHtml(o.contact_name || 'Khách')}</b>
-                      <span style="color:var(--color-neutral-500)">·</span>
-                      <span style="font-size:11px;color:var(--color-neutral-400)">${escapeHtml(o.group_name || '1-1')}</span>
+                      <span style="color:var(--color-neutral-500);">·</span>
+                      <span style="font-size:11px; color:var(--color-neutral-400);">${escapeHtml(o.group_name || '1-1')}</span>
                     </div>
 
                     ${o.estimated_value > 0 ? `
-                      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(16, 185, 129, 0.08);padding:6px 8px;border-radius:4px;border:1px solid rgba(16, 185, 129, 0.2)">
-                        <span style="font-size:11px;color:var(--color-neutral-300)">Giá trị deal:</span>
-                        <span style="font-size:12.5px;font-weight:700;color:#10b981;font-family:var(--mono)">${formatMoney(o.estimated_value)}</span>
+                      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(16, 185, 129, 0.08); padding:6px 8px; border-radius:4px; border:1px solid rgba(16, 185, 129, 0.2);">
+                        <span style="font-size:11px; color:var(--color-neutral-300);">Giá trị deal:</span>
+                        <span style="font-size:12.5px; font-weight:700; color:#10b981; font-family:var(--mono);">${formatMoney(o.estimated_value)}</span>
                       </div>
                     ` : ''}
 
-                    <div style="font-size:11px;color:var(--color-neutral-400);line-height:1.4;background:rgba(255,255,255,0.02);padding:6px 8px;border-radius:4px;max-height:45px;overflow:hidden;text-overflow:ellipsis">
+                    <div style="font-size:11px; color:var(--color-neutral-400); line-height:1.4; background:rgba(255,255,255,0.02); padding:6px 8px; border-radius:4px; max-height:45px; overflow:hidden; text-overflow:ellipsis;">
                       ${escapeHtml(o.need_summary || 'Chưa có tóm tắt nhu cầu')}
                     </div>
 
-                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--color-neutral-400);margin-top:2px">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:10.5px; color:var(--color-neutral-400); margin-top:2px;">
                       <span><i class="ph ph-user-circle"></i> ${escapeHtml(o.owner || 'Sếp Ryan')}</span>
-                      <span>Xác suất: <b style="color:#a5b4fc">${o.win_probability || 50}%</b></span>
+                      <span>Xác suất: <b style="color:#a5b4fc;">${o.win_probability || 50}%</b></span>
                     </div>
 
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);gap:6px">
-                      <button class="btn sm" style="padding:3px 7px;font-size:10.5px" onclick="openOpportunityDetailModal('${o.id}')">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.06); gap:6px;">
+                      <button class="btn sm" style="padding:3px 7px; font-size:10.5px;" onclick="openOpportunityDetailModal('${o.id}')">
                         <i class="ph ph-magnifying-glass"></i> Chi Tiết
                       </button>
-                      <button class="btn sm" style="padding:3px 7px;font-size:10.5px;background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)" onclick="quickMatchOpportunity('${o.id}')" title="Tự động ráp khớp với catalog dịch vụ công ty">
+                      <button class="btn sm" style="padding:3px 7px; font-size:10.5px; background:rgba(168,85,247,0.15); color:#c084fc; border:1px solid rgba(168,85,247,0.3);" onclick="quickMatchOpportunity('${o.id}')" title="Tự động ráp khớp với catalog dịch vụ công ty">
                         <i class="ph ph-arrows-merge"></i> Ráp Khớp
                       </button>
-                      <select style="background:var(--color-surface);color:var(--color-text);font-size:10.5px;border:1px solid var(--color-divider);padding:2px 4px;border-radius:4px;max-width:90px" onchange="moveOpportunityStage('${o.id}', this.value)">
+                      <select style="background:var(--color-surface); color:var(--color-text); font-size:10.5px; border:1px solid var(--color-divider); padding:2px 4px; border-radius:4px; max-width:90px;" onchange="moveOpportunityStage('${o.id}', this.value)">
                         ${stages.map(s => `<option value="${s.key}" ${(s.alias.includes(o.stage) || s.key === o.stage) ? 'selected' : ''}>➔ ${s.label.split(' ')[1]}</option>`).join('')}
                       </select>
                     </div>
@@ -9906,107 +10852,6 @@ function renderOpportunitiesHub() {
             </div>
           `;
         }).join('')}
-      </div>
-    ` : `
-      <!-- MEANING INBOX (ACTIONABLE MEANING CARDS) -->
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));gap:14px">
-          ${(() => {
-            let filteredEvents = events;
-            if (currentMeaningFilter !== 'ALL') {
-              filteredEvents = filteredEvents.filter(e => e.event_type === currentMeaningFilter || e.intent === currentMeaningFilter);
-            }
-            if (filteredEvents.length === 0) {
-              return `
-                <div class="card card-pad" style="grid-column:1/-1;text-align:center;padding:48px 16px;color:var(--color-neutral-400)">
-                  <i class="ph ph-check-circle" style="font-size:36px;color:#10b981;margin-bottom:10px;display:block"></i>
-                  <div style="font-size:15px;font-weight:600;color:var(--color-text);margin-bottom:4px">Đã Đạt Trạng Thái Inbox Zero!</div>
-                  <div>Không còn thẻ ý nghĩa nào đang chờ xử lý trong danh mục này.</div>
-                </div>
-              `;
-            }
-
-            return filteredEvents.map(e => {
-              const intentColors = {
-                AskedPrice: '#f59e0b',
-                Complained: '#ef4444',
-                ScheduledMeeting: '#38bdf8',
-                RequestedPartnership: '#a855f7',
-                SentQuotation: '#10b981',
-                MentionsCompetitor: '#ec4899',
-                GeneralConversation: '#94a3b8'
-              };
-              const col = intentColors[e.event_type] || '#38bdf8';
-              let parsedEnt = {};
-              try { parsedEnt = typeof e.extracted_entities === 'string' ? JSON.parse(e.extracted_entities) : (e.extracted_entities || {}); } catch(err){}
-
-              return `
-                <div class="card" style="border-left:4px solid ${col};display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 3px 8px rgba(0,0,0,0.2)">
-                  <div style="padding:14px">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-                      <div style="display:flex;align-items:center;gap:8px">
-                        <span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44;font-weight:700;font-size:10.5px">
-                          ${escapeHtml(e.intent || e.event_type)}
-                        </span>
-                        <span class="badge" style="font-size:10px;text-transform:uppercase;background:rgba(255,255,255,0.06)">${e.channel || 'zalo'}</span>
-                      </div>
-                      <div style="display:flex;align-items:center;gap:6px">
-                        <span class="badge ${e.priority === 'P0' ? 'danger' : e.priority === 'P1' ? 'p1' : 'neutral'}" style="font-size:10px">
-                          ${e.priority || 'P2'} · <i class="ph ph-fire"></i> ${e.heat_score || 50}°
-                        </span>
-                        <button class="icon-btn" style="font-size:11px;color:var(--color-neutral-400)" onclick="archiveMeaningEvent('${e.id}')" title="Đánh dấu đã xử lý (Lưu trữ)">✕</button>
-                      </div>
-                    </div>
-
-                    <div style="font-weight:600;font-size:13.5px;color:var(--color-text);margin-bottom:6px">
-                      👤 ${escapeHtml(e.sender_name || 'Đối tác')}
-                      <span style="font-weight:400;color:var(--color-neutral-400);font-size:11px">(${escapeHtml(e.group_name || '1-1')})</span>
-                    </div>
-
-                    <div style="background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:var(--radius-sm);font-size:12px;color:var(--color-neutral-300);margin-bottom:10px;font-style:italic;border-left:2px solid rgba(255,255,255,0.1)">
-                      "${escapeHtml(e.content)}"
-                    </div>
-
-                    <div style="font-size:12.5px;color:var(--color-text);margin-bottom:6px">
-                      <b style="color:#a5b4fc">💡 Ý nghĩa:</b> ${escapeHtml(e.meaning_summary || 'Chưa có phân tích')}
-                    </div>
-
-                    <div style="font-size:12.5px;color:#38bdf8;margin-bottom:8px">
-                      <b>⚡ Hành động đề xuất:</b> ${escapeHtml(e.action_suggested || 'Theo dõi tiếp')}
-                    </div>
-
-                    ${(parsedEnt.prices?.length || parsedEnt.products?.length || parsedEnt.dates?.length) ? `
-                      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;padding:6px;background:rgba(0,0,0,0.2);border-radius:4px">
-                        ${(parsedEnt.prices || []).map(p => `<span class="badge good" style="font-size:10px">💰 ${escapeHtml(p)}</span>`).join('')}
-                        ${(parsedEnt.products || []).map(p => `<span class="badge neutral" style="font-size:10px">📦 ${escapeHtml(p)}</span>`).join('')}
-                        ${(parsedEnt.dates || []).map(d => `<span class="badge p1" style="font-size:10px">📅 ${escapeHtml(d)}</span>`).join('')}
-                      </div>
-                    ` : ''}
-                  </div>
-
-                  <!-- 1-Click Action Hub -->
-                  <div style="padding:10px 14px;border-top:1px solid var(--color-divider);background:rgba(255,255,255,0.015);display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
-                    <button class="btn sm primary" onclick="acceptSuggestedAction('${e.id}', '${escapeHtml(e.action_suggested || '')}')">
-                      <i class="ph ph-check"></i> Duyệt Trả Lời
-                    </button>
-                    <button class="btn sm" style="background:rgba(16, 185, 129, 0.15);color:#34d399;border:1px solid rgba(16, 185, 129, 0.3)" onclick="quickCreateQuotationFromEvent('${e.id}', '${escapeHtml(e.sender_name || 'Khách')}', '${escapeHtml(e.content)}')">
-                      <i class="ph ph-file-text"></i> Soạn Báo Giá
-                    </button>
-                    <button class="btn sm" onclick="convertEventToTask('${e.id}', '${escapeHtml(e.meaning_summary || e.content)}')">
-                      <i class="ph ph-check-square"></i> Tạo Việc
-                    </button>
-                    <button class="btn sm" onclick="convertEventToOpportunity('${e.id}', '${escapeHtml(e.sender_name || 'Khách')}', '${escapeHtml(e.content)}')">
-                      <i class="ph ph-target"></i> Sang Deal
-                    </button>
-                    <button class="btn sm" style="color:var(--color-neutral-400)" onclick="archiveMeaningEvent('${e.id}')" title="Ẩn thẻ này">
-                      <i class="ph ph-archive"></i> Xong
-                    </button>
-                  </div>
-                </div>
-              `;
-            }).join('');
-          })()}
-        </div>
       </div>
     `}
   `;
