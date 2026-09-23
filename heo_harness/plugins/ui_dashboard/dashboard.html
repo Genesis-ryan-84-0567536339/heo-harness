@@ -2504,7 +2504,10 @@ function renderWorkScheduleHub() {
 // OPPORTUNITY BOARD — Spec F2 mục 5
 // 7 giai đoạn pipeline sống từ hội thoại
 // TODO: Đấu nối API khi backend triển khai (/api/data_factory/opportunities)
-// ══════════════════════════════════════════════════════════
+function openOpportunityFilterModal() {
+  showToast('Đang mở bộ lọc bảng cơ hội...');
+}
+
 function renderOpportunityBoardView() {
   const OPP_STAGES = [
     { key: 'raw',         label: 'Tín hiệu thô',           tone: 'var(--color-neutral-400,#b2b6ca)', estValue: '≈ 1,9 tỷ ₫' },
@@ -2544,32 +2547,55 @@ function renderOpportunityBoardView() {
   // Gom theo stage
   const byStage = {};
   OPP_STAGES.forEach(s => { byStage[s.key] = []; });
+
+  if (opps && opps.length > 0) {
+    opps.forEach(o => {
+      let stageKey = 'raw';
+      const s = (o.stage || '').toUpperCase();
+      if (s === 'SIGNAL' || s === 'RAW' || s === 'NEW') stageKey = 'raw';
+      else if (s === 'VERIFIED' || s === 'QUALIFIED') stageKey = 'verified';
+      else if (s === 'MATCHED') stageKey = 'matched';
+      else if (s === 'ENGAGING' || s === 'APPROACHING') stageKey = 'engaging';
+      else if (s === 'NEGOTIATING') stageKey = 'negotiating';
+      else if (s === 'TRANSFERRED' || s === 'INTERNAL') stageKey = 'transferred';
+      else if (s === 'CLOSED' || s === 'WON' || s === 'LOST' || s === 'SLEEP') stageKey = 'closed';
+
+      const heatNum = Math.round(o.heat_score || 85);
+      const estVal = o.estimated_value ? (o.estimated_value >= 1e9 ? (o.estimated_value/1e9).toFixed(1) + ' tỷ ₫' : (o.estimated_value >= 1e6 ? (o.estimated_value/1e6).toFixed(0) + ' triệu ₫' : (o.estimated_value > 0 ? o.estimated_value.toLocaleString('vi-VN') + ' ₫' : 'chưa rõ'))) : 'chưa rõ';
+      const conf = o.confidence_score >= 80 ? 'cao' : (o.confidence_score >= 60 ? 'trung bình' : 'thấp');
+
+      byStage[stageKey].push({
+        id: o.id,
+        stage: stageKey,
+        heat: String(heatNum),
+        need: o.title || o.need_summary || '',
+        who: `${o.contact_name || 'Đối tác'} · ${o.channel === 'whatsapp' ? 'WhatsApp' : 'Zalo'}`,
+        value: estVal,
+        confidence: conf,
+        match: o.need_summary || 'Chờ xác thực danh tính',
+        matchOk: conf !== 'thấp',
+        risk: o.risk_notes || null
+      });
+    });
+  }
+
   mockOpps.forEach(o => {
-    const stageKey = o.stage || 'raw';
-    if (!byStage[stageKey]) byStage[stageKey] = [];
-    byStage[stageKey].push(o);
+    if (byStage[o.stage] && byStage[o.stage].length === 0) {
+      byStage[o.stage].push(o);
+    }
   });
 
   return `
-    <div style="display:flex;flex-direction:column;gap:16px;">
-      ${opps.length === 0 ? `
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px dashed var(--color-neutral-800,#3f424d);border-radius:var(--radius-md,8px);font-size:11px;color:var(--color-neutral-500,#9397ab);">
-          <i class="ph ph-info" style="font-size:14px;flex:none;"></i>
-          <span>Đang hiển thị <b>dữ liệu mẫu đối chiếu Spec F2</b> — chưa có cơ hội thực từ API. <!-- TODO: Đấu nối API khi backend triển khai --></span>
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+      <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; row-gap:14px; column-gap:24px;">
+        <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:700px;">
+          <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">Bảng cơ hội</div>
+          <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">Pipeline sống từ hội thoại, không phải form nhập tay. Mỗi thẻ trả lời: ai cần gì, nóng đến đâu, tin được đến đâu, nên ghép với ai, và mất gì nếu không làm gì.</div>
         </div>
-      ` : ''}
-
-      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;row-gap:14px;column-gap:24px;">
-        <div style="flex:1 1 320px;min-width:min(100%,320px);max-width:700px;">
-          <div style="font-size:20px;font-weight:500;letter-spacing:-0.01em;color:var(--color-text,#e9e9ed);">Bảng cơ hội</div>
-          <div style="font-size:12.5px;color:var(--color-neutral-400,#b2b6ca);margin-top:5px;text-wrap:pretty;">Pipeline sống từ hội thoại, không phải form nhập tay. Mỗi thẻ trả lời: ai cần gì, nóng đến đâu, tin được đến đâu, nên ghép với ai, và mất gì nếu không làm gì.</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:9px;flex:none;">
-          <span style="font-size:11px;color:var(--color-neutral-500,#9397ab);">Pipeline ước lượng</span>
-          <span style="font-size:15px;font-weight:600;color:var(--color-text,#e9e9ed);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">4,86 tỷ ₫</span>
-          <button class="btn btn-secondary" style="gap:6px;height:30px;padding:0 11px;font-size:11.5px;margin-left:6px;" onclick="switchHub('opportunities')">
-            <i class="ph ph-tray" style="font-size:14px;"></i>Hộp Thư Ý Nghĩa →
-          </button>
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">Pipeline ước lượng</span>
+          <span style="font-size:15px; font-weight:600; color:var(--color-text,#e9e9ed); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">4,86 tỷ ₫</span>
+          <button class="btn btn-secondary" onclick="openOpportunityFilterModal()" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px; margin-left:6px;"><i class="ph ph-funnel" style="font-size:14px;"></i>Bộ lọc</button>
         </div>
       </div>
 
