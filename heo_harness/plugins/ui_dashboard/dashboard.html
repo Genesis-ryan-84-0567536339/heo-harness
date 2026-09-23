@@ -6437,38 +6437,15 @@ function renderIntelligenceHub() {
 // TODO: Đấu nối API khi backend triển khai (/api/care_quality/records)
 // ══════════════════════════════════════════════════════════
 function renderCareQualityView() {
+  const cq = peopleReviewState.summary?.care_quality || {};
+  const hasCqData = Boolean(cq.total_broken_promises !== undefined || cq.avg_response_min !== undefined);
+
   const careKpis = [
-    { label: 'Trung vị phản hồi', value: '24', unit: 'phút', sub: 'Mục tiêu dưới 15 phút', tone: 'oklch(0.84 0.13 84)' },
-    { label: 'Follow sau báo giá', value: '68', unit: '%', sub: '32% báo giá không ai follow lại', tone: 'oklch(0.76 0.15 24)' },
-    { label: 'Hứa rồi quên', value: '11', unit: 'lần / 30 ngày', sub: 'Tập trung ở 2 người', tone: 'oklch(0.76 0.15 24)' },
-    { label: 'Khách bị bỏ rơi', value: '6', unit: 'khách', sub: 'Không ai chạm trên 30 ngày', tone: 'oklch(0.76 0.15 24)' },
-    { label: 'Độ phủ follow-up', value: '81', unit: '%', sub: '↑ 7 điểm so với tháng trước', tone: 'oklch(0.76 0.12 162)' }
-  ];
-
-  const careHours = ['08', '10', '12', '14', '16', '18', '20', '22'];
-
-  const careGrid = [
-    { name: 'Nguyễn Thu Hà', v: [14, 22, 38, 84, 96, 62, 0, 0] },
-    { name: 'Trần Minh Khoa', v: [8, 11, 24, 18, 22, 26, 34, 41] },
-    { name: 'Vũ Hải Đăng',   v: [6, 9, 14, 12, 11, 16, 0, 0] },
-    { name: 'Đỗ Thanh Mai',  v: [11, 13, 21, 19, 24, 0, 0, 0] },
-    { name: 'Phạm Anh Tú',   v: [18, 26, 44, 51, 68, 72, 0, 0] }
-  ];
-
-  const carePatterns = [
-    { label: 'Quên khách sau khi gửi báo giá', bar: '100%', n: '19', tone: 'oklch(0.76 0.15 24)' },
-    { label: 'Hứa mốc thời gian rồi không cập nhật', bar: '58%', n: '11', tone: 'oklch(0.76 0.15 24)' },
-    { label: 'Follow quá muộn (sau 7 ngày)', bar: '47%', n: '9', tone: 'oklch(0.84 0.13 84)' },
-    { label: 'Follow quá sớm (dưới 2 giờ, gây phiền)', bar: '32%', n: '6', tone: 'oklch(0.84 0.13 84)' },
-    { label: 'Giọng điệu gây khó chịu', bar: '21%', n: '4', tone: 'oklch(0.84 0.13 84)' },
-    { label: 'Chăm sóc tốt rồi biến mất', bar: '16%', n: '3', tone: 'oklch(0.84 0.13 84)' }
-  ];
-
-  const careScripts = [
-    { text: 'Báo giá kèm mốc giao cụ thể, follow lại đúng ngày đã hứa — thắng 74% các ca áp dụng.', meta: '32 ca · kịch bản thắng', icon: 'ph ph-trophy', tone: 'oklch(0.76 0.12 162)' },
-    { text: 'Gửi mẫu trước khi khách hỏi giá lần hai — thắng 61%.', meta: '18 ca · kịch bản thắng', icon: 'ph ph-trophy', tone: 'oklch(0.76 0.12 162)' },
-    { text: 'Trả lời sau hơn 60 phút ba lần liên tiếp — mất khách 80%.', meta: '15 ca · kịch bản mất', icon: 'ph ph-warning-octagon', tone: 'oklch(0.76 0.15 24)' },
-    { text: 'Để khách tự hỏi tiến độ từ lần thứ hai trở đi — mất khách 68%.', meta: '22 ca · kịch bản mất', icon: 'ph ph-warning-octagon', tone: 'oklch(0.76 0.15 24)' }
+    { label: 'Trung vị phản hồi', value: cq.avg_response_min ? String(cq.avg_response_min) : '—', unit: cq.avg_response_min ? 'phút' : '', sub: cq.avg_response_min ? 'Mục tiêu dưới 15 phút' : 'Chờ tích lũy từ hội thoại', tone: 'var(--color-accent,#9184d9)' },
+    { label: 'Follow sau báo giá', value: cq.follow_up_rate ? String(cq.follow_up_rate) : '—', unit: cq.follow_up_rate ? '%' : '', sub: cq.follow_up_rate ? 'Tỷ lệ theo sát sau báo giá' : 'Chờ phân tích hội thoại', tone: 'oklch(0.76 0.12 162)' },
+    { label: 'Hứa rồi quên', value: cq.total_broken_promises !== undefined ? String(cq.total_broken_promises) : '—', unit: cq.total_broken_promises !== undefined ? 'lần' : '', sub: cq.total_broken_promises !== undefined ? 'Số lần hứa trễ hạn' : 'Chờ quét radar lời hứa', tone: cq.total_broken_promises > 0 ? 'oklch(0.76 0.15 24)' : 'oklch(0.76 0.12 162)' },
+    { label: 'Khách bị bỏ rơi', value: cq.abandoned_clients !== undefined ? String(cq.abandoned_clients) : '—', unit: cq.abandoned_clients !== undefined ? 'khách' : '', sub: cq.abandoned_clients !== undefined ? 'Không chạm > 72 giờ' : 'Chờ dữ liệu liên hệ', tone: cq.abandoned_clients > 0 ? 'oklch(0.84 0.13 84)' : 'oklch(0.76 0.12 162)' },
+    { label: 'Điểm sức khỏe chăm sóc', value: cq.care_health_score !== undefined ? String(cq.care_health_score) : '—', unit: cq.care_health_score !== undefined ? 'đ' : '', sub: cq.care_health_score !== undefined ? 'Tổng hòa chỉ số chăm sóc' : 'Chờ tổng hợp KPI', tone: 'oklch(0.76 0.12 162)' }
   ];
 
   return `
@@ -6480,7 +6457,7 @@ function renderCareQualityView() {
             <span style="font-size:9.5px;font-weight:600;letter-spacing:0.13em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);">${ck.label}</span>
             <div style="display:flex;align-items:baseline;gap:5px;margin-top:6px;">
               <span style="font-size:24px;font-weight:600;letter-spacing:-0.02em;color:${ck.tone};line-height:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${ck.value}</span>
-              <span style="font-size:11px;color:var(--color-neutral-500,#9397ab);">${ck.unit}</span>
+              ${ck.unit ? `<span style="font-size:11px;color:var(--color-neutral-500,#9397ab);">${ck.unit}</span>` : ''}
             </div>
             <div style="font-size:11px;color:var(--color-neutral-400,#b2b6ca);margin-top:4px;">${ck.sub}</div>
           </div>
@@ -6496,42 +6473,12 @@ function renderCareQualityView() {
               <div style="font-size:13px;font-weight:600;color:var(--color-text,#e9e9ed);">Tốc độ phản hồi theo khung giờ</div>
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);margin-top:1px;">Trung vị phút · theo nhân viên</div>
             </div>
-            <div style="display:flex;align-items:center;gap:13px;">
-              <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--color-neutral-400,#b2b6ca);"><span style="width:8px;height:8px;border-radius:2px;background:oklch(0.76 0.12 162);"></span>&lt; 15 phút</span>
-              <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--color-neutral-400,#b2b6ca);"><span style="width:8px;height:8px;border-radius:2px;background:oklch(0.84 0.13 84);"></span>15–60</span>
-              <span style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--color-neutral-400,#b2b6ca);"><span style="width:8px;height:8px;border-radius:2px;background:oklch(0.76 0.15 24);"></span>&gt; 60</span>
-            </div>
           </div>
-          <div style="padding:13px 16px 16px;">
-            <div style="display:grid;grid-template-columns:120px repeat(8,minmax(0,1fr));gap:4px;align-items:center;">
-              <span></span>
-              ${careHours.map(h => `
-                <span style="font-size:9.5px;text-align:center;color:var(--color-neutral-500,#9397ab);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${h}h</span>
-              `).join('')}
-              ${careGrid.map(cg => `
-                <span style="font-size:11px;color:var(--color-neutral-300,#cfd3e5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(cg.name)}</span>
-                ${cg.v.map((v, idx) => {
-                  const isZero = v === 0;
-                  const bg = isZero
-                    ? 'var(--color-neutral-900,#292b31)'
-                    : v > 60
-                    ? 'oklch(0.66 0.17 24 / 0.22)'
-                    : v >= 15
-                    ? 'oklch(0.79 0.12 82 / 0.18)'
-                    : 'oklch(0.76 0.12 162 / 0.16)';
-                  const fg = isZero
-                    ? 'var(--color-neutral-500,#9397ab)'
-                    : v > 60
-                    ? 'oklch(0.76 0.15 24)'
-                    : v >= 15
-                    ? 'oklch(0.84 0.13 84)'
-                    : 'oklch(0.76 0.12 162)';
-                  const title = `${cg.name} · ${careHours[idx]}:00 — ${isZero ? 'không hoạt động' : v + ' phút'}`;
-                  return `
-                    <span style="display:grid;place-items:center;height:28px;border-radius:var(--radius-sm,4px);font-size:10.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:${bg};color:${fg};" title="${escapeHtml(title)}">${isZero ? '—' : v}</span>
-                  `;
-                }).join('')}
-              `).join('')}
+          <div style="padding:32px 16px;text-align:center;color:var(--color-neutral-400,#b2b6ca);">
+            <div style="font-size:24px;margin-bottom:8px;"><i class="ph ph-clock-countdown"></i></div>
+            <div style="font-size:13px;font-weight:500;color:var(--color-text,#e9e9ed);">Chưa có dữ liệu ma trận phản hồi thật</div>
+            <div style="font-size:11px;color:var(--color-neutral-500,#9397ab);margin-top:4px;max-width:380px;margin-left:auto;margin-right:auto;line-height:1.5;">
+              Hệ thống cần tích lũy mốc thời gian nhận và gửi tin nhắn thực tế trên Zalo &amp; WhatsApp để lập biểu đồ trung vị theo từng khung giờ.
             </div>
           </div>
         </div>
@@ -6544,16 +6491,12 @@ function renderCareQualityView() {
               <div style="font-size:13px;font-weight:600;color:var(--color-text,#e9e9ed);">Lỗi chăm sóc lặp lại</div>
               <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);margin-top:1px;">30 ngày · toàn tổ chức</div>
             </div>
-            <div style="padding:6px 0 10px;">
-              ${carePatterns.map(cp => `
-                <div style="display:flex;align-items:center;gap:10px;padding:8px 16px;">
-                  <span style="flex:1;min-width:0;font-size:11.5px;color:var(--color-neutral-300,#cfd3e5);text-wrap:pretty;">${escapeHtml(cp.label)}</span>
-                  <span style="width:52px;height:4px;flex:none;border-radius:2px;background:var(--color-divider,rgba(233,233,237,0.16));overflow:hidden;">
-                    <span style="display:block;height:4px;width:${cp.bar};background:${cp.tone};opacity:.85;"></span>
-                  </span>
-                  <span style="width:40px;flex:none;text-align:right;font-size:11px;color:${cp.tone};font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${cp.n}</span>
-                </div>
-              `).join('')}
+            <div style="padding:28px 16px;text-align:center;color:var(--color-neutral-400,#b2b6ca);">
+              <div style="font-size:22px;margin-bottom:6px;"><i class="ph ph-shield-check" style="color:var(--color-good,#4ade80);"></i></div>
+              <div style="font-size:12.5px;font-weight:500;color:var(--color-text,#e9e9ed);">Chưa ghi nhận mẫu lỗi lặp lại nào</div>
+              <div style="font-size:11px;color:var(--color-neutral-500,#9397ab);margin-top:3px;">
+                Mô hình suy luận sẽ tự động phân loại khi phát hiện bất thường trong giao tiếp với khách hàng.
+              </div>
             </div>
           </div>
 
@@ -6561,18 +6504,14 @@ function renderCareQualityView() {
           <div style="background:var(--color-surface,#232532);border:1px solid var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);overflow:hidden;">
             <div style="padding:12px 16px;border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
               <div style="font-size:13px;font-weight:600;color:var(--color-text,#e9e9ed);">Kịch bản thắng và mất khách</div>
-              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);margin-top:1px;">Rút từ 214 ca đã đóng</div>
+              <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-500,#9397ab);margin-top:1px;">Đối soát từ hội thoại thực tế</div>
             </div>
-            <div style="padding:12px 16px 14px;display:flex;flex-direction:column;gap:11px;">
-              ${careScripts.map(sp => `
-                <div style="display:flex;align-items:flex-start;gap:10px;">
-                  <i class="${sp.icon}" style="font-size:15px;flex:none;color:${sp.tone};margin-top:1px;"></i>
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-size:11.5px;color:var(--color-neutral-300,#cfd3e5);line-height:1.5;text-wrap:pretty;">${escapeHtml(sp.text)}</div>
-                    <div style="font-size:10px;color:var(--color-neutral-500,#9397ab);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(sp.meta)}</div>
-                  </div>
-                </div>
-              `).join('')}
+            <div style="padding:28px 16px;text-align:center;color:var(--color-neutral-400,#b2b6ca);">
+              <div style="font-size:22px;margin-bottom:6px;"><i class="ph ph-chart-polar"></i></div>
+              <div style="font-size:12.5px;font-weight:500;color:var(--color-text,#e9e9ed);">Chưa có kịch bản đối soát chốt đơn</div>
+              <div style="font-size:11px;color:var(--color-neutral-500,#9397ab);margin-top:3px;">
+                Chờ bóc tách dữ liệu từ các ca tương tác hoàn tất giữa tư vấn viên và khách hàng.
+              </div>
             </div>
           </div>
         </div>
