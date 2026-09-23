@@ -10797,6 +10797,27 @@ function renderOpportunitiesHub() {
 
 
 function renderDataFactoryHub() {
+  // Dispatcher theo subtab (4 man con trong nhom "Tang du lieu": raw/rules/clean/identity
+  // - dung khop mockup Gen-Harness Console.dc.html). Dung typeof check de an toan khi merge
+  // song song voi ticket khac dang dung rieng rules/clean tren nhanh khac.
+  const sub = state.subtabs?.data_factory || 'raw';
+  if (sub === 'identity' && typeof renderDataFactoryIdentityView === 'function') {
+    return renderDataFactoryIdentityView();
+  }
+  if (sub === 'rules' && typeof renderDataFactoryRulesView === 'function') {
+    return renderDataFactoryRulesView();
+  }
+  if (sub === 'clean' && typeof renderDataFactoryCleanView === 'function') {
+    return renderDataFactoryCleanView();
+  }
+  if (sub !== 'raw' && typeof renderDataFactoryRawView === 'function') {
+    // Subtab hop le nhung view tuong ung chua duoc merge vao nhanh nay.
+    return `<div style="padding:40px; text-align:center; color:var(--color-neutral-500,#9397ab); font-size:12.5px;">Màn này đang được dựng, chưa merge vào bản này.</div>`;
+  }
+  return renderDataFactoryRawView();
+}
+
+function renderDataFactoryRawView() {
   const stats = state.df_stats || {};
   const events = state.df_events || [];
 
@@ -11060,6 +11081,53 @@ function renderDataFactoryHub() {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDataFactoryIdentityView() {
+  // Man MOI, chua tung ton tai - dung theo dung khoi isIdentity cua mockup.
+  // Khong co API/logic gop danh tinh that nao trong backend hien tai (da grep
+  // toan bo heo_harness/ khong thay identity_resolution/merge_identity gi ca),
+  // nen TOAN BO deu la trang thai rong trung thuc - khong bia 1 dong nao.
+  const people = state.people || [];
+  const idStats = [
+    { label: 'Người có nhiều kênh', value: '0', unit: 'người', tone: 'var(--color-accent,#9184d9)', sub: 'Chưa có logic phát hiện trùng danh tính' },
+    { label: 'Gợi ý chờ duyệt', value: '0', unit: 'gợi ý', tone: '#f59e0b', sub: 'Cần nối thuật toán so khớp' },
+    { label: 'Đã gộp', value: '0', unit: 'lần', tone: '#10b981', sub: 'Chưa có lịch sử gộp' },
+    { label: 'Tổng hồ sơ người', value: String(people.length), unit: 'hồ sơ', tone: 'var(--color-neutral-300,#cfd3e5)', sub: 'Từ danh bạ thật hiện có' },
+  ];
+
+  return `
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+      <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; row-gap:14px; column-gap:24px;">
+        <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:700px;">
+          <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">Hợp nhất danh tính</div>
+          <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">Cùng một người xuất hiện trên nhiều kênh phải gộp được, nếu không toàn bộ dữ liệu sẽ vỡ thành mảnh. Hệ thống chỉ gợi ý — quyết định gộp hoặc tách là của Sếp.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <button class="btn btn-secondary" onclick="showToast('Chưa nối API lịch sử gộp/tách — tính năng sẽ triển khai ở ticket sau.')" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;"><i class="ph ph-clock-counter-clockwise" style="font-size:14px;"></i>Lịch sử gộp / tách</button>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:12px; min-width:0;">
+        ${idStats.map(s => `
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+            <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">${s.label}</span>
+            <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+              <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:${s.tone}; line-height:1;">${s.value}</span>
+              <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">${s.unit}</span>
+            </div>
+            <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">${s.sub}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="background:var(--color-surface,#232532); border:1px dashed var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:40px 24px; text-align:center;">
+        <i class="ph ph-git-merge" style="font-size:28px; color:var(--color-neutral-600,#75798c);"></i>
+        <div style="font-size:13.5px; font-weight:600; color:var(--color-text,#e9e9ed); margin-top:10px;">Chưa có gợi ý ghép danh tính nào</div>
+        <div style="font-size:11.5px; color:var(--color-neutral-500,#9397ab); margin-top:5px; max-width:420px; margin-left:auto; margin-right:auto; line-height:1.5;">Hệ thống chưa có thuật toán tự động phát hiện cùng một người trên nhiều kênh (Zalo/WhatsApp) — cần nối API/logic so khớp thật trước khi hiển thị gợi ý ở đây. Không hiển thị dữ liệu mẫu để tránh gây hiểu nhầm.</div>
       </div>
     </div>
   `;
