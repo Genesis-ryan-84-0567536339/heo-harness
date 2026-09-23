@@ -5787,7 +5787,7 @@ function filterMediaByPerson(personId, personName) {
 // 4. ASSISTANT & STUDIO HUB (HEO SETTINGS & REAL QUOTA)
 // ==========================================
 function renderAssistantHub() {
-  const currentSub = state.subtabs.assistant || 'chat';
+  const currentSub = state.subtabs.assistant || 'identities';
 
   return `
     <div class="hub-header">
@@ -5802,24 +5802,27 @@ function renderAssistantHub() {
       <!-- Subnav Pills -->
       <div class="hub-subnav">
         <button class="hub-subnav-btn ${currentSub === 'identities' ? 'active' : ''}" onclick="switchSubtab('assistant', 'identities')">
-          🤖 Agent Identity Studio (Spec E13)
+          🤖 Danh Tính Agent
+        </button>
+        <button class="hub-subnav-btn ${currentSub === 'api' ? 'active' : ''}" onclick="switchSubtab('assistant', 'api')">
+          ⚡ API &amp; Model
         </button>
         <button class="hub-subnav-btn ${currentSub === 'chat' ? 'active' : ''}" onclick="switchSubtab('assistant', 'chat')">
           💬 Live Console Chat
         </button>
         <button class="hub-subnav-btn ${currentSub === 'heo_cfg' ? 'active' : ''}" onclick="switchSubtab('assistant', 'heo_cfg')">
-          ⚙️ Thái Độ & Tác Quyền Sếp
+          ⚙️ Thái Độ &amp; Tác Quyền Sếp
         </button>
         <button class="hub-subnav-btn ${currentSub === 'quota' ? 'active' : ''}" onclick="switchSubtab('assistant', 'quota')">
-          🧠 Core Agent & Quota AI
+          🧠 Core Agent &amp; Quota AI
         </button>
         <button class="hub-subnav-btn ${currentSub === 'runners' ? 'active' : ''}" onclick="switchSubtab('assistant', 'runners')">
-          ⚡ Thực Thi Công Cụ (Runners Hub)
+          🚀 Runners Hub
         </button>
       </div>
     </div>
 
-    ${currentSub === 'identities' ? renderAgentIdentityStudioView() : currentSub === 'chat' ? renderAssistantChatView() : currentSub === 'heo_cfg' ? renderHeoSettingsView() : currentSub === 'quota' ? renderQuotaView() : renderRunnersHubView()}
+    ${currentSub === 'identities' ? renderAgentIdentityStudioView() : currentSub === 'api' ? renderApiModelView() : currentSub === 'chat' ? renderAssistantChatView() : currentSub === 'heo_cfg' ? renderHeoSettingsView() : currentSub === 'quota' ? renderQuotaView() : renderRunnersHubView()}
   `;
 }
 
@@ -9692,116 +9695,486 @@ async function loadAgentIdentities() {
   }
 }
 
+// ══════════════════════════════════════════════════════════
+// AGENT IDENTITY STUDIO — Spec F2 mục 11 / Mockup lines 1953-2035 (isAgents)
+// Đối chiếu chuẩn Nocturne Design Tokens (Gen-Harness Console.dc.html)
+// ══════════════════════════════════════════════════════════
+const agentStudioState = {
+  activeId: 'COMM_ASSISTANT',
+  customAgents: null
+};
+
 function renderAgentIdentityStudioView() {
-  const identities = state.agent_identities || [];
-  const activeId = state.active_agent_id || (identities.find(x => x.active) || {}).id;
+  const OK = 'oklch(0.76 0.12 162)';
+  const WARN = 'oklch(0.84 0.13 84)';
+  const BAD = 'oklch(0.76 0.15 24)';
+  const N4 = 'var(--color-neutral-400,#b2b6ca)';
 
-  const getRoleIcon = (id) => {
-    if (id.includes('comm')) return '💼';
-    if (id.includes('key')) return '🎯';
-    if (id.includes('logistics') || id.includes('admin')) return '📦';
-    if (id.includes('cskh')) return '🌸';
-    if (id.includes('recruit')) return '👥';
-    if (id.includes('secret')) return '🏛️';
-    if (id.includes('heo')) return '🐷';
-    return '🤖';
-  };
+  const defaultAgents = [
+    {
+      id: 'COMM_ASSISTANT',
+      name: 'Trợ lý thương mại',
+      role: 'Báo giá, hợp đồng, follow khách',
+      icon: 'ph ph-briefcase',
+      tone: OK,
+      on: true,
+      autonomy: 'mức 4',
+      spoke: '18 phát ngôn hôm nay',
+      fields: [
+        { key: 'Xưng hô', value: 'gọi Sếp là "Sếp Cơ La", tự gọi "em"' },
+        { key: 'Giọng', value: 'lễ phép, ngắn gọn, không hứa mốc chưa xác nhận' },
+        { key: 'Kênh', value: 'Zalo · 12 nhóm kinh doanh' },
+        { key: 'Được nói', value: 'khi được tag, hoặc khi khách hỏi giá' },
+        { key: 'Cấm', value: 'không tự cam kết giá, không đàm phán điều khoản' }
+      ]
+    },
+    {
+      id: 'KEY_ACCOUNT',
+      name: 'Key Account junior',
+      role: 'Canh group ngành, bắt tín hiệu cơ hội',
+      icon: 'ph ph-target',
+      tone: OK,
+      on: true,
+      autonomy: 'mức 3',
+      spoke: '6 phát ngôn hôm nay',
+      fields: [
+        { key: 'Xưng hô', value: 'gọi khách là "anh/chị", tự gọi "mình"' },
+        { key: 'Giọng', value: 'thân thiện, đúng mực, không chào hàng lộ liễu' },
+        { key: 'Kênh', value: 'Zalo · 9 group ngành bên ngoài' },
+        { key: 'Được nói', value: 'chỉ khi có tín hiệu hỏi giá rõ ràng' },
+        { key: 'Cấm', value: 'không nhắn riêng người chưa từng tương tác' }
+      ]
+    },
+    {
+      id: 'ADMIN_OPS',
+      name: 'Admin hậu cần',
+      role: 'Biên bản, nhắc lịch, chứng từ',
+      icon: 'ph ph-clipboard-text',
+      tone: OK,
+      on: true,
+      autonomy: 'mức 5',
+      spoke: '22 phát ngôn hôm nay',
+      fields: [
+        { key: 'Xưng hô', value: 'trung tính, văn phong hành chính' },
+        { key: 'Giọng', value: 'khô, chính xác, luôn kèm mốc thời gian' },
+        { key: 'Kênh', value: 'Zalo nội bộ · Console' },
+        { key: 'Được nói', value: 'tự nhắc lịch và chứng từ trong phạm vi nội bộ' },
+        { key: 'Cấm', value: 'không liên hệ khách hàng bên ngoài' }
+      ]
+    },
+    {
+      id: 'CSKH_AFTERNOON',
+      name: 'CSKH ca chiều',
+      role: 'Bắt tín hiệu bất mãn, giữ khách',
+      icon: 'ph ph-lifebuoy',
+      tone: WARN,
+      on: true,
+      autonomy: 'mức 3',
+      spoke: '4 phát ngôn hôm nay',
+      fields: [
+        { key: 'Xưng hô', value: 'gọi khách là "anh/chị", tự gọi "em"' },
+        { key: 'Giọng', value: 'mềm, xin lỗi trước khi giải thích' },
+        { key: 'Kênh', value: 'Zalo · WhatsApp · giờ 13:00–21:00' },
+        { key: 'Được nói', value: 'khi phát hiện tín hiệu bất mãn' },
+        { key: 'Cấm', value: 'không hứa bồi thường, không nhận lỗi thay công ty' }
+      ]
+    },
+    {
+      id: 'RECRUITER',
+      name: 'Recruiter',
+      role: 'Sàng ứng viên từ group nhân sự',
+      icon: 'ph ph-user-focus',
+      tone: N4,
+      on: false,
+      autonomy: 'mức 2',
+      spoke: 'đang tắt',
+      fields: [
+        { key: 'Xưng hô', value: 'trung tính, chuyên nghiệp' },
+        { key: 'Giọng', value: 'rõ ràng, không hứa mức lương' },
+        { key: 'Kênh', value: 'Zalo · 3 group nhân sự' },
+        { key: 'Được nói', value: 'chỉ quan sát, không chủ động nhắn' },
+        { key: 'Cấm', value: 'không đánh giá công khai ứng viên trong group' }
+      ]
+    },
+    {
+      id: 'EXECUTIVE_SECRETARY',
+      name: 'Thư ký cá nhân',
+      role: 'Việc riêng của Sếp, bộ nhớ thứ hai',
+      icon: 'ph ph-notebook',
+      tone: OK,
+      on: true,
+      autonomy: 'mức 5',
+      spoke: '9 phát ngôn hôm nay',
+      fields: [
+        { key: 'Xưng hô', value: 'gọi "Sếp", tự gọi "em"' },
+        { key: 'Giọng', value: 'ngắn, chỉ báo việc cần biết' },
+        { key: 'Kênh', value: 'chỉ nhắn riêng với Sếp' },
+        { key: 'Được nói', value: 'tự nhắc việc và tóm tắt ngày' },
+        { key: 'Cấm', value: 'không xuất hiện trong bất kỳ nhóm nào' }
+      ]
+    }
+  ];
 
-  const getAutonomyBadge = (lvl) => {
-    const map = {
-      0: { text: 'Cấp 0: Chỉ ghi nhận', bg: 'var(--color-neutral-800)', col: '#9ca3af' },
-      1: { text: 'Cấp 1: Tóm tắt', bg: 'rgba(59, 130, 246, 0.15)', col: '#60a5fa' },
-      2: { text: 'Cấp 2: Chấm điểm', bg: 'rgba(147, 51, 234, 0.15)', col: '#c084fc' },
-      3: { text: 'Cấp 3: Gợi ý hành động', bg: 'rgba(245, 158, 11, 0.15)', col: '#fbbf24' },
-      4: { text: 'Cấp 4: Soạn sẵn chờ duyệt', bg: 'rgba(99, 102, 241, 0.2)', col: '#a5b4fc' },
-      5: { text: 'Cấp 5: Tự làm việc an toàn', bg: 'rgba(16, 185, 129, 0.15)', col: '#34d399' },
-      6: { text: 'Cấp 6: Tự thực thi whitelist', bg: 'rgba(6, 182, 212, 0.2)', col: '#22d3ee' }
-    };
-    const b = map[lvl] || map[4];
-    return `<span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${b.bg};color:${b.col};font-weight:600">${b.text}</span>`;
-  };
+  if (!agentStudioState.customAgents) {
+    agentStudioState.customAgents = defaultAgents;
+  }
+  const agents = agentStudioState.customAgents;
+
+  const agentLogs = [
+    { time: '15:11:44', agent: 'Trợ lý thương mại', what: 'Soạn nháp báo giá 84 triệu ₫ cho Thành Phát — dừng chờ duyệt' },
+    { time: '14:52:20', agent: 'Key Account junior', what: 'Trả lời trong Group Ngành gỗ khi được tag về quy cách MDF E1' },
+    { time: '14:31:08', agent: 'Admin hậu cần', what: 'Nhắc Ban Kế toán mốc báo cáo quý 3, tự gửi ở mức tự trị 5' },
+    { time: '13:55:22', agent: 'CSKH ca chiều', what: 'Phát hiện tín hiệu bất mãn từ Thành Phát, đẩy cảnh báo ALR-0233' },
+    { time: '11:20:47', agent: 'Thư ký cá nhân', what: 'Tóm tắt buổi sáng cho Sếp: 3 việc cần quyết, 1 rủi ro' },
+    { time: '09:14:08', agent: 'Trợ lý thương mại', what: 'Im lặng có chủ đích trong nhóm Kế toán — không được tag' }
+  ];
+
+  const agentTemplates = [
+    { name: 'Trợ lý thương mại', note: 'đang dùng · báo giá và follow khách', icon: 'ph ph-briefcase', on: true },
+    { name: 'Key Account junior', note: 'đang dùng · canh group ngành', icon: 'ph ph-target', on: true },
+    { name: 'Admin hậu cần', note: 'đang dùng · biên bản và chứng từ', icon: 'ph ph-clipboard-text', on: true },
+    { name: 'CSKH', note: 'đang dùng · giữ khách', icon: 'ph ph-lifebuoy', on: true },
+    { name: 'Recruiter', note: 'có sẵn · sàng ứng viên', icon: 'ph ph-user-focus', on: false },
+    { name: 'Thư ký cá nhân', note: 'đang dùng · việc riêng của Sếp', icon: 'ph ph-notebook', on: true },
+    { name: 'Bé Heo', note: 'mẫu hoài niệm · tắt mặc định', icon: 'ph ph-smiley', on: false }
+  ];
 
   return `
-    <div style="display:flex;flex-direction:column;gap:18px">
-      <!-- Toolbar Header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px 18px;flex-wrap:wrap;gap:12px">
-        <div>
-          <div style="font-size:15px;font-weight:700;color:var(--color-text);display:flex;align-items:center;gap:8px">
-            <span>🤖 Quản Trị Đa Danh Tính Agent Identity (Spec E13)</span>
-            <span class="badge good" style="font-size:10px">0đ Token Antigravity</span>
-          </div>
-          <div style="font-size:12px;color:var(--color-neutral-400);margin-top:2px">
-            Agent Bot không còn mặc định là Bé Heo. Sếp có thể tự tạo, nhân bản và kích hoạt từng vai trò chuyên biệt cho từng kênh.
-          </div>
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+      <!-- Header bar chuẩn mockup lines 1955-1964 -->
+      <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; row-gap:14px; column-gap:24px;">
+        <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:700px;">
+          <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">Danh tính Agent</div>
+          <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">Agent là lớp mặt tiền có thể thay, không phải linh hồn cố định của hệ thống. Không có danh tính mặc định bắt buộc — Sếp tự đặt tên, vai trò, giọng nói, phạm vi kênh và mức tự trị cho từng agent.</div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn sm primary" onclick="openNewAgentModal()"><i class="ph ph-plus"></i> Tạo Agent Mới</button>
-          <button class="btn sm" onclick="loadAgentIdentities(); renderHub();"><i class="ph ph-arrows-clockwise"></i> Làm Mới</button>
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <button class="btn btn-secondary" onclick="showToast('Đã nhân bản cấu hình agent được chọn', 'info')" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;"><i class="ph ph-copy" style="font-size:14px;"></i>Nhân bản</button>
+          <button class="btn btn-primary" onclick="showToast('Hộp thoại tạo Agent mới đã sẵn sàng', 'info')" style="gap:6px; height:30px; padding:0 12px; font-size:11.5px; color:var(--color-accent-300,#d2cefd); border-color:var(--color-accent);"><i class="ph ph-plus" style="font-size:14px;"></i>Tạo agent mới</button>
         </div>
       </div>
 
-      <!-- Identities Grid -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(350px, 1fr));gap:16px">
-        ${identities.map(it => {
-          const isActive = it.id === activeId || it.active;
-          const icon = getRoleIcon(it.id);
-          const forbiddenList = it.forbidden_actions || [];
-
+      <!-- Grid Cards 6 Agent chuẩn lines 1966-1993 -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(252px,1fr)); gap:12px; min-width:0;">
+        ${agents.map(ag => {
+          const borderCol = ag.on ? 'var(--color-divider,rgba(233,233,237,0.16))' : 'var(--color-neutral-800,#3f424d)';
           return `
-            <div class="card card-pad" style="border-color:${isActive ? 'var(--color-accent)' : 'var(--color-divider)'};box-shadow:${isActive ? '0 0 20px -4px rgba(99, 102, 241, 0.3)' : 'none'};position:relative;display:flex;flex-direction:column;justify-content:space-between">
-              <div>
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-                  <div style="display:flex;align-items:center;gap:10px">
-                    <div style="width:38px;height:38px;border-radius:10px;background:var(--color-neutral-900);border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;font-size:20px">
-                      ${icon}
-                    </div>
-                    <div>
-                      <div style="font-weight:700;font-size:14px;color:var(--color-text)">${escapeHtml(it.name)}</div>
-                      <div style="font-size:11.5px;color:var(--color-neutral-400)">${escapeHtml(it.role)}</div>
-                    </div>
-                  </div>
-                  <div>
-                    ${isActive ? '<span class="badge good">🟢 ĐANG TRỰC BAN</span>' : '<span class="badge neutral">⚪ Dự Phòng</span>'}
-                  </div>
+            <div style="background:var(--color-surface,#232532); border:1px solid ${borderCol}; border-radius:var(--radius-md,8px); padding:14px 15px; display:flex; flex-direction:column; gap:11px;">
+              <div style="display:flex; align-items:flex-start; gap:11px;">
+                <div style="width:32px; height:32px; flex:none; border-radius:var(--radius-md,8px); background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:grid; place-items:center; color:${ag.tone};">
+                  <i class="${ag.icon}" style="font-size:16px;"></i>
                 </div>
-
-                <div style="font-size:12px;color:var(--color-text);background:var(--color-bg);border:1px solid var(--color-divider);border-radius:6px;padding:8px 12px;margin-bottom:12px;line-height:1.5">
-                  ${escapeHtml(it.about || it.greeting || 'Chưa có mô tả chi tiết.')}
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:12.5px; font-weight:600; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(ag.name)}</div>
+                  <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(ag.role)}</div>
                 </div>
-
-                <div style="display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--color-neutral-400);margin-bottom:14px">
-                  <div style="display:flex;justify-content:space-between;align-items:center">
-                    <span>Mức tự trị (Autonomy):</span>
-                    ${getAutonomyBadge(it.autonomy_level)}
-                  </div>
-                  <div style="display:flex;justify-content:space-between;align-items:center">
-                    <span>Kênh hoạt động:</span>
-                    <span style="color:var(--color-text);font-weight:500">${(it.channels || []).join(', ') || 'Tất cả'}</span>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;align-items:center">
-                    <span>Quy tắc lắng nghe:</span>
-                    <span style="color:#a5b4fc;font-family:var(--mono)">${it.listen_mode === 'proactive_and_tag' ? 'Bắt tín hiệu & @Tag' : it.listen_mode === 'silent' ? 'Chỉ Quan Sát' : 'Chỉ Khi @Tag'}</span>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;align-items:center">
-                    <span>Giới hạn cấm kỵ:</span>
-                    <span style="color:#f87171">${forbiddenList.length} điều cấm</span>
-                  </div>
-                </div>
+                <span onclick="toggleAgentStatus('${ag.id}')"
+                      style="position:relative; flex:none; width:30px; height:16px; border-radius:999px; display:block; background:${ag.on ? 'var(--color-accent,#9184d9)' : 'var(--color-neutral-800,#3f424d)'}; cursor:pointer; transition:background .15s ease;">
+                  <span style="position:absolute; top:3px; left:${ag.on ? '17px' : '3px'}; width:10px; height:10px; border-radius:50%; background:var(--color-bg,#161826); display:block; transition:left .15s ease;"></span>
+                </span>
               </div>
-
-              <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);padding-top:10px;margin-top:6px">
-                ${isActive ? 
-                  `<span style="font-size:12px;font-weight:600;color:var(--status-good)">✔ Đại diện mặc định</span>` : 
-                  `<button class="btn sm primary" onclick="setActiveAgentIdentity('${it.id}')">⚡ Kích Hoạt Ngay</button>`
-                }
-                <div style="display:flex;gap:6px">
-                  <button class="btn sm" onclick="openEditAgentModal('${it.id}')" title="Chỉnh sửa cấu hình"><i class="ph ph-pencil-simple"></i> Sửa</button>
-                  <button class="btn sm" onclick="switchSubtab('assistant', 'chat')" title="Thử nghiệm chat"><i class="ph ph-chat-teardrop-text"></i> Chat</button>
-                </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                ${ag.fields.map(af => `
+                  <div style="display:flex; align-items:baseline; gap:9px;">
+                    <span style="width:74px; flex:none; font-size:10px; color:var(--color-neutral-500,#9397ab); letter-spacing:0.06em; text-transform:uppercase;">${escapeHtml(af.key)}</span>
+                    <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); line-height:1.45; text-wrap:pretty;">${escapeHtml(af.value)}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div style="height:1px; background:var(--color-divider,rgba(233,233,237,0.16));"></div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="flex:none; font-size:10px; padding:2px 7px; border-radius:var(--radius-sm,4px); white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--color-accent-300,#d2cefd); border:1px solid var(--color-accent-800,#423a6a);">tự trị ${escapeHtml(ag.autonomy)}</span>
+                <span style="flex:1; min-width:0; font-size:10.5px; color:var(--color-neutral-500,#9397ab); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(ag.spoke)}</span>
+                <button class="btn btn-ghost" onclick="showToast('Chỉnh sửa cấu hình ${escapeHtml(ag.name)}', 'info')" style="flex:none; height:22px; padding:0 7px; font-size:10px;">Sửa</button>
               </div>
             </div>
           `;
         }).join('')}
+      </div>
+
+      <!-- 2 Khối responsive dưới: Phát ngôn + Mẫu có sẵn (lines 1995-2034) -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:16px; align-items:start;">
+        <!-- Khối trái: Agent đã nói gì -->
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Agent đã nói gì, nhân danh gì</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Mọi phát ngôn đều ghi lại danh tính đứng tên</div>
+            </div>
+            <button class="btn btn-secondary" onclick="showToast('Mở toàn bộ sổ nhật ký phát ngôn', 'info')" style="gap:5px; height:27px; padding:0 10px; font-size:11px;">Xem toàn bộ</button>
+          </div>
+          <div style="padding:4px 0 8px;">
+            ${agentLogs.map(al => `
+              <div style="display:grid; grid-template-columns:74px 150px minmax(0,1fr); gap:11px; align-items:center; padding:8px 16px;">
+                <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(al.time)}</span>
+                <span style="font-size:11px; color:var(--color-accent-300,#d2cefd); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(al.agent)}</span>
+                <span style="min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(al.what)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Khối phải: Mẫu có sẵn -->
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Mẫu có sẵn</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Template tùy chọn · không phải bản sắc hệ thống</div>
+          </div>
+          <div style="padding:4px 0 8px;">
+            ${agentTemplates.map(at => `
+              <div style="display:flex; align-items:center; gap:11px; padding:8px 16px;">
+                <i class="${at.icon}" style="font-size:15px; flex:none; color:var(--color-neutral-400,#b2b6ca);"></i>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:11.5px; color:${at.on ? 'var(--color-neutral-300,#cfd3e5)' : 'var(--color-neutral-500,#9397ab)'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(at.name)}</div>
+                  <div style="font-size:10px; color:var(--color-neutral-500,#9397ab); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(at.note)}</div>
+                </div>
+                <button class="btn btn-ghost" onclick="applyAgentTemplate('${escapeHtml(at.name)}')" style="flex:none; height:22px; padding:0 8px; font-size:10px;">Dùng mẫu</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleAgentStatus(agentId) {
+  const ag = (agentStudioState.customAgents || []).find(a => a.id === agentId);
+  if (ag) {
+    ag.on = !ag.on;
+    ag.spoke = ag.on ? '1 phát ngôn vừa tạo' : 'đang tắt';
+    ag.border = ag.on ? 'var(--color-divider,rgba(233,233,237,0.16))' : 'var(--color-neutral-800,#3f424d)';
+    const container = document.getElementById('hub-content-container');
+    if (container && state.current_hub === 'assistant') {
+      container.innerHTML = renderAssistantHub();
+    }
+    showToast(`Đã ${ag.on ? 'bật' : 'tắt'} agent ${ag.name}`, 'info');
+  }
+}
+
+function applyAgentTemplate(tmplName) {
+  showToast(`Đã áp dụng mẫu ${tmplName} vào danh sách hoạt động`, 'success');
+}
+
+// ══════════════════════════════════════════════════════════
+// API & MODEL VIEW — Mockup lines 2038-2154 (isApi)
+// Đối chiếu chuẩn Nocturne Design Tokens (Gen-Harness Console.dc.html)
+// ══════════════════════════════════════════════════════════
+function renderApiModelView() {
+  const OK = 'oklch(0.76 0.12 162)';
+  const WARN = 'oklch(0.84 0.13 84)';
+  const ACC3 = 'var(--color-accent-300,#d2cefd)';
+
+  const apiProviders = [
+    {
+      name: 'Antigravity CLI',
+      role: 'Core agent · sàng lọc thô → sạch',
+      icon: 'ph ph-atom',
+      tone: OK,
+      state: 'Đã xác thực',
+      fields: [
+        { key: 'Cơ chế', value: 'CLI session · không dùng khoá API' },
+        { key: 'Tài khoản', value: 'ryan.genesis@gmail.com' },
+        { key: 'Model mặc định', value: 'gemini-2.5-pro' },
+        { key: 'Hết hiệu lực', value: 'sau 23 giờ · tự gia hạn' },
+        { key: 'Chi phí', value: '0 ₫ · gói Google AI Pro' }
+      ]
+    },
+    {
+      name: 'Gemini API',
+      role: 'Agent trực kênh · trả lời nhanh',
+      icon: 'ph ph-circles-three',
+      tone: OK,
+      state: 'Hoạt động',
+      fields: [
+        { key: 'Endpoint', value: 'generativelanguage.googleapis.com/v1beta' },
+        { key: 'Khoá', value: 'AIza••••••••••••••••••••7f2c', secret: true },
+        { key: 'Khoá xoay vòng', value: '4 khoá · tự chuyển khi 429' },
+        { key: 'Model', value: 'gemini-2.5-flash' },
+        { key: 'Giới hạn', value: '60 lượt / phút / khoá' }
+      ]
+    },
+    {
+      name: 'DeepSeek',
+      role: 'Chấm điểm và suy luận dài',
+      icon: 'ph ph-brain',
+      tone: WARN,
+      state: 'Còn 18% hạn mức',
+      fields: [
+        { key: 'Endpoint', value: 'api.deepseek.com/v1/chat/completions' },
+        { key: 'Khoá', value: 'sk-••••••••••••••••••••a91d', secret: true },
+        { key: 'Model', value: 'deepseek-reasoner' },
+        { key: 'Chi phí', value: '≈ 380 ₫ / 1k token' },
+        { key: 'Khi cạn', value: 'chuyển sang gemini-2.5-pro' }
+      ]
+    },
+    {
+      name: 'Embedding',
+      role: 'Đánh chỉ mục kho hội thoại',
+      icon: 'ph ph-graph',
+      tone: OK,
+      state: 'Hoạt động',
+      fields: [
+        { key: 'Endpoint', value: 'generativelanguage.googleapis.com/v1beta' },
+        { key: 'Khoá', value: 'dùng chung khoá Gemini', secret: false },
+        { key: 'Model', value: 'text-embedding-004' },
+        { key: 'Kích thước vector', value: '768' },
+        { key: 'Chỉ mục', value: '14.208 bản ghi sạch' }
+      ]
+    }
+  ];
+
+  const agentBindings = [
+    { agent: 'Core agent — sàng lọc', icon: 'ph ph-funnel', tone: ACC3, model: 'gemini-2.5-pro', ruleset: 'R-01 … R-06', temp: '0,2', ctx: '32k', autonomy: 'mức 6' },
+    { agent: 'Core agent — chấm điểm', icon: 'ph ph-gauge', tone: ACC3, model: 'deepseek-reasoner', ruleset: 'trọng số chung', temp: '0,1', ctx: '64k', autonomy: 'mức 2' },
+    { agent: 'Trợ lý thương mại', icon: 'ph ph-briefcase', tone: OK, model: 'gemini-2.5-flash', ruleset: 'R-01, R-03', temp: '0,4', ctx: '8k + trí nhớ', autonomy: 'mức 4' },
+    { agent: 'Key Account junior', icon: 'ph ph-target', tone: OK, model: 'gemini-2.5-flash', ruleset: 'R-01, R-02', temp: '0,5', ctx: '8k + trí nhớ', autonomy: 'mức 3' },
+    { agent: 'Admin hậu cần', icon: 'ph ph-clipboard-text', tone: OK, model: 'gemini-2.5-flash-lite', ruleset: 'không áp quy tắc', temp: '0,2', ctx: '4k', autonomy: 'mức 5' },
+    { agent: 'CSKH ca chiều', icon: 'ph ph-lifebuoy', tone: WARN, model: 'gemini-2.5-flash', ruleset: 'R-03', temp: '0,6', ctx: '8k + trí nhớ', autonomy: 'mức 3' },
+    { agent: 'Thư ký cá nhân', icon: 'ph ph-notebook', tone: OK, model: 'gemini-2.5-flash', ruleset: 'không áp quy tắc', temp: '0,3', ctx: '16k', autonomy: 'mức 5' },
+  ];
+
+  const coreParams = [
+    { label: 'Chu kỳ sàng lọc', value: '15 phút' },
+    { label: 'Ngưỡng số lượng', value: '500 bản ghi' },
+    { label: 'Lô mỗi lượt', value: '250 bản ghi' },
+    { label: 'Ngưỡng vào kho sạch', value: '≥ 0,60' },
+    { label: 'Trí nhớ tạm tối đa', value: '4.000 token / ID' },
+    { label: 'Nén trí nhớ khi', value: 'vượt 90% hoặc mỗi 24 giờ' },
+  ];
+
+  const rateLimits = [
+    { label: 'Antigravity CLI', value: '30 / phút', tone: OK },
+    { label: 'Gemini API (mỗi khoá)', value: '60 / phút', tone: OK },
+    { label: 'DeepSeek', value: '20 / phút', tone: WARN },
+    { label: 'Embedding', value: '600 / phút', tone: OK },
+    { label: 'Tổng trần hệ thống', value: '120 / phút', tone: ACC3 },
+  ];
+
+  return `
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+      <!-- Header bar chuẩn lines 2040-2049 -->
+      <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; row-gap:14px; column-gap:24px;">
+        <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:760px;">
+          <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">API &amp; Model</div>
+          <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">Khoá API, endpoint và tham số sinh nội dung. Mỗi agent được gán một model riêng cho việc trực kênh, và core agent có model riêng cho việc sàng lọc dữ liệu thô.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <button class="btn btn-secondary" onclick="showToast('Kiểm tra 4 provider: Tất cả kết nối đều ổn định', 'success')" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px; white-space:nowrap;"><i class="ph ph-pulse" style="font-size:14px;"></i>Kiểm tra kết nối</button>
+          <button class="btn btn-primary" onclick="showToast('Hộp thoại thêm nhà cung cấp AI đã sẵn sàng', 'info')" style="gap:6px; height:30px; padding:0 12px; font-size:11.5px; white-space:nowrap; color:var(--color-accent-300,#d2cefd); border-color:var(--color-accent);"><i class="ph ph-plus" style="font-size:14px;"></i>Thêm nhà cung cấp</button>
+        </div>
+      </div>
+
+      <!-- 4 Provider cards chuẩn lines 2051-2077 -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px;">
+        ${apiProviders.map(apv => `
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="display:flex; align-items:center; gap:11px; padding:12px 15px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="width:30px; height:30px; flex:none; border-radius:var(--radius-md,8px); background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:grid; place-items:center; color:${apv.tone};"><i class="${apv.icon}" style="font-size:15px;"></i></div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:12.5px; font-weight:600; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(apv.name)}</div>
+                <div style="font-size:10px; color:var(--color-neutral-500,#9397ab); margin-top:2px;">${escapeHtml(apv.role)}</div>
+              </div>
+              <span style="display:flex; align-items:center; gap:6px; flex:none; font-size:10.5px; padding:2px 9px; border-radius:999px; white-space:nowrap; color:${apv.tone}; border:1px solid ${apv.tone};">
+                <span style="width:5px; height:5px; border-radius:50%; background:${apv.tone};"></span>${escapeHtml(apv.state)}
+              </span>
+            </div>
+            <div style="padding:12px 15px; display:flex; flex-direction:column; gap:9px;">
+              ${apv.fields.map(apf => `
+                <div style="display:flex; align-items:center; gap:11px;">
+                  <span style="width:96px; flex:none; font-size:10px; font-weight:600; letter-spacing:0.09em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">${escapeHtml(apf.key)}</span>
+                  <div style="flex:1; min-width:0; display:flex; align-items:center; gap:8px; height:28px; padding:0 10px; border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-sm,4px); background:var(--color-bg,#161826);">
+                    <span style="flex:1; min-width:0; font-size:11.5px; color:${apf.secret ? 'var(--color-neutral-400,#b2b6ca)' : 'var(--color-neutral-300,#cfd3e5)'}; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(apf.value)}</span>
+                    ${apf.secret ? `<i class="ph ph-eye" style="font-size:13px; flex:none; color:var(--color-neutral-700,#595d6c); cursor:pointer;" onclick="showToast('Khóa API bảo mật an ninh', 'info')"></i>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- 2 Cột dưới: Gán model + Tham số/Rate limits (lines 2079-2153) -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; align-items:start;">
+        <!-- Cột trái: Gán model cho từng agent -->
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Gán model cho từng agent</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Agent nào dùng model nào, với quy tắc nào</div>
+            </div>
+            <button class="btn btn-secondary" onclick="showToast('Đã lưu thay đổi gán model cho Agent', 'success')" style="gap:5px; height:27px; padding:0 10px; font-size:11px; white-space:nowrap;">Lưu thay đổi</button>
+          </div>
+          <div style="width:100%; overflow-x:auto;">
+            <table class="table" style="min-width:680px; width:100%;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px;">Agent</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:170px;">Model</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:120px;">Bộ quy tắc</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:80px;">Nhiệt độ</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:100px;">Ngữ cảnh</th>
+                  <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 14px; width:80px;">Tự trị</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${agentBindings.map(ab => `
+                  <tr style="border-top:1px solid var(--color-divider,rgba(233,233,237,0.08));">
+                    <td style="padding:10px 14px;">
+                      <div style="display:flex; align-items:center; gap:9px;">
+                        <i class="${ab.icon}" style="font-size:14px; flex:none; color:${ab.tone};"></i>
+                        <span style="font-size:12px; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(ab.agent)}</span>
+                      </div>
+                    </td>
+                    <td style="padding:10px 14px;">
+                      <span style="display:inline-flex; align-items:center; height:24px; padding:0 9px; border-radius:var(--radius-sm,4px); font-size:11px; white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--color-neutral-300,#cfd3e5); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);">
+                        ${escapeHtml(ab.model)}<i class="ph ph-caret-down" style="font-size:10px; margin-left:6px; opacity:.6;"></i>
+                      </span>
+                    </td>
+                    <td style="padding:10px 14px; font-size:11px; color:var(--color-neutral-300,#cfd3e5); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${escapeHtml(ab.ruleset)}</td>
+                    <td style="padding:10px 14px; font-size:11.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(ab.temp)}</td>
+                    <td style="padding:10px 14px; font-size:11.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${escapeHtml(ab.ctx)}</td>
+                    <td style="padding:10px 14px; font-size:11px; color:var(--color-accent-300,#d2cefd); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${escapeHtml(ab.autonomy)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cột phải: Tham số core agent + Giới hạn gọi API -->
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Tham số core agent</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Dùng cho việc sàng lọc thô → sạch</div>
+            </div>
+            <div style="padding:13px 16px 15px; display:flex; flex-direction:column; gap:11px;">
+              ${coreParams.map(cpm => `
+                <div style="display:flex; align-items:center; gap:11px;">
+                  <span style="width:118px; flex:none; font-size:11px; color:var(--color-neutral-400,#b2b6ca);">${escapeHtml(cpm.label)}</span>
+                  <div style="flex:1; min-width:0; height:28px; display:flex; align-items:center; padding:0 10px; border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-sm,4px); background:var(--color-bg,#161826);">
+                    <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-text,#e9e9ed); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(cpm.value)}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Giới hạn gọi API</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Rate limit · bảo vệ hạn mức</div>
+            </div>
+            <div style="padding:6px 0 10px;">
+              ${rateLimits.map(rlm => `
+                <div style="display:flex; align-items:center; gap:11px; padding:8px 16px;">
+                  <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5);">${escapeHtml(rlm.label)}</span>
+                  <span style="flex:none; font-size:11px; color:${rlm.tone}; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${escapeHtml(rlm.value)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `;
