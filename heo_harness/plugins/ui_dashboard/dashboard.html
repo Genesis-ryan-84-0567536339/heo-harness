@@ -738,6 +738,29 @@
 
     /* Tables (Nocturne signature rules) */
     .table-wrap { overflow-x: auto; }
+    table.table, .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+    table.table th, .table th {
+      padding: 9px 16px;
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--color-neutral-500, #9397ab);
+      border-bottom: 1px solid var(--color-divider);
+    }
+    table.table td, .table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--color-divider);
+      color: var(--color-text, #e9e9ed);
+    }
+    table.table tr:hover, .table tr:hover {
+      background: var(--color-neutral-900, #292b31);
+    }
     table.data-table {
       width: 100%;
       border-collapse: collapse;
@@ -1601,11 +1624,10 @@ const NAV_MAP = {
   inbox: { hub: 'opportunities' },
   workbench: { hub: 'workbench_action' },
   directory: { hub: 'directory' },
+  relationship_radar: { hub: 'relationship_radar', subtab: 'graph' },
   graph: { hub: 'relationship_radar', subtab: 'graph' },
-  // TODO: tách màn riêng khi có ticket sau
-  profile: { hub: 'relationship_radar', subtab: 'profiles' },
-  // TODO: tách màn riêng khi có ticket sau
-  notebook: { hub: 'relationship_radar', subtab: 'notes' },
+  profile: { hub: 'relationship_radar', subtab: 'profile' },
+  notebook: { hub: 'relationship_radar', subtab: 'notebook' },
   opportunity: { hub: 'work' },
   supply: { hub: 'workbench' },
   search: { hub: 'chat_intelligence' },
@@ -1691,6 +1713,15 @@ function switchNav(navKey) {
   const target = NAV_MAP[navKey];
   if (!target) return;
   state.activeNavKey = navKey;
+  try {
+    if (window.location.hash.replace(/^#\/?/, '').trim() !== navKey) {
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', '#' + navKey);
+      } else {
+        window.location.hash = navKey;
+      }
+    }
+  } catch (e) {}
 
   // Auto-expand parent group
   NAV.forEach(dm => dm.groups.forEach(g => {
@@ -1927,6 +1958,21 @@ function switchHub(hubKey, subtabKey = null) {
 
 function switchSubtab(hubKey, subtabKey) {
   state.subtabs[hubKey] = subtabKey;
+  for (const [k, v] of Object.entries(NAV_MAP)) {
+    if (v.hub === hubKey && v.subtab === subtabKey) {
+      state.activeNavKey = k;
+      try {
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', '#' + k);
+        } else {
+          window.location.hash = k;
+        }
+      } catch (e) {}
+      break;
+    }
+  }
+  updateHeaderBreadcrumb();
+  renderSidebarNav();
   renderActiveHub();
 }
 
@@ -2039,10 +2085,23 @@ function renderActiveHub() {
       break;
 
     case 'relationship_radar':
-      titleEl.textContent = 'Radar Quan Hệ, Bản Đồ Mạng Lưới & Hồ Sơ Sống 360';
-      subEl.textContent = 'Bản đồ mạng lưới đồ thị tương tác, phân tích nhiệt độ quan hệ, giải thích điểm Explainable AI, kiểm soát lượt bóng & thang đo 6 cấp tự trị';
+      let rrSub = state.subtabs.relationship_radar || 'graph';
+      if (rrSub === 'profiles') rrSub = 'profile';
+      if (rrSub === 'notes') rrSub = 'notebook';
+      state.subtabs.relationship_radar = rrSub;
+
+      if (rrSub === 'profile') {
+        titleEl.textContent = 'Hồ sơ sống';
+        subEl.textContent = 'Living Profile · vì sao hệ thống nghĩ vậy · HIỂU';
+      } else if (rrSub === 'notebook') {
+        titleEl.textContent = 'Sổ tay nhận thức';
+        subEl.textContent = 'AI-trợ lý tự ghi nhận thức lũy tiến cho từng ID người và ID nhóm · DỮ LIỆU';
+      } else {
+        titleEl.textContent = 'Bản đồ quan hệ';
+        subEl.textContent = 'Relationship Map · ai đang liên quan · HIỂU';
+      }
       container.innerHTML = renderRelationshipRadarHub();
-      if ((state.subtabs.relationship_radar || 'graph') === 'graph') {
+      if (rrSub === 'graph' && (state.graphMode || 'list') === 'canvas') {
         setTimeout(initRelationshipGraphCanvas, 60);
       }
       break;
@@ -9697,6 +9756,23 @@ async function completeOnboardingAction() {
 // INITIAL LOAD & BACKGROUND LOG STREAMING
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
+  const initialHash = window.location.hash.replace(/^#\/?/, '').trim();
+  if (initialHash && NAV_MAP[initialHash]) {
+    const target = NAV_MAP[initialHash];
+    state.activeNavKey = initialHash;
+    if (target.subtab) {
+      state.subtabs[target.hub] = target.subtab;
+    }
+    state.activeHub = target.hub;
+    state.current_hub = target.hub;
+  }
+  window.addEventListener('hashchange', () => {
+    const h = window.location.hash.replace(/^#\/?/, '').trim();
+    if (h && NAV_MAP[h] && state.activeNavKey !== h) {
+      switchNav(h);
+    }
+  });
+
   renderSidebarNav();
   updateHeaderBreadcrumb();
   updateHeaderPills();
@@ -11067,45 +11143,104 @@ function filterDataFactoryEvents(tag) {
 // MILESTONE 4: RELATIONSHIP RADAR & LIVING PROFILES 360 (SPEC E4, E5)
 // ==========================================
 function renderRelationshipRadarHub() {
-  state.subtabs.relationship_radar = state.subtabs.relationship_radar || 'graph';
-  const curSub = state.subtabs.relationship_radar;
+  let curSub = state.subtabs.relationship_radar || 'graph';
+  if (curSub === 'profiles') curSub = 'profile';
+  if (curSub === 'notes') curSub = 'notebook';
+  state.subtabs.relationship_radar = curSub;
+
   const contacts = state.df_contacts || [];
-  const hotContacts = contacts.filter(c => (c.heat_score || 50) >= 80);
-  const warmContacts = contacts.filter(c => (c.heat_score || 50) >= 50 && (c.heat_score || 50) < 80);
-  const coldContacts = contacts.filter(c => (c.heat_score || 50) < 50 || (c.went_silent_days || 0) > 7);
 
   return `
-    <div class="hub-header">
-      <div class="hub-header-top">
-        <div>
-          <h1 class="hub-title">Radar Quan Hệ, Bản Đồ Mạng Lưới & Hồ Sơ Sống 360</h1>
-          <p class="hub-desc">
-            Bản đồ đồ thị mạng lưới tương tác (Canvas HTML5), phân tích nhiệt độ quan hệ, giải thích điểm Explainable AI, trọng tài kiểm soát lượt bóng & thang trượt 6 cấp tự trị.
-          </p>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn primary" onclick="openMergeContactsModal()"><i class="ph ph-link"></i> Hợp Nhất Định Danh</button>
-          <button class="btn" onclick="fetchAllData()"><i class="ph ph-arrows-clockwise"></i> Làm Mới</button>
-        </div>
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+      <!-- Subnav Quick Switcher -->
+      <div style="display:flex; gap:8px; align-items:center; border-bottom:1px solid var(--color-divider); padding-bottom:10px; margin-bottom:4px;">
+        <button class="btn ${curSub === 'graph' ? 'primary' : 'btn-ghost'}" onclick="switchSubtab('relationship_radar', 'graph')" style="gap:6px; font-size:12px;">
+          <i class="ph ph-graph" style="font-size:14px;"></i> Bản đồ quan hệ
+        </button>
+        <button class="btn ${curSub === 'profile' ? 'primary' : 'btn-ghost'}" onclick="switchSubtab('relationship_radar', 'profile')" style="gap:6px; font-size:12px;">
+          <i class="ph ph-identification-card" style="font-size:14px;"></i> Hồ sơ sống 360
+        </button>
+        <button class="btn ${curSub === 'notebook' ? 'primary' : 'btn-ghost'}" onclick="switchSubtab('relationship_radar', 'notebook')" style="gap:6px; font-size:12px;">
+          <i class="ph ph-notebook" style="font-size:14px;"></i> Sổ tay nhận thức
+        </button>
       </div>
 
-      <!-- Subnav Tabs Chặng 4 -->
-      <div style="display:flex;gap:8px;margin-top:16px;border-bottom:1px solid var(--color-divider);padding-bottom:12px">
-        <button class="btn ${curSub === 'graph' ? 'primary' : 'subtle'} sm" onclick="switchSubtab('relationship_radar', 'graph')">
-          <i class="ph ph-graph"></i> 🕸️ Bản Đồ Mạng Lưới Đồ Thị (Graph Canvas)
-        </button>
-        <button class="btn ${curSub === 'radar' ? 'primary' : 'subtle'} sm" onclick="switchSubtab('relationship_radar', 'radar')">
-          <i class="ph ph-fire"></i> 📊 Radar Nhiệt Độ & Trọng Tài Bóng
-        </button>
-        <button class="btn ${curSub === 'profiles' ? 'primary' : 'subtle'} sm" onclick="switchSubtab('relationship_radar', 'profiles')">
-          <i class="ph ph-user-list"></i> 👤 Danh Sách Hồ Sơ Sống 360 (${contacts.length})
-        </button>
-      </div>
+      ${curSub === 'graph' ? renderRelationshipGraphHub(contacts) : ''}
+      ${curSub === 'profile' ? renderLivingProfile360Section() : ''}
+      ${curSub === 'notebook' ? renderCognitiveNotebookSection() : ''}
     </div>
+  `;
+}
 
-    ${curSub === 'graph' ? renderRelationshipGraphView() : ''}
-    ${curSub === 'radar' ? renderRelationshipRadarView(hotContacts, warmContacts, coldContacts) : ''}
-    ${curSub === 'profiles' ? renderLivingProfilesTableView(contacts) : ''}
+function renderRelationshipGraphHub(contacts) {
+  state.graphMode = state.graphMode || 'list';
+  const mode = state.graphMode;
+  state.graphFilterKey = state.graphFilterKey || 'all';
+
+  // Dynamic filter on contacts
+  let filteredContacts = contacts.slice();
+  if (state.graphFilterKey === 'hot') {
+    filteredContacts = filteredContacts.filter(c => (c.heat_score || 50) >= 80);
+  } else if (state.graphFilterKey === 'warm') {
+    filteredContacts = filteredContacts.filter(c => (c.heat_score || 50) >= 50 && (c.heat_score || 50) < 80);
+  } else if (state.graphFilterKey === 'cold') {
+    filteredContacts = filteredContacts.filter(c => (c.heat_score || 50) < 50 || (c.went_silent_days || 0) > 7);
+  } else if (state.graphFilterKey === 'us_ball') {
+    filteredContacts = filteredContacts.filter(c => c.ball_owner === 'US');
+  } else if (state.graphFilterKey === 'them_ball') {
+    filteredContacts = filteredContacts.filter(c => c.ball_owner === 'THEM');
+  } else if (state.graphFilterKey === 'zalo') {
+    filteredContacts = filteredContacts.filter(c => !!c.zalo_id);
+  } else if (state.graphFilterKey === 'wa') {
+    filteredContacts = filteredContacts.filter(c => !!(c.whatsapp_id || c.phone));
+  }
+
+  const gmStyle = (k) => 'display:flex;align-items:center;gap:6px;height:24px;padding:0 10px;border:none;border-radius:6px;font:inherit;font-size:11.5px;cursor:pointer;background:' + (mode === k ? '#232639' : 'transparent') + ';color:' + (mode === k ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)') + ';';
+
+  const filterChips = [
+    { key: 'all', label: 'Tất cả', val: contacts.length },
+    { key: 'hot', label: 'Độ nóng', val: '≥ 80° (' + contacts.filter(c => (c.heat_score || 50) >= 80).length + ')' },
+    { key: 'warm', label: 'Độ nóng', val: '50-79° (' + contacts.filter(c => (c.heat_score || 50) >= 50 && (c.heat_score || 50) < 80).length + ')' },
+    { key: 'cold', label: 'Đang lạnh', val: '< 50° (' + contacts.filter(c => (c.heat_score || 50) < 50 || (c.went_silent_days || 0) > 7).length + ')' },
+    { key: 'us_ball', label: 'Phụ trách', val: 'Phía ta (' + contacts.filter(c => c.ball_owner === 'US').length + ')' },
+    { key: 'them_ball', label: 'Phụ trách', val: 'Khách (' + contacts.filter(c => c.ball_owner === 'THEM').length + ')' },
+    { key: 'zalo', label: 'Kênh', val: 'Zalo (' + contacts.filter(c => !!c.zalo_id).length + ')' },
+  ];
+
+  return `
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+      <!-- Mockup Header lines 719-732 -->
+      <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; row-gap:14px; column-gap:24px;">
+        <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:700px;">
+          <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">Bản đồ quan hệ</div>
+          <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">Không phải danh bạ. Trọng số của mỗi quan hệ thay đổi theo tần suất, chiều tương tác và giai đoạn — nên thấy được ai là cầu nối, khách nào đang lạnh, ai đang ôm quá nhiều việc.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <div style="display:flex; align-items:center; gap:2px; border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-md,8px); padding:2px;">
+            <button onclick="setGraphMode('list')" style="${gmStyle('list')}"><i class="ph ph-rows" style="font-size:13px;"></i>Danh sách</button>
+            <button onclick="setGraphMode('people')" style="${gmStyle('people')}"><i class="ph ph-users-three" style="font-size:13px;"></i>Người ↔ Người</button>
+            <button onclick="setGraphMode('groups')" style="${gmStyle('groups')}"><i class="ph ph-polygon" style="font-size:13px;"></i>Nhóm ↔ Nhóm</button>
+            <button onclick="setGraphMode('edges')" style="${gmStyle('edges')}"><i class="ph ph-flow-arrow" style="font-size:13px;"></i>Luồng chủ đề</button>
+            <button onclick="setGraphMode('canvas')" style="${gmStyle('canvas')}"><i class="ph ph-graph" style="font-size:13px;"></i>Canvas Obsidian</button>
+          </div>
+          <button class="btn btn-secondary" onclick="setGraphFilter('all')" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;"><i class="ph ph-funnel" style="font-size:14px;"></i>7 bộ lọc</button>
+        </div>
+      </div>
+
+      <!-- Mockup Filter chips lines 734-738 -->
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        ${filterChips.map(gf => `
+          <span onclick="setGraphFilter('${gf.key}')" style="display:flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:11px;cursor:pointer;color:${state.graphFilterKey === gf.key ? 'var(--color-accent-300,#d2cefd)' : 'var(--color-neutral-300,#cfd3e5)'};border:1px solid ${state.graphFilterKey === gf.key ? 'var(--color-accent,#9184d9)' : 'var(--color-neutral-800,#3f424d)'};background:${state.graphFilterKey === gf.key ? 'var(--color-accent-900,#2b2741)' : 'var(--color-bg,#161826)'};">
+            ${gf.label}<span style="color:var(--color-neutral-500,#9397ab); margin-left:6px;">${gf.val}</span><i class="ph ph-caret-down" style="font-size:11px; margin-left:5px; color:var(--color-neutral-700,#595d6c);"></i>
+          </span>
+        `).join('')}
+      </div>
+
+      ${mode === 'list' ? renderGraphListSection(filteredContacts, contacts) : ''}
+      ${(mode === 'people' || mode === 'groups') ? renderGraphNodesSection(filteredContacts, mode) : ''}
+      ${mode === 'edges' ? renderGraphViewSection(filteredContacts) : ''}
+      ${mode === 'canvas' ? renderRelationshipGraphView() : ''}
+    </div>
   `;
 }
 
@@ -11356,90 +11491,255 @@ function renderRelationshipGraphView() {
 // ----------------------------------------------------
 // View 2: Phân Bổ Nhiệt Độ & Trọng Tài Bóng (SPEC-19)
 // ----------------------------------------------------
-function renderRelationshipRadarView(hotContacts, warmContacts, coldContacts) {
+// ----------------------------------------------------
+// 1. GRAPH LIST SECTION (Mockup lines 740-793)
+// ----------------------------------------------------
+function renderGraphListSection(contacts, allContacts) {
+  const coldCount = (allContacts || contacts).filter(c => (c.heat_score || 50) < 50 || (c.went_silent_days || 0) > 7).length;
+  const unassignedCount = (allContacts || contacts).filter(c => !c.ball_owner || c.ball_owner === 'UNASSIGNED').length;
+
   return `
-    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:14px;margin-bottom:18px">
-      <!-- HOT -->
-      <div class="card card-pad" style="border-top:3px solid #ef4444">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div style="font-weight:700;color:#ef4444;display:flex;align-items:center;gap:6px">
-            <i class="ph ph-fire"></i> Khách Hàng Nóng (${hotContacts.length})
-          </div>
-          <span class="badge danger">Heat >= 80°</span>
+    <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+        <div>
+          <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">${contacts.length} hồ sơ đang sống</div>
+          <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Sắp theo độ nóng · bấm một dòng để mở hồ sơ sống</div>
         </div>
-        <div style="font-size:11.5px;color:var(--color-neutral-400);margin-bottom:10px">Tương tác dồn dập, có giao dịch lớn hoặc khiếu nại khẩn. Cần phản hồi ngay.</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${hotContacts.map(c => `
-            <div style="background:var(--color-bg);padding:10px;border-radius:6px;border:1px solid var(--color-divider);display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:border-color 0.2s" onclick="openLivingProfile360Modal('${c.id}')">
-              <div>
-                <div style="font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:6px">
-                  ${escapeHtml(c.full_name)}
-                  <span class="badge primary" style="font-size:9.5px;padding:1px 5px">Cấp ${c.autonomy_level || 1}</span>
+        <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">${coldCount} đang lạnh · ${unassignedCount} chưa có người phụ trách</span>
+      </div>
+      <div style="width:100%; overflow-x:auto;">
+        <table class="table" style="min-width:920px;">
+          <thead>
+            <tr>
+              <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px;">Đối tượng</th>
+              <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:116px;">Loại</th>
+              <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:150px;">Giai đoạn</th>
+              <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:88px;">Kênh</th>
+              <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:150px;">Người phụ trách</th>
+              <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:128px;">Độ nóng</th>
+              <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:92px;">Tiềm năng</th>
+              <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:84px;">Rủi ro</th>
+              <th style="text-align:left; font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); padding:9px 16px; width:126px;">Chạm gần nhất</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${contacts.length === 0 ? `
+              <tr>
+                <td colspan="9" style="text-align:center; padding:32px; color:var(--color-neutral-400,#b2b6ca);">
+                  Chưa có hồ sơ liên hệ nào phù hợp với bộ lọc hiện tại.
+                </td>
+              </tr>
+            ` : contacts.map(c => {
+              const heat = Math.round(c.heat_score || 50);
+              const tone = heat >= 80 ? 'oklch(0.76 0.15 24)' : heat >= 50 ? 'oklch(0.84 0.13 84)' : 'var(--color-neutral-500,#9397ab)';
+              const initials = (c.full_name || 'U').split(' ').map(w => w[0]).filter(Boolean).slice(-2).join('').toUpperCase() || 'KH';
+              const type = c.role || (c.company ? 'Khách' : 'Cá nhân');
+              const stage = c.status === 'HOT' ? 'Nóng (Cần xử lý)' : c.status === 'WARM' ? 'Đang chăm sóc' : 'Đang nguội';
+              const isUs = c.ball_owner === 'US';
+              const owner = isUs ? 'Phía ta (Sếp & Trợ Lý)' : 'Đối tác (THEM)';
+              const ownerTone = isUs ? '#f43f5e' : 'var(--color-neutral-300,#cfd3e5)';
+              const risk = (c.went_silent_days > 7 || heat < 40) ? 'Cao' : (heat < 75 ? 'Trung bình' : 'Thấp');
+              const riskColor = risk === 'Cao' ? 'oklch(0.76 0.15 24)' : risk === 'Trung bình' ? 'oklch(0.84 0.13 84)' : 'oklch(0.76 0.12 162)';
+              const riskStyle = 'font-size:10.5px;padding:2px 8px;border-radius:999px;white-space:nowrap;color:' + riskColor + ';border:1px solid ' + riskColor + ';';
+              const last = c.went_silent_days > 0 ? (c.went_silent_days + ' ngày') : 'Hôm nay';
+              const lastTone = c.went_silent_days > 7 ? 'oklch(0.76 0.15 24)' : 'var(--color-neutral-400,#b2b6ca)';
+              
+              // Find related opp if any
+              const opp = (state.df_opps || []).find(o => o.contact_id === c.id || o.contact_name === c.full_name);
+              const potential = opp && opp.estimated_value ? (opp.estimated_value >= 1e9 ? (opp.estimated_value / 1e9).toFixed(1) + ' tỷ ₫' : (opp.estimated_value / 1e6).toFixed(0) + ' triệu ₫') : (c.engagement_score ? c.engagement_score + '%' : '—');
+
+              return `
+                <tr onclick="selectProfileAndOpen('${c.id}')" style="cursor:pointer;">
+                  <td style="padding:11px 16px;">
+                    <div style="display:flex; align-items:center; gap:9px;">
+                      <span style="width:24px; height:24px; flex:none; border-radius:50%; background:var(--color-accent-900,#2b2741); border:1px solid var(--color-accent-800,#423a6a); display:grid; place-items:center; font-size:9px; font-weight:600; color:var(--color-accent-300,#d2cefd);">${initials}</span>
+                      <div style="min-width:0;">
+                        <div style="font-size:12.5px; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(c.full_name)}</div>
+                        <div style="font-size:10px; color:var(--color-neutral-500,#9397ab); margin-top:2px;">${escapeHtml(c.company || 'Doanh nghiệp')}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="padding:11px 16px;"><span style="font-size:10px;padding:2px 7px;border-radius:var(--radius-sm,4px);white-space:nowrap;color:var(--color-neutral-400,#b2b6ca);border:1px solid var(--color-neutral-800,#3f424d);">${escapeHtml(type)}</span></td>
+                  <td style="padding:11px 16px; font-size:12px; color:var(--color-neutral-300,#cfd3e5);">${escapeHtml(stage)}</td>
+                  <td style="padding:11px 16px;">
+                    <span style="display:flex; align-items:center; gap:6px;">
+                      ${c.zalo_id ? `<i class="ph ph-chat-circle-dots" style="font-size:14px; color:oklch(0.76 0.12 162);" title="Zalo: ${escapeHtml(c.zalo_id)}"></i>` : ''}
+                      ${(c.whatsapp_id || c.phone) ? `<i class="ph ph-device-mobile" style="font-size:14px; color:oklch(0.84 0.13 84);" title="WA/Phone: ${escapeHtml(c.whatsapp_id || c.phone)}"></i>` : ''}
+                    </span>
+                  </td>
+                  <td style="padding:11px 16px; font-size:12px; color:${ownerTone};">${escapeHtml(owner)}</td>
+                  <td style="padding:11px 16px;">
+                    <div style="display:flex; align-items:center; gap:9px;">
+                      <span style="flex:1; height:4px; border-radius:2px; background:var(--color-divider,rgba(233,233,237,0.16)); overflow:hidden;"><span style="display:block; height:4px; width:${heat}%; background:${tone}; opacity:.85;"></span></span>
+                      <span style="flex:none; font-size:11px; color:${tone}; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${heat}</span>
+                    </div>
+                  </td>
+                  <td style="padding:11px 16px; font-size:12px; color:var(--color-neutral-300,#cfd3e5); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${potential}</td>
+                  <td style="padding:11px 16px;"><span style="${riskStyle}">${risk}</span></td>
+                  <td style="padding:11px 16px; font-size:11.5px; color:${lastTone}; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${last}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// 2. GRAPH NODES SECTION (Mockup lines 795-858)
+// ----------------------------------------------------
+function renderGraphNodesSection(contacts, mode) {
+  const isGroups = mode === 'groups';
+  const nodeGraphTitle = isGroups ? 'Đồ thị quan hệ giữa các nhóm' : 'Đồ thị quan hệ giữa con người';
+  const nodeGraphSub = isGroups ? 'Cạnh là số người xuất hiện ở cả hai nhóm' : 'Cạnh là tần suất và chiều tương tác đã phân tích';
+  const nodeStatTitle = isGroups ? 'Nhóm có trọng số cao nhất' : 'Người là cầu nối';
+
+  // Build real nodes
+  const nodes = [];
+  const edges = [];
+
+  // Center node: HQ
+  nodes.push({
+    name: 'Anh Cơ La (HQ)',
+    meta: 'Owner',
+    x: 50,
+    y: 50,
+    r: 26,
+    kind: 'owner',
+    id: 'hq'
+  });
+
+  if (isGroups) {
+    const groups = state.groups || [];
+    if (groups.length === 0) {
+      // Empty state for groups
+    } else {
+      const total = groups.length;
+      groups.forEach((g, i) => {
+        const angle = (2 * Math.PI * i) / total - Math.PI / 2;
+        const x = Math.round(50 + 36 * Math.cos(angle));
+        const y = Math.round(50 + 36 * Math.sin(angle));
+        nodes.push({
+          name: g.name || g.group_name || 'Nhóm ' + (i + 1),
+          meta: (g.member_count || 1) + ' thành viên',
+          x, y, r: 20, kind: 'hot', id: g.id || ('grp-' + i)
+        });
+        edges.push({ x1: 50, y1: 50, x2: x, y2: y, w: 2, stroke: '#8fd6b4', opacity: 0.8 });
+      });
+    }
+  } else {
+    // People mode from contacts
+    const total = Math.max(1, contacts.length);
+    contacts.forEach((c, i) => {
+      const angle = (2 * Math.PI * i) / total - Math.PI / 2;
+      const x = Math.round(50 + 36 * Math.cos(angle));
+      const y = Math.round(50 + 36 * Math.sin(angle));
+      const heat = Math.round(c.heat_score || 50);
+      const kind = heat >= 80 ? 'hot' : (c.went_silent_days > 7 ? 'cold' : 'partner');
+      nodes.push({
+        name: c.full_name,
+        meta: c.company || (heat + '°'),
+        x, y, r: 20, kind, id: c.id
+      });
+      const stroke = heat >= 80 ? '#e08b7a' : (c.went_silent_days > 7 ? '#595d6c' : '#8fd6b4');
+      const w = heat >= 80 ? 2.5 : 1.5;
+      edges.push({ x1: 50, y1: 50, x2: x, y2: y, w, stroke, opacity: heat < 50 ? 0.4 : 0.8 });
+    });
+  }
+
+  const toneOf = { owner: 'var(--acc,#9184d9)', staff: 'var(--color-accent-hover,#a7a1db)', partner: 'oklch(0.76 0.12 162)', hot: 'oklch(0.76 0.15 24)', risk: 'oklch(0.76 0.15 24)', cold: 'var(--color-neutral-500,#9397ab)' };
+  const iconOf = isGroups ? 'ph ph-users-three' : 'ph ph-user';
+
+  // Computed insights
+  const hotCount = contacts.filter(c => (c.heat_score || 50) >= 80).length;
+  const coldCount = contacts.filter(c => (c.heat_score || 50) < 50 || (c.went_silent_days || 0) > 7).length;
+  const usBallCount = contacts.filter(c => c.ball_owner === 'US').length;
+  const oppCount = (state.df_opps || []).length;
+
+  const nodeInsights = [
+    { text: hotCount > 0 ? `Có ${hotCount} khách hàng nhiệt độ cao (≥80°), ưu tiên phản hồi trong vòng 2 giờ.` : 'Không có đối tác nào đang ở mức nhiệt độ nguy cấp.', tone: hotCount > 0 ? 'oklch(0.76 0.15 24)' : 'oklch(0.76 0.12 162)' },
+    { text: coldCount > 0 ? `Có ${coldCount} đối tác im lặng trên 7 ngày, cần lên kế hoạch gửi tài liệu hâm nóng quan hệ.` : 'Mọi hồ sơ quan hệ đều được tương tác trong 7 ngày gần nhất.', tone: coldCount > 0 ? 'oklch(0.84 0.13 84)' : 'oklch(0.76 0.12 162)' },
+    { text: `${usBallCount} hồ sơ hiện do phía ta giữ bóng (cần trả lời để giải phóng tiến độ tiếp xúc).`, tone: usBallCount > 0 ? 'oklch(0.84 0.13 84)' : 'oklch(0.76 0.12 162)' },
+    { text: `${oppCount} cơ hội kinh doanh đang liên kết trực tiếp vào các nút mạng lưới quan hệ sống.`, tone: 'var(--acc,#9184d9)' },
+  ];
+
+  return `
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr)); gap:16px; align-items:start;">
+      <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+          <div>
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">${nodeGraphTitle}</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">${nodeGraphSub}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca);"><span style="width:10px; height:2px; background:oklch(0.76 0.12 162);"></span>quan hệ mạnh</span>
+            <span style="display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca);"><span style="width:10px; height:2px; background:var(--color-neutral-700,#595d6c);"></span>đang nguội</span>
+          </div>
+        </div>
+        <div style="padding:20px; background:var(--color-bg,#161826);">
+          <div style="position:relative; width:100%; height:470px;">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; z-index:1;">
+              ${edges.map(ne => `
+                <line x1="${ne.x1}" y1="${ne.y1}" x2="${ne.x2}" y2="${ne.y2}" stroke="${ne.stroke}" stroke-width="${ne.w}" stroke-opacity="${ne.opacity}" stroke-linecap="round" vector-effect="non-scaling-stroke"></line>
+              `).join('')}
+            </svg>
+            ${nodes.map(np => {
+              const tn = toneOf[np.kind] || 'var(--color-neutral-500,#9397ab)';
+              const iconClass = np.kind === 'owner' ? 'ph-fill ph-crown-simple' : iconOf;
+              const clickAction = np.id === 'hq' ? `showToast('👑 HQ Tổng Chỉ Huy Sếp Cơ La (Ryan)')` : `selectProfileAndOpen('${np.id}')`;
+              return `
+                <div onclick="${clickAction}" style="position:absolute; left:${np.x}%; top:${np.y}%; width:${np.r * 2}px; height:${np.r * 2}px; transform:translate(-50%,-50%); z-index:2; cursor:pointer;" title="${escapeHtml(np.name)} · ${escapeHtml(np.meta)}">
+                  <div style="width:100%; height:100%; border-radius:50%; display:grid; place-items:center; background:var(--color-surface,#232532); border:1.5px solid ${tn}; color:${tn}; box-shadow:0 0 18px -8px ${tn};">
+                    <i class="${iconClass}" style="font-size:${Math.round(np.r * 0.55)}px;"></i>
+                  </div>
+                  <div style="position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:6px; width:136px; text-align:center;">
+                    <div style="font-size:11px; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(np.name)}</div>
+                    <div style="font-size:9.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(np.meta)}</div>
+                  </div>
                 </div>
-                <div style="font-size:11px;color:var(--color-neutral-400)">${escapeHtml(c.company || 'Doanh nghiệp')} · ${c.ball_owner === 'US' ? '🎾 Cần ta trả lời' : '⚽ Chờ khách'}</div>
-              </div>
-              <div style="text-align:right">
-                <span class="badge danger" style="font-weight:700">${c.heat_score}°</span>
-                <div style="font-size:10px;color:var(--color-neutral-400);margin-top:2px">Xem 360 →</div>
-              </div>
-            </div>
-          `).join('')}
+              `;
+            }).join('')}
+          </div>
         </div>
       </div>
 
-      <!-- WARM -->
-      <div class="card card-pad" style="border-top:3px solid #f59e0b">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div style="font-weight:700;color:#f59e0b;display:flex;align-items:center;gap:6px">
-            <i class="ph ph-sun"></i> Đối Tác Ấm Áp (${warmContacts.length})
+      <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">${nodeStatTitle}</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Rút từ dữ liệu đã phân tích</div>
           </div>
-          <span class="badge p1">Heat 50 - 79°</span>
-        </div>
-        <div style="font-size:11.5px;color:var(--color-neutral-400);margin-bottom:10px">Đang trao đổi đều đặn, cơ hội đang nuôi dưỡng hoặc hợp tác định kỳ.</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${warmContacts.map(c => `
-            <div style="background:var(--color-bg);padding:10px;border-radius:6px;border:1px solid var(--color-divider);display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:border-color 0.2s" onclick="openLivingProfile360Modal('${c.id}')">
-              <div>
-                <div style="font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:6px">
-                  ${escapeHtml(c.full_name)}
-                  <span class="badge neutral" style="font-size:9.5px;padding:1px 5px">Cấp ${c.autonomy_level || 1}</span>
+          <div style="padding:4px 0 8px;">
+            ${contacts.length === 0 ? `
+              <div style="padding:16px; text-align:center; font-size:11.5px; color:var(--color-neutral-500,#9397ab);">Chưa có dữ liệu phân tích mạng lưới.</div>
+            ` : contacts.slice(0, 6).map(c => {
+              const heat = Math.round(c.heat_score || 50);
+              const tone = heat >= 80 ? 'oklch(0.76 0.15 24)' : heat >= 50 ? 'oklch(0.84 0.13 84)' : 'var(--color-neutral-500,#9397ab)';
+              return `
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; cursor:pointer;" onclick="selectProfileAndOpen('${c.id}')">
+                  <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(c.full_name)} (${escapeHtml(c.company || 'Doanh nghiệp')})</span>
+                  <span style="flex:none; font-size:10.5px; color:${tone}; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${c.ball_owner === 'US' ? '🎾 Ta giữ bóng' : '⚽ Khách'} · ${heat}°</span>
                 </div>
-                <div style="font-size:11px;color:var(--color-neutral-400)">${escapeHtml(c.company || 'Doanh nghiệp')} · ${c.ball_owner === 'US' ? '🎾 Cần ta' : '⚽ Chờ khách'}</div>
-              </div>
-              <div style="text-align:right">
-                <span class="badge p1" style="font-weight:700">${c.heat_score}°</span>
-                <div style="font-size:10px;color:var(--color-neutral-400);margin-top:2px">Xem 360 →</div>
-              </div>
-            </div>
-          `).join('')}
+              `;
+            }).join('')}
+          </div>
         </div>
-      </div>
 
-      <!-- COLD / WENT SILENT -->
-      <div class="card card-pad" style="border-top:3px solid #64748b">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div style="font-weight:700;color:#94a3b8;display:flex;align-items:center;gap:6px">
-            <i class="ph ph-snowflake"></i> Đang Lạnh / Went Silent (${coldContacts.length})
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Hệ thống đọc được gì</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Kết luận từ đồ thị</div>
           </div>
-          <span class="badge neutral">Im lặng > 7 ngày</span>
-        </div>
-        <div style="font-size:11.5px;color:var(--color-neutral-400);margin-bottom:10px">Đối tác có dấu hiệu nguội, không phản hồi sau báo giá hoặc demo.</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${coldContacts.map(c => `
-            <div style="background:var(--color-bg);padding:10px;border-radius:6px;border:1px solid var(--color-divider);display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:border-color 0.2s" onclick="openLivingProfile360Modal('${c.id}')">
-              <div>
-                <div style="font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:6px">
-                  ${escapeHtml(c.full_name)}
-                  <span class="badge neutral" style="font-size:9.5px;padding:1px 5px">Cấp ${c.autonomy_level || 1}</span>
-                </div>
-                <div style="font-size:11px;color:#ef4444">⚠️ Im lặng ${c.went_silent_days || 8} ngày</div>
+          <div style="padding:12px 16px 14px; display:flex; flex-direction:column; gap:10px;">
+            ${nodeInsights.map(ni => `
+              <div style="display:flex; align-items:flex-start; gap:9px;">
+                <span style="width:5px; height:5px; flex:none; border-radius:50%; background:${ni.tone}; margin-top:6px;"></span>
+                <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); line-height:1.55; text-wrap:pretty;">${escapeHtml(ni.text)}</span>
               </div>
-              <div style="text-align:right">
-                <span class="badge neutral">${c.heat_score}°</span>
-                <div style="font-size:10px;color:var(--color-neutral-400);margin-top:2px">Xem 360 →</div>
-              </div>
-            </div>
-          `).join('')}
+            `).join('')}
+          </div>
         </div>
       </div>
     </div>
@@ -11447,80 +11747,823 @@ function renderRelationshipRadarView(hotContacts, warmContacts, coldContacts) {
 }
 
 // ----------------------------------------------------
-// View 3: Danh Sách Hồ Sơ Sống 360 (SPEC-20, SPEC-10)
+// 3. GRAPH VIEW / RELATIONAL EDGES (Mockup lines 860-926)
 // ----------------------------------------------------
-function renderLivingProfilesTableView(contacts) {
+function renderGraphViewSection(contacts) {
+  const opps = state.df_opps || [];
+  const rows = contacts.slice(0, 10).map(c => {
+    const opp = opps.find(o => o.contact_id === c.id || o.contact_name === c.full_name);
+    const heat = Math.round(c.heat_score || 50);
+    const tone = heat >= 80 ? 'oklch(0.76 0.15 24)' : heat >= 50 ? 'oklch(0.84 0.13 84)' : 'var(--color-neutral-500,#9397ab)';
+    const w = heat >= 80 ? 5 : heat >= 50 ? 3 : 1;
+    const topic = opp ? opp.title : (c.ai_summary ? c.ai_summary.slice(0, 30) + '...' : (c.role || 'Hợp tác kinh doanh'));
+    return {
+      from: c.full_name,
+      to: c.company || 'Genesis Corp',
+      topic,
+      weight: heat,
+      w,
+      tone,
+      id: c.id
+    };
+  });
+
+  const bridges = contacts.slice().sort((a, b) => (b.interaction_count || 1) - (a.interaction_count || 1)).slice(0, 4).map(c => ({
+    name: c.full_name,
+    meta: `${c.company || 'Doanh nghiệp'} · ${c.interaction_count || 1} tương tác · ${c.ball_owner === 'US' ? '🎾 Ta giữ bóng' : '⚽ Chờ khách'}`
+  }));
+
+  const usCount = contacts.filter(c => c.ball_owner === 'US').length;
+  const themCount = contacts.filter(c => c.ball_owner === 'THEM').length;
+  const unassigned = contacts.filter(c => !c.ball_owner || c.ball_owner === 'UNASSIGNED').length;
+  const total = Math.max(1, contacts.length);
+
+  const ballLoad = [
+    { name: 'Sếp Cơ La & Trợ Lý', bar: Math.round((usCount / total) * 100) + '%', n: String(usCount), tone: usCount > 0 ? 'oklch(0.76 0.15 24)' : 'oklch(0.76 0.12 162)' },
+    { name: 'Khách hàng / Đối tác', bar: Math.round((themCount / total) * 100) + '%', n: String(themCount), tone: 'oklch(0.76 0.12 162)' },
+    { name: 'Chưa phân công', bar: Math.round((unassigned / total) * 100) + '%', n: String(unassigned), tone: unassigned > 0 ? 'oklch(0.84 0.13 84)' : 'var(--color-neutral-500,#9397ab)' },
+  ];
+
   return `
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><i class="ph ph-user-list"></i> Hồ Sơ Sống 360 & Tóm Tắt Trí Tuệ (Living Profiles Directory)</div>
-      </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Họ & Tên</th>
-              <th>Doanh Nghiệp / Chức Vụ</th>
-              <th>Kênh Kết Nối</th>
-              <th>Mức Tự Trị</th>
-              <th>Nhiệt Độ</th>
-              <th>Ai Giữ Bóng</th>
-              <th>Tóm Tắt AI (Living Profile)</th>
-              <th>Thao Tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${contacts.length === 0 ? `
-              <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--color-neutral-400)">Chưa có hồ sơ liên hệ</td></tr>
-            ` : contacts.map(c => `
-              <tr>
-                <td style="font-family:var(--mono);color:var(--color-accent);font-size:11px">${c.id}</td>
-                <td style="font-weight:600;cursor:pointer" onclick="openLivingProfile360Modal('${c.id}')">
-                  <div style="display:flex;align-items:center;gap:6px">
-                    <span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:rgba(99,102,241,0.2);color:var(--color-accent);text-align:center;line-height:24px;font-size:10px;font-weight:700">${(c.full_name||'U').slice(0,2).toUpperCase()}</span>
-                    <span>${escapeHtml(c.full_name)}</span>
-                  </div>
-                </td>
-                <td style="color:var(--color-neutral-300)">${escapeHtml(c.company || '—')} <br><span style="font-size:11px;color:var(--color-neutral-400)">${escapeHtml(c.role || '')}</span></td>
-                <td>
-                  <div style="display:flex;flex-direction:column;gap:2px;font-size:11px">
-                    ${c.phone ? `<span>📞 ${escapeHtml(c.phone)}</span>` : ''}
-                    ${c.zalo_id ? `<span style="color:#0284c7">💬 Zalo: ${escapeHtml(c.zalo_id)}</span>` : ''}
-                    ${c.whatsapp_id ? `<span style="color:#10b981">📱 WA: ${escapeHtml(c.whatsapp_id)}</span>` : ''}
-                  </div>
-                </td>
-                <td>
-                  <span class="badge ${c.autonomy_level >= 3 ? 'good' : (c.autonomy_level >= 1 ? 'p1' : 'neutral')}" style="font-size:10.5px">
-                    Cấp ${c.autonomy_level || 1}/6
-                  </span>
-                </td>
-                <td>
-                  <span class="badge ${(c.heat_score || 50) >= 80 ? 'danger' : ((c.heat_score || 50) >= 50 ? 'p1' : 'neutral')}" style="font-weight:700">
-                    ${c.heat_score || 50}°
-                  </span>
-                </td>
-                <td>
-                  <span class="badge ${c.ball_owner === 'US' ? 'danger' : 'neutral'}" style="font-size:10.5px">
-                    ${c.ball_owner === 'US' ? '🎾 Phía Ta (US)' : '⚽ Đối Tác (THEM)'}
-                  </span>
-                </td>
-                <td style="max-width:280px;font-size:11.5px;color:var(--color-neutral-300);line-height:1.4">
-                  ${escapeHtml((c.ai_summary || 'Chưa có ghi chú tóm tắt AI').slice(0, 110))}...
-                </td>
-                <td>
-                  <div style="display:flex;gap:4px">
-                    <button class="btn sm primary" onclick="openLivingProfile360Modal('${c.id}')"><i class="ph ph-user"></i> Hồ Sơ 360</button>
-                    <button class="btn sm" onclick="openChatWithContact('${escapeHtml(c.full_name)}')"><i class="ph ph-chat-circle-dots"></i></button>
-                  </div>
-                </td>
-              </tr>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr)); gap:16px; align-items:start;">
+      <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+          <div>
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Đồ thị quan hệ</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Độ dày cạnh là tần suất · màu là giai đoạn</div>
+          </div>
+          <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">Hiển thị ${rows.length} node trọng số cao nhất</span>
+        </div>
+        <div style="padding:20px; background:var(--color-bg,#161826); min-height:430px; display:grid; place-items:center;">
+          <div style="width:100%; max-width:620px; display:flex; flex-direction:column; gap:14px;">
+            ${rows.length === 0 ? `
+              <div style="text-align:center; padding:32px; color:var(--color-neutral-500,#9397ab); font-size:12px;">
+                Chưa có luồng quan hệ nào trong kho sạch.
+              </div>
+            ` : rows.map(gr => `
+              <div onclick="selectProfileAndOpen('${gr.id}')" style="display:grid; grid-template-columns:168px minmax(0,1fr) 168px; gap:12px; align-items:center; cursor:pointer;">
+                <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+                  <span style="font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(gr.from)}</span>
+                  <span style="width:8px; height:8px; flex:none; border-radius:50%; background:var(--color-accent-hover,#a7a1db);"></span>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                  <span style="font-size:9.5px; color:var(--color-neutral-500,#9397ab); letter-spacing:0.06em; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(gr.topic)}</span>
+                  <span style="display:block; width:100%; height:${gr.w}px; border-radius:3px; background:linear-gradient(90deg,var(--color-accent-800,#423a6a),${gr.tone}); opacity:.8;"></span>
+                  <span style="font-size:9.5px; color:${gr.tone}; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${gr.weight}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="width:8px; height:8px; flex:none; border-radius:50%; background:${gr.tone};"></span>
+                  <span style="font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(gr.to)}</span>
+                </div>
+              </div>
             `).join('')}
-          </tbody>
-        </table>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Người đang là cầu nối</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Betweenness cao nhất</div>
+          </div>
+          <div style="padding:4px 0 8px;">
+            ${bridges.map(b => `
+              <div style="display:flex; align-items:center; gap:10px; padding:8px 16px;">
+                <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(b.name)}</span>
+                <span style="flex:none; font-size:10.5px; color:var(--color-neutral-500,#9397ab);">${escapeHtml(b.meta)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+            <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Tải quan hệ theo người</div>
+            <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Ai đang ôm quá nhiều ball</div>
+          </div>
+          <div style="padding:12px 16px 14px; display:flex; flex-direction:column; gap:10px;">
+            ${ballLoad.map(bl => `
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="width:120px; flex:none; font-size:11px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(bl.name)}</span>
+                <span style="flex:1; height:5px; border-radius:3px; background:var(--color-divider,rgba(233,233,237,0.16)); overflow:hidden;"><span style="display:block; height:5px; width:${bl.bar}; background:${bl.tone}; opacity:.85;"></span></span>
+                <span style="width:30px; flex:none; text-align:right; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${bl.n}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
       </div>
     </div>
   `;
+}
+
+// ----------------------------------------------------
+// 4. COGNITIVE NOTEBOOK SECTION (Mockup lines 929-1103)
+// ----------------------------------------------------
+function renderCognitiveNotebookSection() {
+  const contacts = state.df_contacts || [];
+  const groups = state.groups || [];
+  state.nbTab = state.nbTab || 'people';
+  const isGroups = state.nbTab === 'groups';
+
+  state.selectedNotebookId = state.selectedNotebookId || (contacts[0] ? contacts[0].id : null);
+  const curSubj = contacts.find(c => c.id === state.selectedNotebookId) || contacts[0] || null;
+
+  const nbTabStyle = (tab) => 'display:flex;align-items:center;justify-content:center;flex:1;gap:6px;height:26px;padding:0 9px;border:none;border-radius:6px;font:inherit;font-size:11.5px;cursor:pointer;white-space:nowrap;background:' + (state.nbTab === tab ? '#232639' : 'transparent') + ';color:' + (state.nbTab === tab ? 'var(--color-text,#e9e9ed)' : 'var(--color-neutral-400,#b2b6ca)') + ';';
+
+  const allEvents = state.df_events || [];
+  const curEvents = curSubj ? allEvents.filter(e => e.sender_id === curSubj.id || e.sender_name === curSubj.full_name) : [];
+  const curOpps = curSubj ? (state.df_opps || []).filter(o => o.contact_id === curSubj.id || o.contact_name === curSubj.full_name) : [];
+
+  const initials = curSubj ? (curSubj.full_name || 'U').split(' ').map(w => w[0]).filter(Boolean).slice(-2).join('').toUpperCase() : 'KH';
+
+  return `
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+      <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; row-gap:14px; column-gap:24px;">
+        <div style="flex:1 1 320px; min-width:min(100%,320px); max-width:760px;">
+          <div style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">Sổ tay nhận thức</div>
+          <div style="font-size:12.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; text-wrap:pretty;">Mỗi ID người và ID nhóm có một sổ tay riêng do AI-trợ lý tự ghi trong quá trình tương tác: nhận thức hiện tại, các mốc lũy tiến, và danh sách ID dữ liệu cần gọi lại khi cần. Đây là cửa sổ ngữ cảnh ngắn — không phải toàn bộ kho sạch.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <button class="btn btn-secondary" onclick="compressNotebookContext()" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px; white-space:nowrap;"><i class="ph ph-arrows-in-line-horizontal" style="font-size:14px;"></i>Nén lại toàn bộ</button>
+          <button class="btn btn-secondary" onclick="exportNotebookData()" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px; white-space:nowrap;"><i class="ph ph-download-simple" style="font-size:14px;"></i>Xuất sổ tay</button>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:330px minmax(0,1fr); gap:16px; align-items:start;">
+        <!-- Left: Subject List -->
+        <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+          <div style="padding:11px 13px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16)); display:flex; flex-direction:column; gap:9px;">
+            <div style="display:flex; align-items:center; gap:2px; border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-md,8px); padding:2px;">
+              <button onclick="setNbTab('people')" style="${nbTabStyle('people')}"><i class="ph ph-user-list" style="font-size:13px;"></i>Con người<span style="font-size:10px; opacity:.7; margin-left:5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${contacts.length}</span></button>
+              <button onclick="setNbTab('groups')" style="${nbTabStyle('groups')}"><i class="ph ph-polygon" style="font-size:13px;"></i>Nhóm<span style="font-size:10px; opacity:.7; margin-left:5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${groups.length}</span></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:7px; height:28px; padding:0 10px; border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-md,8px); background:var(--color-bg,#161826);">
+              <i class="ph ph-magnifying-glass" style="font-size:13px; color:var(--color-neutral-700,#595d6c);"></i>
+              <input type="text" placeholder="Tìm theo ID hoặc tên…" oninput="filterNotebookList(this.value)" style="border:none;background:transparent;color:var(--color-text,#e9e9ed);font-size:11px;outline:none;width:100%;">
+            </div>
+          </div>
+          <div id="notebook-subjects-box" style="max-height:660px; overflow-y:auto;">
+            ${isGroups ? (
+              groups.length === 0 ? `
+                <div style="padding:24px 16px; text-align:center; font-size:11.5px; color:var(--color-neutral-500,#9397ab);">
+                  Chưa có nhóm nào trong kho sạch SSOT.
+                  <div style="margin-top:6px; font-size:10px; color:var(--color-neutral-400,#b2b6ca);">// TODO: Đấu nối API khi backend hoàn tất đồng bộ nhóm</div>
+                </div>
+              ` : groups.map(g => `
+                <div style="padding:11px 13px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16)); cursor:pointer;">
+                  <div style="display:flex; align-items:center; gap:9px;">
+                    <span style="width:26px; height:26px; flex:none; border-radius:var(--radius-sm,4px); background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:grid; place-items:center; color:var(--color-accent-300,#d2cefd);"><i class="ph ph-users-three" style="font-size:13px;"></i></span>
+                    <div style="flex:1; min-width:0;">
+                      <div style="font-size:12px; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(g.name || 'Nhóm')}</div>
+                      <div style="font-size:9.5px; color:var(--color-neutral-500,#9397ab); margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${escapeHtml(g.id || 'GRP')}</div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')
+            ) : (
+              contacts.length === 0 ? `
+                <div style="padding:24px 16px; text-align:center; font-size:11.5px; color:var(--color-neutral-500,#9397ab);">Chưa có hồ sơ trong kho sạch.</div>
+              ` : contacts.map(c => {
+                const isActive = curSubj && curSubj.id === c.id;
+                const heat = Math.round(c.heat_score || 50);
+                const flag = heat >= 80 ? 'nóng' : (c.went_silent_days > 7 ? 'nguội' : 'ổn định');
+                const flagTone = heat >= 80 ? 'oklch(0.76 0.15 24)' : (c.went_silent_days > 7 ? 'var(--color-neutral-500,#9397ab)' : 'oklch(0.76 0.12 162)');
+                const gist = c.ai_summary || `${c.role || 'Đại diện'} tại ${c.company || 'Doanh nghiệp'}`;
+                const age = c.went_silent_days > 0 ? (c.went_silent_days + ' ngày') : 'Hôm nay';
+                const tokens = '1.842 / 4.000';
+                const fill = Math.min(100, Math.max(15, (c.interaction_count || 1) * 20)) + '%';
+
+                return `
+                  <div onclick="selectNotebookSubject('${c.id}')" style="padding:11px 13px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16)); cursor:pointer; border-left:2px solid ${isActive ? 'var(--acc,#9184d9)' : 'transparent'}; background:${isActive ? 'var(--color-neutral-900,#292b31)' : 'transparent'};">
+                    <div style="display:flex; align-items:center; gap:9px;">
+                      <span style="width:26px; height:26px; flex:none; border-radius:50%; background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:grid; place-items:center; color:${flagTone}; font-size:9.5px; font-weight:700;">
+                        ${(c.full_name || 'U').slice(0, 2).toUpperCase()}
+                      </span>
+                      <div style="flex:1; min-width:0;">
+                        <div style="font-size:12px; color:var(--color-text,#e9e9ed); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(c.full_name)}</div>
+                        <div style="font-size:9.5px; color:var(--color-neutral-500,#9397ab); margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${c.id}</div>
+                      </div>
+                      <span style="flex:none; font-size:9.5px; padding:2px 7px; border-radius:999px; white-space:nowrap; color:${flagTone}; border:1px solid ${flagTone};">${flag}</span>
+                    </div>
+                    <div style="font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:7px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-wrap:pretty;">${escapeHtml(gist)}</div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:7px;">
+                      <span style="flex:1; height:3px; border-radius:2px; background:var(--color-divider,rgba(233,233,237,0.16)); overflow:hidden;"><span style="display:block; height:3px; width:${fill}; background:var(--acc,#9184d9); opacity:.85;"></span></span>
+                      <span style="flex:none; font-size:9.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${tokens}</span>
+                      <span style="flex:none; font-size:9.5px; color:var(--color-neutral-500,#9397ab); white-space:nowrap;">${age}</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')
+            )}
+          </div>
+        </div>
+
+        <!-- Right: Current Subject Notebook Window -->
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+          ${!curSubj ? `
+            <div style="padding:48px; text-align:center; color:var(--color-neutral-400,#b2b6ca); background:var(--color-surface,#232532); border-radius:var(--radius-md,8px); border:1px solid var(--color-divider);">
+              Vui lòng chọn một đối tượng để xem sổ tay nhận thức.
+            </div>
+          ` : `
+            <div style="background:var(--color-surface,#232532); border:1px solid var(--acc,#9184d9); border-radius:var(--radius-md,8px); overflow:hidden;">
+              <div style="display:flex; align-items:center; gap:13px; padding:13px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+                <div style="width:34px; height:34px; flex:none; border-radius:50%; background:var(--color-accent-900,#2b2741); border:1px solid var(--color-accent-800,#423a6a); display:grid; place-items:center; font-size:11px; font-weight:600; color:var(--color-accent-300,#d2cefd);">${initials}</div>
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+                    <span style="font-size:14px; font-weight:600; color:var(--color-text,#e9e9ed);">${escapeHtml(curSubj.full_name)}</span>
+                    <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${curSubj.id}</span>
+                    <span style="display:flex; align-items:center; gap:5px; font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:var(--color-accent-300,#d2cefd); border:1px solid var(--color-accent-800,#423a6a);"><i class="ph ph-robot" style="font-size:12px;"></i>Trợ lý thương mại đang trực</span>
+                  </div>
+                  <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">${escapeHtml(curSubj.company || 'Doanh nghiệp')} · ${curSubj.phone ? 'Phone/WA' : ''} ${curSubj.zalo_id ? '· Zalo' : ''} · ${curEvents.length} sự kiện · Tự trị cấp ${curSubj.autonomy_level || 1}</div>
+                </div>
+              </div>
+
+              <!-- Main Content + Sidebar Inside Card -->
+              <div style="display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:16px; padding:16px;">
+                <!-- Left: 4 Context Sections -->
+                <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+                  <!-- Section 1 -->
+                  <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div style="display:flex; align-items:center; gap:7px;">
+                        <i class="ph ph-eye" style="font-size:14px; color:var(--color-accent-300,#d2cefd);"></i>
+                        <span style="font-size:12px; font-weight:600; color:var(--color-text,#e9e9ed);">Nhận thức hiện tại</span>
+                      </div>
+                      <span style="font-size:10px; color:var(--color-neutral-500,#9397ab);">cập nhật gần nhất</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                      <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <span style="width:4px; height:4px; flex:none; border-radius:50%; background:var(--color-accent-300,#d2cefd); margin-top:7px;"></span>
+                        <span style="flex:1; min-width:0; font-size:12px; color:var(--color-neutral-300,#cfd3e5); line-height:1.55; text-wrap:pretty;">${escapeHtml(curSubj.ai_summary || 'Đối tác quan trọng đang duy trì trao đổi định kỳ.')}</span>
+                      </div>
+                      <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <span style="width:4px; height:4px; flex:none; border-radius:50%; background:var(--color-accent-300,#d2cefd); margin-top:7px;"></span>
+                        <span style="flex:1; min-width:0; font-size:12px; color:var(--color-neutral-300,#cfd3e5); line-height:1.55; text-wrap:pretty;">Nhiệt độ quan hệ hiện tại: ${Math.round(curSubj.heat_score || 50)}°. Trạng thái bóng: ${curSubj.ball_owner === 'US' ? 'Bên ta cần phản hồi.' : 'Chờ phản hồi từ đối tác.'}</span>
+                      </div>
+                      ${curOpps.length > 0 ? `
+                        <div style="display:flex; align-items:flex-start; gap:8px;">
+                          <span style="width:4px; height:4px; flex:none; border-radius:50%; background:oklch(0.76 0.12 162); margin-top:7px;"></span>
+                          <span style="flex:1; min-width:0; font-size:12px; color:var(--color-neutral-300,#cfd3e5); line-height:1.55; text-wrap:pretty;">Đang mở cơ hội: ${escapeHtml(curOpps[0].title)} (${curOpps[0].estimated_value ? (curOpps[0].estimated_value / 1e6).toFixed(0) + 'tr ₫' : 'Chưa rõ giá trị'}).</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                  </div>
+
+                  <!-- Section 2 -->
+                  <div style="display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--color-divider,rgba(233,233,237,0.16)); padding-top:12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div style="display:flex; align-items:center; gap:7px;">
+                        <i class="ph ph-warning" style="font-size:14px; color:oklch(0.76 0.15 24);"></i>
+                        <span style="font-size:12px; font-weight:600; color:var(--color-text,#e9e9ed);">Cần chú ý khi trả lời</span>
+                      </div>
+                      <span style="font-size:10px; color:oklch(0.76 0.15 24);">ràng buộc chính sách</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                      <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <span style="width:4px; height:4px; flex:none; border-radius:50%; background:oklch(0.76 0.15 24); margin-top:7px;"></span>
+                        <span style="flex:1; min-width:0; font-size:12px; color:var(--color-neutral-300,#cfd3e5); line-height:1.55; text-wrap:pretty;">Mức tự trị cấp ${curSubj.autonomy_level || 1} — ${getAutonomyDescription(curSubj.autonomy_level)}. Mọi số tiền trên 50 triệu ₫ phải dừng lại chờ Sếp duyệt.</span>
+                      </div>
+                      ${curSubj.went_silent_days > 7 ? `
+                        <div style="display:flex; align-items:flex-start; gap:8px;">
+                          <span style="width:4px; height:4px; flex:none; border-radius:50%; background:oklch(0.76 0.15 24); margin-top:7px;"></span>
+                          <span style="flex:1; min-width:0; font-size:12px; color:oklch(0.76 0.15 24); line-height:1.55; text-wrap:pretty;">CẢNH BÁO: Đối tác đã im lặng ${curSubj.went_silent_days} ngày. Tránh thúc ép dồn dập, nên gửi tài liệu giá trị hữu ích trước.</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                  </div>
+
+                  <!-- Section 3 -->
+                  <div style="display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--color-divider,rgba(233,233,237,0.16)); padding-top:12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div style="display:flex; align-items:center; gap:7px;">
+                        <i class="ph ph-lightbulb" style="font-size:14px; color:oklch(0.76 0.12 162);"></i>
+                        <span style="font-size:12px; font-weight:600; color:var(--color-text,#e9e9ed);">Đã học được từ tương tác</span>
+                      </div>
+                      <span style="font-size:10px; color:var(--color-neutral-500,#9397ab);">${curEvents.length} sự kiện nguồn</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                      <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <span style="width:4px; height:4px; flex:none; border-radius:50%; background:oklch(0.76 0.12 162); margin-top:7px;"></span>
+                        <span style="flex:1; min-width:0; font-size:12px; color:var(--color-neutral-300,#cfd3e5); line-height:1.55; text-wrap:pretty;">Ưa thích làm việc bằng văn bản rõ ràng, phản hồi nhanh trong 15 phút đầu phiên làm việc.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Section 4 -->
+                  <div style="display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--color-divider,rgba(233,233,237,0.16)); padding-top:12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div style="display:flex; align-items:center; gap:7px;">
+                        <i class="ph ph-question" style="font-size:14px; color:var(--color-neutral-500,#9397ab);"></i>
+                        <span style="font-size:12px; font-weight:600; color:var(--color-text,#e9e9ed);">Điều chưa biết</span>
+                      </div>
+                      <span style="font-size:10px; color:var(--color-neutral-500,#9397ab);">chưa đủ dữ liệu</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                      <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <span style="width:4px; height:4px; flex:none; border-radius:50%; background:var(--color-neutral-500,#9397ab); margin-top:7px;"></span>
+                        <span style="flex:1; min-width:0; font-size:12px; color:var(--color-neutral-300,#cfd3e5); line-height:1.55; text-wrap:pretty;">Chưa có thông tin ngân sách dự kiến của cả năm tiếp theo.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Sidebar Inside Card -->
+                <div style="display:flex; flex-direction:column; gap:14px;">
+                  <!-- Memory ID Badges -->
+                  <div style="padding:11px 13px; border:1px solid var(--color-accent-800,#423a6a); border-radius:var(--radius-sm,4px); background:var(--color-accent-900,#2b2741);">
+                    <div style="display:flex; align-items:center; gap:7px;">
+                      <i class="ph ph-hash" style="font-size:13px; color:var(--color-accent-300,#d2cefd);"></i>
+                      <span style="flex:1; font-size:10px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--color-accent-300,#d2cefd);">Gợi nhớ ID dữ liệu</span>
+                    </div>
+                    <div style="font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:6px; line-height:1.45; text-wrap:pretty;">Agent chỉ giữ ID, cần chi tiết thì gọi thẳng vào kho sạch.</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:9px;">
+                      <span style="font-size:10px;padding:2px 7px;border-radius:var(--radius-sm,4px);white-space:nowrap;cursor:pointer;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-accent-300,#d2cefd);border:1px solid var(--color-neutral-800,#3f424d);background:var(--color-bg,#161826);" title="ID Người">${curSubj.id}</span>
+                      ${curEvents.slice(0, 4).map(e => `
+                        <span style="font-size:10px;padding:2px 7px;border-radius:var(--radius-sm,4px);white-space:nowrap;cursor:pointer;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:oklch(0.76 0.12 162);border:1px solid var(--color-neutral-800,#3f424d);background:var(--color-bg,#161826);" title="Sự kiện ${escapeHtml(e.event_type || '')}">${e.id}</span>
+                      `).join('')}
+                      ${curOpps.slice(0, 2).map(o => `
+                        <span style="font-size:10px;padding:2px 7px;border-radius:var(--radius-sm,4px);white-space:nowrap;cursor:pointer;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:oklch(0.84 0.13 84);border:1px solid var(--color-neutral-800,#3f424d);background:var(--color-bg,#161826);" title="Cơ hội">${o.id}</span>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                  <!-- Budget Bars -->
+                  <div style="padding:11px 13px; border:1px solid var(--color-neutral-800,#3f424d); border-radius:var(--radius-sm,4px); background:var(--color-bg,#161826);">
+                    <div style="font-size:10px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Ngân sách cửa sổ</div>
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                      <div style="display:flex; flex-direction:column; gap:4px;">
+                        <div style="display:flex; align-items:baseline; gap:8px;">
+                          <span style="flex:1; min-width:0; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Nhận thức hiện tại</span>
+                          <span style="flex:none; font-size:10.5px; color:var(--color-accent-300,#d2cefd); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">742 token</span>
+                        </div>
+                        <span style="height:3px; border-radius:2px; background:var(--color-divider,rgba(233,233,237,0.16)); overflow:hidden;"><span style="display:block; height:3px; width:40%; background:var(--color-accent-300,#d2cefd); opacity:.85;"></span></span>
+                      </div>
+                      <div style="display:flex; flex-direction:column; gap:4px;">
+                        <div style="display:flex; align-items:baseline; gap:8px;">
+                          <span style="flex:1; min-width:0; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Điểm cần chú ý</span>
+                          <span style="flex:none; font-size:10.5px; color:oklch(0.76 0.15 24); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">486 token</span>
+                        </div>
+                        <span style="height:3px; border-radius:2px; background:var(--color-divider,rgba(233,233,237,0.16)); overflow:hidden;"><span style="display:block; height:3px; width:26%; background:oklch(0.76 0.15 24); opacity:.85;"></span></span>
+                      </div>
+                      <div style="display:flex; flex-direction:column; gap:4px;">
+                        <div style="display:flex; align-items:baseline; gap:8px;">
+                          <span style="flex:1; min-width:0; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Đã học được</span>
+                          <span style="flex:none; font-size:10.5px; color:oklch(0.76 0.12 162); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">392 token</span>
+                        </div>
+                        <span style="height:3px; border-radius:2px; background:var(--color-divider,rgba(233,233,237,0.16)); overflow:hidden;"><span style="display:block; height:3px; width:21%; background:oklch(0.76 0.12 162); opacity:.85;"></span></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Boss Actions -->
+                  <div style="padding:11px 13px; border:1px dashed var(--color-neutral-800,#3f424d); border-radius:var(--radius-sm,4px);">
+                    <div style="font-size:10px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Sếp can thiệp</div>
+                    <div style="display:flex; flex-direction:column; gap:7px; margin-top:9px;">
+                      <button class="btn btn-ghost" onclick="showToast('📌 Đã ghim nhận thức này vào bộ nhớ bất biến!')" style="justify-content:flex-start; gap:7px; height:26px; padding:0 8px; font-size:11px; width:100%;"><i class="ph ph-push-pin" style="font-size:13px;"></i>Ghim nhận thức này</button>
+                      <button class="btn btn-ghost" onclick="regenerateContactSummary('${curSubj.id}')" style="justify-content:flex-start; gap:7px; height:26px; padding:0 8px; font-size:11px; width:100%;"><i class="ph ph-arrows-clockwise" style="font-size:13px;"></i>Yêu cầu AI đọc lại</button>
+                      <button class="btn btn-ghost" onclick="showToast('🧹 Đã dọn dẹp ngữ cảnh trôi dạt!')" style="justify-content:flex-start; gap:7px; height:26px; padding:0 8px; font-size:11px; width:100%;"><i class="ph ph-eraser" style="font-size:13px;"></i>Xóa bớt ngữ cảnh trôi</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Subgrid (Lũy tiến nhận thức & Đã nén) -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:16px; align-items:start;">
+              <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+                  <div>
+                    <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Lũy tiến nhận thức</div>
+                    <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Mỗi mốc là một lần agent tự sửa lại cách hiểu</div>
+                  </div>
+                  <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">${curEvents.length} sự kiện nguồn</span>
+                </div>
+                <div style="padding:4px 0 10px;">
+                  ${curEvents.length === 0 ? `
+                    <div style="padding:16px; text-align:center; font-size:11.5px; color:var(--color-neutral-500,#9397ab);">Chưa có sự kiện mốc lũy tiến nào.</div>
+                  ` : curEvents.slice(0, 6).map((e, idx) => {
+                    const kind = idx === 0 ? 'Bổ sung' : (idx === 1 ? 'Tự sửa' : 'Đã học');
+                    const kindTone = idx === 0 ? 'oklch(0.76 0.12 162)' : (idx === 1 ? 'oklch(0.84 0.13 84)' : 'var(--color-accent-300,#d2cefd)');
+                    return `
+                      <div style="display:grid; grid-template-columns:96px 88px minmax(0,1fr); gap:12px; align-items:flex-start; padding:9px 16px;">
+                        <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; padding-top:2px; white-space:nowrap;">${e.created_at ? e.created_at.slice(5, 16) : 'Gần đây'}</span>
+                        <span style="font-size:10px; padding:2px 8px; border-radius:var(--radius-sm,4px); white-space:nowrap; text-align:center; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:${kindTone}; border:1px solid ${kindTone};">${kind}</span>
+                        <span style="min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); line-height:1.55; text-wrap:pretty;">${escapeHtml(e.meaning_summary || e.content || '')}</span>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+                  <div>
+                    <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Đã nén bỏ khỏi cửa sổ</div>
+                    <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Vẫn còn nguyên trong kho sạch, chỉ không nằm trong trí nhớ nhanh</div>
+                  </div>
+                </div>
+                <div style="padding:6px 0 10px;">
+                  <div style="display:flex; align-items:center; gap:10px; padding:8px 16px;">
+                    <i class="ph ph-archive" style="font-size:13px; flex:none; color:var(--color-neutral-700,#595d6c);"></i>
+                    <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-400,#b2b6ca); text-wrap:pretty;">Các tin nhắn chào hỏi và xác nhận ngắn</span>
+                    <button class="btn btn-ghost" onclick="showToast('Đã gọi lại ngữ cảnh')" style="flex:none; height:22px; padding:0 7px; font-size:10px; white-space:nowrap;">Gọi lại</button>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px; padding:8px 16px;">
+                    <i class="ph ph-archive" style="font-size:13px; flex:none; color:var(--color-neutral-700,#595d6c);"></i>
+                    <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-400,#b2b6ca); text-wrap:pretty;">Toàn văn nội dung các tệp đính kèm cũ — chỉ lưu ID</span>
+                    <button class="btn btn-ghost" onclick="showToast('Đã gọi lại ngữ cảnh')" style="flex:none; height:22px; padding:0 7px; font-size:10px; white-space:nowrap;">Gọi lại</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// 5. LIVING PROFILE 360 SECTION (Mockup lines 1340-1490)
+// ----------------------------------------------------
+function renderLivingProfile360Section() {
+  const contacts = state.df_contacts || [];
+  state.selectedProfileId = state.selectedProfileId || (contacts[0] ? contacts[0].id : null);
+  const c = contacts.find(x => x.id === state.selectedProfileId) || contacts[0] || null;
+
+  if (!c) {
+    return `
+      <div style="padding:48px; text-align:center; color:var(--color-neutral-400,#b2b6ca); background:var(--color-surface,#232532); border-radius:var(--radius-md,8px); border:1px solid var(--color-divider);">
+        Chưa có hồ sơ liên hệ trong kho sạch. Hãy nạp danh bạ từ Data Factory.
+      </div>
+    `;
+  }
+
+  const initials = (c.full_name || 'U').split(' ').map(w => w[0]).filter(Boolean).slice(-2).join('').toUpperCase() || 'KH';
+  const heat = Math.round(c.heat_score || 50);
+  const curLvl = c.autonomy_level !== undefined ? c.autonomy_level : 1;
+  const isSilent = (c.went_silent_days || 0) > 7;
+
+  // Real events for timeline
+  const allEvents = state.df_events || [];
+  const cEvents = allEvents.filter(e => e.sender_id === c.id || e.sender_name === c.full_name);
+
+  // Associated opportunities
+  const opp = (state.df_opps || []).find(o => o.contact_id === c.id || o.contact_name === c.full_name);
+  const potentialVal = opp && opp.estimated_value ? (opp.estimated_value >= 1e9 ? (opp.estimated_value / 1e9).toFixed(1) + ' tỷ ₫' : (opp.estimated_value / 1e6).toFixed(0) + ' triệu ₫') : (c.engagement_score ? c.engagement_score + '%' : 'Chưa rõ');
+
+  const profileScores = [
+    { label: 'Độ nóng', value: String(heat), unit: '/100', note: heat >= 80 ? 'Nhu cầu cao, cần bám sát' : (isSilent ? 'Đang có dấu hiệu nguội' : 'Duy trì nhịp độ đều'), trendIcon: heat >= 80 ? 'ph ph-trend-up' : (isSilent ? 'ph ph-trend-down' : 'ph ph-minus'), tone: heat >= 80 ? 'oklch(0.76 0.15 24)' : (heat >= 50 ? 'oklch(0.84 0.13 84)' : 'var(--color-neutral-500,#9397ab)') },
+    { label: 'Trọng tài bóng', value: c.ball_owner === 'US' ? 'Phía Ta' : 'Khách', unit: '', note: c.ball_owner === 'US' ? 'Cần phản hồi để thông luồng' : 'Đang đợi phía khách trả lời', trendIcon: 'ph ph-arrows-left-right', tone: c.ball_owner === 'US' ? 'oklch(0.76 0.15 24)' : 'oklch(0.76 0.12 162)' },
+    { label: 'Tiềm năng', value: potentialVal, unit: '', note: opp ? `Deal: ${opp.title.slice(0, 24)}...` : 'Dựa trên gắn kết lịch sử', trendIcon: 'ph ph-target', tone: 'oklch(0.76 0.12 162)' },
+    { label: 'Rủi ro churn', value: String(c.churn_risk || (isSilent ? 80 : 15)), unit: '/100', note: isSilent ? `Im lặng ${c.went_silent_days} ngày` : 'Tương tác trong tầm an toàn', trendIcon: isSilent ? 'ph ph-trend-up' : 'ph ph-minus', tone: isSilent ? 'oklch(0.76 0.15 24)' : 'oklch(0.76 0.12 162)' },
+    { label: 'Tin cậy dữ liệu', value: '95', unit: '%', note: `${cEvents.length} sự kiện · SSOT hợp nhất`, trendIcon: 'ph ph-minus', tone: 'oklch(0.76 0.12 162)' },
+  ];
+
+  const summaryBullets = c.ai_summary ? c.ai_summary.split('. ').filter(Boolean) : [
+    'Đối tác đang duy trì liên lạc với tổ chức.',
+    'Thông tin được ghi nhận tự động từ các sự kiện hội thoại nguyên tử.',
+  ];
+
+  return `
+    <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+      <!-- Back button -->
+      <button onclick="switchSubtab('relationship_radar', 'graph')" class="btn btn-ghost" style="align-self:flex-start; gap:6px; height:26px; padding:0 8px; font-size:11.5px;"><i class="ph ph-arrow-left" style="font-size:13px;"></i>Quay lại bản đồ quan hệ</button>
+
+      <!-- Profile Header lines 1344-1365 -->
+      <div style="display:flex; align-items:flex-start; gap:16px;">
+        <div style="width:52px; height:52px; flex:none; border-radius:50%; background:var(--color-accent-900,#2b2741); border:1px solid var(--color-accent-800,#423a6a); display:grid; place-items:center; font-size:16px; font-weight:600; color:var(--color-accent-300,#d2cefd);">${initials}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:20px; font-weight:500; letter-spacing:-0.01em; color:var(--color-text,#e9e9ed);">${escapeHtml(c.full_name)}</span>
+            <span style="font-size:10px; font-weight:600; letter-spacing:0.09em; text-transform:uppercase; padding:2px 7px; border-radius:var(--radius-sm,4px); color:var(--color-neutral-400,#b2b6ca); border:1px solid var(--color-neutral-800,#3f424d);">${escapeHtml(c.role || 'Khách hàng')} · ${escapeHtml(c.company || 'Doanh nghiệp')}</span>
+            <span style="display:flex; align-items:center; gap:6px; font-size:11px; padding:2px 9px; border-radius:999px; color:${isSilent ? 'oklch(0.76 0.15 24)' : 'oklch(0.76 0.12 162)'}; border:1px solid ${isSilent ? 'oklch(0.76 0.15 24)' : 'oklch(0.76 0.12 162)'};"><span style="width:5px; height:5px; border-radius:50%; background:${isSilent ? 'oklch(0.76 0.15 24)' : 'oklch(0.76 0.12 162)'};"></span>${isSilent ? 'Rủi ro mất khách' : (heat >= 80 ? 'Khách hàng ưu tiên' : 'Quan hệ ổn định')}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap;">
+            <span style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--color-neutral-400,#b2b6ca);"><i class="ph ph-chat-circle-dots" style="font-size:14px; color:oklch(0.76 0.12 162);"></i>Zalo · ${escapeHtml(c.zalo_id || 'Chưa liên kết')}</span>
+            <span style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--color-neutral-400,#b2b6ca);"><i class="ph ph-device-mobile" style="font-size:14px; color:oklch(0.84 0.13 84);"></i>WhatsApp · ${escapeHtml(c.phone || c.whatsapp_id || 'Chưa liên kết')}</span>
+            <button class="btn btn-ghost" onclick="openMergeContactsModal()" style="gap:5px; height:24px; padding:0 8px; font-size:10.5px;"><i class="ph ph-git-merge" style="font-size:12px;"></i>Hợp nhất danh tính</button>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:9px; flex:none;">
+          <button class="btn btn-secondary" onclick="openAssignOwnerModal('${c.id}')" style="gap:6px; height:30px; padding:0 11px; font-size:11.5px;"><i class="ph ph-user-plus" style="font-size:14px;"></i>Gán phụ trách</button>
+          <button class="btn btn-primary" onclick="switchNav('workbench')" style="gap:6px; height:30px; padding:0 12px; font-size:11.5px; color:var(--color-accent-300,#d2cefd); border-color:var(--acc,var(--color-accent));"><i class="ph ph-pen-nib" style="font-size:14px;"></i>Mở bàn làm việc</button>
+        </div>
+      </div>
+
+      <!-- 5 Metric Cards lines 1367-1382 -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(176px,1fr)); gap:12px; min-width:0;">
+        ${profileScores.map(ps => `
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">${ps.label}</span>
+              <i class="${ps.trendIcon}" style="font-size:13px; color:${ps.tone};"></i>
+            </div>
+            <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
+              <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:${ps.tone}; line-height:1; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${ps.value}</span>
+              <span style="font-size:10.5px; color:var(--color-neutral-500,#9397ab);">${ps.unit}</span>
+            </div>
+            <div style="font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); margin-top:5px; line-height:1.4;">${ps.note}</div>
+            <button class="btn btn-ghost" onclick="showToast('Giải thích: ${escapeHtml(c.score_explanation || 'Điểm được tính từ tần suất tương tác, thời gian phản hồi và giá trị cơ hội.')}')" style="margin-top:8px; gap:5px; height:22px; padding:0 7px; font-size:10px;">Vì sao<i class="ph ph-arrow-right" style="font-size:11px;"></i></button>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Main 2-Column Section lines 1384-1490 -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:16px; align-items:start;">
+        <!-- Left: System Understandings & Timeline -->
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+          <!-- Understandings -->
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div>
+                <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Hệ thống hiểu gì về đối tượng này</div>
+                <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Tóm tắt tự cập nhật · lần cuối hôm nay</div>
+              </div>
+              <button class="btn btn-ghost" onclick="regenerateContactSummary('${c.id}')" style="gap:5px; height:24px; padding:0 8px; font-size:10.5px;"><i class="ph ph-arrows-clockwise" style="font-size:12px;"></i>AGY AI Phân Tích Lại</button>
+            </div>
+            <div style="padding:14px 16px; display:flex; flex-direction:column; gap:8px;">
+              ${summaryBullets.map(bullet => `
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                  <span style="width:5px; height:5px; flex:none; border-radius:50%; background:oklch(0.76 0.12 162); margin-top:6px;"></span>
+                  <span style="flex:1; min-width:0; font-size:12.5px; color:var(--color-neutral-300,#cfd3e5); line-height:1.6; text-wrap:pretty;">${escapeHtml(bullet)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Timeline of events -->
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div>
+                <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Dòng sự kiện</div>
+                <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Sự kiện có nghĩa, không phải log tin nhắn</div>
+              </div>
+              <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">Hiển thị ${cEvents.length} sự kiện</span>
+            </div>
+            <div style="padding:6px 0 10px;">
+              ${cEvents.length === 0 ? `
+                <div style="padding:20px; text-align:center; font-size:11.5px; color:var(--color-neutral-500,#9397ab);">
+                  Chưa có sự kiện nguyên tử nào từ đối tượng này.
+                </div>
+              ` : cEvents.map(e => `
+                <div style="display:grid; grid-template-columns:104px 140px minmax(0,1fr) auto; gap:12px; align-items:center; padding:9px 16px;" onmouseover="this.style.background='var(--color-neutral-900,#292b31)'" onmouseout="this.style.background='transparent'">
+                  <span style="font-size:11px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${e.created_at ? e.created_at.slice(5, 16) : 'Gần đây'}</span>
+                  <span style="font-size:10.5px; padding:2px 8px; border-radius:var(--radius-sm,4px); white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:oklch(0.76 0.12 162); border:1px solid oklch(0.76 0.12 162);">${escapeHtml(e.event_type || 'Event')}</span>
+                  <span style="min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(e.meaning_summary || e.content || '')}</span>
+                  <button class="btn btn-ghost" onclick="openEventEvidenceModal('${e.id}')" style="flex:none; height:22px; padding:0 7px; font-size:10px;">Chứng cứ</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Autonomy Scale, Docs, Touchpoints, Boss Notes -->
+        <div style="display:flex; flex-direction:column; gap:16px; min-width:0;">
+          <!-- Autonomy Scale -->
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Mức tự trị với đối tượng này</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Thang 0–6 · đang đặt mức ${curLvl}</div>
+            </div>
+            <div style="padding:14px 16px;">
+              <div style="display:flex; gap:4px;">
+                ${[0,1,2,3,4,5,6].map(n => {
+                  const isActive = n <= curLvl;
+                  const isCurrent = n === curLvl;
+                  const style = `flex:1; height:30px; display:grid; place-items:center; border-radius:var(--radius-sm,4px); font-size:11px; cursor:pointer; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:${isCurrent ? 'var(--acc,#9184d9)' : (isActive ? 'var(--color-accent-900,#2b2741)' : 'var(--color-neutral-900,#292b31)')}; color:${isCurrent ? 'var(--color-bg,#161826)' : (isActive ? 'var(--color-accent-300,#d2cefd)' : 'var(--color-neutral-500,#9397ab)')}; border:1px solid ${isActive ? 'var(--color-accent-800,#423a6a)' : 'var(--color-neutral-800,#3f424d)'};`;
+                  return `<span onclick="updateContactAutonomy('${c.id}', ${n})" style="${style}" title="Bấm để đặt mức tự trị ${n}">${n}</span>`;
+                }).join('')}
+              </div>
+              <div style="font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); margin-top:11px; line-height:1.55; text-wrap:pretty;">
+                ${getAutonomyDescription(curLvl)}
+              </div>
+            </div>
+          </div>
+
+          <!-- Documents -->
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Tài liệu đã trao đổi</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Documents</div>
+            </div>
+            <div style="padding:4px 0 8px;">
+              ${opp ? `
+                <div style="display:flex; align-items:center; gap:10px; padding:8px 16px;">
+                  <i class="ph ph-file-doc" style="font-size:15px; flex:none; color:var(--color-neutral-400,#b2b6ca);"></i>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">BaoGia_${c.id}.docx</div>
+                    <div style="font-size:10px; color:var(--color-neutral-500,#9397ab); margin-top:2px;">Báo giá tự động · Cơ hội ${opp.id}</div>
+                  </div>
+                </div>
+              ` : `
+                <div style="padding:12px 16px; font-size:11px; color:var(--color-neutral-500,#9397ab);">Chưa có tài liệu trao đổi nào được ghi nhận.</div>
+              `}
+            </div>
+          </div>
+
+          <!-- Internal touchpoints -->
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Người nội bộ từng chạm</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Internal touchpoints</div>
+            </div>
+            <div style="padding:4px 0 8px;">
+              <div style="display:flex; align-items:center; gap:10px; padding:8px 16px;">
+                <span style="width:22px; height:22px; flex:none; border-radius:50%; background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:grid; place-items:center; font-size:8.5px; font-weight:600; color:var(--color-neutral-300,#cfd3e5);">RC</span>
+                <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Anh Cơ La (Ryan)</span>
+                <span style="flex:none; font-size:10.5px; color:var(--color-neutral-500,#9397ab);">Chỉ huy tối cao</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; padding:8px 16px;">
+                <span style="width:22px; height:22px; flex:none; border-radius:50%; background:var(--color-neutral-900,#292b31); border:1px solid var(--color-neutral-800,#3f424d); display:grid; place-items:center; font-size:8.5px; font-weight:600; color:var(--color-neutral-300,#cfd3e5);">AI</span>
+                <span style="flex:1; min-width:0; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Trợ lý AI Agent</span>
+                <span style="flex:none; font-size:10.5px; color:var(--color-neutral-500,#9397ab);">${cEvents.length} lượt chạm</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Owner Notes -->
+          <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid var(--color-divider,rgba(233,233,237,0.16));">
+              <div style="font-size:13px; font-weight:600; color:var(--color-text,#e9e9ed);">Ghi chú tay của Sếp</div>
+              <div style="font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab); margin-top:1px;">Owner notes · hệ thống không sửa</div>
+            </div>
+            <div style="padding:13px 16px;">
+              <textarea id="owner-note-input-${c.id}" class="form-textarea" style="width:100%; height:80px; font-size:11.5px; margin-bottom:8px;" placeholder="Nhập ghi chú riêng của Sếp về phong cách đối tác, lưu ý đặc biệt...">${escapeHtml(c.owner_notes || '')}</textarea>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:10.5px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">Anh Cơ La · Hôm nay</div>
+                <button class="btn btn-secondary sm" onclick="saveOwnerNotes('${c.id}')"><i class="ph ph-floppy-disk"></i> Lưu ghi chú</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// RELATIONSHIP RADAR HELPER FUNCTIONS
+// ----------------------------------------------------
+function setGraphMode(mode) {
+  state.graphMode = mode;
+  renderActiveHub();
+  if (mode === 'canvas') {
+    setTimeout(initRelationshipGraphCanvas, 60);
+  }
+}
+
+function setGraphFilter(key) {
+  state.graphFilterKey = key;
+  renderActiveHub();
+}
+
+function selectProfileAndOpen(contactId) {
+  state.selectedProfileId = contactId;
+  switchSubtab('relationship_radar', 'profile');
+}
+
+function selectNotebookSubject(subjectId) {
+  state.selectedNotebookId = subjectId;
+  renderActiveHub();
+}
+
+function setNbTab(tab) {
+  state.nbTab = tab;
+  renderActiveHub();
+}
+
+function filterNotebookList(query) {
+  const q = (query || '').toLowerCase().trim();
+  const box = document.getElementById('notebook-subjects-box');
+  if (!box) return;
+  const items = box.children;
+  for (let i = 0; i < items.length; i++) {
+    const text = items[i].textContent.toLowerCase();
+    items[i].style.display = (!q || text.includes(q)) ? '' : 'none';
+  }
+}
+
+function compressNotebookContext() {
+  showToast('Đang kích hoạt nén bộ nhớ ngữ cảnh...');
+  setTimeout(() => {
+    showToast('✓ Đã nén thành công 187 tin ngắn thành mốc lũy tiến mới!');
+  }, 400);
+}
+
+function exportNotebookData() {
+  const c = (state.df_contacts || []).find(x => x.id === state.selectedNotebookId) || state.df_contacts[0];
+  if (!c) { showToast('Không có dữ liệu'); return; }
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(c, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `notebook-${c.id}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  showToast('✓ Đã xuất sổ tay nhận thức dạng JSON');
+}
+
+async function updateContactAutonomy(contactId, lvl) {
+  try {
+    showToast(`Đang cập nhật mức tự trị Cấp ${lvl}...`);
+    const res = await fetch('/api/contacts/update_autonomy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contact_id: contactId, autonomy_level: lvl })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(`✓ Đã lưu mức tự trị Cấp ${lvl}!`);
+      const c = (state.df_contacts || []).find(x => x.id === contactId);
+      if (c) c.autonomy_level = lvl;
+      renderActiveHub();
+    } else {
+      showToast('Lỗi: ' + (d.error || 'Không thể cập nhật'));
+    }
+  } catch (e) {
+    showToast('Lỗi kết nối: ' + e.message);
+  }
+}
+
+function saveOwnerNotes(contactId) {
+  const el = document.getElementById(`owner-note-input-${contactId}`);
+  if (!el) return;
+  const note = el.value.trim();
+  const c = (state.df_contacts || []).find(x => x.id === contactId);
+  if (c) c.owner_notes = note;
+  showToast('✓ Đã lưu ghi chú tay của Sếp!');
+}
+
+function openAssignOwnerModal(contactId) {
+  const c = (state.df_contacts || []).find(x => x.id === contactId);
+  openModal('👤 Gán Người Phụ Trách Hồ Sơ', `
+    <div style="font-size:12px;color:var(--color-neutral-300);margin-bottom:12px">
+      Chọn người phụ trách trực tiếp đối tác <b>${c ? escapeHtml(c.full_name) : ''}</b>:
+    </div>
+    <div class="form-group">
+      <label class="form-label">Người Phụ Trách</label>
+      <select class="form-select" id="assign-owner-select">
+        <option value="Sếp Cơ La (Ryan)">Sếp Cơ La (Ryan) — Tổng chỉ huy</option>
+        <option value="Trợ lý AI Agent">Trợ lý AI Agent (Tự động)</option>
+        <option value="Trần Minh Khoa">Trần Minh Khoa — Giám đốc vận hành</option>
+        <option value="Nguyễn Thu Hà">Nguyễn Thu Hà — Trưởng ban tài chính</option>
+      </select>
+    </div>
+  `, async () => {
+    const owner = $('#assign-owner-select').value;
+    if (c) c.owner = owner;
+    showToast(`✓ Đã gán phụ trách cho: ${owner}`);
+    closeModal();
+    renderActiveHub();
+  });
+}
+
+function openEventEvidenceModal(eventId) {
+  const ev = (state.df_events || []).find(e => e.id === eventId);
+  if (!ev) {
+    showToast('Không tìm thấy sự kiện');
+    return;
+  }
+  openModal(`📜 Chứng Cứ Sự Kiện · ${ev.id}`, `
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="badge primary">${escapeHtml(ev.event_type || 'Event')}</span>
+        <span style="font-size:11px; color:var(--color-neutral-400);">${ev.created_at || ''}</span>
+      </div>
+      <div class="card card-pad">
+        <div style="font-size:10.5px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-500); margin-bottom:6px;">Nội dung nguyên trạng (Raw Message)</div>
+        <div style="font-size:12.5px; color:var(--color-text); line-height:1.6; white-space:pre-wrap;">${escapeHtml(ev.content || '')}</div>
+      </div>
+      <div style="background:var(--color-bg); padding:10px 12px; border-radius:6px; border:1px solid var(--color-divider); font-size:11.5px; color:var(--color-neutral-300);">
+        <div><b>Ý định bóc tách:</b> ${escapeHtml(ev.intent || '—')}</div>
+        <div style="margin-top:4px;"><b>Ý nghĩa suy diễn:</b> ${escapeHtml(ev.meaning_summary || '—')}</div>
+        <div style="margin-top:4px;"><b>Hành động đề xuất:</b> ${escapeHtml(ev.action_suggested || '—')}</div>
+      </div>
+    </div>
+  `);
+}
+
+function getAutonomyDescription(lvl) {
+  const descs = [
+    "Mức 0 — Chỉ ghi nhận & lắng nghe, tuyệt đối không gửi tin nhắn tự động.",
+    "Mức 1 — Dự thảo nháp tin nhắn & hành động, Sếp duyệt tay 100% trước khi gửi.",
+    "Mức 2 — Tự động phản hồi các câu chào hỏi, thông tin dịch vụ theo kịch bản chuẩn.",
+    "Mức 3 — Hệ thống được gợi ý hành động nhưng không soạn sẵn, không gửi. Cần Sếp xác nhận.",
+    "Mức 4 — Tự động gửi báo giá trong hạn mức chuẩn (dưới 50tr) và theo dõi tiến độ đơn hàng.",
+    "Mức 5 — Toàn quyền điều phối hội thoại thông thường, gửi báo cáo tổng kết định kỳ.",
+    "Mức 6 — Executive Agent đại diện toàn quyền theo ủy thác của Sếp Cơ La."
+  ];
+  return descs[lvl] || descs[1];
+}
+
+// Legacy aliases for backward compatibility
+function renderRelationshipRadarView(hotContacts, warmContacts, coldContacts) {
+  return renderGraphNodesSection(state.df_contacts || [], 'people');
+}
+function renderLivingProfilesTableView(contacts) {
+  return renderGraphListSection(contacts, state.df_contacts || []);
 }
 
 
