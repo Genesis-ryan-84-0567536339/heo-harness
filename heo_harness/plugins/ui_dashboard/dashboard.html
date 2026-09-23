@@ -969,15 +969,15 @@
       <div class="topbar-right" style="display:flex; align-items:center; gap:8px; flex:none; justify-content:flex-end;">
         <div id="topbar-channels-pill" style="display:flex; align-items:center; gap:7px; flex:none; white-space:nowrap; border:1px solid var(--color-neutral-800,#3f424d); border-radius:999px; padding:5px 11px 5px 9px; background:#1a1c2b;">
           <span style="width:6px; height:6px; flex:none; border-radius:50%; background:oklch(0.76 0.12 162); animation:gnPulse 2.2s ease-in-out infinite;"></span>
-          <span id="topbar-channels-text" style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); font-weight:500; white-space:nowrap;" title="4 kênh đang sống, 42 nhóm đang lắng nghe">4 kênh · 42 nhóm</span>
+          <span id="topbar-channels-text" style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); font-weight:500; white-space:nowrap;" title="0 kênh đang sống, 0 nhóm đang lắng nghe">0 kênh · 0 nhóm</span>
         </div>
-        <div id="topbar-autonomy-pill" style="display:flex; align-items:center; gap:6px; flex:none; white-space:nowrap; border:1px solid var(--color-neutral-800,#3f424d); border-radius:999px; padding:5px 10px 5px 9px; background:#1a1c2b;" title="Mức tự trị hiện tại — mức 4: soạn sẵn chờ duyệt (thang 0–6)">
+        <div id="topbar-autonomy-pill" style="display:none; align-items:center; gap:6px; flex:none; white-space:nowrap; border:1px solid var(--color-neutral-800,#3f424d); border-radius:999px; padding:5px 10px 5px 9px; background:#1a1c2b;" title="Chưa có API tổng hợp mức tự trị toàn hệ thống">
           <i class="ph ph-sliders" style="font-size:13px; flex:none; color:var(--color-accent-300,#d2cefd);"></i>
-          <span id="topbar-autonomy-text" style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">tự trị 4</span>
+          <span id="topbar-autonomy-text" style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;"></span>
         </div>
-        <div id="topbar-dci-pill" style="display:flex; align-items:center; gap:6px; flex:none; white-space:nowrap; border:1px solid var(--color-neutral-800,#3f424d); border-radius:999px; padding:5px 10px 5px 9px; background:#1a1c2b; cursor:pointer;" onclick="showDciModal()" title="Độ tin cậy dữ liệu hôm nay — 78%, còn 12 danh tính chờ hợp nhất">
+        <div id="topbar-dci-pill" style="display:none; align-items:center; gap:6px; flex:none; white-space:nowrap; border:1px solid var(--color-neutral-800,#3f424d); border-radius:999px; padding:5px 10px 5px 9px; background:#1a1c2b; cursor:pointer;" onclick="showDciModal()" title="Chưa có API tổng hợp độ tin cậy dữ liệu (DCI) toàn hệ thống">
           <i class="ph ph-shield-check" style="font-size:13px; flex:none; color:oklch(0.79 0.12 82);"></i>
-          <span id="topbar-dci-text" style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">78%</span>
+          <span id="topbar-dci-text" style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;"></span>
         </div>
         <button class="btn btn-secondary" style="height:30px; width:32px; padding:0; flex:none;" title="Góc nhìn đã lưu" onclick="showSavedViewsModal()"><i class="ph ph-bookmark-simple" style="font-size:15px;"></i></button>
         <button class="btn btn-primary" style="height:30px; width:32px; padding:0; flex:none; color:var(--color-accent-300,#d2cefd); border-color:var(--color-accent,#9184d9);" title="Tìm theo ý định" onclick="switchNav('search')"><i class="ph ph-magnifying-glass" style="font-size:15px;"></i></button>
@@ -1568,7 +1568,9 @@ const NAV = [
       { key: 'mcp', icon: 'ph ph-plugs-connected', name: 'MCP Hub', en: 'External MCP servers' },
     ]},
     { key: 'plugins', icon: 'ph ph-puzzle-piece', name: 'Plugin & Tiện ích', en: 'DSH base plugins & external add-ons' },
-    { key: 'system', icon: 'ph ph-sliders-horizontal', name: 'Điều khiển hệ thống', en: 'System Control — kênh, quyền, nhật ký' },
+    // 'system' (Điều khiển hệ thống) tạm ẩn: renderGovernanceHub() vẫn dùng CSS class cũ
+    // (hub-header/btn/card cũ, không phải Nocturne inline) và renderInfraView() có số fallback
+    // bịa cứng (21GB/182GB/20%/12%...) khi state.metrics rỗng — chờ dựng lại đúng chuẩn trước khi lộ lại.
   ]},
 ];
 
@@ -1762,19 +1764,17 @@ function updateHeaderBreadcrumb() {
 function updateHeaderPills() {
   const channelText = $('#topbar-channels-text');
   if (channelText) {
-    const groupCount = (state.groups && state.groups.length) || 42;
-    channelText.textContent = `4 kênh · ${groupCount} nhóm`;
+    const channelCount = (state.zalo && state.zalo.connected === true ? 1 : 0)
+      + (state.whatsapp && state.whatsapp.connected === true ? 1 : 0);
+    const groupCount = state.groups ? state.groups.length : 0;
+    channelText.textContent = `${channelCount} kênh · ${groupCount} nhóm`;
+    channelText.title = `${channelCount} kênh đang sống, ${groupCount} nhóm đang lắng nghe`;
   }
+  // Chưa có API tổng hợp mức tự trị / DCI toàn hệ thống (chỉ có theo từng contact/agent) — ẩn thay vì bịa số.
   const autoText = $('#topbar-autonomy-text');
-  if (autoText) {
-    const lvl = state.autonomy_level ?? 4;
-    autoText.textContent = `tự trị ${lvl}`;
-  }
+  if (autoText) autoText.style.display = 'none';
   const dciText = $('#topbar-dci-text');
-  if (dciText) {
-    const dci = state.dci_score ?? 78;
-    dciText.textContent = `${dci}%`;
-  }
+  if (dciText) dciText.style.display = 'none';
 }
 
 function showSavedViewsModal() {
@@ -7802,8 +7802,8 @@ async function installCatalogPlugin(id) {
 function renderMcpConnectorsHub() {
   const currentSub = state.subtabs.mcp_connectors || 'servers';
   const mcpData = state.mcp_connectors || { total_connectors: 0, connected_connectors: 0, active_servers: 0, total_tools_ready: 0, connectors: [], servers: [] };
-  const totalCount = mcpData.total_connectors || (mcpData.connectors ? mcpData.connectors.length : 14);
-  const activeCount = mcpData.active_servers || 5;
+  const totalCount = mcpData.total_connectors || (mcpData.connectors ? mcpData.connectors.length : 0);
+  const activeCount = mcpData.active_servers ?? (mcpData.servers ? mcpData.servers.length : 0);
 
   return `
     <div style="display:flex; flex-direction:column; gap:16px; min-width:0; margin-bottom:18px;">
@@ -10428,12 +10428,8 @@ function explainSystemReasoning(id) {
   const m = items.find(x => x.id === id);
   if (!m) { showToast('Không tìm thấy thông tin'); return; }
 
-  const r = m.reasoning || {
-    heat: parseInt(m.score, 10) || 75,
-    heatFactors: ['Bóc tách tự động từ thông điệp hội thoại', 'Chỉ số phù hợp ngữ cảnh cao'],
-    sentiment: 'Khách quan',
-    modelNote: 'Đơn vị ý nghĩa được định danh tự động bởi Mô hình Lõi Gen-Harness OS.'
-  };
+  // Chưa có API thật trả về lý do suy luận (m.reasoning) cho từng sự kiện — không bịa yếu tố/nhận định giả.
+  const r = m.reasoning || null;
 
   openModal(`🧠 Vì Sao Hệ Thống Nghĩ Vậy? — ${m.id}`, `
     <div style="display:flex; flex-direction:column; gap:14px;">
@@ -10457,12 +10453,16 @@ function explainSystemReasoning(id) {
           <i class="ph ph-tree-structure" style="color:var(--color-accent);"></i> Các Yếu Tố Trọng Số Quyết Định (Decision Signals):
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
-          ${(r.heatFactors || []).map(f => `
+          ${r && r.heatFactors && r.heatFactors.length ? r.heatFactors.map(f => `
             <div style="display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--color-neutral-300); background:rgba(255,255,255,0.02); padding:8px 10px; border-radius:4px; border:1px solid var(--color-divider);">
               <i class="ph ph-check-circle" style="color:${m.tone}; font-size:14px; flex:none; margin-top:2px;"></i>
               <span>${escapeHtml(f)}</span>
             </div>
-          `).join('')}
+          `).join('') : `
+            <div style="font-size:12px; color:var(--color-neutral-500); padding:8px 10px;">
+              Chưa có dữ liệu thật — chờ nối API phân tích yếu tố quyết định (Reasoning Engine)
+            </div>
+          `}
         </div>
       </div>
 
@@ -10470,7 +10470,7 @@ function explainSystemReasoning(id) {
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
         <div style="background:var(--color-bg); padding:10px 12px; border-radius:var(--radius-md); border:1px solid var(--color-divider);">
           <div style="font-size:11px; color:var(--color-neutral-400);">Thái độ / Cảm xúc hội thoại:</div>
-          <div style="font-size:12px; font-weight:600; color:var(--color-text); margin-top:3px;">🎭 ${escapeHtml(r.sentiment || 'Trung tính')}</div>
+          <div style="font-size:12px; font-weight:600; color:var(--color-text); margin-top:3px;">${r && r.sentiment ? `🎭 ${escapeHtml(r.sentiment)}` : 'Chưa có dữ liệu thật'}</div>
         </div>
         <div style="background:var(--color-bg); padding:10px 12px; border-radius:var(--radius-md); border:1px solid var(--color-divider);">
           <div style="font-size:11px; color:var(--color-neutral-400);">Khuyến nghị thuật toán:</div>
@@ -10484,7 +10484,7 @@ function explainSystemReasoning(id) {
           <i class="ph ph-sparkle"></i> Nhận Định Từ Google Antigravity Brain (0đ Token API):
         </div>
         <div style="font-size:12px; color:var(--color-text); line-height:1.55;">
-          ${escapeHtml(r.modelNote || 'Đã đối chiếu các mẫu hội thoại và tính toán điểm số.')}
+          ${r && r.modelNote ? escapeHtml(r.modelNote) : 'Chưa có dữ liệu thật — chờ nối API giải thích mô hình (Model Inference Note)'}
         </div>
       </div>
     </div>
