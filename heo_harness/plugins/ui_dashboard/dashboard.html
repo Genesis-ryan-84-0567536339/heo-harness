@@ -14364,10 +14364,10 @@ function renderPeopleReviewHub() {
   const counts = peopleReviewState.summary?.people_counts || {};
 
   const tabs = [
-    { key: 'staff',     label: 'Nhân viên',  count: counts.EMPLOYEE?.count  || '28', altKey: 'EMPLOYEE' },
-    { key: 'customer',  label: 'Khách hàng', count: counts.CUSTOMER?.count  || '96', altKey: 'CUSTOMER' },
-    { key: 'candidate', label: 'Ứng viên',   count: counts.CANDIDATE?.count || '11', altKey: 'CANDIDATE' },
-    { key: 'learner',   label: 'Học viên',   count: counts.TRAINEE?.count   || '13', altKey: 'TRAINEE' }
+    { key: 'staff',     label: 'Nhân viên',  count: counts.EMPLOYEE?.count !== undefined ? counts.EMPLOYEE.count : '—', altKey: 'EMPLOYEE' },
+    { key: 'customer',  label: 'Khách hàng', count: counts.CUSTOMER?.count !== undefined ? counts.CUSTOMER.count : '—', altKey: 'CUSTOMER' },
+    { key: 'candidate', label: 'Ứng viên',   count: counts.CANDIDATE?.count !== undefined ? counts.CANDIDATE.count : '—', altKey: 'CANDIDATE' },
+    { key: 'learner',   label: 'Học viên',   count: counts.TRAINEE?.count !== undefined ? counts.TRAINEE.count : '—', altKey: 'TRAINEE' }
   ];
 
   return `
@@ -14588,70 +14588,35 @@ function renderPeopleBoardTable(container, tabKey) {
   const acceptedTypes = typeMap[tabKey] || [tabKey];
   const matchedApiPeople = rawReviews.filter(p => acceptedTypes.includes(p.person_type));
 
-  // Dữ liệu mẫu đối chiếu chuẩn từ Gen-Harness Console Design Export (F2 mục 6)
-  const mockDataset = {
-    staff: [
-      { id: 'P-M01', name: 'Nguyễn Thu Hà', initials: 'TH', role: 'Trưởng ban Tài chính · 11 khách', score: '62', trend: 'down', tone: 'oklch(0.76 0.15 24)',
-        signal: 'Trung vị phản hồi tăng từ 12 lên 84 phút. Ba khách nhắc lại mà chưa được trả lời, trong đó có Thành Phát 87 điểm rủi ro.',
-        rec: 'Giảm tải: chuyển 4 khách sang Đỗ Thanh Mai. Đây là dấu hiệu quá tải, không phải thờ ơ.', recIcon: 'ph ph-scales',
-        evidence_quote: 'Khách: "Em ơi hợp đồng in ấn quý 4 bên em duyệt xong chưa? Anh hỏi từ hôm qua chưa thấy ai phản hồi." (20/09 14:22)',
-        ai_coaching_notes: 'Quá tải đột biến do ôm 11 khách VIP cùng lúc. Cần phân bổ lại bớt quan hệ đối tác để giảm áp lực phản hồi.' },
-      { id: 'P-M02', name: 'Trần Minh Khoa', initials: 'MK', role: 'Giám đốc vận hành · 14 khách', score: '71', trend: 'flat', tone: 'oklch(0.84 0.13 84)',
-        signal: 'Chất lượng chăm sóc tốt nhưng đang là cầu nối của 9 nhóm và ôm 14 quan hệ — rủi ro tập trung một người.',
-        rec: 'Phân bổ lại 3 quan hệ đối tác cho Vũ Hải Đăng để giảm rủi ro phụ thuộc.', recIcon: 'ph ph-users-three',
-        evidence_quote: 'Nội bộ: "Anh Khoa ơi bên An Khang đang hỏi lại điều khoản thanh toán đợt 3, anh chốt giúp em nhé." (21/09 10:15)',
-        ai_coaching_notes: 'Đang là nút cổ chai thông tin (SPOF). Cần ủy quyền cho các trưởng nhóm cấp dưới xử lý các đầu việc thông thường.' },
-      { id: 'P-M03', name: 'Vũ Hải Đăng', initials: 'HĐ', role: 'Trưởng phòng Kinh doanh · 8 khách', score: '84', trend: 'up', tone: 'oklch(0.76 0.12 162)',
-        signal: 'Tỷ lệ follow sau báo giá đạt 92%, cao nhất tổ chức. Hai khách lạnh được làm ấm lại trong tuần.',
-        rec: 'Lấy kịch bản follow của người này làm mẫu chuẩn cho ban kinh doanh.', recIcon: 'ph ph-star',
-        evidence_quote: 'Khách: "Cảm ơn Đăng đã gửi mẫu và giải thích cặn kẽ biểu giá. Bên anh quyết định chốt đơn tuần này." (21/09 15:30)',
-        ai_coaching_notes: 'Kịch bản follow mẫu mực: luôn gửi tài liệu kèm mốc cam kết cụ thể, bám sát tiến độ khách hàng.' },
-      { id: 'P-M04', name: 'Đỗ Thanh Mai', initials: 'TM', role: 'Kế toán trưởng · 6 khách', score: '78', trend: 'up', tone: 'oklch(0.76 0.12 162)',
-        signal: 'Phản hồi đều trong giờ hành chính, không có tin nào quá 30 phút. Ngoài giờ không trả lời — phù hợp giờ im lặng.',
-        rec: 'Còn dư tải, có thể nhận thêm 3–4 khách từ Ban Tài chính.', recIcon: 'ph ph-plus-circle',
-        evidence_quote: 'Khách: "Chị Mai gửi hóa đơn VAT và đối chiếu công nợ nhanh quá, cảm ơn chị nhiều." (20/09 16:40)',
-        ai_coaching_notes: 'Kỷ luật thời gian chuẩn mực, xử lý chứng từ nhanh và chính xác. Có thể san sẻ bớt khách từ Hà.' },
-      { id: 'P-M05', name: 'Phạm Anh Tú', initials: 'AT', role: 'Quản lý kho · 4 khách', score: '54', trend: 'down', tone: 'oklch(0.84 0.13 84)',
-        signal: 'Hai lần hứa mốc giao hàng rồi không cập nhật lại. Một khách phải tự hỏi tiến độ ba lần.',
-        rec: 'Bật nhắc tự động cho mọi lời hứa có mốc thời gian của người này.', recIcon: 'ph ph-bell-ringing',
-        evidence_quote: 'Khách: "Anh Tú ơi hẹn thứ Ba giao 2 kiện phụ kiện mà giờ thứ Năm rồi chưa thấy đâu?" (19/09 09:18)',
-        ai_coaching_notes: 'Thói quen hứa mốc thời gian rồi quên cập nhật. Cần kích hoạt bot tự động cảnh báo trước hạn 2h.' }
-    ],
-    customer: [
-      { id: 'C-M01', name: 'Nguyễn Văn Bảo - In Thành Phát', initials: 'NB', role: 'Khách hàng VIP · Doanh thu 840tr · Zalo', score: '82', trend: 'down', tone: 'oklch(0.84 0.13 84)',
-        signal: 'Đang hỏi tiến độ hợp đồng in ấn quý 4, nhắc lại 2 lần chưa có phản hồi. Có rủi ro đối thủ Minh Long tiếp cận.',
-        rec: 'Ưu tiên gửi mẫu và gọi trực tiếp làm rõ biểu giá trong hôm nay.', recIcon: 'ph ph-phone-call',
-        evidence_quote: 'Khách: "Bên Minh Long chào giá thấp hơn 4% và cam kết giao 10 ngày. Em kiểm tra lại giúp anh nhé." (21/09 11:20)',
-        ai_coaching_notes: 'Khách VIP nhạy cảm về mốc giao hàng. Cần Trưởng phòng xử lý phản hồi ngay.' },
-      { id: 'C-M02', name: 'Trần Văn Hậu - Xưởng gỗ Bình Dương', initials: 'TH', role: 'Khách hàng chiến lược · Cung cấp ván MDF · Zalo', score: '89', trend: 'up', tone: 'oklch(0.76 0.12 162)',
-        signal: 'Vừa chốt đơn 1,2 tỷ MDF E1 17mm. Tương tác tích cực, yêu cầu giao đúng hẹn tháng 10.',
-        rec: 'Phân công theo dõi mốc vận chuyển và cập nhật lịch trình 2 ngày/lần.', recIcon: 'ph ph-truck',
-        evidence_quote: 'Khách: "Xác nhận chốt đơn 3 container giao đầu tháng 10 nhé. Nhớ đảm bảo chứng chỉ E1." (21/09 09:15)',
-        ai_coaching_notes: 'Quan hệ rất vững. Cần giữ cam kết chất lượng để chuẩn bị cho đơn quý 1/2027.' }
-    ],
-    candidate: [
-      { id: 'CD-M01', name: 'Võ Thanh Sơn', initials: 'TS', role: 'Ứng viên Key Account ngành lạnh · WhatsApp', score: '74', trend: 'up', tone: 'oklch(0.76 0.12 162)',
-        signal: 'Đã hoàn thành vòng phỏng vấn 1, phù hợp 85% tiêu chí năng lực ngành logistics lạnh.',
-        rec: 'Lên lịch phỏng vấn vòng 2 với Giám đốc Vận hành trong tuần này.', recIcon: 'ph ph-calendar',
-        evidence_quote: 'HR: "Ứng viên có 5 năm kinh nghiệm mảng kho lạnh, xử lý tình huống giao tiếp tốt." (20/09 15:00)',
-        ai_coaching_notes: 'Ứng viên sáng giá cho vị trí đang trống của Ban Kinh doanh.' },
-      { id: 'CD-M02', name: 'Lê Minh Hoàng', initials: 'MH', role: 'Ứng viên Lập trình viên Python · Telegram', score: '68', trend: 'flat', tone: 'oklch(0.84 0.13 84)',
-        signal: 'Kinh nghiệm 3 năm FastAPI/asyncio, đã hoàn thành bài test kiến trúc plugin.',
-        rec: 'Soát xét code test và gửi thư mời trao đổi trực tiếp.', recIcon: 'ph ph-code',
-        evidence_quote: 'Tech Lead: "Code sạch, hiểu cơ chế EventBus và Circuit Breaker." (21/09 14:00)',
-        ai_coaching_notes: 'Cần kiểm tra thêm kinh nghiệm tối ưu SQLite concurrency và background tasks.' }
-    ],
-    learner: [
-      { id: 'L-M01', name: 'Hoàng Văn Nam', initials: 'HN', role: 'Học viên Khoá Chuyển đổi số K4 · Zalo Group', score: '91', trend: 'up', tone: 'oklch(0.76 0.12 162)',
-        signal: 'Nộp bài tập thực hành sớm, tham gia 100% buổi thảo luận nhóm, tích cực hỗ trợ học viên khác.',
-        rec: 'Đề xuất làm nhóm trưởng dự án tốt nghiệp và mời tham gia mạng lưới chuyên gia.', recIcon: 'ph ph-certificate',
-        evidence_quote: 'Giảng viên: "Nam áp dụng bài tập vào quy trình công ty thực tế rất xuất sắc." (21/09 20:00)',
-        ai_coaching_notes: 'Học viên xuất sắc, tiềm năng trở thành đại sứ giải pháp của Gen-Harness.' }
-    ]
+  const tabNames = {
+    staff: 'nhân viên',
+    customer: 'khách hàng',
+    candidate: 'ứng viên',
+    learner: 'học viên'
   };
+  const currentTabName = tabNames[tabKey] || 'nhân sự';
 
-  // Ưu tiên dữ liệu thật từ API, fallback sang mock
-  const people = matchedApiPeople.length > 0 ? matchedApiPeople.map(p => ({
+  if (matchedApiPeople.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:56px 20px;background:var(--color-surface,#232532);border:1px dashed var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--color-bg,#161826);border:1px solid var(--color-divider,rgba(233,233,237,0.16));display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--color-neutral-400,#b2b6ca);">
+          <i class="ph ph-users-three"></i>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--color-text,#e9e9ed);">Chưa có dữ liệu đánh giá ${currentTabName} thật</div>
+          <div style="font-size:12px;color:var(--color-neutral-400,#b2b6ca);margin-top:4px;max-width:520px;line-height:1.5;">
+            Hệ thống cần tích lũy hội thoại thực tế từ các kênh Zalo &amp; WhatsApp và đồng bộ qua API <code>/api/people_review/list</code> để AI chấm điểm và bóc tách tín hiệu.
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="font-size:11.5px;gap:6px;height:30px;padding:0 12px;margin-top:6px;" onclick="fetchPeopleReviewData()">
+          <i class="ph ph-arrows-clockwise"></i> Quét lại dữ liệu
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const people = matchedApiPeople.map(p => ({
     id: p.id,
     name: p.full_name || p.name,
     initials: (p.full_name || p.name || 'U').split(' ').map(w => w[0]).slice(-2).join('').toUpperCase(),
@@ -14664,7 +14629,7 @@ function renderPeopleBoardTable(container, tabKey) {
     recIcon: 'ph ph-sparkle',
     evidence_quote: p.evidence_quote || 'Hội thoại đang diễn ra trên kênh chỉ định.',
     ai_coaching_notes: p.ai_coaching_notes || 'Hệ thống đang tích lũy dữ liệu đối soạt.'
-  })) : (mockDataset[tabKey] || mockDataset.staff);
+  }));
 
   container.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:12px;">
@@ -14772,10 +14737,27 @@ function renderPeopleBoardTable(container, tabKey) {
 // TAB 5: BẮT BỆNH KỊCH BẢN CHĂM SÓC (CARE PATTERN INTELLIGENCE - SPEC-23)
 // -----------------------------------------------------------------------------
 function renderCareQualityTab(container) {
-  const records = peopleReviewState.careRecords;
+  const records = peopleReviewState.careRecords || [];
 
-  container.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:18px">
+  if (records.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:56px 20px;background:var(--color-surface,#232532);border:1px dashed var(--color-divider,rgba(233,233,237,0.16));border-radius:var(--radius-md,8px);display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--color-bg,#161826);border:1px solid var(--color-divider,rgba(233,233,237,0.16));display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--color-neutral-400,#b2b6ca);">
+          <i class="ph ph-heartbeat"></i>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--color-text,#e9e9ed);">Chưa có hồ sơ chất lượng chăm sóc thật</div>
+          <div style="font-size:12px;color:var(--color-neutral-400,#b2b6ca);margin-top:4px;max-width:520px;line-height:1.5;">
+            Chờ hệ thống tích lũy dữ liệu phản hồi từ các nhóm Zalo/WhatsApp và đồng bộ qua API <code>/api/care_quality/records</code>.
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="font-size:11.5px;gap:6px;height:30px;padding:0 12px;margin-top:6px;" onclick="fetchPeopleReviewData()">
+          <i class="ph ph-arrows-clockwise"></i> Quét lại dữ liệu
+        </button>
+      </div>
+    `;
+    return;
+  }
       
       <div style="font-size:12.5px;color:#cbd5e1;line-height:1.5">
         Hệ thống phân tích cách chăm sóc của từng nhân viên: đo lường tốc độ phản hồi thực tế, tỷ lệ theo sát sau báo giá, và bóc tách các <b>Kịch Bản Thắng (chốt deal)</b> đối chiếu với <b>Kịch Bản Mất Khách (hứa suông, chậm trễ)</b>:
