@@ -1653,30 +1653,36 @@ const HUB_TO_NAV_KEY = {
 };
 
 function getNavBadge(key) {
+  // DU LIEU THAT: khong con so bia cung nhu truoc (9/28/6/41/27/18k/12/7/11 la
+  // lay nguyen tu mockup mau) - chi hien badge khi co nguon that, khong co thi
+  // an badge (return null) thay vi bia so.
   switch (key) {
-    case 'overview':
-      const p1 = (state.attention && state.attention.filter(a => a.band === 'P1').length) || (state.opportunities && state.opportunities.filter(x => x.priority === 'P1').length) || 9;
-      return { text: String(p1), tone: 'danger' };
-    case 'inbox':
-      const opp = (state.opportunities && state.opportunities.length) || 28;
-      return { text: String(opp), tone: 'warn' };
-    case 'workbench':
-      return { text: '6', tone: 'warn' };
-    case 'opportunity':
-      const worksCount = (state.works && state.works.length) || 41;
-      return { text: String(worksCount), tone: 'ok' };
-    case 'supply':
-      return { text: '27', tone: 'ok' };
-    case 'raw':
-      return { text: '18k', tone: 'warn' };
-    case 'identity':
-      return { text: '12', tone: 'warn' };
-    case 'mcp':
-      const mcpCount = (state.mcp_connectors?.connected_connectors) || (state.mcp_servers && state.mcp_servers.length) || 7;
-      return { text: String(mcpCount), tone: 'ok' };
-    case 'plugins':
-      const plugCount = (state.plugins && state.plugins.length) || 11;
-      return { text: String(plugCount), tone: 'ok' };
+    case 'overview': {
+      const n = (state.attention || []).filter(a => a.band === 'P1').length;
+      return n > 0 ? { text: String(n), tone: 'danger' } : null;
+    }
+    case 'inbox': {
+      const n = (typeof getAllMeaningItems === 'function' ? getAllMeaningItems().length : (state.df_events || []).length);
+      return n > 0 ? { text: String(n), tone: 'warn' } : null;
+    }
+    case 'opportunity': {
+      const n = (state.df_opps || []).length;
+      return n > 0 ? { text: String(n), tone: 'ok' } : null;
+    }
+    case 'raw': {
+      const n = (state.df_events || []).length;
+      return n > 0 ? { text: String(n), tone: 'warn' } : null;
+    }
+    case 'mcp': {
+      const n = state.mcp_connectors?.connected_connectors ?? (state.mcp_servers || []).length;
+      return n > 0 ? { text: String(n), tone: 'ok' } : null;
+    }
+    case 'plugins': {
+      const n = (state.plugins || []).length;
+      return n > 0 ? { text: String(n), tone: 'ok' } : null;
+    }
+    // 'workbench', 'supply', 'identity': chua co nguon dem that ro rang - khong
+    // hien badge thay vi bia so, cho tick tiep theo dung lai man tuong ung.
     default:
       return null;
   }
@@ -10794,53 +10800,55 @@ function renderDataFactoryHub() {
   const stats = state.df_stats || {};
   const events = state.df_events || [];
 
-  const rawRows = [
-    { time: '15:11:44', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0114', pid: 'PER-0042', text: 'Anh hỏi ba lần rồi mà không ai trả lời. Nếu bên mình không làm được thì nói thẳng để anh tìm chỗ khác nhé.', label: 'Complained', confidence: '0,94', st: 'clean' },
-    { time: '15:09:02', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0231', pid: 'PER-0311', text: 'Bên nào có sẵn MDF E1 17mm khổ 1220x2440 cho em 3 cont trong tháng 10 không ạ, ngân sách tầm 1.2 tỷ.', label: 'AskedPrice', confidence: '0,96', st: 'clean' },
-    { time: '15:06:18', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0231', pid: 'PER-0402', text: 'Mình có kho ở Bình Dương, còn tồn 6 cont E1 17mm, ai cần inbox mình nhé.', label: 'OfferedSupply', confidence: '0,91', st: 'clean' },
-    { time: '15:04:51', channel: 'WhatsApp', ch: 'w', gid: 'GRP-WA-0007', pid: 'PER-0118', text: 'Em gửi lại file khảo sát qua đây cho nhanh nha anh', label: 'SentDocument', confidence: '0,88', st: 'clean' },
-    { time: '15:02:33', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0114', pid: 'PER-0007', text: 'Ok chị đã gửi bản hợp đồng sửa vào kho tài liệu rồi nhé', label: 'SentDocument', confidence: '0,86', st: 'clean' },
-    { time: '14:58:07', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0231', pid: 'PER-0512', text: 'giá bên minh long đang thấp hơn 4% đó anh, anh xem lại giúp em', label: 'MentionsCompetitor', confidence: '0,79', st: 'processing' },
-    { time: '14:55:40', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0356', pid: 'PER-0619', text: 'Mình làm key account ngành lạnh 5 năm, đang tính đổi hướng sang gỗ nội thất.', label: 'JobSignal', confidence: '0,64', st: 'processing' },
-    { time: '14:51:12', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0231', pid: 'PER-0733', text: 'ai co nguon van phu melamine gia si k a', label: 'AskedPrice', confidence: '0,52', st: 'lowconf' },
-    { time: '14:49:55', channel: 'WhatsApp', ch: 'w', gid: 'GRP-WA-0011', pid: 'PER-0844', text: 'Cần kho lạnh 400 pallet khu Tân Cảng, giá sao ạ', label: 'AskedPrice', confidence: '0,71', st: 'processing' },
-    { time: '14:46:21', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0114', pid: 'PER-0311', text: 'ok a', label: 'Noise', confidence: '0,31', st: 'discarded' },
-    { time: '14:44:03', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0489', pid: 'PER-0951', text: 'Sticker', label: 'Noise', confidence: '0,12', st: 'discarded' },
-    { time: '14:41:38', channel: 'Zalo', ch: 'z', gid: 'GRP-ZL-0231', pid: 'PER-0402', text: 'Đơn hàng cont trước giao trễ 4 ngày, khách bên em phàn nàn nhiều lắm.', label: 'Complained', confidence: '0,83', st: 'raw' },
-  ];
-
-  const stateMap = {
-    clean: ['Đã vào kho sạch', '#10b981'],
-    processing: ['Đang phân loại', 'var(--color-accent,#9184d9)'],
-    lowconf: ['Tin cậy thấp', '#f59e0b'],
-    discarded: ['Loại — nhiễu', 'var(--color-neutral-500,#9397ab)'],
-    raw: ['Chờ chu kỳ tới', 'var(--color-neutral-400,#b2b6ca)']
+  // DU LIEU THAT: lay tu state.df_events (that su tu /api/data_factory/events,
+  // nguon SQLite atomic_events - xem heo_harness/core/event_store.py get_events()).
+  // Khong con hardcode mau nhu truoc (da xoa 11 dong tin nhan gia + cac mang cau hinh gia).
+  const CH_ICON = { zalo: 'ph ph-chat-circle-dots', whatsapp: 'ph ph-whatsapp-logo' };
+  const CH_TONE = { zalo: '#10b981', whatsapp: '#f59e0b' };
+  const fmtTime = (ts) => {
+    if (!ts) return '—';
+    try {
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return String(ts).slice(11, 16) || String(ts);
+      return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return String(ts); }
   };
+  const rawRows = events.slice(0, 12).map(e => {
+    const ch = (e.channel || 'zalo').toLowerCase();
+    const conf = e.confidence != null ? Number(e.confidence) : null;
+    let st = 'raw', stText = 'Chờ chu kỳ tới', stTone = 'var(--color-neutral-400,#b2b6ca)';
+    if (e.status === 'ARCHIVED' || e.archived) { st = 'discarded'; stText = 'Loại — nhiễu'; stTone = 'var(--color-neutral-500,#9397ab)'; }
+    else if (conf != null && conf < 0.6) { st = 'lowconf'; stText = 'Tin cậy thấp'; stTone = '#f59e0b'; }
+    else if (conf != null && conf >= 0.6) { st = 'clean'; stText = 'Đã vào kho sạch'; stTone = '#10b981'; }
+    return {
+      time: fmtTime(e.timestamp), channel: ch === 'zalo' ? 'Zalo' : 'WhatsApp',
+      chIcon: CH_ICON[ch] || CH_ICON.zalo, chTone: CH_TONE[ch] || CH_TONE.zalo,
+      gid: e.group_id || '—', pid: e.sender_id || '—',
+      text: e.content || e.meaning_summary || '(không có nội dung)',
+      label: e.event_type || 'GeneralConversation',
+      confidence: conf != null ? conf.toFixed(2).replace('.', ',') : '—',
+      stText, stTone,
+    };
+  });
 
-  const triggerConfig = [
-    { label: 'Chu kỳ thời gian', value: 'mỗi 15 phút', bar: '25%', tone: 'var(--color-accent,#9184d9)', note: 'Chu kỳ tới chạy sau 4 phút 12 giây' },
-    { label: 'Ngưỡng số lượng', value: '500 bản ghi', bar: '84%', tone: '#f59e0b', note: 'Đang có 4.204 chờ — sẽ chạy theo ngưỡng trước' },
-    { label: 'Số bản ghi mỗi lượt', value: '250 / lượt', bar: '50%', tone: '#10b981', note: 'Giới hạn để không cạn hạn mức model' },
-    { label: 'Ngưỡng tin cậy vào kho sạch', value: '≥ 0,60', bar: '60%', tone: '#10b981', note: 'Dưới ngưỡng thì giữ lại chờ Sếp xem' },
-  ];
+  // "Kich hoat sang loc" va "Chu ky gan nhat": cau hinh lich chay / lich su van hanh
+  // CHUA CO API that (khong co endpoint tra ve lich chay refinery) - de trong trung thuc
+  // thay vi bia so, dung theo dung nguyen tac Boss yeu cau.
+  const triggerConfig = [];
+  const refineryRuns = [];
 
-  const rawByGroup = [
-    { name: 'Group Ngành gỗ Miền Nam', bar: '100%', n: '6.412' },
-    { name: 'Vận hành Genesis — Quý 4', bar: '64%', n: '4.108' },
-    { name: 'Group Nhân sự Logistics', bar: '41%', n: '2.634' },
-    { name: 'Ban Tài chính', bar: '28%', n: '1.802' },
-    { name: 'Nhóm Kỹ thuật hạ tầng', bar: '19%', n: '1.216' },
-    { name: 'Đối tác in ấn Thành Phát', bar: '12%', n: '784' },
-    { name: 'Nhóm khác (36 nhóm)', bar: '22%', n: '1.456' },
-  ];
-
-  const refineryRuns = [
-    { time: '15:00:00', meta: '486 bản ghi · 0 lỗi', tone: '#10b981' },
-    { time: '14:45:00', meta: '512 bản ghi · 2 tin cậy thấp', tone: '#f59e0b' },
-    { time: '14:30:00', meta: '448 bản ghi · 0 lỗi', tone: '#10b981' },
-    { time: '14:15:00', meta: '604 bản ghi · theo ngưỡng', tone: '#10b981' },
-    { time: '14:00:00', meta: '396 bản ghi · 0 lỗi', tone: '#10b981' },
-  ];
+  // "Tho theo nhom nguon": gop that tu state.df_events theo group_name/group_id.
+  const groupCounts = {};
+  events.forEach(e => {
+    const gname = e.group_name || e.group_id;
+    if (!gname || gname === '1-1') return;
+    groupCounts[gname] = (groupCounts[gname] || 0) + 1;
+  });
+  const groupEntries = Object.entries(groupCounts).sort((a, b) => b[1] - a[1]).slice(0, 7);
+  const maxGroupCount = groupEntries.length ? groupEntries[0][1] : 1;
+  const rawByGroup = groupEntries.map(([name, n]) => ({
+    name, n: String(n), bar: Math.max(6, Math.round((n / maxGroupCount) * 100)) + '%'
+  }));
 
   return `
     <div style="display:flex; flex-direction:column; gap:16px; min-width:0; margin-bottom:18px;">
@@ -10865,9 +10873,9 @@ function renderDataFactoryHub() {
       <!-- 4 KPIs Grid (Nocturne) -->
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:12px; min-width:0;">
         <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
-          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Bản ghi thô 24h</span>
+          <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Bản ghi thô</span>
           <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
-            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:var(--color-accent,#9184d9); line-height:1;">18.412</span>
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:var(--color-accent,#9184d9); line-height:1;">${stats.total_events != null ? stats.total_events : events.length}</span>
             <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">bản ghi</span>
           </div>
           <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">Gom từ Zalo &amp; WhatsApp</div>
@@ -10885,7 +10893,7 @@ function renderDataFactoryHub() {
         <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
           <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Cơ hội phát hiện</span>
           <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
-            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:#38bdf8; line-height:1;">${stats.total_opportunities || state.df_opps?.length || 8}</span>
+            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:#38bdf8; line-height:1;">${(state.df_opps || []).length}</span>
             <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">cơ hội</span>
           </div>
           <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">Cung cầu &amp; Hỏi mua bán</div>
@@ -10894,7 +10902,14 @@ function renderDataFactoryHub() {
         <div style="background:var(--color-surface,#232532); border:1px solid var(--color-divider,rgba(233,233,237,0.16)); border-radius:var(--radius-md,8px); padding:13px 15px;">
           <span style="font-size:9.5px; font-weight:600; letter-spacing:0.13em; text-transform:uppercase; color:var(--color-neutral-500,#9397ab);">Tỷ lệ tin cậy</span>
           <div style="display:flex; align-items:baseline; gap:5px; margin-top:6px;">
-            <span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:#f59e0b; line-height:1;">94.2%</span>
+            ${(() => {
+              const withConf = events.filter(e => e.confidence != null);
+              const cleanCount = withConf.filter(e => Number(e.confidence) >= 0.6).length;
+              const pct = withConf.length ? Math.round((cleanCount / withConf.length) * 1000) / 10 : null;
+              return pct != null
+                ? `<span style="font-size:24px; font-weight:600; letter-spacing:-0.02em; color:#f59e0b; line-height:1;">${pct}%</span>`
+                : `<span style="font-size:15px; font-weight:600; color:var(--color-neutral-500,#9397ab); line-height:1;">—</span>`;
+            })()}
             <span style="font-size:11px; color:var(--color-neutral-500,#9397ab);">kho sạch</span>
           </div>
           <div style="font-size:11px; color:var(--color-neutral-400,#b2b6ca); margin-top:4px;">Chỉ sự kiện ≥ 0,60 mới vào kho sạch</div>
@@ -10907,7 +10922,7 @@ function renderDataFactoryHub() {
           <span style="color:var(--color-neutral-500,#9397ab); margin-right:6px;">Kênh:</span>Tất cả <i class="ph ph-caret-down" style="font-size:11px; margin-left:6px; color:var(--color-neutral-500,#9397ab);"></i>
         </span>
         <span onclick="filterDataFactoryEvents('GRP')" style="display:flex; align-items:center; height:26px; padding:0 10px; border-radius:999px; font-size:11px; white-space:nowrap; color:var(--color-neutral-300,#cfd3e5); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826); cursor:pointer;">
-          <span style="color:var(--color-neutral-500,#9397ab); margin-right:6px;">Nhóm:</span>Tất cả 42 nhóm <i class="ph ph-caret-down" style="font-size:11px; margin-left:6px; color:var(--color-neutral-500,#9397ab);"></i>
+          <span style="color:var(--color-neutral-500,#9397ab); margin-right:6px;">Nhóm:</span>Tất cả ${(state.groups || []).length} nhóm <i class="ph ph-caret-down" style="font-size:11px; margin-left:6px; color:var(--color-neutral-500,#9397ab);"></i>
         </span>
         <span onclick="filterDataFactoryEvents('ALL')" style="display:flex; align-items:center; height:26px; padding:0 10px; border-radius:999px; font-size:11px; white-space:nowrap; color:var(--color-neutral-300,#cfd3e5); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826); cursor:pointer;">
           <span style="color:var(--color-neutral-500,#9397ab); margin-right:6px;">Trạng thái:</span>Tất cả <i class="ph ph-caret-down" style="font-size:11px; margin-left:6px; color:var(--color-neutral-500,#9397ab);"></i>
@@ -10923,7 +10938,7 @@ function renderDataFactoryHub() {
         </span>
         <span style="flex:1;"></span>
         <span style="font-size:11px; color:var(--color-neutral-500,#9397ab); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">
-          18.412 bản ghi thô · hiển thị 12 mới nhất
+          ${stats.total_events != null ? stats.total_events : events.length} bản ghi thô · hiển thị ${rawRows.length} mới nhất
         </span>
       </div>
 
@@ -10946,23 +10961,22 @@ function renderDataFactoryHub() {
                 </tr>
               </thead>
               <tbody id="df-events-tbody">
-                ${rawRows.map(rw => {
-                  const [stateText, stateTone] = stateMap[rw.st] || ['Chờ xử lý', 'var(--color-neutral-400,#b2b6ca)'];
-                  const cn = Number(rw.confidence.replace(',', '.'));
-                  const confTone = cn >= 0.8 ? '#10b981' : cn >= 0.6 ? '#f59e0b' : '#ef4444';
-                  const chIcon = rw.ch === 'z' ? 'ph ph-chat-circle-dots' : 'ph ph-device-mobile';
-                  const chTone = rw.ch === 'z' ? '#10b981' : '#f59e0b';
+                ${rawRows.length === 0 ? `
+                  <tr><td colspan="8" style="padding:32px 14px; text-align:center; font-size:12px; color:var(--color-neutral-500,#9397ab);">Chưa có dữ liệu thật — chờ tin nhắn mới từ Zalo/WhatsApp qua Data Factory.</td></tr>
+                ` : rawRows.map(rw => {
+                  const cn = rw.confidence === '—' ? null : Number(rw.confidence.replace(',', '.'));
+                  const confTone = cn == null ? 'var(--color-neutral-500,#9397ab)' : cn >= 0.8 ? '#10b981' : cn >= 0.6 ? '#f59e0b' : '#ef4444';
 
                   return `
                     <tr style="border-bottom:1px solid rgba(233,233,237,0.06);">
                       <td style="padding:9px 12px; font-size:11px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${rw.time}</td>
-                      <td style="padding:9px 12px;"><i class="${chIcon}" style="font-size:14px; color:${chTone};" title="${rw.channel}"></i></td>
-                      <td style="padding:9px 12px; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${rw.gid}</td>
-                      <td style="padding:9px 12px; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${rw.pid}</td>
+                      <td style="padding:9px 12px;"><i class="${rw.chIcon}" style="font-size:14px; color:${rw.chTone};" title="${rw.channel}"></i></td>
+                      <td style="padding:9px 12px; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${escapeHtml(rw.gid)}</td>
+                      <td style="padding:9px 12px; font-size:10.5px; color:var(--color-neutral-400,#b2b6ca); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; white-space:nowrap;">${escapeHtml(rw.pid)}</td>
                       <td style="padding:9px 12px; font-size:11.5px; color:var(--color-neutral-300,#cfd3e5); min-width:260px;"><div style="line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;" title="${escapeHtml(rw.text)}">${escapeHtml(rw.text)}</div></td>
-                      <td style="padding:9px 12px;"><span style="font-size:10px; padding:2px 7px; border-radius:var(--radius-sm,4px); white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:${rw.label === 'Noise' ? 'var(--color-neutral-500,#9397ab)' : 'var(--color-neutral-300,#cfd3e5)'}; border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);">${rw.label}</span></td>
+                      <td style="padding:9px 12px;"><span style="font-size:10px; padding:2px 7px; border-radius:var(--radius-sm,4px); white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--color-neutral-300,#cfd3e5); border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);">${escapeHtml(rw.label)}</span></td>
                       <td style="padding:9px 12px; font-size:11px; color:${confTone}; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${rw.confidence}</td>
-                      <td style="padding:9px 12px;"><span style="font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:${stateTone}; border:1px solid ${stateTone === 'var(--color-neutral-400,#b2b6ca)' || stateTone === 'var(--color-neutral-500,#9397ab)' ? 'var(--color-neutral-800,#3f424d)' : stateTone}; background:var(--color-bg,#161826);">${stateText}</span></td>
+                      <td style="padding:9px 12px;"><span style="font-size:10.5px; padding:2px 8px; border-radius:999px; white-space:nowrap; color:${rw.stTone}; border:1px solid var(--color-neutral-800,#3f424d); background:var(--color-bg,#161826);">${rw.stText}</span></td>
                     </tr>
                   `;
                 }).join('')}
@@ -10982,7 +10996,9 @@ function renderDataFactoryHub() {
               </div>
             </div>
             <div style="padding:14px 16px; display:flex; flex-direction:column; gap:13px;">
-              ${triggerConfig.map(tc => `
+              ${triggerConfig.length === 0 ? `
+                <div style="font-size:11.5px; color:var(--color-neutral-500,#9397ab); text-align:center; padding:8px 0;">Chưa có dữ liệu thật — chờ nối API cấu hình chu kỳ sàng lọc.</div>
+              ` : triggerConfig.map(tc => `
                 <div style="display:flex; flex-direction:column; gap:6px;">
                   <div style="display:flex; align-items:baseline; gap:8px;">
                     <span style="flex:1; min-width:0; font-size:11px; color:var(--color-neutral-400,#b2b6ca);">${tc.label}</span>
@@ -11009,9 +11025,11 @@ function renderDataFactoryHub() {
               </div>
             </div>
             <div style="padding:12px 16px 14px; display:flex; flex-direction:column; gap:9px;">
-              ${rawByGroup.map(rg => `
+              ${rawByGroup.length === 0 ? `
+                <div style="font-size:11.5px; color:var(--color-neutral-500,#9397ab); text-align:center; padding:8px 0;">Chưa có sự kiện nhóm nào trong dữ liệu thật gần đây.</div>
+              ` : rawByGroup.map(rg => `
                 <div onclick="filterDataFactoryEvents('${escapeHtml(rg.name)}')" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                  <span style="flex:1; min-width:0; font-size:11px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rg.name}</span>
+                  <span style="flex:1; min-width:0; font-size:11px; color:var(--color-neutral-300,#cfd3e5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(rg.name)}</span>
                   <span style="width:56px; height:4px; flex:none; border-radius:2px; background:var(--color-divider,rgba(233,233,237,0.16)); overflow:hidden;">
                     <span style="display:block; height:4px; width:${rg.bar}; background:var(--acc,var(--color-accent,#9184d9)); opacity:.75;"></span>
                   </span>
@@ -11030,7 +11048,9 @@ function renderDataFactoryHub() {
               </div>
             </div>
             <div style="padding:4px 0 8px;">
-              ${refineryRuns.map(rr2 => `
+              ${refineryRuns.length === 0 ? `
+                <div style="font-size:11.5px; color:var(--color-neutral-500,#9397ab); text-align:center; padding:16px 16px 20px;">Chưa có dữ liệu thật — chờ nối API lịch sử chạy refinery.</div>
+              ` : refineryRuns.map(rr2 => `
                 <div style="display:flex; align-items:center; gap:10px; padding:8px 16px;">
                   <span style="width:6px; height:6px; flex:none; border-radius:50%; background:${rr2.tone};"></span>
                   <span style="flex:1; min-width:0; font-size:11px; color:var(--color-neutral-300,#cfd3e5); font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${rr2.time}</span>
